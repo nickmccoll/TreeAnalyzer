@@ -78,6 +78,7 @@ public:
 	// Helper functions for event processing
 	//--------------------------------------------------------------------------------------------------
 	void setupReaders();
+	void processReaders();
 	bool nextEvent(const int reportFrequency)  {return tree.readEvent(eventNumber, reportFrequency);}
 	void setEventNumber(const int newEventNumber) {eventNumber = newEventNumber;}
 

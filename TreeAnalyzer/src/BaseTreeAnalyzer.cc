@@ -17,6 +17,7 @@ void BaseEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequency
     }
     while(ana->nextEvent(reportFrequency)){
         if(numEvents >= 0 && ana->getEventNumber() >= numEvents+1) return;
+        ana->processReaders();
         ana->runEvent();
         ana->setEventNumber(ana->getEventNumber() +1);
     }
@@ -49,7 +50,9 @@ BaseReader* BaseTreeAnalyzer::load(BaseReader * reader) {
 
 //--------------------------------------------------------------------------------------------------
 void BaseTreeAnalyzer::setupReaders() {for(auto * r : readers) r->setup(&tree);}
-
+//--------------------------------------------------------------------------------------------------
+void BaseTreeAnalyzer::processReaders() {for(auto * r : readers) r->processVars();}
+//--------------------------------------------------------------------------------------------------
 void BaseTreeAnalyzer::initializeTreeCopy(std::string outFileName, TreeCopyingOptions copyOptions) {
     outTreeName = outFileName;
     outTreeCopyOpt = copyOptions;

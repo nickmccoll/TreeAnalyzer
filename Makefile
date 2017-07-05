@@ -11,10 +11,11 @@ TARGET=libTreeAnalysis.so
 
 ASTREEINT   = AnalysisSupport/TreeInterface/src
 ASUTILITIES = AnalysisSupport/Utilities/src
-TREEREADING = TreeAnalyzer/src
-#DATAFORMATS = DataFormats/src
+TREEANALYZER = TreeAnalyzer/src
+TREEREADING  = TreeReaders/src
+DATAFORMATS  = DataFormats/src
 
-SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(TREEREADING)/*.cc)
+SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(DATAFORMATS)/*.cc) $(wildcard $(TREEREADING)/*.cc)  $(wildcard $(TREEANALYZER)/*.cc)
 OBJ=$(join $(addsuffix ../obj/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.o))) 
 DEPENDS=$(join $(addsuffix ../.dep/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.d)))
 
@@ -63,6 +64,17 @@ $(ASUTILITIES)/../.dep/%.d: $(ASUTILITIES)/%.cc
 	@echo "============="
 	@echo Building dependencies file for $*.o
 	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(ASUTILITIES)/../obj/$*.o^" > $@'
+	
+$(DATAFORMATS)/../obj/%.o : $(DATAFORMATS)/%.cc
+	@mkdir -p $(dir $@)
+	@echo "============="
+	@echo "Compiling $<"
+	$(CXX) $(CXXFLAGS) -c $<  -o $@
+$(DATAFORMATS)/../.dep/%.d: $(DATAFORMATS)/%.cc
+	@mkdir -p $(dir $@)
+	@echo "============="
+	@echo Building dependencies file for $*.o
+	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(DATAFORMATS)/../obj/$*.o^" > $@'
 
 $(TREEREADING)/../obj/%.o : $(TREEREADING)/%.cc
 	@mkdir -p $(dir $@)
@@ -74,18 +86,17 @@ $(TREEREADING)/../.dep/%.d: $(TREEREADING)/%.cc
 	@echo "============="
 	@echo Building dependencies file for $*.o
 	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(TREEREADING)/../obj/$*.o^" > $@'
-#	
-#$(DATAFORMATS)/../obj/%.o : $(DATAFORMATS)/%.cc
-#	@mkdir -p $(dir $@)
-#	@echo "============="
-#	@echo "Compiling $<"
-#	$(CXX) $(CXXFLAGS) -c $<  -o $@
-#$(DATAFORMATS)/../.dep/%.d: $(DATAFORMATS)/%.cc
-#	@mkdir -p $(dir $@)
-#	@echo "============="
-#	@echo Building dependencies file for $*.o
-#	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(DATAFORMATS)/../obj/$*.o^" > $@'
+
 	
-	
+$(TREEANALYZER)/../obj/%.o : $(TREEANALYZER)/%.cc
+	@mkdir -p $(dir $@)
+	@echo "============="
+	@echo "Compiling $<"
+	$(CXX) $(CXXFLAGS) -c $<  -o $@
+$(TREEANALYZER)/../.dep/%.d: $(TREEANALYZER)/%.cc
+	@mkdir -p $(dir $@)
+	@echo "============="
+	@echo Building dependencies file for $*.o
+	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(TREEANALYZER)/../obj/$*.o^" > $@'
 
 -include $(DEPENDS)

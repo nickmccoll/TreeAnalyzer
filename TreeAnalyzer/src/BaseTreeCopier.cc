@@ -24,9 +24,9 @@ void CopierEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequen
 
   while(ana->nextEvent(reportFrequency)){
       if(numEvents >= 0 && ana->getEventNumber() >= numEvents+1) return;
+      ana->processReaders();
       ana->resetOutData();
       if(!ana->runEvent()) continue;
-      ana->runEvent();
       ana->fillOutTree();
       ana->setEventNumber(ana->getEventNumber() +1);
   }
@@ -53,8 +53,8 @@ void ManualCopierEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportF
 
   while(ana->nextEvent(reportFrequency)){
       if(numEvents >= 0 && ana->getEventNumber() >= numEvents+1) return;
+      ana->processReaders();
       ana->resetOutData();
-      if(!ana->runEvent()) continue;
       ana->runEvent();
       ana->setEventNumber(ana->getEventNumber() +1);
   }
