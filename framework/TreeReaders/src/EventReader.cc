@@ -5,7 +5,7 @@
 
 namespace TAna{
 
-EventReader::EventReader(std::string branchName, bool isRealData) : BaseReader(branchName),realData(isRealData) {};
+EventReader::EventReader(std::string branchName, bool isRealData) : BaseReader("EventReader",branchName),realData(isRealData) {};
 
 void EventReader::setup(TreeReadingWrapper * wrapper){
 
@@ -30,6 +30,7 @@ void EventReader::setup(TreeReadingWrapper * wrapper){
     } else {
         wrapper->setBranchAddressPre(branchName,"dataset"           , &dataset      , false);
         wrapper->setBranchAddressPre(branchName,"dataRun"           , &dataRun      , false);
+        weight = 1.0;
     }
 
     wrapper->setBranchAddressPre(branchName,"metFilterResult"   , &metFilterResult  , false);

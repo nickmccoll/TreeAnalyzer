@@ -7,14 +7,16 @@ class TreeReadingWrapper;
 namespace TAna{
 class BaseReader {
 public:
-	BaseReader(std::string branchName) : branchName(branchName) {};
+	BaseReader(std::string readerName,std::string branchName) : readerName(readerName), branchName(branchName) {};
 	virtual ~BaseReader() {}
+	//external functions
+	virtual void initialize(TreeReadingWrapper * wrapper) final;
+
 	virtual void setup(TreeReadingWrapper * wrapper) = 0; //set active branches
 	virtual void processVars() = 0; //build objects
-	bool isProcessed() const {return processStatus;}
 
-	std::string branchName ="";
-	bool processStatus     =false;
+	const std::string readerName ="";
+	const std::string branchName ="";
 
 };
 }

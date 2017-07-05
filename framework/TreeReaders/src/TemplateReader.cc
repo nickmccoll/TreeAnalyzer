@@ -5,7 +5,7 @@
 
 namespace TAna{
 
-TemplateReader::TemplateReader(std::string branchName) : BaseReader(branchName){};
+TemplateReader::TemplateReader(std::string branchName) : BaseReader("TemplateReader",branchName){};
 
 void TemplateReader::setup(TreeReadingWrapper * wrapper){
     wrapper->getEntries();

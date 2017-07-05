@@ -6,7 +6,7 @@ namespace TAna {
 
 //--------------------------------------------------------------------------------------------------
 void BaseEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequency, int numEvents, int startEvent){
-    cout << "Running over " << (numEvents < 0 ? "all" : TString::Format("at most %i",numEvents).Data()) << " events";
+    cout << " ++  Running over " << (numEvents < 0 ? "all" : TString::Format("at most %i",numEvents).Data()) << " events";
     if(startEvent >= 0 ) cout << ", starting with event: "<< startEvent;
     cout <<endl;
     ana->loadVariables();
@@ -26,7 +26,12 @@ void BaseEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequency
 //--------------------------------------------------------------------------------------------------
 BaseTreeAnalyzer::BaseTreeAnalyzer(std::string fileName, std::string treeName, size randomSeed) :
 		        tree(fileName,treeName), eventNumber(0), randGen (new TRandom3(randomSeed))
-{}
+{
+    std::cout << " \033[1;34m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\033[0m"  << std::endl;
+    std::cout << " ++  Setting up BaseTreeAnalyzer"<<std::endl;
+    std::cout << " \033[1;34m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\033[0m"  << std::endl;
+
+}
 
 //--------------------------------------------------------------------------------------------------
 BaseTreeAnalyzer::~BaseTreeAnalyzer() {
@@ -49,7 +54,7 @@ BaseReader* BaseTreeAnalyzer::load(BaseReader * reader) {
 }
 
 //--------------------------------------------------------------------------------------------------
-void BaseTreeAnalyzer::setupReaders() {for(auto * r : readers) r->setup(&tree);}
+void BaseTreeAnalyzer::setupReaders() {for(auto * r : readers) r->initialize(&tree);}
 //--------------------------------------------------------------------------------------------------
 void BaseTreeAnalyzer::processReaders() {for(auto * r : readers) r->processVars();}
 //--------------------------------------------------------------------------------------------------
@@ -58,6 +63,8 @@ void BaseTreeAnalyzer::initializeTreeCopy(std::string outFileName, TreeCopyingOp
     outTreeCopyOpt = copyOptions;
 }
 void BaseTreeAnalyzer::setupOutTree(){
+    cout << " ++  Creating file " <<outTreeName;
+
     if(outTreeCopyOpt == COPY_ERROR)
         throw std::invalid_argument("BaseTreeAnalyzer::setupOutTree() -> Must call TreeCopyingOptions() before you call analyze()");
 
@@ -69,12 +76,15 @@ void BaseTreeAnalyzer::setupOutTree(){
     case COPY_ALL :
         tree.getTree()->SetBranchStatus("*",1);
         newTree = tree.getTree()->CloneTree(0);
+        std::cout <<", and will copy all branches from the input tree.";
         break;
     case COPY_LOADED :
         newTree = tree.getTree()->CloneTree(0);
+        std::cout <<", and will copy only loaded branches from the input tree.";
         break;
     default:
         newTree = new TTree(tree.getTree()->GetName(),tree.getTree()->GetTitle());
+        std::cout <<", and will copy no branches from the input tree.";
     }
     outTree = new TreeWriter(outFile, newTree);
 }
