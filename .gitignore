@@ -1,5 +1,9 @@
 # Eclipse
 .settings/*
+
+#extra
+*.pcm
+
 # Prerequisites
 *.d
 

@@ -33,15 +33,16 @@ void EventReader::setup(TreeReadingWrapper * wrapper){
         weight = 1.0;
     }
 
-    wrapper->setBranchAddressPre(branchName,"metFilterResult"   , &metFilterResult  , false);
-    wrapper->setBranchAddressPre(branchName,"trigPass"          , &trigPass         , false);
-    wrapper->setBranchAddressPre(branchName,"trigPrescale"      , &trigPrescale     , false);
+    wrapper->setBranchAddressPre(branchName,"metFilters"         , &metFilters      , false);
+    wrapper->setBranchAddressPre(branchName,"triggerAccepts"    , &triggerAccepts   , false);
+    wrapper->setBranchAddressPre(branchName,"triggerPrescales"  , &triggerPrescales , false);
 
 
 }
 
 void EventReader::processVars() {
     met.setP4(met_pt,float(0),met_phi,float(0));
+    rawMet.setP4(met_raw_pt,float(0),met_raw_phi,float(0));
 }
 
 

@@ -1,6 +1,7 @@
 include $(ROOTSYS)/etc/Makefile.arch
 
-CXXFLAGS += -I../.. -I.
+#CXXFLAGS += -I../.. -I.
+CXXFLAGS += -I.
 
 ifeq ($(PLATFORM),macosx)
 CXXFLAGS += -std=c++11
@@ -31,9 +32,9 @@ $(TARGET): $(OBJ)
 	@echo "Linking the target $@"
 	@echo "============="
 ifeq ($(PLATFORM),macosx)
-		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS)
+		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) -lGenVector
 else
-		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS)
+		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) -lGenVector
 endif
 	@echo -- Link finished --
         

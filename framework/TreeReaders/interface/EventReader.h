@@ -39,12 +39,13 @@ public:
 	size16 process            = 0;
 	size16 dataset            = 0;
 	size16 dataRun            = 0;
-	size   metFilterResult    = 0;
-	size   trigPass           = 0;
-	size   trigPrescale       = 0;
+	size   metFilters         = 0;
+	size64 triggerAccepts     = 0;
+	size64 triggerPrescales   = 0;
 
 	//objects created in process
 	Met met;
+	Met rawMet;
 
 
 };
