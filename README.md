@@ -6,6 +6,7 @@ Execute the following commands on your system. If you are running at FNAL you wi
 
 ```Shell
 git clone git@github.com:{USERNAME}/TreeAnalyzer.git
+cd TreeAnalyzer
 git submodule init
 git submodule update
 cd framework
