@@ -6,7 +6,7 @@ namespace TAna{
 class TemplateReader: public BaseReader {
 public:
     TemplateReader(std::string branchName);
-	virtual ~TemplateReader() {}
+	virtual ~TemplateReader();
 	virtual void setup(TreeReadingWrapper * wrapper);
 	virtual void processVars();
 

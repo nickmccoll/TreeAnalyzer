@@ -6,11 +6,11 @@
 namespace TAna{
 
 TemplateReader::TemplateReader(std::string branchName) : BaseReader("TemplateReader",branchName){};
+TemplateReader::~TemplateReader() {}
 
 void TemplateReader::setup(TreeReadingWrapper * wrapper){
-    wrapper->getEntries();
-
-//    wrapper->setBranchAddressPre(branchName,"run"               , &run              , false);
+    double a;
+    wrapper->setBranchAddressPre(branchName,"run"               , &a              , false);
 
 }
 

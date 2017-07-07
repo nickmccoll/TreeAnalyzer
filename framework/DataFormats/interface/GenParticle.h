@@ -6,6 +6,9 @@
 namespace TAna {
 template <class Type> class CandidateRef;
 
+//--------------------------------------------------------------------------------------------------
+// GenParticle
+//--------------------------------------------------------------------------------------------------
 class GenParticle : public MomentumF
 {
 public :
@@ -53,8 +56,9 @@ protected :
 };
 typedef std::vector<GenParticle>     GenParticleCollection;
 
-
-//dummy class to add compatibility with GenParticle
+//--------------------------------------------------------------------------------------------------
+// CandidateRef...dummy class to add compatibility with CMSSW GenParticle
+//--------------------------------------------------------------------------------------------------
 template <class Type>
 class CandidateRef {
 public:
