@@ -5,6 +5,7 @@
 
 #include "AnalysisSupport/Utilities/interface/Types.h"
 #include<vector>
+using ASTypes::size;
 
 namespace TAna {
 

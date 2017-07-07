@@ -13,9 +13,37 @@ typedef IndexedMomentumF GenJet;
 typedef std::vector<GenJet> GenJetCollection;
 
 //--------------------------------------------------------------------------------------------------
+// BaseRecoJet: Base class for jets, subjets, and fatjets
+//--------------------------------------------------------------------------------------------------
+class BaseRecoJet : public IndexedMomentumF
+{
+public :
+    BaseRecoJet() {}
+
+    template <class InputCoordSystem>
+    BaseRecoJet(const ROOT::Math::LorentzVector<InputCoordSystem> &mom,
+            const int idx,
+            const float csv, const  ASTypes::int8 hadronFlv = 0,
+            const  ASTypes::int8 partonFlv=0)
+        : IndexedMomentumF(mom, idx), _csv(csv), _hadronFlv(hadronFlv)
+          ,_partonFlv(partonFlv) {}
+    ~BaseRecoJet() {}
+
+    float csv() const {return _csv;}
+    int  hadronFlv() const {return _hadronFlv;}
+    int  partonFlv() const {return _partonFlv;}
+
+
+protected :
+    float          _csv       = 0;
+    ASTypes::int8  _hadronFlv = 0;
+    ASTypes::int8  _partonFlv = 0;
+
+};
+//--------------------------------------------------------------------------------------------------
 // Jet: standard RecoJet
 //--------------------------------------------------------------------------------------------------
-class Jet : public IndexedMomentumF
+class Jet : public BaseRecoJet
 {
 public :
     Jet() {}
@@ -25,16 +53,14 @@ public :
             const int idx,
             const float csv, const  ASTypes::size8 jetID, const  ASTypes::int8 hadronFlv = 0,
             const  ASTypes::int8 partonFlv=0, GenJet *gj = 0)
-        : IndexedMomentumF(mom, idx), _csv(csv), _jetID(jetID),_hadronFlv(hadronFlv)
-          ,_partonFlv(partonFlv),_gj(gj) {}
+        : BaseRecoJet(mom, idx,csv,hadronFlv,partonFlv),_jetID(jetID),_gj(gj) {}
     ~Jet() {}
+
 
     float csv() const {return _csv;}
     bool passPUID() const;
     bool passLooseID() const;
     bool passTightID() const;
-    int  hadronFlv() const {return _hadronFlv;}
-    int  partonFlv() const {return _partonFlv;}
 
     const GenJet  *genJet()        const { return _gj;  }
     GenJet        *genJet()        { return _gj;  }
@@ -42,13 +68,11 @@ public :
 
 
 protected :
-    float          _csv       = 0;
     ASTypes::size8 _jetID     = 0;
-    ASTypes::int8  _hadronFlv = 0;
-    ASTypes::int8  _partonFlv = 0;
     GenJet  *      _gj        = 0;
 
 };
+
 typedef std::vector<Jet>   JetCollection;
 }
 #endif
