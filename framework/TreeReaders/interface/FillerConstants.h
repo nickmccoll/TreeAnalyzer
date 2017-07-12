@@ -6,9 +6,9 @@
 #include <string>
 namespace FillerConstants{
 	template <class storage, class type>
-	void addPass(storage& passList, const type passed ) { passList |= (1 << passed);}
+	void addPass(storage& passList, const type passed ) { passList |= (static_cast<storage>(1) << passed);}
 	template <class storage, class type>
-	bool doesPass(const storage passList, const type checkPassed ) {return  (1 << checkPassed) & passList;};
+	bool doesPass(const storage passList, const type checkPassed ) {return  (static_cast<storage>(1) << checkPassed) & passList;};
 
 
 	enum DataRun   {NODATARUN, RUN2016A,RUN2016B,RUN2016C,RUN2016D,RUN2016E,RUN2016F,RUN2016G,RUN2016H};

@@ -75,6 +75,14 @@ public:
         }
         plotter.getOrMake1D("incl_norm",";norm",1,0,2)->Fill(1,reader_event->weight);
 
+
+        plotter.getOrMake1D("incl_all_bin_zeta",";#eta(ll)",50,0,10)->Fill(diMuon.absEta(),reader_event->weight);
+        plotter.getOrMake1D("incl_all_bin_rap_zeta",";#eta(ll)",50,0,10)->Fill(TMath::Abs(diMuon.p4().Rapidity()),reader_event->weight);
+        if(diMuon.pt() > 50){
+        plotter.getOrMake1D("pt_gt30_all_bin_zeta",";#eta(ll)",50,0,10)->Fill(diMuon.absEta(),reader_event->weight);
+        plotter.getOrMake1D("pt_gt30_all_bin_rap_zeta",";#eta(ll)",50,0,10)->Fill(TMath::Abs(diMuon.p4().Rapidity()),reader_event->weight);
+        }
+
         plotter.getOrMake1D("incl_all_zeta",";#eta(ll)",nBins,diMuonETAs)->Fill(diMuon.absEta(),reader_event->weight);
     if(passScen1)
         plotter.getOrMake1D("incl_scen1_zeta",";#eta(ll)",nBins,diMuonETAs)->Fill(diMuon.absEta(),reader_event->weight);
@@ -82,6 +90,16 @@ public:
         plotter.getOrMake1D("incl_scen2_zeta",";#eta(ll)",nBins,diMuonETAs)->Fill(diMuon.absEta(),reader_event->weight);
     if(passScen3)
         plotter.getOrMake1D("incl_scen3_zeta",";#eta(ll)",nBins,diMuonETAs)->Fill(diMuon.absEta(),reader_event->weight);
+
+
+    plotter.getOrMake1D("incl_all_zrap",";|y|(ll)",nBins,diMuonETAs)->Fill(TMath::Abs(diMuon.p4().Rapidity()),reader_event->weight);
+if(passScen1)
+    plotter.getOrMake1D("incl_scen1_zrap",";|y|(ll)",nBins,diMuonETAs)->Fill(TMath::Abs(diMuon.p4().Rapidity()),reader_event->weight);
+if(passScen2)
+    plotter.getOrMake1D("incl_scen2_zrap",";|y|(ll)",nBins,diMuonETAs)->Fill(TMath::Abs(diMuon.p4().Rapidity()),reader_event->weight);
+if(passScen3)
+    plotter.getOrMake1D("incl_scen3_zrap",";|y|(ll)",nBins,diMuonETAs)->Fill(TMath::Abs(diMuon.p4().Rapidity()),reader_event->weight);
+
 
     plotter.getOrMake1D("all_zpt",";p_{T}(ll)",500,0,500)->Fill(diMuon.pt(),reader_event->weight);
     plotter.getOrMake1D("all_min_mu_pt",";min p_{T}(l)",500,0,500)->Fill(std::min(genMuons[0]->pt(),genMuons[1]->pt()),reader_event->weight);
