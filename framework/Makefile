@@ -10,13 +10,14 @@ endif
 
 TARGET=libTreeAnalysis.so
 
-ASTREEINT   = AnalysisSupport/TreeInterface/src
-ASUTILITIES = AnalysisSupport/Utilities/src
+ASTREEINT    = AnalysisSupport/TreeInterface/src
+ASUTILITIES  = AnalysisSupport/Utilities/src
 TREEANALYZER = TreeAnalyzer/src
 TREEREADING  = TreeReaders/src
 DATAFORMATS  = DataFormats/src
+PROCESSORS   = Processors/src
 
-SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(DATAFORMATS)/*.cc) $(wildcard $(TREEREADING)/*.cc)  $(wildcard $(TREEANALYZER)/*.cc)
+SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(DATAFORMATS)/*.cc) $(wildcard $(PROCESSORS)/*.cc) $(wildcard $(TREEREADING)/*.cc)  $(wildcard $(TREEANALYZER)/*.cc)
 OBJ=$(join $(addsuffix ../obj/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.o))) 
 DEPENDS=$(join $(addsuffix ../.dep/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.d)))
 
@@ -34,7 +35,7 @@ $(TARGET): $(OBJ)
 ifeq ($(PLATFORM),macosx)
 		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) -lGenVector
 else
-		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) -lGenVector
+		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS)
 endif
 	@echo -- Link finished --
         
@@ -76,6 +77,17 @@ $(DATAFORMATS)/../.dep/%.d: $(DATAFORMATS)/%.cc
 	@echo "============="
 	@echo Building dependencies file for $*.o
 	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(DATAFORMATS)/../obj/$*.o^" > $@'
+	
+$(PROCESSORS)/../obj/%.o : $(PROCESSORS)/%.cc
+	@mkdir -p $(dir $@)
+	@echo "============="
+	@echo "Compiling $<"
+	$(CXX) $(CXXFLAGS) -c $<  -o $@
+$(PROCESSORS)/../.dep/%.d: $(PROCESSORS)/%.cc
+	@mkdir -p $(dir $@)
+	@echo "============="
+	@echo Building dependencies file for $*.o
+	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(PROCESSORS)/../obj/$*.o^" > $@'
 
 $(TREEREADING)/../obj/%.o : $(TREEREADING)/%.cc
 	@mkdir -p $(dir $@)

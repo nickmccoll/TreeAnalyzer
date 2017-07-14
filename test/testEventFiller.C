@@ -5,28 +5,31 @@
 #include "TreeReaders/interface/EventReader.h"
 #include "TreeReaders/interface/FillerConstants.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
+#include "Processors/interface/EventWeights.h"
 
 using namespace TAna;
 
 class Analyzer : public BaseTreeAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, bool realData) : BaseTreeAnalyzer(fileName,treeName), realData(realData){
+    Analyzer(std::string fileName, std::string treeName, int treeInt) : BaseTreeAnalyzer(fileName,treeName,treeInt){
 
     }
     void loadVariables() override {
-        reader_event = (EventReader*)load(new EventReader("event",realData));
+        reader_event = (EventReader*)load(new EventReader("event",isRealData()));
     }
 
     bool runEvent() override {
-        plotter.getOrMake1D("met",";#slash{E}_{T}",200,0,1000)->Fill(reader_event->met.pt(),reader_event->weight);
-        plotter.getOrMake1D("met_o_rawmet",";#slash{E}_{T}/raw #slash{E}_{T}",200,0,10)->Fill(reader_event->met.pt()/reader_event->rawMet.pt(),reader_event->weight);
-        plotter.getOrMake1D("met_phi",";#slash{E}_{T} #phi",200,-7,7)->Fill(reader_event->met.phi(),reader_event->weight);
-        plotter.getOrMake1D("npv",";npv",200,-0.5,99.5)->Fill(reader_event->npv,reader_event->weight);
-        plotter.getOrMake1D("rho",";rho",200,0,100)->Fill(reader_event->rho,reader_event->weight);
-        if(!realData){
-            plotter.getOrMake1D("nTruePUInts",";nTruePUInts",200,-0.5,99.5)->Fill(reader_event->nTruePUInts,reader_event->weight);
-            plotter.getOrMake2D("process_weight",";weight;process",1000,0,500,20,-0.5,19.5)->Fill(reader_event->weight,reader_event->process);
+        float eventWeight = EventWeights::getNormalizedEventWeight(reader_event,xsec(),nSampEvt(),lumi());
+
+        plotter.getOrMake1D("met",";#slash{E}_{T}",200,0,1000)->Fill(reader_event->met.pt(),eventWeight);
+        plotter.getOrMake1D("met_o_rawmet",";#slash{E}_{T}/raw #slash{E}_{T}",200,0,10)->Fill(reader_event->met.pt()/reader_event->rawMet.pt(),eventWeight);
+        plotter.getOrMake1D("met_phi",";#slash{E}_{T} #phi",200,-7,7)->Fill(reader_event->met.phi(),eventWeight);
+        plotter.getOrMake1D("npv",";npv",200,-0.5,99.5)->Fill(reader_event->npv,eventWeight);
+        plotter.getOrMake1D("rho",";rho",200,0,100)->Fill(reader_event->rho,eventWeight);
+        if(!isRealData()){
+            plotter.getOrMake1D("nTruePUInts",";nTruePUInts",200,-0.5,99.5)->Fill(reader_event->nTruePUInts,eventWeight);
+            plotter.getOrMake2D("process_weight",";weight;process",1000,0,500,20,-0.5,19.5)->Fill(eventWeight,reader_event->process);
         } else {
             plotter.getOrMake2D("dataset_dataRun",";dataset;dataRun",20,-0.5,19.5,20,-0.5,19.5)->Fill(reader_event->dataset,reader_event->dataRun);
         }
@@ -51,7 +54,6 @@ public:
 
     void write(TString fileName){ plotter.write(fileName);}
 
-    bool realData = false;
     EventReader * reader_event = 0;
     HistGetter plotter;
 
@@ -59,9 +61,14 @@ public:
 
 #endif
 
-void testEventFiller(std::string fileName ="output.root",std::string outFileName = "plots.root"){
-    TString path = fileName;
-    Analyzer a(fileName,"treeMaker/Events",path.Contains("data",TString::kIgnoreCase));
+void testEventFiller(std::string fileName, int treeInt, std::string outFileName){
+    Analyzer a(fileName,"treeMaker/Events",treeInt);
+    a.analyze();
+    a.write(outFileName);
+}
+void testEventFiller(std::string fileName, int treeInt, std::string outFileName, float xSec, float numEvent){
+    Analyzer a(fileName,"treeMaker/Events",treeInt);
+    a.setSampleInfo(xSec,numEvent);
     a.analyze();
     a.write(outFileName);
 }

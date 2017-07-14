@@ -43,9 +43,14 @@ public:
 	size64 triggerAccepts     = 0;
 	size64 triggerPrescales   = 0;
 
+	//branches from post processing
+	bool   normWeightLoaded     = false;
+	float  nomrmWeight          = 0;
+
 	//objects created in process
 	Met met;
 	Met rawMet;
+
 
 
 };

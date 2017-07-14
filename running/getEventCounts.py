@@ -37,12 +37,13 @@ def addSample(name,sample,datarun,cross,numE,numF,cmdLine,dasName,configs) :
 	if(re.match(".+-ext\d*", dasName)) : return
 	
 	files = []
-	prefix = ""
+	
 	if args.dataDir.startswith("/eos/uscms/store/user") or args.dataDir.startswith("/store/user") :
 		cmd = (" eos root://cmseos.fnal.gov find -f %s | egrep '.*%s(-ext[0-9]*|)_[0-9]*.root'" % ( args.dataDir, name))
 		prefix = "root://cmseos:1094/"
 	else:
 		cmd = ("find %s -f | egrep '.*%s(-ext[0-9]*|)_[0-9]*.root'" % (args.dataDir, name))
+		prefix = ""
 	ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	result = ps.communicate()
 	filelist = result[0].rstrip('\n').split('\n')
@@ -55,7 +56,7 @@ def addSample(name,sample,datarun,cross,numE,numF,cmdLine,dasName,configs) :
 		nposevents = get_num_data_events(filelist, prefix)
 		print "Sample " + name + " has " + str(nposevents) + " number of events"
 		totNumE = nposevents
-	cfgLine = ("%s\t%s\t%s\t5\t%s" % (name,cross,str(totNumE),numF,args.dataDir))
+	cfgLine = ("%s\t%s\t%s\t%s\t5\t%s" % (name,str(datarun == "-" ),cross,str(totNumE),args.dataDir))
 	configs.append(cfgLine)
 
 outputLines = []

@@ -27,10 +27,13 @@ void EventReader::setup(TreeReadingWrapper * wrapper){
         wrapper->setBranchAddressPre(branchName,"nTruePUInts"       , &nTruePUInts  , false);
         wrapper->setBranchAddressPre(branchName,"weight"            , &weight       , false);
         wrapper->setBranchAddressPre(branchName,"process"           , &process      , false);
+        normWeightLoaded = wrapper->setBranchAddressPre(branchName,"nomrmWeight"            , &nomrmWeight       , false);
     } else {
         wrapper->setBranchAddressPre(branchName,"dataset"           , &dataset      , false);
         wrapper->setBranchAddressPre(branchName,"dataRun"           , &dataRun      , false);
-        weight = 1.0;
+        weight = 1;
+        normWeightLoaded = false;
+        nomrmWeight = 1;
     }
 
     wrapper->setBranchAddressPre(branchName,"metFilters"         , &metFilters      , false);

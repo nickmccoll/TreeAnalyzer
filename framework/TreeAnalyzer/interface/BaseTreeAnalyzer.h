@@ -9,6 +9,11 @@
 using ASTypes::size;
 
 namespace TAna {
+//Function for processing tree type, expandable for more
+enum TreeType {TREE_DATA, TREE_MC, TREE_OTHER};
+TreeType getTreeType(const int inputInt);
+std::string getTreeTypeName(const int inputInt);
+
 
 //Event processor, tells the TreeAnalyzer how to
 //process events. This one only reads the tree
@@ -24,7 +29,7 @@ public:
 
 class BaseTreeAnalyzer {
 public:
-	BaseTreeAnalyzer(std::string fileName, std::string treeName, size randomSeed = 0);
+	BaseTreeAnalyzer(std::string fileName, std::string treeName, int inputTreeType, size randomSeed = 0);
 	virtual ~BaseTreeAnalyzer();
 
     // Function that user calls to setup the output tree
@@ -81,6 +86,11 @@ public:
 	void processReaders();
 	bool nextEvent(const int reportFrequency)  {return tree.readEvent(eventNumber, reportFrequency);}
 	void setEventNumber(const int newEventNumber) {eventNumber = newEventNumber;}
+	void setSampleInfo(float inXSec, float inNumE) {_xsec =inXSec;_numSampleEvents=inNumE;}
+	void setLumi(float inLumi) {_lumi=inLumi;}
+	float xsec() const {return _xsec;}
+	float nSampEvt() const {return _numSampleEvents;}
+	float lumi() const {return _lumi;}
 
     //--------------------------------------------------------------------------------------------------
     // Helper functions for tree writing
@@ -97,12 +107,21 @@ public:
 	TRandom3 * getRndGen()  { return randGen;}
 	int  getEventNumber() const { return eventNumber;  }
 	int  getEntries()     const { return tree.getEntries(); }
+	bool isRealData()     const {return treeType == TREE_DATA;}
 
 
 protected:
-	TreeReadingWrapper tree;
-	int                eventNumber; //current event number
-	TRandom3*          randGen;
+    const TreeType           treeType;
+	TreeReadingWrapper       tree;
+	int                      eventNumber; //current event number
+	TRandom3*                randGen;
+
+private:
+	//Standard variables for normalization
+	float _xsec            = -1;
+	float _numSampleEvents = -1;
+	float _lumi            =  1;
+protected:
 
 	std::string        outTreeName = "";
 

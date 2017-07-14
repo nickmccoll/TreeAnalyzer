@@ -3,8 +3,28 @@
 using namespace std;
 
 namespace TAna {
-
 //--------------------------------------------------------------------------------------------------
+TreeType getTreeType(const int inputInt) {
+    switch( inputInt){
+    case TREE_DATA:
+        return TREE_DATA;
+    case TREE_MC:
+        return TREE_MC;
+    default:
+        return TREE_OTHER;
+    }
+}
+std::string getTreeTypeName(const int inputInt) {
+    switch( inputInt){
+    case TREE_DATA:
+        return "DATA";
+    case TREE_MC:
+        return "MC";
+    default:
+        return "OTHER";
+    }
+}
+
 void BaseEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequency, int numEvents, int startEvent){
     cout << " ++  Running over " << (numEvents < 0 ? "all" : TString::Format("at most %i",numEvents).Data()) << " events";
     if(startEvent >= 0 ) cout << ", starting with event: "<< startEvent;
@@ -24,11 +44,12 @@ void BaseEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequency
 }
 
 //--------------------------------------------------------------------------------------------------
-BaseTreeAnalyzer::BaseTreeAnalyzer(std::string fileName, std::string treeName, size randomSeed) :
-		        tree(fileName,treeName), eventNumber(0), randGen (new TRandom3(randomSeed))
+BaseTreeAnalyzer::BaseTreeAnalyzer(std::string fileName, std::string treeName, int inputTreeType, size randomSeed) :
+        treeType(getTreeType(inputTreeType)),tree(fileName,treeName), eventNumber(0), randGen (new TRandom3(randomSeed))
 {
     std::cout << " \033[1;34m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\033[0m"  << std::endl;
     std::cout << " ++  Setting up BaseTreeAnalyzer"<<std::endl;
+    std::cout << " ++  Will be analyzing a "<<getTreeTypeName(inputTreeType) <<" tree"<<std::endl;
     std::cout << " \033[1;34m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\033[0m"  << std::endl;
 
 }
