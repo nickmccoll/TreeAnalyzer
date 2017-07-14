@@ -9,6 +9,7 @@ endif
 
 
 TARGET=libTreeAnalysis.so
+STARGET=libTreeAnalysis.a
 
 ASTREEINT    = AnalysisSupport/TreeInterface/src
 ASUTILITIES  = AnalysisSupport/Utilities/src
@@ -22,10 +23,10 @@ OBJ=$(join $(addsuffix ../obj/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.o)))
 DEPENDS=$(join $(addsuffix ../.dep/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.d)))
 
 
-all:  $(TARGET)
+all:  $(TARGET) $(STARGET)
 	@true
 clean:
-	@-rm -f $(TARGET) $(OBJ) $(DEPENDS)
+	@-rm -f $(TARGET) $(STARGET) $(OBJ) $(DEPENDS)
         
         
 $(TARGET): $(OBJ)
@@ -37,6 +38,13 @@ ifeq ($(PLATFORM),macosx)
 else
 		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS)
 endif
+	@echo -- Link finished --
+
+$(STARGET): $(OBJ)
+	@echo "============="
+	@echo "Linking the target $@"
+	@echo "============="
+	ar rcs $@ $^
 	@echo -- Link finished --
         
 %.o : %.cc

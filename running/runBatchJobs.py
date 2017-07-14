@@ -4,6 +4,7 @@ import sys
 import re
 import argparse
 import subprocess
+import cmd
 
 parser = argparse.ArgumentParser(description='Prepare and submit ntupling jobs')
 parser.add_argument("-m", "--macro",         dest="macro", default="runSomething.C", help="file to be run. [Default: runSomething.C]")
@@ -14,6 +15,8 @@ parser.add_argument("-o", "--outputDir",     dest="outdir", default="", help="Ou
 parser.add_argument("-j", "--jobdir"       , dest="jobdir", default="jobs", help="Directory for job files  [Default: jobs]")
 parser.add_argument("-r", "--runningDir"    , dest="runningDir", default="running/", help="Where to find helper files for running  [Default: running/]")
 parser.add_argument("-s", "--runScript"    , dest="runScript", default="running/batchScript.sh", help="File that tells condor how to run  [Default: running/batchScript.sh]")
+parser.add_argument("-c", "--compCommand"  , dest="compCommand", default="running/saComp.C", help="File with to make the macro compilable for batch (use none if not needed) [Default: running/saComp.C]")
+parser.add_argument("-l", "--libDir"       , dest="libDir", default="$CMSSW_BASE/../TreeAnalyzer/framework/", help="Include location for batch (use none if not needed) [Default: $CMSSW_BASE/../TreeAnalyzer/framework/]")
 parser.add_argument("-n", "--numFiles",      dest="numFiles", default=5, help="Number of files per job if no config [Default: 5]")
 parser.add_argument("-t", "--treeInt",       dest="treeInt" , default=1, help="treeInt if no config [Default: 1]")
 if len(sys.argv)==1:
@@ -21,8 +24,61 @@ if len(sys.argv)==1:
     sys.exit(1)
 args = parser.parse_args()
 
+def compileSAMacro() :
+    compM = args.macro
+    bareM = os.path.splitext(os.path.basename(args.macro))[0]
+    exeM = os.path.normpath(os.path.join(os.path.join(os.getcwd(), args.jobdir),"comp.exe"))
+    if args.compCommand != "" :
+        compM = os.path.normpath(os.path.join(args.jobdir,bareM+"_copy.C"))
+        ps = subprocess.Popen(("cp %s %s" % (args.macro,compM)), shell=True)
+        ps.wait()  
+        with open(compM, "a") as of :
+            with open(args.compCommand,"r") as inf :
+                for line in inf:
+                    of.write(line.replace("__MACRO__NAME__", bareM))
+    envCMD = "root-config --cflags --libs"
+    ps = subprocess.Popen(envCMD, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)    
+    envStr = ps.communicate()[0]    
+    compCmd = ("g++ {MCR} {ENV} -o {OBJ} -lGenVector" .format (MCR=compM,ENV=envStr.rstrip(), OBJ=exeM))
+    if args.libDir != "" :
+        compCmd += (" -I{INC} {INC}/*.a "  .format( INC=os.path.normpath(args.libDir)))
+    ps = subprocess.Popen(compCmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print "Compiling macro:"
+    output = ps.communicate()            
+    if not os.path.isfile(exeM) :
+        print "could not find " + exeM
+        print output[0]
+        print output[1]
+        exit()            
+    else:
+        print "Compiled!"
+    if args.compCommand != "" :
+        ps = subprocess.Popen("rm %s" % compM,shell=True)
+        ps.wait()
+    
+    return exeM
+
+def compileLOCMacro() :
+    compCmd = ("root -l -b -q \'%s/compileMacro.C(\"%s\")\'" % (args.runningDir, args.macro))
+    ps = subprocess.Popen(compCmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    print "Compiling macro:"
+    output = ps.communicate()            
+    libName = re.sub(r'(.+)\.(\w+)', r'\1_\2.so', args.macro)
+    if not os.path.isfile(libName) :
+        print "could not find " + libName
+        print output[0]
+        print output[1]
+        exit()            
+    else:
+        print "Compiled!"
+    return libName
+            
 
 def prepareSampleJob(libName,outList, name, filelist, nFilesPerJob, treeInt, weightJob = False,  xsec = 1, numE = 1):
+    
+    pcmName = re.sub(r'(.+)\.so', r'\1_ACLiC_dict_rdict.pcm', libName)
+    dName   = re.sub(r'(.+)\.so', r'\1.d', libName)
+    
     nFiles = len(filelist)
     iF = 0
     iF2 = 0
@@ -45,40 +101,44 @@ def prepareSampleJob(libName,outList, name, filelist, nFilesPerJob, treeInt, wei
             if not args.runBatch: 
                 inputF  = os.path.normpath(os.path.join(os.path.join(os.getcwd(), args.jobdir),inputF))
                 outputF = os.path.normpath(os.path.join(os.path.join(os.getcwd(), args.outdir),outputF))
-            if weightJob  :
-                CMD = "root -l -b -q \'{cfg}+(\"{INF}\",{TreeInt},\"{OUTF}\",{xs},{nE})\'".format( cfg=args.macro,INF=inputF,TreeInt=treeInt,OUTF=outputF,xs=xsec,nE=numE)
-            else :
-                CMD = "root -l -b -q \'{cfg}+(\"{INF}\",{TreeInt},\"{OUTF}\")\'".format( cfg=args.macro,INF=inputF,TreeInt=treeInt,OUTF=outputF)
+                macroS = os.path.basename(args.macro)
+                if weightJob  :
+                    CMD = "root -b -q \'{cfg}+(\"{INF}\",{TreeInt},\"{OUTF}\",{xs},{nE})\'".format( cfg= macroS,INF=inputF,TreeInt=treeInt,OUTF=outputF,xs=xsec,nE=numE)
+                else :
+                    CMD = "root -b -q \'{cfg}+(\"{INF}\",{TreeInt},\"{OUTF}\")\'".format( cfg=macroS,INF=inputF,TreeInt=treeInt,OUTF=outputF)
+                outList.append(CMD + " &")
             
-            if args.runBatch :
-                jobscript = open("{0}/submit_{1}_{2}.sh".format(args.jobdir,name,iJ), "w")
+            else :
+                if weightJob  :
+                    CMD = "./{MCR} {INF} {TreeInt} {OUTF} {xs} {nE}".format( MCR=os.path.basename(libName),INF=inputF,TreeInt=treeInt,OUTF=outputF,xs=xsec,nE=numE)
+                else :
+                    CMD = "./{MCR} {INF} {TreeInt} {OUTF}".format( MCR=os.path.basename(libName),INF=inputF,TreeInt=treeInt,OUTF=outputF)
+
+                jobscript = open("{0}/submit_{1}_{2}".format(args.jobdir,name,iJ), "w")
                 jobscript.write("""
-cat > submit.cmd <<EOF
 universe                = vanilla
 Requirements            = (Arch == "X86_64") && (OpSys == "LINUX")
 Executable              = {runscript}
-Arguments               = "{cmd}" {outputdir}
+Arguments               = "'{cmd}' {outputdir} {CMSSWVERS}"
 Output                  = logs/job_{samp}_{num}.out
 Error                   = logs/job_{samp}_{num}.err
 Log                     = logs/job_{samp}_{num}.log
 use_x509userproxy       = true
 initialdir              = {jobdir}
 Should_Transfer_Files   = YES
-transfer_input_files    = {cfgdir},{libdir},{workdir}/files_{samp}_{num}.txt
+transfer_input_files    = {workdir}/{libdir},{workdir}/files_{samp}_{num}.txt
 WhenToTransferOutput    = ON_EXIT
 Queue
-EOF
-
-condor_submit submit.cmd;
-rm submit.cmd""".format(
-                runscript=script, cmd=CMD, outputdir=args.outdir,  workdir=os.path.normpath(os.path.join(os.getcwd(), args.jobdir)), num=iJ, jobdir=args.jobdir,
-                cfgdir=os.path.normpath(os.path.join(os.getcwd(), args.macro)),libdir=os.path.normpath(os.path.join(os.getcwd(),  libName)),samp=name
+""".format(
+                runscript=args.runScript, 
+                cmd=CMD, outputdir=args.outdir,CMSSWVERS=os.path.expandvars("$CMSSW_VERSION"),
+                samp=name, num=iJ,
+                jobdir=args.jobdir,workdir=os.path.normpath(os.path.join(os.getcwd(), args.jobdir)),                 
+                libdir=os.path.basename(libName)            
                 ))
                 jobscript.close()
-                os.system("chmod +x %s/submit_%s_%d.sh" % (args.jobdir, name, iJ))        
-                outList.append("./{jobdir}/submit_{samp}_{num}.sh".format(jobdir=args.jobdir,samp=name,num=ijob))
-            else :
-                outList.append(CMD + " &")
+                outList.append("condor_submit {jobdir}/submit_{samp}_{num}".format(jobdir=args.jobdir,samp=name,num=iJ))
+
             iF2 = 0
             iJ += 1
 
@@ -89,12 +149,12 @@ def getFileList(inputDir,name="") :
         grepCmd = "egrep '.*%s(-ext[0-9]*|)_[0-9]*.root'" % ( name)
         
     if inputDir.startswith("/eos/uscms/store/user") or inputDir.startswith("/store/user") :
-        cmd = (" eos root://cmseos.fnal.gov find -f %s | %s" % ( args.input,grepCmd))
+        cmd = (" eos root://cmseos.fnal.gov find -f %s | %s" % ( inputDir,grepCmd))
         prefix = "root://cmseos:1094/"
     else:
-        cmd = ("find -f %s | %s" % (args.input,grepCmd))
+        cmd = ("find -f %s | %s" % (inputDir,grepCmd))
         prefix = ""
-    
+#     print cmd
     ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     result = ps.communicate()
     return result[0].rstrip('\n').split('\n')                
@@ -108,25 +168,17 @@ if args.outdir.startswith("/eos/cms/store/user") or args.outdir.startswith("/sto
 else :
     os.system("mkdir -p %s" % args.outdir)
     
-compCmd = ("root -l -b -q \'%s/compileMacro.C(\"%s\")\'" % (args.runningDir, args.macro))
-ps = subprocess.Popen(compCmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-print "Compiling macro:"
-output = ps.communicate()            
-libName = re.sub(r'(.+)\.(\w+)', r'\1_\2.so', args.macro)
-if not os.path.isfile(libName) :
-    print "could not find " + libName
-    print output[0]
-    print output[1]
-    exit()            
-else:
-    print "Compiled!"
-
+if args.runBatch :
+    libName = compileSAMacro()
+else :
+    libName = compileLOCMacro()
+    
 outList = []
 if os.path.isdir(args.input) :
     fileList = getFileList(args.input,"")
     prepareSampleJob(libName,outList,"all", fileList, args.numFiles,args.treeInt)
 else :
-    inputData = open(args.inputData, "r")
+    inputData = open(args.input, "r")
     for line in inputData:
         if re.match("\s*#.*", line) : 
             continue
@@ -141,9 +193,9 @@ else :
         
 if args.runBatch:
     subscript = open("submitall.sh", "w")
-    subscript.write("#!/bin/bash")
+    subscript.write("#!/bin/bash\n")
     for line in outList :
-        subscript.write("%s\n" & line)
+        subscript.write("%s\n" % line)
 else:
     for line in outList :
         print line
