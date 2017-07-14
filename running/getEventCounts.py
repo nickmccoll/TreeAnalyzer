@@ -12,6 +12,9 @@ parser.add_argument("-i", "--inputData", dest="inputData", default="datasets.con
 parser.add_argument("-o", "--outputData", dest="outputData", default="procdatasets.conf", help="output dataset. [Default: procdatasets.conf]")
 parser.add_argument("-d", "--dataDir", dest="dataDir", default="/eos/uscms/store/user/${USER}/13TeV/processed", help="Location of data [Default: \"/eos/uscms/store/user/${USER}/13TeV/ntuples\"]")
 parser.add_argument("-t", "--treeName", dest="treeName", default="treeMaker/Events", help="data tree [Default: \"treeMaker/Events\"]")
+if len(sys.argv)==1:
+    parser.print_help()
+    sys.exit(1)
 args = parser.parse_args()
 
 def get_num_mc_events(filelist, prefix='', selection=''):
@@ -56,7 +59,7 @@ def addSample(name,sample,datarun,cross,numE,numF,cmdLine,dasName,configs) :
 		nposevents = get_num_data_events(filelist, prefix)
 		print "Sample " + name + " has " + str(nposevents) + " number of events"
 		totNumE = nposevents
-	cfgLine = ("%s\t%s\t%s\t%s\t5\t%s" % (name,str(datarun == "-" ),cross,str(totNumE),args.dataDir))
+	cfgLine = ("%s\t%s\t%s\t%s\t5\t%s" % (name,str(1 if datarun == "-" else 0 ),cross,str(totNumE),args.dataDir))
 	configs.append(cfgLine)
 
 outputLines = []

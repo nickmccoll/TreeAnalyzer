@@ -13,7 +13,7 @@ parser.add_argument("-i", "--input",         dest="input", default="procdatasets
 parser.add_argument("-o", "--outputDir",     dest="outdir", default="", help="Output directory for ntuples. [Default: \"\"]")
 parser.add_argument("-j", "--jobdir"       , dest="jobdir", default="jobs", help="Directory for job files  [Default: jobs]")
 parser.add_argument("-r", "--runningDir"    , dest="runningDir", default="running/", help="Where to find helper files for running  [Default: running/]")
-parser.add_argument("-s", "--runScript"    , dest="runScript", default="running/runBatchJob.sh", help="File that tells condor how to run  [Default: running/runBatchJob.sh]")
+parser.add_argument("-s", "--runScript"    , dest="runScript", default="running/batchScript.sh", help="File that tells condor how to run  [Default: running/batchScript.sh]")
 parser.add_argument("-n", "--numFiles",      dest="numFiles", default=5, help="Number of files per job if no config [Default: 5]")
 parser.add_argument("-t", "--treeInt",       dest="treeInt" , default=1, help="treeInt if no config [Default: 1]")
 if len(sys.argv)==1:
