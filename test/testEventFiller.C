@@ -5,7 +5,7 @@
 #include "TreeReaders/interface/EventReader.h"
 #include "TreeReaders/interface/FillerConstants.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
-#include "Processors/interface/EventWeights.h"
+#include "Processors/Corrections/interface/EventWeights.h"
 
 using namespace TAna;
 

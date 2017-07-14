@@ -15,9 +15,9 @@ ASUTILITIES  = AnalysisSupport/Utilities/src
 TREEANALYZER = TreeAnalyzer/src
 TREEREADING  = TreeReaders/src
 DATAFORMATS  = DataFormats/src
-PROCESSORS   = Processors/src
+CORRECTIONS   = Processors/Corrections/src
 
-SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(DATAFORMATS)/*.cc) $(wildcard $(PROCESSORS)/*.cc) $(wildcard $(TREEREADING)/*.cc)  $(wildcard $(TREEANALYZER)/*.cc)
+SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(DATAFORMATS)/*.cc) $(wildcard $(CORRECTIONS)/*.cc) $(wildcard $(TREEREADING)/*.cc)  $(wildcard $(TREEANALYZER)/*.cc)
 OBJ=$(join $(addsuffix ../obj/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.o))) 
 DEPENDS=$(join $(addsuffix ../.dep/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.d)))
 
@@ -78,16 +78,16 @@ $(DATAFORMATS)/../.dep/%.d: $(DATAFORMATS)/%.cc
 	@echo Building dependencies file for $*.o
 	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(DATAFORMATS)/../obj/$*.o^" > $@'
 	
-$(PROCESSORS)/../obj/%.o : $(PROCESSORS)/%.cc
+$(CORRECTIONS)/../obj/%.o : $(CORRECTIONS)/%.cc
 	@mkdir -p $(dir $@)
 	@echo "============="
 	@echo "Compiling $<"
 	$(CXX) $(CXXFLAGS) -c $<  -o $@
-$(PROCESSORS)/../.dep/%.d: $(PROCESSORS)/%.cc
+$(CORRECTIONS)/../.dep/%.d: $(CORRECTIONS)/%.cc
 	@mkdir -p $(dir $@)
 	@echo "============="
 	@echo Building dependencies file for $*.o
-	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(PROCESSORS)/../obj/$*.o^" > $@'
+	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(CORRECTIONS)/../obj/$*.o^" > $@'
 
 $(TREEREADING)/../obj/%.o : $(TREEREADING)/%.cc
 	@mkdir -p $(dir $@)

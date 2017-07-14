@@ -1,5 +1,5 @@
 
-#include "Processors/interface/EventWeights.h"
+#include "Processors/Corrections/interface/EventWeights.h"
 #include "TreeReaders/interface/EventReader.h"
 namespace TAna {
 namespace EventWeights {
