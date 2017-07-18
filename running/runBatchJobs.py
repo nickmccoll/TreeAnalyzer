@@ -8,8 +8,8 @@ import cmd
 
 parser = argparse.ArgumentParser(description='Prepare and submit ntupling jobs')
 parser.add_argument("-m", "--macro",         dest="macro", default="runSomething.C", help="file to be run. [Default: runSomething.C]")
-parser.add_argument("-b", "--runBatch",      dest="runBatch", default=False, help="Should we setup a condor job? [Default: False]")
-parser.add_argument("-w", "--computeWeight", dest="compW", default=False, help="Should we include the parameters to calculate weight? [Default: False]")
+parser.add_argument("-b", "--runBatch",      dest="runBatch", action='store_true', default=False, help="Should we setup a condor job? [Default: False]")
+parser.add_argument("-w", "--computeWeight", dest="compW", action='store_true', default=False, help="Should we include the parameters to calculate weight? [Default: False]")
 parser.add_argument("-i", "--input",         dest="input", default="procdatasets.conf", help="input config or directory [Default: procdatasets.conf]")
 parser.add_argument("-o", "--outputDir",     dest="outdir", default="", help="Output directory for ntuples. [Default: \"\"]")
 parser.add_argument("-j", "--jobdir"       , dest="jobdir", default="jobs", help="Directory for job files  [Default: jobs]")
@@ -23,6 +23,10 @@ if len(sys.argv)==1:
     parser.print_help()
     sys.exit(1)
 args = parser.parse_args()
+
+
+
+
 
 def compileSAMacro() :
     compM = args.macro
@@ -101,11 +105,10 @@ def prepareSampleJob(libName,outList, name, filelist, nFilesPerJob, treeInt, wei
             if not args.runBatch: 
                 inputF  = os.path.normpath(os.path.join(os.path.join(os.getcwd(), args.jobdir),inputF))
                 outputF = os.path.normpath(os.path.join(os.path.join(os.getcwd(), args.outdir),outputF))
-                macroS = os.path.basename(args.macro)
                 if weightJob  :
-                    CMD = "root -b -q \'{cfg}+(\"{INF}\",{TreeInt},\"{OUTF}\",{xs},{nE})\'".format( cfg= macroS,INF=inputF,TreeInt=treeInt,OUTF=outputF,xs=xsec,nE=numE)
+                    CMD = "root -l -b -q \'{cfg}+(\"{INF}\",{TreeInt},\"{OUTF}\",{xs},{nE})\'".format( cfg= args.macro,INF=inputF,TreeInt=treeInt,OUTF=outputF,xs=xsec,nE=numE)
                 else :
-                    CMD = "root -b -q \'{cfg}+(\"{INF}\",{TreeInt},\"{OUTF}\")\'".format( cfg=macroS,INF=inputF,TreeInt=treeInt,OUTF=outputF)
+                    CMD = "root -l -b -q \'{cfg}+(\"{INF}\",{TreeInt},\"{OUTF}\")\'".format( cfg=args.macro,INF=inputF,TreeInt=treeInt,OUTF=outputF)
                 outList.append(CMD + " &")
             
             else :
@@ -168,7 +171,7 @@ if args.outdir.startswith("/eos/cms/store/user") or args.outdir.startswith("/sto
 else :
     os.system("mkdir -p %s" % args.outdir)
     
-if args.runBatch :
+if args.runBatch:
     libName = compileSAMacro()
 else :
     libName = compileLOCMacro()
