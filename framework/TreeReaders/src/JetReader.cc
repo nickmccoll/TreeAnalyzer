@@ -35,6 +35,14 @@ void JetReader::setup(TreeReadingWrapper * wrapper){
         wrapper->setBranchAddressPre(branchName,"mass"        ,&mass        ,true);
         wrapper->setBranchAddressPre(branchName,"csv"         ,&csv         ,true);
         wrapper->setBranchAddressPre(branchName,"id"          ,&id          ,true);
+
+        if(!realData){
+            wrapper->setBranchAddressPre(branchName,"hadronFlavor",&hadronFlavor,true);
+            wrapper->setBranchAddressPre(branchName,"partonFlavor",&partonFlavor,true);
+        }
+        if(fillGenJets && !realData) {
+            wrapper->setBranchAddressPre(branchName,"genIDX"      ,&genIDX      ,true);
+        }
     }
 
     if(fillRecoJets && !realData) {
@@ -43,7 +51,6 @@ void JetReader::setup(TreeReadingWrapper * wrapper){
     }
 
     if(fillGenJets && !realData) {
-        wrapper->setBranchAddressPre(branchName,"genIDX"      ,&genIDX      ,true);
         wrapper->setBranchAddressPre(branchName,"gen_pt"      ,&gen_pt      ,true);
         wrapper->setBranchAddressPre(branchName,"gen_eta"     ,&gen_eta     ,true);
         wrapper->setBranchAddressPre(branchName,"gen_phi"     ,&gen_phi     ,true);
@@ -71,8 +78,8 @@ void JetReader::processVars() {
 
     if(fillRecoJets){
         for(unsigned int iO = 0; iO < pt->size(); ++iO){
-            ASTypes::int8 hadronFlv = realData  ? ASTypes::int8(0) : hadronFlavor->at(iO);
-            ASTypes::int8 partonFlv = realData  ? ASTypes::int8(0) : partonFlavor->at(iO);
+            ASTypes::int8 hadronFlv =  ASTypes::int8(0);//realData  ? ASTypes::int8(0) : hadronFlavor->at(iO);
+            ASTypes::int8 partonFlv =  ASTypes::int8(0);//realData  ? ASTypes::int8(0) : partonFlavor->at(iO);
             GenJet *gj = 0;
             if(fillGenJets && !realData && genIDX->at(iO) != 255 ){
                 gj = genInd[genIDX->at(iO)];
