@@ -40,7 +40,7 @@ public:
 	// LOADED -> Copy only the loaded branches
 	// NONE -> don't copy any
 	enum TreeCopyingOptions {COPY_ERROR, COPY_ALL, COPY_LOADED, COPY_NONE};
-    virtual void initializeTreeCopy(std::string outFileName, TreeCopyingOptions copyOptions);
+    virtual void initializeTreeCopy(std::string outFileName, TreeCopyingOptions copyOptions, std::string directory = "treeMaker");
 
 	// Function user calls to start the run, initializes and
 	// starts the EventAnalyzer
@@ -124,6 +124,7 @@ private:
 protected:
 
 	std::string        outTreeName = "";
+	std::string        outTreeDirectory = "";
 
     TreeWriter*        outTree        =0;
     TreeCopyingOptions outTreeCopyOpt = COPY_ERROR;

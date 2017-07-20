@@ -15,9 +15,8 @@ public:
 	virtual void setup(TreeReadingWrapper * wrapper);
 	virtual void processVars();
 
-private:
 	//settings
-	bool realData;
+	const bool realData;
 
 public:
 	//branches from the tree
@@ -45,7 +44,7 @@ public:
 
 	//branches from post processing
 	bool   normWeightLoaded     = false;
-	float  nomrmWeight          = 0;
+	float  normWeight           = 0;
 
 	//objects created in process
 	Met met;

@@ -26,8 +26,8 @@ void CopierEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequen
       if(numEvents >= 0 && ana->getEventNumber() >= numEvents+1) return;
       ana->processReaders();
       ana->resetOutData();
-      if(!ana->runEvent()) continue;
-      ana->fillOutTree();
+      if(ana->runEvent())
+          ana->fillOutTree();
       ana->setEventNumber(ana->getEventNumber() +1);
   }
 }

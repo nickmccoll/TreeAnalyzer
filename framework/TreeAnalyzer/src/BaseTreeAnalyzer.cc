@@ -79,9 +79,10 @@ void BaseTreeAnalyzer::setupReaders() {for(auto * r : readers) r->initialize(&tr
 //--------------------------------------------------------------------------------------------------
 void BaseTreeAnalyzer::processReaders() {for(auto * r : readers) r->processVars();}
 //--------------------------------------------------------------------------------------------------
-void BaseTreeAnalyzer::initializeTreeCopy(std::string outFileName, TreeCopyingOptions copyOptions) {
+void BaseTreeAnalyzer::initializeTreeCopy(std::string outFileName, TreeCopyingOptions copyOptions, std::string directory) {
     outTreeName = outFileName;
     outTreeCopyOpt = copyOptions;
+    outTreeDirectory =directory;
 }
 void BaseTreeAnalyzer::setupOutTree(){
     cout << " ++  Creating file " <<outTreeName;
@@ -92,22 +93,28 @@ void BaseTreeAnalyzer::setupOutTree(){
     TFile * outFile = new TFile(outTreeName.c_str(),"RECREATE");
     outFile->cd();
 
+    TDirectory *cdtof = 0;
+    if(outTreeDirectory != ""){
+        cdtof = outFile->mkdir(outTreeDirectory.c_str());
+        cdtof->cd();
+    }
+
     TTree * newTree = 0;
     switch(outTreeCopyOpt){
     case COPY_ALL :
         tree.getTree()->SetBranchStatus("*",1);
         newTree = tree.getTree()->CloneTree(0);
-        std::cout <<", and will copy all branches from the input tree.";
+        std::cout <<", and will copy all branches from the input tree.\n";
         break;
     case COPY_LOADED :
         newTree = tree.getTree()->CloneTree(0);
-        std::cout <<", and will copy only loaded branches from the input tree.";
+        std::cout <<", and will copy only loaded branches from the input tree.\n";
         break;
     default:
         newTree = new TTree(tree.getTree()->GetName(),tree.getTree()->GetTitle());
-        std::cout <<", and will copy no branches from the input tree.";
+        std::cout <<", and will copy no branches from the input tree.\n";
     }
-    outTree = new TreeWriter(outFile, newTree);
+    outTree = new TreeWriter(outFile, newTree,cdtof);
 }
 
 //--------------------------------------------------------------------------------------------------
