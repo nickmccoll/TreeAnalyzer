@@ -37,18 +37,14 @@ void JetReader::setup(TreeReadingWrapper * wrapper){
         wrapper->setBranchAddressPre(branchName,"id"          ,&id          ,true);
 
         if(!realData){
-            wrapper->setBranchAddressPre(branchName,"hadronFlavor",&hadronFlavor,true);
-            wrapper->setBranchAddressPre(branchName,"partonFlavor",&partonFlavor,true);
+//            wrapper->setBranchAddressPre(branchName,"hadronFlavor",&hadronFlavor,true);
+//            wrapper->setBranchAddressPre(branchName,"partonFlavor",&partonFlavor,true);
         }
         if(fillGenJets && !realData) {
             wrapper->setBranchAddressPre(branchName,"genIDX"      ,&genIDX      ,true);
         }
     }
 
-    if(fillRecoJets && !realData) {
-        wrapper->setBranchAddressPre(branchName,"hadronFlavor",&hadronFlavor,true);
-        wrapper->setBranchAddressPre(branchName,"partonFlavor",&partonFlavor,true);
-    }
 
     if(fillGenJets && !realData) {
         wrapper->setBranchAddressPre(branchName,"gen_pt"      ,&gen_pt      ,true);
