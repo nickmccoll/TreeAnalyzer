@@ -11,14 +11,14 @@ namespace TAna {
 class Electron : public Lepton
 {
 public :
-    Electron() {}
+    Electron() : Lepton(false) {}
 
     template <class InputCoordSystem>
     Electron(const ROOT::Math::LorentzVector<InputCoordSystem> &mom,
             const int idx,
             const ASTypes::int8 q, const  float d0,
             const  float dz,const  float sip3D,const  float miniIso)
-        : Lepton(mom, idx,q,d0,dz,sip3D,miniIso) {}
+        : Lepton(mom, idx,q,d0,dz,sip3D,miniIso,false) {}
     ~Electron() {}
 
     void addElectronInfo(float scEta, float mvaID, float eaRelISO, ASTypes::size16 id);

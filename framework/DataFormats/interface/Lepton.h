@@ -12,13 +12,14 @@ class Lepton : public IndexedMomentumF
 {
 public :
     Lepton() {}
+    Lepton(const bool muon) : _muon(muon) {}
 
     template <class InputCoordSystem>
     Lepton(const ROOT::Math::LorentzVector<InputCoordSystem> &mom,
             const int idx,
             const ASTypes::int8 q, const  float d0,
-            const  float dz,const  float sip3D,const  float miniIso)
-        : IndexedMomentumF(mom, idx), _q(q), _d0(d0),_dz(dz),_sip3D(sip3D),_miniIso(miniIso) {}
+            const  float dz,const  float sip3D,const  float miniIso, const bool muon)
+        : IndexedMomentumF(mom, idx), _q(q), _d0(d0),_dz(dz),_sip3D(sip3D),_miniIso(miniIso), _muon(muon) {}
     ~Lepton() {}
 
     int   q       () const {return _q      ;}
@@ -27,6 +28,8 @@ public :
     float sip3D   () const {return _sip3D  ;}
     float miniIso () const {return _miniIso;}
 
+    bool isMuon   () const {return _muon;}
+
 
 protected :
     ASTypes::int8  _q         = 0;
@@ -34,6 +37,8 @@ protected :
     float          _dz        = 0;
     float          _sip3D     = 0;
     float          _miniIso   = 0;
+
+    bool           _muon      = false;
 
 };
 }

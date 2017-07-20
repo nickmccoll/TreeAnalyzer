@@ -9,14 +9,14 @@ namespace TAna {
 class Muon : public Lepton
 {
 public :
-    Muon() {}
+    Muon() : Lepton(true) {}
 
     template <class InputCoordSystem>
     Muon(const ROOT::Math::LorentzVector<InputCoordSystem> &mom,
             const int idx,
             const ASTypes::int8 q, const  float d0,
             const  float dz,const  float sip3D,const  float miniIso)
-        : Lepton(mom, idx,q,d0,dz,sip3D,miniIso) {}
+        : Lepton(mom, idx,q,d0,dz,sip3D,miniIso,true) {}
     ~Muon() {}
 
     void addMuonInfo(float dbRelISO, ASTypes::size16 id);
