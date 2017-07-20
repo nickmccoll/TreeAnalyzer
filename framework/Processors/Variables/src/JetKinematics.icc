@@ -1,0 +1,117 @@
+
+#ifndef PROCESSORS_VARIABLES_JETKINEMATICS_ICC
+#define PROCESSORS_VARIABLES_JETKINEMATICS_ICC
+
+
+#include <vector>
+#include <utility>
+
+#include "Processors/Variables/interface/JetKinematics.h"
+#include "AnalysisSupport/Utilities/interface/PhysicsUtilities.h"
+
+using ASTypes::size;
+
+namespace TAna {
+//_____________________________________________________________________________
+template<typename Jet>
+std::vector<Jet*> JetKinematics::selectObjectsDref(std::vector<Jet*>& jets, const double minPT, const double maxEta, const std::vector<bool>* selected){
+    const size                    numJets = jets.size();
+    std::vector<Jet*>             out;
+    out.reserve(jets.size());
+    for (size iJet = 0; iJet < numJets; ++iJet) {
+      const Jet&             jet     = (*jets[iJet]);
+      if (selected && !(*selected)[iJet]) continue;
+      if (!passCuts(jet,minPT,maxEta)) continue;
+      out.push_back(jets[iJet]);
+    } // end loop over jets
+    return out;
+}
+//_____________________________________________________________________________
+template<typename Jet>
+std::vector<Jet*> JetKinematics::selectObjects(std::vector<Jet>& jets, const double minPT, const double maxEta, const std::vector<bool>* selected){
+    const size                    numJets = jets.size();
+    std::vector<Jet*>             out;
+    out.reserve(jets.size());
+    for (size iJet = 0; iJet < numJets; ++iJet) {
+      const Jet&             jet     = (jets[iJet]);
+      if (selected && !(*selected)[iJet]) continue;
+      if (!passCuts(jet,minPT,maxEta)) continue;
+      out.push_back(&jets[iJet]);
+    } // end loop over jets
+    return out;
+}
+//_____________________________________________________________________________
+template<typename Jet>
+Jet JetKinematics::mht(const vector<Jet*>& jets, const double minPT, const double maxEta, const vector<bool>* selected)
+{
+  const size                    numJets = jets.size();
+  Jet mht;
+  for (size iJet = 0; iJet < numJets; ++iJet) {
+    const Jet&             jet     = (*jets[iJet]);
+    if (selected && !(*selected)[iJet]) continue;
+    if (!passCuts(jet,minPT,maxEta)) continue;
+    mht.p4() = mht.p4() - jet.p4();
+  } // end loop over jets
+  return mht;
+}
+
+//_____________________________________________________________________________
+template<typename Jet>
+double JetKinematics::ht(const vector<Jet*>& jets, const double minPT, const double maxEta, const vector<bool>* selected)
+{
+  const size                    numJets = jets.size();
+  double                        ht      = 0;
+  for (size iJet = 0; iJet < numJets; ++iJet) {
+    const Jet&             jet     = (*jets[iJet]);
+    if (selected && !(*selected)[iJet]) continue;
+    if (!passCuts(jet,minPT,maxEta)) continue;
+    ht                         += jet.pt();
+  } // end loop over jets
+  return ht;
+}
+//_____________________________________________________________________________
+template<typename MET,typename Jet>
+double JetKinematics::absDPhiMETJ(const MET& met, const Jet& jet, const double minPT, const double maxEta)
+{
+  if (!passCuts(jet,minPT,maxEta)) return noDist;
+  return PhysicsUtilities::absDeltaPhi(met,jet);
+}
+
+//_____________________________________________________________________________
+template<typename MET,typename Jet>
+double JetKinematics::absDPhiMETJ12(const MET& met, const std::vector<Jet*>& jets, const double minPT, const double maxEta)
+{
+  const size                    numJets = jets.size();
+  return min( (numJets > 0 ? absDPhiMETJ(met,*jets[0],minPT,maxEta) : noDist )
+            , (numJets > 1 ? absDPhiMETJ(met,*jets[1],minPT,maxEta) : noDist )
+            );
+}
+
+//_____________________________________________________________________________
+template<typename MET,typename Jet>
+double JetKinematics::absDPhiMETJ3(const MET& met, const std::vector<Jet*>& jets, const double minPT, const double maxEta)
+{
+  return (jets.size() > 2 ? absDPhiMETJ(met,*jets[2],minPT,maxEta) : noDist );
+}
+
+//_____________________________________________________________________________
+template<typename Momentum1, typename Momentum2>
+double JetKinematics::transverseMass(const Momentum1& visible, const Momentum2& invisible)
+{
+  const double    cosDPhi   = TMath::Cos( PhysicsUtilities::deltaPhi(visible.phi(), invisible.phi()) );
+  return TMath::Sqrt( 2 * visible.pt() * invisible.pt() * (1 - cosDPhi) );
+}
+
+
+//_____________________________________________________________________________
+template<typename Jet>
+inline bool JetKinematics::passCuts(const Jet& jet,const double minPT, const double maxEta)
+{
+  if (jet.pt()              < minPT ) return false;
+  if (TMath::Abs(jet.eta()) > maxEta) return false;
+  return true;
+}
+
+}
+#endif //ANALYSISTOOLS_KINEMATICVARIABLES_JETKINEMATICS_ICC
+

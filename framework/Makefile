@@ -18,8 +18,9 @@ TREEREADING  = TreeReaders/src
 DATAFORMATS  = DataFormats/src
 CORRECTIONS   = Processors/Corrections/src
 GENTOOLS   = Processors/GenTools/src
+VARIABLES   = Processors/Variables/src
 
-SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(DATAFORMATS)/*.cc) $(wildcard $(CORRECTIONS)/*.cc) $(wildcard $(TREEREADING)/*.cc)  $(wildcard $(TREEANALYZER)/*.cc) $(wildcard $(GENTOOLS)/*.cc)
+SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(DATAFORMATS)/*.cc) $(wildcard $(CORRECTIONS)/*.cc) $(wildcard $(TREEREADING)/*.cc)  $(wildcard $(TREEANALYZER)/*.cc) $(wildcard $(GENTOOLS)/*.cc) $(wildcard $(VARIABLES)/*.cc)
 OBJ=$(join $(addsuffix ../obj/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.o))) 
 DEPENDS=$(join $(addsuffix ../.dep/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.d)))
 
@@ -131,5 +132,16 @@ $(GENTOOLS)/../.dep/%.d: $(GENTOOLS)/%.cc
 	@echo "============="
 	@echo Building dependencies file for $*.o
 	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(GENTOOLS)/../obj/$*.o^" > $@'
+	
+$(VARIABLES)/../obj/%.o : $(VARIABLES)/%.cc
+	@mkdir -p $(dir $@)
+	@echo "============="
+	@echo "Compiling $<"
+	$(CXX) $(CXXFLAGS) -c $<  -o $@
+$(VARIABLES)/../.dep/%.d: $(VARIABLES)/%.cc
+	@mkdir -p $(dir $@)
+	@echo "============="
+	@echo Building dependencies file for $*.o
+	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(VARIABLES)/../obj/$*.o^" > $@'
 
 -include $(DEPENDS)
