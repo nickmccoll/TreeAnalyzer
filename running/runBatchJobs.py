@@ -11,7 +11,7 @@ parser.add_argument("-m", "--macro",         dest="macro", default="runSomething
 parser.add_argument("-b", "--runBatch",      dest="runBatch", action='store_true', default=False, help="Should we setup a condor job? [Default: False]")
 parser.add_argument("-w", "--computeWeight", dest="compW", action='store_true', default=False, help="Should we include the parameters to calculate weight? [Default: False]")
 parser.add_argument("-i", "--input",         dest="input", default="procdatasets.conf", help="input config or directory [Default: procdatasets.conf]")
-parser.add_argument("-o", "--outputDir",     dest="outdir", default="", help="Output directory for ntuples. [Default: \"\"]")
+parser.add_argument("-o", "--outputDir",     dest="outdir", default="out", help="Output directory for ntuples. [Default: \"out\"]")
 parser.add_argument("-j", "--jobdir"       , dest="jobdir", default="jobs", help="Directory for job files  [Default: jobs]")
 parser.add_argument("-r", "--runningDir"    , dest="runningDir", default="running/", help="Where to find helper files for running  [Default: running/]")
 parser.add_argument("-s", "--runScript"    , dest="runScript", default="running/batchScript.sh", help="File that tells condor how to run  [Default: running/batchScript.sh]")
@@ -149,15 +149,15 @@ def getFileList(inputDir,name="") :
     if name == "":
         grepCmd = "egrep '.*root'"
     else :
-        grepCmd = "egrep '.*%s(-ext[0-9]*|)_[0-9]*.root'" % ( name)
+        grepCmd = "egrep '.*%s(-ext[0-9]*|())(_[0-9]*|()).root'" % ( name)
         
     if inputDir.startswith("/eos/uscms/store/user") or inputDir.startswith("/store/user") :
         cmd = (" eos root://cmseos.fnal.gov find -f %s | %s" % ( inputDir,grepCmd))
         prefix = "root://cmseos:1094/"
     else:
-        cmd = ("find -f %s | %s" % (inputDir,grepCmd))
+        cmd = ("find %s | %s" % (inputDir,grepCmd))
         prefix = ""
-#     print cmd
+    print cmd
     ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     result = ps.communicate()
     return result[0].rstrip('\n').split('\n')                

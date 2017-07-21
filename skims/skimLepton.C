@@ -45,9 +45,9 @@ public:
 
         reader_electron = (ElectronReader*)load(new ElectronReader("electron"));
         reader_muon     = (MuonReader*)load(new MuonReader("muon"));
-        reader_jet      = (JetReader*)load(new JetReader("ak4Jet",isRealData()));
+        reader_jet      = (JetReader*)load(new JetReader("ak4Jet",isRealData(),false));
         reader_jetnolep = (JetReader*)load(new JetReader("ak4PuppiNoLepJet",isRealData(),false));
-        reader_fatjet   = (FatJetReader*)load(new FatJetReader("ak8PuppiNoLepJet",isRealData()));
+        reader_fatjet   = (FatJetReader*)load(new FatJetReader("ak8PuppiNoLepJet",isRealData(),false));
     }
 
     bool runEvent() override {
@@ -109,7 +109,14 @@ public:
             reader_genpart  = (GenParticleReader*)load(new GenParticleReader("genParticle"));
 
         reader_jetnolep = (JetReader*)load(new JetReader("ak4PuppiNoLepJet",isRealData(),false));
-        reader_fatjet   = (FatJetReader*)load(new FatJetReader("ak8PuppiNoLepJet",isRealData()));
+        reader_fatjet   = (FatJetReader*)load(new FatJetReader("ak8PuppiNoLepJet",isRealData(),false));
+
+       setBranchAddress("skim" ,"ht"         ,   &ht                  ,true);
+       setBranchAddress("skim" ,"selLep_pt"  ,   &selLep_pt           ,true);
+       setBranchAddress("skim" ,"selLep_eta" ,   &selLep_eta          ,true);
+       setBranchAddress("skim" ,"selLep_phi" ,   &selLep_phi          ,true);
+       setBranchAddress("skim" ,"selLep_muon",   &selLep_muon         ,true);
+
     }
 
     bool runEvent() override {
@@ -121,6 +128,13 @@ public:
     GenParticleReader * reader_genpart  = 0;
     JetReader         * reader_jetnolep = 0;
     FatJetReader      * reader_fatjet   = 0;
+
+    float   normWeight =0;
+    float   ht         =0;
+    float   selLep_pt  =0;
+    float   selLep_eta =0;
+    float   selLep_phi =0;
+    size8   selLep_muon=0;
 };
 
 #endif
@@ -132,9 +146,17 @@ void doSecondAnalyzer(std::string fileName, int treeInt, std::string outFileName
 }
 
 void skimLepton(std::string fileName, int treeInt, std::string outFileName){
-    FirstAnalyzer a(fileName,"treeMaker/Events",treeInt);
-    a.initializeTreeCopy(outFileName,BaseTreeAnalyzer::COPY_LOADED);
-    a.analyze();
+    TString tempFilename = outFileName;
+    tempFilename.ReplaceAll(".root", "");
+    tempFilename += "_temp.root";
+
+    FirstAnalyzer* a = new FirstAnalyzer(fileName,"treeMaker/Events",treeInt);
+    a->initializeTreeCopy(tempFilename.Data(),BaseTreeAnalyzer::COPY_LOADED);
+    a->analyze();
+    delete a;
+
+    doSecondAnalyzer(tempFilename.Data(),treeInt,outFileName);
+    gSystem->Exec(TString::Format("rm %s", tempFilename.Data()));
 }
 void skimLepton(std::string fileName, int treeInt, std::string outFileName, float xSec, float numEvent){
     TString tempFilename = outFileName;
