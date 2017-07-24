@@ -40,6 +40,7 @@ public:
         if(treeType == TREE_OTHER)
             reader_genpart  = (GenParticleReader*)load(new GenParticleReader("genParticle"));
         reader_fatjet   = (FatJetReader*)load(new FatJetReader("ak8PuppiNoLepJet",isRealData(),false));
+        reader_jet = (JetReader*)load(new JetReader("ak4PuppiNoLepJet",isRealData(),false));
 
         setBranchAddress("skim" ,"ht"         ,   &ht                  ,true);
         setBranchAddress("skim" ,"selLep_pt"  ,   &selLep_pt           ,true);
@@ -61,6 +62,46 @@ public:
         if(fjIDX < 0) return 0;
         if(minDR > 0.5) return 0;
         return fjs[fjIDX];
+    }
+
+    const std::pair<const Jet *, const Jet*> getSignaljets(const DiHiggsEvent& diHiggsEvt, const MomentumF* lepton, const std::vector<Jet*>& jets){
+        auto nullResult = std::make_pair((const Jet*)(0),(const Jet*)(0));
+        double genLepDR = PhysicsUtilities::deltaR(*lepton,*diHiggsEvt.w1_d1);
+        if(genLepDR > 0.2) return nullResult;
+        if(PhysicsUtilities::deltaR(*diHiggsEvt.b1,*diHiggsEvt.b2) <= 0.8 ) return nullResult;
+        if(diHiggsEvt.b1->pt() < 20 || diHiggsEvt.b2->pt() < 20 || diHiggsEvt.b1->absEta() > 2.4 ||diHiggsEvt.b1->absEta() > 2.4)
+            return nullResult;
+        double minDR1 = 0;
+        int j1IDX = PhysicsUtilities::findNearestDRDeref(*diHiggsEvt.b1,jets,minDR1);
+        if(j1IDX < 0) return nullResult;
+        std::vector<bool> vetoed(jets.size(),false); vetoed[j1IDX] = true;
+        double minDR2 = 0;
+        int j2IDX = PhysicsUtilities::findNearestDRDeref(*diHiggsEvt.b2,jets,minDR2,99999,20,&vetoed);
+        if(j2IDX < 0) return nullResult;
+        if(minDR2 > 0.4 || minDR1 > 0.4) return nullResult;
+        const auto* jet1 = jets[j1IDX];
+        const auto* jet2 = jets[j2IDX];
+        return std::make_pair(jet1,jet2);
+    }
+    const std::pair<const Jet *, const Jet*> getJetPair(const MomentumF* lepton, const std::vector<Jet*>& jets){
+        std::vector<std::pair<const Jet*,const Jet*> > jetPairs;
+        for(unsigned int iJ1 = 0; iJ1 < jets.size(); ++iJ1){
+            if(PhysicsUtilities::absDeltaPhi(*jets[iJ1],*lepton) < TMath::PiOver2()) continue;
+            for(unsigned int iJ2 = iJ1+1; iJ2 < jets.size(); ++iJ2){
+                if(PhysicsUtilities::absDeltaPhi(*jets[iJ2],*lepton) < TMath::PiOver2()) continue;
+                if(PhysicsUtilities::deltaR(*jets[iJ1],*jets[iJ2]) > 1.5) continue;
+                jetPairs.emplace_back(std::make_pair(jets[iJ1],jets[iJ2]));
+            }
+        }
+        std::vector<std::pair<float,size>> rankedPairPTS(jetPairs.size());
+        for(unsigned int iJ = 0; iJ < jetPairs.size(); ++iJ){
+            rankedPairPTS[iJ] = std::make_pair((jetPairs[iJ].first->p4()+jetPairs[iJ].second->p4()).pt(),iJ);
+        }
+        std::sort(rankedPairPTS.begin(), rankedPairPTS.end(),PhysicsUtilities::greaterAbsFirst<float,int>());
+        if(rankedPairPTS.size())
+            return jetPairs[rankedPairPTS.front().second];
+        else
+            return  std::make_pair((const Jet*)(0),(const Jet*)(0));
     }
 
     const FatJet* getFJ(const MomentumF* lepton, const std::vector<FatJet*>& fjs) {
@@ -86,6 +127,47 @@ public:
     const float DoubleBM1 = 0.6;
     const float DoubleBM2 = 0.8;
     const float DoubleBT  = 0.9;
+
+
+    void makeHbbPairPlots(TString pre, const std::pair<const Jet*,const Jet*>& jetPair){
+
+        const float pairMass = (jetPair.first->p4()+jetPair.second->p4() ).mass();
+        const float minCSV = std::min(jetPair.first->csv(),jetPair.second->csv());
+        const float maxCSV = std::max(jetPair.first->csv(),jetPair.second->csv());
+
+        plotter.getOrMake1DPre(pre,"hbb_pair_mass"             ,";hbb pair mass [GeV]; a.u."       ,250,0,500)->Fill(pairMass,weight );
+        plotter.getOrMake1DPre(pre,"hbb_pair_minsdcsv"         ,";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(minCSV,weight );
+        plotter.getOrMake1DPre(pre,"hbb_pair_maxsdcsv"         ,";hbb pair bb max sj csv; a.u."    ,100,0,1  )->Fill(maxCSV,weight );
+        plotter.getOrMake1DPre(pre,"hbb_pair_maxMed_minsdcsv"  ,";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(maxCSV >= CSVM ? minCSV :0.0,weight );
+        plotter.getOrMake1DPre(pre,"hbb_pair_maxTight_minsdcsv",";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(maxCSV >= CSVT ? minCSV :0.0,weight );
+
+        bool passMassL = (pairMass > 20);
+        bool passMass = (pairMass > 100 && pairMass< 150);
+        bool passCSV = (maxCSV >= CSVM && minCSV >= CSVL  );
+        bool passCSVT = (minCSV >= CSVM  );
+
+        if(passMass)
+            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(7.0,weight);
+        if(passMass&&passCSV)
+            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(8.0,weight);
+        if(passMass && passCSVT)
+            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(9.0,weight);
+
+
+        if(passMass){
+            plotter.getOrMake1DPre(pre,"hbb_pair_oM_minsdcsv"         ,";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(minCSV,weight );
+            plotter.getOrMake1DPre(pre,"hbb_pair_oM_maxsdcsv"         ,";hbb pair bb max sj csv; a.u."    ,100,0,1  )->Fill(maxCSV,weight );
+            plotter.getOrMake1DPre(pre,"hbb_pair_oM_maxMed_minsdcsv"  ,";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(maxCSV >= CSVM ? minCSV :0.0,weight );
+            plotter.getOrMake1DPre(pre,"hbb_pair_oM_maxTight_minsdcsv",";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(maxCSV >= CSVT ? minCSV :0.0,weight );
+        }
+
+        if(passCSV&&passMassL){
+            plotter.getOrMake1DPre(pre,"hbb_pair_oM_mass"             ,";hbb pair mass [GeV]; a.u."       ,250,0,500)->Fill(pairMass,weight );
+        }
+    }
+
+
+
 
     void makeHbbPlots(TString pre, const FatJet* fj){
 
@@ -162,14 +244,37 @@ public:
 
         plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(0.0,weight);
 
+        //Do fat jets
         const auto* fj = getFJ(&lepton,fjs);
-        if(fj == 0) return false;
-        if(reader_event->process == FillerConstants::SIGNAL) {
-            const auto* sigfj = getSignalFJ(diHiggsEvt,&lepton,fjs);
-            if(sigfj != fj) return false;
+        if(fj){
+            bool process = true;
+            if(reader_event->process == FillerConstants::SIGNAL) {
+                const auto* sigfj = getSignalFJ(diHiggsEvt,&lepton,fjs);
+                if(sigfj != fj) process = false;
+            }
+            if(process){
+                plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(1.0,weight);
+                makeHbbPlots(prefix,fj);
+            }
         }
-        plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(1.0,weight);
-        makeHbbPlots(prefix,fj);
+        //do unmerged jets
+        auto jets = JetKinematics::selectObjects(reader_jet->jets,20,2.4);
+        const auto jetPair = getJetPair(&lepton,jets);
+        if(jetPair.first && jetPair.second){
+            bool process = true;
+            if(reader_event->process == FillerConstants::SIGNAL) {
+                const auto sigfj = getSignaljets(diHiggsEvt,&lepton,jets);
+                if(sigfj.first != jetPair.first && sigfj.first != jetPair.second ) process = false;
+                if(sigfj.second != jetPair.first && sigfj.second != jetPair.second ) process = false;
+            }
+            if(process){
+                plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(6.0,weight);
+                makeHbbPairPlots(prefix,jetPair);
+            }
+        }
+
+
+
 
         return true;
     }

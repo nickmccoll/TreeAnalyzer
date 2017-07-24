@@ -36,12 +36,131 @@ public:
         if(treeType == TREE_OTHER)
             reader_genpart  = (GenParticleReader*)load(new GenParticleReader("genParticle"));
         reader_fatjet   = (FatJetReader*)load(new FatJetReader("ak8PuppiNoLepJet",isRealData(),false));
+        reader_jet = (JetReader*)load(new JetReader("ak4PuppiNoLepJet",isRealData(),false));
 
         setBranchAddress("skim" ,"ht"         ,   &ht                  ,true);
         setBranchAddress("skim" ,"selLep_pt"  ,   &selLep_pt           ,true);
         setBranchAddress("skim" ,"selLep_eta" ,   &selLep_eta          ,true);
         setBranchAddress("skim" ,"selLep_phi" ,   &selLep_phi          ,true);
         setBranchAddress("skim" ,"selLep_muon",   &selLep_muon         ,true);
+    }
+
+
+
+    void getAK4Sel(const DiHiggsEvent& diHiggsEvt, const MomentumF& lepton, const float weight ) {
+        const float selOff = 10;
+        if(diHiggsEvt.b1->pt() < 20 || diHiggsEvt.b2->pt() < 20 || diHiggsEvt.b1->absEta() > 2.4 ||diHiggsEvt.b1->absEta() > 2.4)
+            return;
+        plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(0.0 +  selOff,weight);
+        auto jets = JetKinematics::selectObjects(reader_jet->jets,20,2.4);
+        double minDR1 = 0;
+        int j1IDX = PhysicsUtilities::findNearestDRDeref(*diHiggsEvt.b1,jets,minDR1);
+        if(j1IDX < 0) return;
+        std::vector<bool> vetoed(jets.size(),false); vetoed[j1IDX] = true;
+        double minDR2 = 0;
+        int j2IDX = PhysicsUtilities::findNearestDRDeref(*diHiggsEvt.b2,jets,minDR2,99999,20,&vetoed);
+        if(j2IDX < 0) return;
+        plotter.getOrMake1DPre(prefix,"maxDRgenAK4Jet",";max gen #DeltaR(jet); arbitrary units",500,0,5.0  )->Fill(std::max(minDR2,minDR1),weight);
+        if(std::max(minDR2,minDR1) > 0.4) return;
+        plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(1.0 +  selOff,weight);
+        const auto* jet1 = jets[j1IDX];
+        const auto* jet2 = jets[j2IDX];
+        plotter.getOrMake1DPre(prefix,"drAK4Jets",";#DeltaR(jet,jet); arbitrary units",500,0,5.0  )->Fill(PhysicsUtilities::deltaR(*jet1,*jet2),weight);
+        plotter.getOrMake1DPre(prefix,"min_dphiAK4Jetslep",";min #Delta#phi(jet,lepton); arbitrary units",500,0,5.0  )->Fill(
+                std::min(PhysicsUtilities::absDeltaPhi(*jet1,lepton),PhysicsUtilities::absDeltaPhi(*jet2,lepton)),weight);
+        plotter.getOrMake1DPre(prefix,"min_dRAK4Jetslep",";min #Delta#R(jet,lepton); arbitrary units",500,0,5.0  )->Fill(
+                std::min(PhysicsUtilities::deltaR(*jet1,lepton),PhysicsUtilities::deltaR(*jet2,lepton)),weight);
+
+        if(std::min(PhysicsUtilities::absDeltaPhi(*jet1,lepton),PhysicsUtilities::absDeltaPhi(*jet2,lepton)) < TMath::PiOver2()) return;
+        if(PhysicsUtilities::deltaR(*jet1,*jet2) > 1.5) return;
+        plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(2.0 +  selOff,weight);
+
+
+        int ptRank1 = 0;
+        int ptRank2 = 0;
+        std::vector<std::pair<float,int>> rankedPTS(jets.size());
+        for(unsigned int iJ = 0; iJ < jets.size(); ++iJ){
+            if(PhysicsUtilities::absDeltaPhi(*jets[iJ],lepton) < TMath::PiOver2()) continue;
+            rankedPTS[iJ] = std::make_pair(jets[iJ]->pt(),iJ);
+        }
+        std::sort(rankedPTS.begin(), rankedPTS.end(),PhysicsUtilities::greaterAbsFirst<float,int>());
+        for(unsigned int iJ = 0; iJ < jets.size(); ++iJ) {
+            if(rankedPTS[iJ].second == j1IDX) {ptRank1 = iJ;}
+            if(rankedPTS[iJ].second == j2IDX) {ptRank2 = iJ;}
+        }
+
+        plotter.getOrMake1DPre(prefix,"ak4jetptRank",";higgs max(j) #it{p}_{T} rank; arbitrary units",10,-0.5,9.5 )->Fill(std::max(ptRank1,ptRank2),weight);
+
+
+        std::vector<std::pair<const Jet*,const Jet*> > jetPairs;
+        for(unsigned int iJ1 = 0; iJ1 < jets.size(); ++iJ1){
+            if(PhysicsUtilities::absDeltaPhi(*jets[iJ1],lepton) < TMath::PiOver2()) continue;
+            for(unsigned int iJ2 = iJ1+1; iJ2 < jets.size(); ++iJ2){
+                if(PhysicsUtilities::absDeltaPhi(*jets[iJ2],lepton) < TMath::PiOver2()) continue;
+                if(PhysicsUtilities::deltaR(*jets[iJ1],*jets[iJ2]) > 1.5) continue;
+                jetPairs.emplace_back(std::make_pair(jets[iJ1],jets[iJ2]));
+            }
+        }
+        int ptPairRank1 = 0;
+        unsigned int goodPairIDX= 0;
+        std::vector<std::pair<float,size>> rankedPairPTS(jetPairs.size());
+        for(unsigned int iJ = 0; iJ < jetPairs.size(); ++iJ){
+            if((jetPairs[iJ].first == jet1 || jetPairs[iJ].first == jet2) &&(jetPairs[iJ].second == jet1 || jetPairs[iJ].second == jet2))
+                goodPairIDX = iJ;
+            rankedPairPTS[iJ] = std::make_pair((jetPairs[iJ].first->p4()+jetPairs[iJ].second->p4()).pt(),iJ);
+        }
+        std::sort(rankedPairPTS.begin(), rankedPairPTS.end(),PhysicsUtilities::greaterAbsFirst<float,int>());
+        for(unsigned int iJ = 0; iJ < rankedPairPTS.size(); ++iJ) {
+            if(rankedPairPTS[iJ].second == goodPairIDX) {ptPairRank1 = iJ;}
+        }
+        plotter.getOrMake1DPre(prefix,"ak4jetptPairRank",";higgs pair #it{p}_{T} rank; arbitrary units",10,-0.5,9.5 )->Fill(ptPairRank1,weight);
+
+        for(unsigned int iJ = 0; iJ < jetPairs.size(); ++iJ){
+            auto pairMom = jetPairs[iJ].first->p4() + jetPairs[iJ].second->p4();
+            float pairDPHI = PhysicsUtilities::absDeltaPhi(pairMom,lepton);
+            float pairDR = PhysicsUtilities::deltaR(*jetPairs[iJ].first,*jetPairs[iJ].second);
+            if(iJ ==goodPairIDX ){
+                plotter.getOrMake1DPre(prefix,"dphipairlep",";min #Delta#phi(jet pair,lepton); arbitrary units",500,0,5.0  )->Fill(pairDPHI,weight);
+                plotter.getOrMake1DPre(prefix,"drpairjj",";min #Delta#R(jet,jet); arbitrary units",500,0,5.0  )->Fill(pairDR,weight);
+            }else {
+                plotter.getOrMake1DPre(prefix,"bkg_dphipairlep",";min #Delta#phi(jet pair,lepton); arbitrary units",500,0,5.0  )->Fill(pairDPHI,weight);
+                plotter.getOrMake1DPre(prefix,"bkg_drpairjj",";min #Delta#R(jet,jet); arbitrary units",500,0,5.0  )->Fill(pairDR,weight);
+
+            }
+
+        }
+
+        int ptPairBYDRRank = -1;
+        std::vector<std::pair<float,size>> rankedPairDRS(jetPairs.size());
+        for(unsigned int iJ = 0; iJ < jetPairs.size(); ++iJ){
+            rankedPairDRS[iJ] = std::make_pair(PhysicsUtilities::deltaR(*jetPairs[iJ].first,*jetPairs[iJ].second),iJ);
+        }
+        std::sort(rankedPairPTS.begin(), rankedPairPTS.end(),PhysicsUtilities::lesserAbsFirst<float,int>());
+        std::vector<int> usedJets;
+        std::vector<std::pair<float,size>> rankedPairPTSByDRS;
+        for(unsigned int iJ = 0; iJ < rankedPairDRS.size(); ++iJ){
+            const auto* pj1 = jetPairs[rankedPairDRS[iJ].second].first;
+            const auto* pj2 = jetPairs[rankedPairDRS[iJ].second].second;
+            bool used = false;
+            for(const auto& uj : usedJets){
+                if(pj1->index() == uj) used = true;
+                if(pj2->index() == uj) used = true;
+            }
+            if(used) continue;
+            rankedPairPTSByDRS.emplace_back(std::make_pair((pj1->p4() + pj2->p4()).pt(),rankedPairDRS[iJ].second));
+            usedJets.push_back(pj1->index());
+            usedJets.push_back(pj2->index());
+        }
+        std::sort(rankedPairPTSByDRS.begin(), rankedPairPTSByDRS.end(),PhysicsUtilities::greaterAbsFirst<float,int>());
+        for(unsigned int iJ = 0; iJ < rankedPairPTSByDRS.size(); ++iJ) {
+            if(rankedPairPTSByDRS[iJ].second == goodPairIDX) {ptPairBYDRRank = iJ;}
+        }
+        plotter.getOrMake1DPre(prefix,"ak4jetptPairRank_byDR",";higgs pair #it{p}_{T} rank (DR match); arbitrary units",11,-1.5,9.5 )->Fill(ptPairBYDRRank,weight);
+
+        if(ptPairRank1 == 0)
+        plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(3.0 +  selOff,weight);
+
+
     }
 
     bool runEvent() override {
@@ -59,6 +178,11 @@ public:
         double genLepDR = PhysicsUtilities::deltaR(lepton,*diHiggsEvt.w1_d1);
         if(genLepDR > 0.2) return false;
         plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(1.0,weight);
+
+        if(PhysicsUtilities::deltaR(*diHiggsEvt.b1,*diHiggsEvt.b2) > 0.8 )
+            getAK4Sel(diHiggsEvt,lepton,weight);
+
+
 
         const MomentumF hbb = diHiggsEvt.b1->p4() + diHiggsEvt.b2->p4();
         if(hbb.pt() < 50) return false;
