@@ -129,7 +129,6 @@ public:
     JetReader         * reader_jetnolep = 0;
     FatJetReader      * reader_fatjet   = 0;
 
-    float   normWeight =0;
     float   ht         =0;
     float   selLep_pt  =0;
     float   selLep_eta =0;

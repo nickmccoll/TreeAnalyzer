@@ -131,7 +131,17 @@ public:
         plotter.getOrMake1DPre(prefix,"leadpt_dphiWRank",";higgs fj #Delta#phi(W) rank; arbitrary units",3,-1.5,1.5 )->Fill(leadpt_dphiWRank,weight);
         plotter.getOrMake1DPre(prefix,"leadpt_dphilepRank",";higgs fj #Delta#phi(lep) rank; arbitrary units",3,-1.5,1.5 )->Fill(leadpt_dphilepRank,weight);
 
-
+        std::vector<FatJet*> highDPhiJets;
+        for(unsigned int iJ = 0; iJ < fjs.size(); ++iJ){
+            if(PhysicsUtilities::absDeltaPhi(lepton,*fjs[iJ]) < 2) continue;
+            highDPhiJets.push_back(fjs[iJ]);
+        }
+        int dPhi_leadPTRank = -1;
+        std::vector<std::pair<float,int>> dPhi_rankedPTS(fjs.size());
+        for(unsigned int iJ = 0; iJ < highDPhiJets.size(); ++iJ) dPhi_rankedPTS[iJ] = std::make_pair(highDPhiJets[iJ]->pt(),iJ);
+        std::sort(dPhi_rankedPTS.begin(), dPhi_rankedPTS.end(),PhysicsUtilities::greaterAbsFirst<float,int>());
+        for(unsigned int iJ = 0; iJ < highDPhiJets.size(); ++iJ) if(dPhi_rankedPTS[iJ].second == fjIDX) {dPhi_leadPTRank = iJ; break;}
+        plotter.getOrMake1DPre(prefix,"dPhi_leadPTRank",";higgs fj #it{p}_{T} rank; arbitrary units",11,-1.5,9.5 )->Fill(dPhi_leadPTRank,weight);
 
 
         plotter.getOrMake1DPre(prefix,"pt",";higgs fj #it{p}_{T}; arbitrary units",600,0,3000 )->Fill(fj->pt(),weight);
@@ -141,7 +151,7 @@ public:
 
         if(ptRank > 1) return false;
         plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(7.0,weight);
-        if(leadpt_dphiWRank != 0) return false;
+        if(leadpt_dphilepRank != 0) return false;
         plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(8.0,weight);
         if(PhysicsUtilities::absDeltaPhi(lepton,*fj) < 2.0) return false;
         plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(9.0,weight);
