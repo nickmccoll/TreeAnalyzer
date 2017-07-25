@@ -142,7 +142,7 @@ public:
         plotter.getOrMake1DPre(pre,"hbb_pair_maxTight_minsdcsv",";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(maxCSV >= CSVT ? minCSV :0.0,weight );
 
         bool passMassL = (pairMass > 20);
-        bool passMass = (pairMass > 100 && pairMass< 150);
+        bool passMass = (pairMass > 90 && pairMass< 140);
         bool passCSV = (maxCSV >= CSVM && minCSV >= CSVL  );
         bool passCSVT = (minCSV >= CSVM  );
 

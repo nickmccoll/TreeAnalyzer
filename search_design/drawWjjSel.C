@@ -31,18 +31,18 @@
     1000,
     // 1200,
     // 1400,
-    1600
+    // 1600,
     // 1800,
-    // 2000
+    2000,
     // 2500,
     // 3000,
     // 3500,
     // 4000,
-    // 4500
+    4500
 
   };
 
-  TFile * f = new TFile("getHbbJetSel_plots.root","read");
+  TFile * f = new TFile("getWjjJetSel_plots.root","read");
   
 
 
@@ -135,10 +135,7 @@ auto makeRocs  = [&](std::vector<TString> vars,TString prefix, TString name,  bo
             // p->draw(false);
 };
 
-// std::vector<TString> vars = {"hbb_fj_mass","hbb_fj_sd_mass","hbb_fj_rawsd_mass","hbb_fj_tau2otau1","hbb_fj_csv","hbb_fj_bbcsv","hbb_fj_minsdcsv","hbb_fj_maxMed_minsdcsv","hbb_fj_maxTight_minsdcsv"};
-// std::vector<TString> vars = {"hbb_fj_oM_mass","hbb_fj_oM_sd_mass","hbb_fj_oM_rawsd_mass","hbb_fj_oM_tau2otau1","hbb_fj_oM_bbcsv","hbb_fj_oM_minsdcsv","hbb_fj_oM_maxMed_minsdcsv","hbb_fj_oM_maxSJMass","hbb_fj_oM_lowCSVSJMass"};
-
-std::vector<TString> vars ={"hbb_pair_mass","hbb_pair_minsdcsv","hbb_pair_maxsdcsv","hbb_pair_maxMed_minsdcsv","hbb_pair_maxTight_minsdcsv","hbb_pair_oM_mass","hbb_pair_oM_minsdcsv","hbb_pair_oM_maxsdcsv","hbb_pair_oM_maxMed_minsdcsv","hbb_pair_oM_maxTight_minsdcsv"};
+std::vector<TString> vars = {"wjj_fj_mass","wjj_fj_sd_mass","wjj_fj_rawsd_mass","wjj_fj_tau2otau1","wjj_fj_csv","wjj_fj_minsdcsv","wjj_fj_maxsdcsv","wjj_fj_oM_csv","wjj_fj_oM_minsdcsv","wjj_fj_oM_maxsdcsv","wjj_fj_oM_tau2otau1","wjj_fj_oM_mass","wjj_fj_oM_sd_mass","wjj_fj_oM_rawsd_mass"};
 std::vector<TString> pres = {""};
 distPlots("plots",vars,pres,true);
 
@@ -146,28 +143,16 @@ std::vector<TString> rocvars = {"hbb_fj_mass","hbb_fj_sd_mass","hbb_fj_rawsd_mas
 // std::vector<TString> rocvars = {"hbb_fj_oM_bbcsv","hbb_fj_oM_minsdcsv","hbb_fj_oM_maxMed_minsdcsv"};
 // makeRocs(rocvars,"","roc",true);
 
-// std::vector<unsigned int> cuts = {0,1,2,3,4,5};
-// std::vector<unsigned int> cuts = {0,4,5,8,9};
-std::vector<unsigned int> cuts = {6,7,8,9};
+std::vector<unsigned int> cuts = {0,1,2,3,4};
+
 vector<TString> cutNames = {
   "inclusive",
-  "hbb fj cand",
+  "wjj fj cand",
   "+ pass mass",
   "+ pass #tau_{3/2}",
-  "+ pass CSV (loose)",
-  "+ pass CSV (tight)",
-  "hbb pair cand",
-  "+ pass pair mass",
-  "+ pass pair CSV (loose)",
-  "+ pass pair CSV (tight)"
+  "+ pass CSV"
 };
 effPlots("cutflow",cuts,cutNames);
-// std::vector<unsigned int> cuts = {0,4,5};
-// std::vector<unsigned int> cuts = {0,4,11,12};
 
-
-
-// effPlots("muRatio","mu",cuts);
-// effPlots("elRatio","el",cuts);
 
 }

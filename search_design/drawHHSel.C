@@ -31,10 +31,10 @@
     1000,
     // 1200,
     // 1400,
-    1600
+    1600,
     // 1800,
-    // 2000
-    // 2500,
+    // 2000,
+    2500
     // 3000,
     // 3500,
     // 4000,
@@ -42,7 +42,7 @@
 
   };
 
-  TFile * f = new TFile("getHbbJetSel_plots.root","read");
+  TFile * f = new TFile("getHHSel_plots.root","read");
   
 
 
@@ -63,7 +63,8 @@
         f->GetObject(TString::Format("m%u_%s%s",sigMasses[iM],p.Data(),v.Data()),h);
         if(h ==0)continue;
         if(doNorm){
-          float stackNorm = plots->getStackIntegral();
+
+          float stackNorm =  plots->getTotStack() ? plots->getStackIntegral() : 1.0;
           if(stackNorm) h->Scale(stackNorm/h->Integral(0,-1)); else PlotTools::normalize(h);
         } else if(plots->getTotStack()){
            h->Add(plots->getTotStack());
@@ -135,39 +136,25 @@ auto makeRocs  = [&](std::vector<TString> vars,TString prefix, TString name,  bo
             // p->draw(false);
 };
 
-// std::vector<TString> vars = {"hbb_fj_mass","hbb_fj_sd_mass","hbb_fj_rawsd_mass","hbb_fj_tau2otau1","hbb_fj_csv","hbb_fj_bbcsv","hbb_fj_minsdcsv","hbb_fj_maxMed_minsdcsv","hbb_fj_maxTight_minsdcsv"};
-// std::vector<TString> vars = {"hbb_fj_oM_mass","hbb_fj_oM_sd_mass","hbb_fj_oM_rawsd_mass","hbb_fj_oM_tau2otau1","hbb_fj_oM_bbcsv","hbb_fj_oM_minsdcsv","hbb_fj_oM_maxMed_minsdcsv","hbb_fj_oM_maxSJMass","hbb_fj_oM_lowCSVSJMass"};
+std::vector<TString> vars = {"hh_mass"};
+// std::vector<TString> vars = {"hWW_mass","hWW_pt","hh_mass","W_W_dR"};
+std::vector<TString> pres = {"hbb_hHT_tCSV_","hbb_lHT_tCSV_","hbb_hHT_lCSV_","hbb_lHT_lCSV_","hbbpairNoHbb_hHT_tCSV_","hbbpairNoHbb_lHT_tCSV_","hbbpairNoHbb_hHT_lCSV_","hbbpairNoHbb_lHT_lCSV_"};
+distPlots("plots",vars,pres,false);
 
-std::vector<TString> vars ={"hbb_pair_mass","hbb_pair_minsdcsv","hbb_pair_maxsdcsv","hbb_pair_maxMed_minsdcsv","hbb_pair_maxTight_minsdcsv","hbb_pair_oM_mass","hbb_pair_oM_minsdcsv","hbb_pair_oM_maxsdcsv","hbb_pair_oM_maxMed_minsdcsv","hbb_pair_oM_maxTight_minsdcsv"};
-std::vector<TString> pres = {""};
-distPlots("plots",vars,pres,true);
-
-std::vector<TString> rocvars = {"hbb_fj_mass","hbb_fj_sd_mass","hbb_fj_rawsd_mass"};
+// std::vector<TString> rocvars = {"hbb_fj_mass","hbb_fj_sd_mass","hbb_fj_rawsd_mass"};
 // std::vector<TString> rocvars = {"hbb_fj_oM_bbcsv","hbb_fj_oM_minsdcsv","hbb_fj_oM_maxMed_minsdcsv"};
 // makeRocs(rocvars,"","roc",true);
 
-// std::vector<unsigned int> cuts = {0,1,2,3,4,5};
-// std::vector<unsigned int> cuts = {0,4,5,8,9};
-std::vector<unsigned int> cuts = {6,7,8,9};
+std::vector<unsigned int> cuts = {0,1,2,3,4};
+
 vector<TString> cutNames = {
   "inclusive",
-  "hbb fj cand",
+  "wjj fj cand",
   "+ pass mass",
   "+ pass #tau_{3/2}",
-  "+ pass CSV (loose)",
-  "+ pass CSV (tight)",
-  "hbb pair cand",
-  "+ pass pair mass",
-  "+ pass pair CSV (loose)",
-  "+ pass pair CSV (tight)"
+  "+ pass CSV"
 };
-effPlots("cutflow",cuts,cutNames);
-// std::vector<unsigned int> cuts = {0,4,5};
-// std::vector<unsigned int> cuts = {0,4,11,12};
+// effPlots("cutflow",cuts,cutNames);
 
-
-
-// effPlots("muRatio","mu",cuts);
-// effPlots("elRatio","el",cuts);
 
 }
