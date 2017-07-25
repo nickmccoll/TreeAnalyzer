@@ -11,6 +11,8 @@ namespace EventWeights {
     //If it is not (was added in post processing), will calculate it on the fly
     //Otherwise will output lumi*normWeight
     float getNormalizedEventWeight(const EventReader * reader_event, const float cross, const float numE, const float lumi = 1);
+
+    float get4bXSecLimit(unsigned int  mass);
 }
 }
 
