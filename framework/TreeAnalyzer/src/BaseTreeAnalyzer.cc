@@ -121,5 +121,19 @@ void BaseTreeAnalyzer::setupOutTree(){
 void BaseTreeAnalyzer::bookOutputVariables() {
     throw std::invalid_argument("BaseTreeAnalyzer::bookOutputVariables() -> Must define if you are running an EventAnalyzer that makes a new tree!");
 };
+//--------------------------------------------------------------------------------------------------
+
+void BaseTreeAnalyzer::setSampleInfo(float inXSec, float inNumE)
+{_xsec =inXSec;_numSampleEvents=inNumE;
+std::cout << " ++  Sample cross-section is set to: "<< inXSec << " [pb]"<<std::endl;
+std::cout << " ++  Number of events produced in this sample: "<< inNumE <<std::endl;
+}
+//--------------------------------------------------------------------------------------------------
+
+void BaseTreeAnalyzer::setLumi(float inLumi) {
+    _lumi=inLumi;
+    std::cout << " ++  Luminosity is set to: "<< inLumi <<" [fb-1]" <<std::endl;
+}
+
 
 }

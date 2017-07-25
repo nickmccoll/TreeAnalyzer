@@ -86,8 +86,8 @@ public:
 	void processReaders();
 	bool nextEvent(const int reportFrequency)  {return tree.readEvent(eventNumber, reportFrequency);}
 	void setEventNumber(const int newEventNumber) {eventNumber = newEventNumber;}
-	void setSampleInfo(float inXSec, float inNumE) {_xsec =inXSec;_numSampleEvents=inNumE;}
-	void setLumi(float inLumi) {_lumi=inLumi;}
+	void setSampleInfo(float inXSec, float inNumE);
+	void setLumi(float inLumi);
 	float xsec() const {return _xsec;}
 	float nSampEvt() const {return _numSampleEvents;}
 	float lumi() const {return _lumi;}
