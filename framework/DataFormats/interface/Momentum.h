@@ -40,8 +40,11 @@ public :
     float   py()      const { return fMom.Py();       }
     float   pz()      const { return fMom.Pz();       }
     float   p()       const { return fMom.P();        }
-    float   y()       const { return fMom.Rapidity(); }
+    float   rap()     const { return fMom.Rapidity(); }
     float   theta()   const { return fMom.Theta();    }
+    float   x()       const { return fMom.x();        }
+    float   y()       const { return fMom.y();        }
+    float   z()       const { return fMom.z();        }
 
     //Momentum getting and setting functions
     ROOT::Math::LorentzVector<CoordSystem>&        p4()         { return fMom; }
