@@ -14,7 +14,7 @@ using ASTypes::size;
 namespace TAna {
 //_____________________________________________________________________________
 template<typename Jet>
-std::vector<Jet*> JetKinematics::selectObjectsDref(std::vector<Jet*>& jets, const double minPT, const double maxEta, const std::vector<bool>* selected){
+std::vector<Jet*> JetKinematics::selectObjectsDref(const std::vector<Jet*>& jets, const double minPT, const double maxEta, const std::vector<bool>* selected){
     const size                    numJets = jets.size();
     std::vector<Jet*>             out;
     out.reserve(jets.size());
@@ -42,7 +42,7 @@ std::vector<Jet*> JetKinematics::selectObjects(std::vector<Jet>& jets, const dou
 }
 //_____________________________________________________________________________
 template<typename Jet>
-Jet JetKinematics::mht(const vector<Jet*>& jets, const double minPT, const double maxEta, const vector<bool>* selected)
+Jet JetKinematics::mht(const std::vector<Jet*>& jets, const double minPT, const double maxEta, const std::vector<bool>* selected)
 {
   const size                    numJets = jets.size();
   Jet mht;
@@ -57,7 +57,7 @@ Jet JetKinematics::mht(const vector<Jet*>& jets, const double minPT, const doubl
 
 //_____________________________________________________________________________
 template<typename Jet>
-double JetKinematics::ht(const vector<Jet*>& jets, const double minPT, const double maxEta, const vector<bool>* selected)
+double JetKinematics::ht(const std::vector<Jet*>& jets, const double minPT, const double maxEta, const std::vector<bool>* selected)
 {
   const size                    numJets = jets.size();
   double                        ht      = 0;

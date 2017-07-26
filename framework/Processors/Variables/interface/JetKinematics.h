@@ -13,7 +13,6 @@
 #include <vector>
 #include <utility>
 
-using namespace std;
 
 namespace TAna {
 
@@ -22,7 +21,7 @@ namespace JetKinematics {
   const double noDist = 10.7;
 
   template<typename Jet>
-  std::vector<Jet*> selectObjectsDref(std::vector<Jet*>& jets, const double minPT = 0, const double maxEta = 9999, const std::vector<bool>* selected = 0);
+  std::vector<Jet*> selectObjectsDref(const std::vector<Jet*>& jets, const double minPT = 0, const double maxEta = 9999, const std::vector<bool>* selected = 0);
   template<typename Jet>
   std::vector<Jet*> selectObjects(std::vector<Jet>& jets, const double minPT = 0, const double maxEta = 9999, const std::vector<bool>* selected = 0);
 
