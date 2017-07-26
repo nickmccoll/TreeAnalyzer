@@ -4,14 +4,16 @@ int main(int argc, char* argv[])
     int treeInt = 0;
     float xSec = 0;
     float numEvent = 0;
+
+
     if(argc > 2){
         std::stringstream convertTreeInt(argv[2]);
         convertTreeInt >> treeInt;
     }
     if(argc > 5){
-        std::stringstream convertxSec(argv[2]);
+        std::stringstream convertxSec(argv[4]);
         convertxSec >> xSec;
-        std::stringstream convertnumEvent(argv[2]);
+        std::stringstream convertnumEvent(argv[5]);
         convertnumEvent >> numEvent;
     }
     switch(argc) {
