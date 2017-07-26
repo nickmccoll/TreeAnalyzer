@@ -157,7 +157,6 @@ def getFileList(inputDir,name="") :
     else:
         cmd = ("find %s | %s" % (inputDir,grepCmd))
         prefix = ""
-    print cmd
     ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     result = ps.communicate()
     return result[0].rstrip('\n').split('\n')                
