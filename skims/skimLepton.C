@@ -29,7 +29,8 @@ public:
     virtual BaseEventAnalyzer * setupEventAnalyzer() override {return new CopierEventAnalyzer();}
 
     virtual void bookOutputVariables() override {
-        i_normWeight             =  outTree->add<float>  ("event","normWeight"  ,"F",0);
+        if(!isRealData())
+            i_normWeight             =  outTree->add<float>  ("event","normWeight"  ,"F",0);
         i_ht                     =  outTree->add<float>  ("skim" ,"ht"          ,"F",0);
         i_selLep_pt              =  outTree->add<float>  ("skim" ,"selLep_pt"   ,"F",0);
         i_selLep_eta             =  outTree->add<float>  ("skim" ,"selLep_eta"  ,"F",0);
@@ -61,8 +62,8 @@ public:
         auto jets = JetKinematics::selectObjects(reader_jet->jets,30);
         const float ht = JetKinematics::ht(jets);
 
-
-        outTree->fill(i_normWeight ,normEventWeight);
+        if(!isRealData())
+            outTree->fill(i_normWeight ,normEventWeight);
         outTree->fill(i_ht         ,ht);
         outTree->fill(i_selLep_pt  ,float(leptons.front()->pt()));
         outTree->fill(i_selLep_eta ,float(leptons.front()->eta()));
