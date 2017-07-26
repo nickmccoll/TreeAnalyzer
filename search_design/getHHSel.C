@@ -124,13 +124,25 @@ public:
 
 
 
-    void makeHHPlots(TString pre, const float ht,  const MomentumF& hbb, const bool passTightCSV, const MomentumF& wjj, const MomentumF& lepton, const MomentumF& met){
+    void makeHHPlots(TString pre, const float ht,  const MomentumF& hbb, const bool passTightCSV, const MomentumF& wjj,const MomentumF& wjjNoSD, const MomentumF& lepton, const MomentumF& met){
         auto neutrino =getnz(met,lepton.p4() + wjj.p4() );
         MomentumF Wlnu = lepton.p4()+ neutrino.p4();
         MomentumF hWW = Wlnu.p4()+ wjj.p4();
         MomentumF hh = hWW.p4() + hbb.p4();
-
+        if(PhysicsUtilities::deltaR(Wlnu, wjj) > 0.5) return;
         auto makeMPlots =[&](const TString& pre) {
+            plotter.getOrMake1DPre(pre, "lepW_pt"  ,";lep W pT [GeV]; arbitrary units",200,0,1000)->Fill((met.p4()+lepton.p4() ).pt(),weight);
+            plotter.getOrMake1DPre(pre, "met"      ,";met [GeV]; arbitrary units",200,0,1000)->Fill(met.pt(),weight);
+            plotter.getOrMake1DPre(pre, "met_o_fjlep" ,";met/fj+lep [GeV]; arbitrary units",200,0,10)->Fill(met.pt()/(wjj.p4()+lepton.p4()).pt(),weight);
+            plotter.getOrMake1DPre(pre, "met_o_h" ,";met/h; arbitrary units",200,0,10)->Fill(met.pt()/hWW.pt(),weight);
+            plotter.getOrMake1DPre(pre, "met_o_fj" ,";met/fj [GeV]; arbitrary units",200,0,10)->Fill(met.pt()/wjj.pt(),weight);
+            plotter.getOrMake1DPre(pre, "met_o_fjNoSD" ,";met/fj [GeV]; arbitrary units",200,0,10)->Fill(met.pt()/wjjNoSD.pt(),weight);
+            plotter.getOrMake1DPre(pre, "met_dPhifj" ,";#Delta#phi(met,fj); arbitrary units",160,0,4)->Fill(PhysicsUtilities::absDeltaPhi(met,wjj),weight);
+            plotter.getOrMake1DPre(pre, "met_dPhifjNoSD" ,";#Delta#phi(met,fj); arbitrary units",160,0,4)->Fill(PhysicsUtilities::absDeltaPhi(met,wjjNoSD),weight);
+            plotter.getOrMake1DPre(pre, "met_dPhihbb" ,";#Delta#phi(met,hbb); arbitrary units",160,0,4)->Fill(PhysicsUtilities::absDeltaPhi(met,hbb),weight);
+            if(PhysicsUtilities::absDeltaPhi(met,hbb) > 0.8)
+                plotter.getOrMake1DPre(pre, "highDPhi_lepW_pt"  ,";lep W pT [GeV]; arbitrary units",200,0,1000)->Fill((met.p4()+lepton.p4() ).pt(),weight);
+            plotter.getOrMake1DPre(pre, "lepPT"    ,";lep pt [GeV]; arbitrary units",200,0,1000)->Fill(lepton.pt(),weight);
             plotter.getOrMake1DPre(pre, "hWW_mass",";hWW mass [GeV]; arbitrary units",200,0,1000)->Fill(hWW.mass(),weight);
             plotter.getOrMake1DPre(pre, "hWW_pt"  ,";hWW #it{p}_{T} [GeV]; arbitrary units",250,0,2500)->Fill(hWW.pt(),weight);
             plotter.getOrMake1DPre(pre, "hh_mass" ,";hh mass [GeV]; arbitrary units",500,0,5000)->Fill(hh.mass(),weight);
@@ -160,20 +172,34 @@ public:
 
 
     bool runEvent() override {
-        DiHiggsEvent diHiggsEvt;
+//        DiHiggsEvent diHiggsEvt;
 
         if(reader_event->process !=
                 FillerConstants::SIGNAL){
-            prefix = reader_event->process >= FillerConstants::ZJETS ? "rare" :
+            prefix = (reader_event->process >= FillerConstants::ZJETS &&  reader_event->process != FillerConstants::QCD)  ? "rare" :
                     FillerConstants::MCProcessNames[reader_event->process];
-        } else {
-            diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
-            if(diHiggsEvt.type < DiHiggsEvent::MU) return 0;
         }
+//        else {
+//            diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
+//            if(diHiggsEvt.type < DiHiggsEvent::MU) return 0;
+//        }
 
         MomentumF lepton(ASTypes::CylLorentzVectorF(selLep_pt,selLep_eta,selLep_phi,0));
         weight = EventWeights::getNormalizedEventWeight(reader_event,xsec(),nSampEvt(),lumi());
         if(reader_event->process == FillerConstants::SIGNAL) weight *=  (0.8241887906 * EventWeights::get4bXSecLimit(mass)/1000.0);
+        plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(0.0,weight);
+
+
+        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_goodVertices) ) return false;
+        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_globalTightHalo2016Filter) ) return false;
+        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_HBHENoiseFilter) ) return false;
+        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_HBHENoiseIsoFilter) ) return false;
+        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_EcalDeadCellTriggerPrimitiveFilter) ) return false;
+        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_eeBadScFilter) ) return false;
+        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::AnaTM_badMuons) ) return false;
+        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::AnaTM_badChargedHadrons) ) return false;
+        plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(1.0,weight);
+
 
         auto fjs = JetKinematics::selectObjects(reader_fatjet->jets,50,2.4);
         const auto* hbbfj = getHbbFJ(&lepton,fjs);
@@ -197,26 +223,35 @@ public:
             passHbbPairT = passHbbPair && minCSV >= CSVM;
         }
 
-        plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(0.0,weight);
-        if(!passWjj) return false;
-        plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(1.0,weight);
+        if(!passWjj || !wjjfj->passTightID()) return false;
+        plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(2.0,weight);
 
-        if(passHbb){
-            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(2.0,weight);
-            makeHHPlots(prefix + "_hbb",ht,hbbfj->sdMom(),passHbbT,wjjfj->sdMom(),lepton,reader_event->met.p4());
+
+        if(passHbb && hbbfj->passTightID() ){
+            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(3.0,weight);
+            makeHHPlots(prefix + "_hbb",ht,hbbfj->sdMom(),passHbbT,wjjfj->sdMom(),wjjfj->p4(),lepton,reader_event->met.p4());
+            if(passHbbT)
+                plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(4.0,weight);
         }
         if(passHbbPair){
-            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(3.0,weight);
-            makeHHPlots(prefix + "_hbbpair",ht,jetPair.first->p4()+jetPair.second->p4(),passHbbPairT,wjjfj->sdMom(),lepton,reader_event->met.p4());
+            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(5.0,weight);
+            makeHHPlots(prefix + "_hbbpair",ht,jetPair.first->p4()+jetPair.second->p4(),passHbbPairT,wjjfj->sdMom(),wjjfj->p4(),lepton,reader_event->met.p4());
+            if(passHbbPairT)
+                plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(6.0,weight);
         }
         if(passHbbPair && !passHbb){
-            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(3.0,weight);
-            makeHHPlots(prefix + "_hbbpairNoHbb",ht,jetPair.first->p4()+jetPair.second->p4(),passHbbPairT,wjjfj->sdMom(),lepton,reader_event->met.p4());
+            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(7.0,weight);
+            makeHHPlots(prefix + "_hbbpairNoHbb",ht,jetPair.first->p4()+jetPair.second->p4(),passHbbPairT,wjjfj->sdMom(),wjjfj->p4(),lepton,reader_event->met.p4());
+            if(passHbbPairT)
+                plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(8.0,weight);
         }
         if(passHbb && !passHbbPair){
-            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(2.0,weight);
-            makeHHPlots(prefix + "_hbbNoPair",ht,hbbfj->sdMom(),passHbbT,wjjfj->sdMom(),lepton,reader_event->met.p4());
+            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(9.0,weight);
+            makeHHPlots(prefix + "_hbbNoPair",ht,hbbfj->sdMom(),passHbbT,wjjfj->sdMom(),wjjfj->p4(),lepton,reader_event->met.p4());
+            if(passHbbT)
+                plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(10.0,weight);
         }
+
 
         return true;
     }

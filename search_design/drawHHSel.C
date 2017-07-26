@@ -18,23 +18,25 @@
     vector<TString> bkgs = {
       "ttbar",
       "wjets",
+      "qcd",
       "rare"
     };
     vector<TString> bkgNamess = {
       "t#bar{t}",
       "w+jets",
+      "QCD",
       "other"
     };
   vector<unsigned int> sigMasses = {
-    600,
-    // 800,
+    // 600,
+    800,
     1000,
     // 1200,
     // 1400,
-    1600,
+    1600
     // 1800,
     // 2000,
-    2500
+    // 2500
     // 3000,
     // 3500,
     // 4000,
@@ -47,7 +49,7 @@
 
 
 
-  auto distPlots = [&](TString name, const std::vector<TString>& vars, const std::vector<TString>& pres, bool doNorm){
+  auto distPlots = [&](TString name, const std::vector<TString>& vars, const std::vector<TString>& pres, bool doNorm, float rebin = -1){
     for(auto v : vars)     for(auto p : pres){
       Plotter * plots = new Plotter;      
       
@@ -72,6 +74,7 @@
 
         plots->addHistLine(h,TString::Format("#it{m}(X) %u GeV",sigMasses[iM]));
     }
+    if(rebin > 0) plots->rebin(rebin);
     plots->draw(false,TString::Format("%s_%s_%s",name.Data(),p.Data(),v.Data()));
     // plots->yAxis()->SetTitleOffset(1.5);
   }
@@ -137,9 +140,14 @@ auto makeRocs  = [&](std::vector<TString> vars,TString prefix, TString name,  bo
 };
 
 std::vector<TString> vars = {"hh_mass"};
+// std::vector<TString> vars = {"lepW_pt","met_o_fj","met_o_fjNoSD","met_dPhifj","met_dPhihbb","highDPhi_lepW_pt"};
 // std::vector<TString> vars = {"hWW_mass","hWW_pt","hh_mass","W_W_dR"};
-std::vector<TString> pres = {"hbb_hHT_tCSV_","hbb_lHT_tCSV_","hbb_hHT_lCSV_","hbb_lHT_lCSV_","hbbpairNoHbb_hHT_tCSV_","hbbpairNoHbb_lHT_tCSV_","hbbpairNoHbb_hHT_lCSV_","hbbpairNoHbb_lHT_lCSV_"};
-distPlots("plots",vars,pres,false);
+// std::vector<TString> pres = {"hbb_hHT_tCSV_","hbb_lHT_tCSV_","hbb_hHT_lCSV_","hbb_lHT_lCSV_","hbbpairNoHbb_hHT_tCSV_","hbbpairNoHbb_lHT_tCSV_","hbbpairNoHbb_hHT_lCSV_","hbbpairNoHbb_lHT_lCSV_"};
+std::vector<TString> pres = {"hbb_hHT_tCSV_","hbb_hHT_lCSV_"};
+
+
+// distPlots("plots",vars,pres,true);
+distPlots("plots",vars,pres,false,10);
 
 // std::vector<TString> rocvars = {"hbb_fj_mass","hbb_fj_sd_mass","hbb_fj_rawsd_mass"};
 // std::vector<TString> rocvars = {"hbb_fj_oM_bbcsv","hbb_fj_oM_minsdcsv","hbb_fj_oM_maxMed_minsdcsv"};
@@ -149,12 +157,18 @@ std::vector<unsigned int> cuts = {0,1,2,3,4};
 
 vector<TString> cutNames = {
   "inclusive",
-  "wjj fj cand",
-  "+ pass mass",
-  "+ pass #tau_{3/2}",
-  "+ pass CSV"
+  "noise",
+  "Wjj",
+  "passHbb",
+  "passHbb + tightCSV",
+  "passHbbPair",
+  "passHbbPair + tightCSV",
+  "passHbbPair && !passHbb",
+  "passHbbPair && !passHbb + tightCSV",
+  "!passHbbPair && passHbb",
+  "!passHbbPair && passHbb + tightCSV"
 };
-// effPlots("cutflow",cuts,cutNames);
+effPlots("cutflow",cuts,cutNames);
 
 
 }
