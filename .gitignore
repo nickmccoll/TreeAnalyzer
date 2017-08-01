@@ -3,6 +3,7 @@
 
 #extra
 *.pcm
+*C_ACLiC_mainC
 
 # Prerequisites
 *.d
