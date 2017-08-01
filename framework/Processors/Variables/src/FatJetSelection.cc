@@ -33,17 +33,19 @@ const FatJet* FatJetSelHelpers::getWjjCand(const MomentumF* lepton, const std::v
     return jets[fjIDX];
 }
 //_____________________________________________________________________________
-const FatJet* FatJetSelHelpers::getHbbCand(const MomentumF* lepton,  const std::vector<const FatJet*>& jets,float minPT, float hbb_minLepDPhi){
-
-    const size nFJ = jets.size();
-    std::vector<const FatJet*> prunedFJs = JetKinematics::selectObjectsDref(jets,minPT,-1);
+const FatJet* FatJetSelHelpers::getHbbCand(const FatJet* wjjCand, const MomentumF* lepton,  const std::vector<const FatJet*>& jets, float minPT, float hbb_minLepDPhi){
+    //assuming the jets collection is ordered by pT
     const FatJet * fj = 0;
-    if (nFJ >= 2) fj =
-            PhysicsUtilities::absDeltaPhi(*lepton,*jets[0]) > PhysicsUtilities::absDeltaPhi(*lepton,*jets[1])
-            ?  jets[0] : jets[1];
-    else if(nFJ == 1) fj = jets[0];
-    else return 0;
-    if(PhysicsUtilities::absDeltaPhi(*lepton,*fj) < hbb_minLepDPhi) return 0;
+    if(jets.size() == 0){
+        return 0;
+    } else if(jets.size() == 1){
+        if(wjjCand == jets[0]) return 0;
+        fj = jets[0];
+    } else {
+        fj = (wjjCand == jets[0] ? jets[1] : jets[0]);
+    }
+    if(minPT >= 0 && fj->pt() < minPT) return 0;
+    if(hbb_minLepDPhi > 0 && PhysicsUtilities::absDeltaPhi(*lepton,*fj) < hbb_minLepDPhi) return 0;
     return fj;
 }
 //_____________________________________________________________________________
@@ -64,10 +66,11 @@ bool FatJetSelHelpers::passWjjSelection(const FatJet* fj, double maxTau2oTau1,  
     return true;
 }
 //_____________________________________________________________________________
-void FatJetProcessor::loadFatJets(const MomentumF* lepton, const FatJetReader* reader_fatjet) {
+std::vector<const FatJet *> FatJetProcessor::loadFatJets(const MomentumF* lepton, const FatJetReader* reader_fatjet) {
     auto fjs = FatJetSelHelpers::selectFatJets(reader_fatjet,cand_minPT, cand_maxETA, fjJetID);
     wjjCand = FatJetSelHelpers::getWjjCand(lepton,fjs,wjj_minPT,wjj_maxLepDR);
-    hbbCand = FatJetSelHelpers::getHbbCand(lepton,fjs,hbb_minPT,hbb_minLepDPhi);
+    hbbCand = FatJetSelHelpers::getHbbCand(wjjCand,lepton,fjs,hbb_minPT,hbb_minLepDPhi);
+    return fjs;
 }
 //_____________________________________________________________________________
 const FatJet * FatJetProcessor::getHBBCand() const {return hbbCand;}
@@ -100,10 +103,11 @@ FatJetProcessor DefaultFatJetSelections::getDefaultFatJetProcessor() {
     proc.wjj_minMass    = 10     ;
     proc.wjj_maxMass    = -1     ;
     proc.wjj_maxCSVWP   = BTagging::CSV_M  ;
+
     proc.hbb_minLepDPhi = 2.0    ;
     proc.hbb_minPT      = 50     ;
     proc.hbb_maxT2oT1   = 0.55   ;
-    proc.hbb_minMass    = -1     ;
+    proc.hbb_minMass    = 10     ;
     proc.hbb_maxMass    = -1     ;
     proc.hbb_l_firMinCSVWP= BTagging::CSV_M;
     proc.hbb_l_secMinCSVWP= BTagging::CSV_L;
