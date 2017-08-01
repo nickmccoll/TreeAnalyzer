@@ -77,15 +77,15 @@
             // p->draw(false);
 };
 
-// std::vector<TString> vars = {"nearestDR","ptRank","drlepRank","dphiWRank","dphilepRank","leadpt_drlepRank","leadpt_dphiWRank","leadpt_dphilepRank","pt","drlep","dphiW","dphilep"};
+std::vector<TString> vars = {"nearestDR","ptRank","drlepRank","dphiWRank","dphilepRank","leadpt_drlepRank","leadpt_dphiWRank","leadpt_dphilepRank","pt","drlep","dphiW","dphilep"};
 // std::vector<TString> pres = {""};
-std::vector<TString> vars = {"maxDRgenAK4Jet","drAK4Jets","min_dphiAK4Jetslep","min_dRAK4Jetslep","ak4jetptRank","ak4jetptPairRank","dphipairlep","drpairjj","bkg_dphipairlep","bkg_drpairjj","ak4jetptPairRank_byDR"};
+// std::vector<TString> vars = {"maxDRgenAK4Jet","drAK4Jets","min_dphiAK4Jetslep","min_dRAK4Jetslep","ak4jetptRank","ak4jetptPairRank","dphipairlep","drpairjj","bkg_dphipairlep","bkg_drpairjj","ak4jetptPairRank_byDR"};
 std::vector<TString> pres = {""};
 distPlots("plots",vars,pres);
 
-// std::vector<unsigned int> cuts = {1,3,4,6,7,8,9};
+std::vector<unsigned int> cuts = {1,3,4,6,7,8,10};
 // std::vector<unsigned int> cuts = {10,11,12,13};
-std::vector<unsigned int> cuts = {1,4,9,10,13};
+// std::vector<unsigned int> cuts = {1,4,9,10,13};
 vector<TString> cutNames = {
   "inclusive",
   "good reco lepton",
@@ -94,7 +94,8 @@ vector<TString> cutNames = {
   "gen h(bb) #it{p}_{T},|#eta|, #DeltaR(bb)<0.8",
   "+ #geq1 #it{p}_{T} > 50 GeV |#eta|<2.4 fj",
   "+ matched fj",
-  "+ leading 2 fj's",
+  "+ not Wjj cand",
+  "+ leading  fj",
   "+ greater |#Delta#phi(fj,l)|",
   "+ |#Delta#phi(fj,l)| > 2",
   "Good gen jets (wide angle)",

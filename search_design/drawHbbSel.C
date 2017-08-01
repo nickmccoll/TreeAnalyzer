@@ -18,11 +18,13 @@
     vector<TString> bkgs = {
       "ttbar",
       "wjets",
+      // "qcd",
       "rare"
     };
     vector<TString> bkgNamess = {
       "t#bar{t}",
       "w+jets",
+      // "QCD",
       "other"
     };
   vector<unsigned int> sigMasses = {
@@ -114,7 +116,7 @@ auto makeRocs  = [&](std::vector<TString> vars,TString prefix, TString name,  bo
   auto effPlots = [&](TString name, std::vector<unsigned int>& cuts, std::vector<TString>& cutNames){
       std::vector<TH1*> hists;
       for(unsigned int iN = 0; iN < cuts.size(); ++iN){
-        hists.push_back(new TH1F(TString::Format("%s_%u",name.Data(),iN),";#it{m}(X) [GeV]",40,550,4550));
+        hists.push_back(new TH1F(TString::Format("%s_%u",name.Data(),iN),";#it{m}(X) [TeV]",40,0.550,4.550));
       }
 
       for(auto m : fullSigMasses){
@@ -122,7 +124,7 @@ auto makeRocs  = [&](std::vector<TString> vars,TString prefix, TString name,  bo
         f->GetObject(TString::Format("m%u_selection",m),h);
         if(h==0){continue;}
         for(unsigned int iC = 0; iC < cuts.size(); ++iC){
-          hists[iC]->SetBinContent(hists[iC]->FindFixBin(m),h->GetBinContent(cuts[iC]+1));
+          hists[iC]->SetBinContent(hists[iC]->FindFixBin(float(m)/1000.),h->GetBinContent(cuts[iC]+1));
         }
       }
       Plotter * p = new Plotter;
@@ -136,9 +138,9 @@ auto makeRocs  = [&](std::vector<TString> vars,TString prefix, TString name,  bo
 };
 
 // std::vector<TString> vars = {"hbb_fj_mass","hbb_fj_sd_mass","hbb_fj_rawsd_mass","hbb_fj_tau2otau1","hbb_fj_csv","hbb_fj_bbcsv","hbb_fj_minsdcsv","hbb_fj_maxMed_minsdcsv","hbb_fj_maxTight_minsdcsv"};
-// std::vector<TString> vars = {"hbb_fj_oM_mass","hbb_fj_oM_sd_mass","hbb_fj_oM_rawsd_mass","hbb_fj_oM_tau2otau1","hbb_fj_oM_bbcsv","hbb_fj_oM_minsdcsv","hbb_fj_oM_maxMed_minsdcsv","hbb_fj_oM_maxSJMass","hbb_fj_oM_lowCSVSJMass"};
+std::vector<TString> vars = {"hbb_fj_oM_mass","hbb_fj_oM_sd_mass","hbb_fj_oM_rawsd_mass","hbb_fj_oM_tau2otau1","hbb_fj_oM_bbcsv","hbb_fj_oM_minsdcsv","hbb_fj_oM_maxMed_minsdcsv","hbb_fj_oM_maxSJMass","hbb_fj_oM_lowCSVSJMass"};
 
-std::vector<TString> vars ={"hbb_pair_mass","hbb_pair_minsdcsv","hbb_pair_maxsdcsv","hbb_pair_maxMed_minsdcsv","hbb_pair_maxTight_minsdcsv","hbb_pair_oM_mass","hbb_pair_oM_minsdcsv","hbb_pair_oM_maxsdcsv","hbb_pair_oM_maxMed_minsdcsv","hbb_pair_oM_maxTight_minsdcsv"};
+// std::vector<TString> vars ={"hbb_pair_mass","hbb_pair_minsdcsv","hbb_pair_maxsdcsv","hbb_pair_maxMed_minsdcsv","hbb_pair_maxTight_minsdcsv","hbb_pair_oM_mass","hbb_pair_oM_minsdcsv","hbb_pair_oM_maxsdcsv","hbb_pair_oM_maxMed_minsdcsv","hbb_pair_oM_maxTight_minsdcsv"};
 std::vector<TString> pres = {""};
 distPlots("plots",vars,pres,true);
 
@@ -146,21 +148,28 @@ std::vector<TString> rocvars = {"hbb_fj_mass","hbb_fj_sd_mass","hbb_fj_rawsd_mas
 // std::vector<TString> rocvars = {"hbb_fj_oM_bbcsv","hbb_fj_oM_minsdcsv","hbb_fj_oM_maxMed_minsdcsv"};
 // makeRocs(rocvars,"","roc",true);
 
-// std::vector<unsigned int> cuts = {0,1,2,3,4,5};
-// std::vector<unsigned int> cuts = {0,4,5,8,9};
-std::vector<unsigned int> cuts = {6,7,8,9};
+// std::vector<unsigned int> cuts = {0,1,6,7,8,9,10};
+std::vector<unsigned int> cuts = {0,1,2,3,4,5};
+// std::vector<unsigned int> cuts = {6,7,8,9};
 vector<TString> cutNames = {
   "inclusive",
-  "hbb fj cand",
-  "+ pass mass",
-  "+ pass #tau_{3/2}",
-  "+ pass CSV (loose)",
-  "+ pass CSV (tight)",
+  "fatjet candidate",
+  "+ softdrop mass  > 10 GeV",
+  "+ #tau_{3/2} < 0.55",
+  "+ 2 CSV(l), #geq1 CSV(m) subjets",
+  "+ 2 CSV(m) subjets",
+  "hbb fj cand truth matched",
+  "+ softdrop mass  > 10 GeV",
+  "+ #tau_{3/2} < 0.55",
+  "+ 2 CSV(l), #geq1 CSV(m) subjets",
+  "+ 2 CSV(m) subjets",
   "hbb pair cand",
   "+ pass pair mass",
   "+ pass pair CSV (loose)",
   "+ pass pair CSV (tight)"
 };
+
+
 effPlots("cutflow",cuts,cutNames);
 // std::vector<unsigned int> cuts = {0,4,5};
 // std::vector<unsigned int> cuts = {0,4,11,12};

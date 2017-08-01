@@ -17,6 +17,7 @@
 #include "Processors/Corrections/interface/EventWeights.h"
 #include "Processors/GenTools/interface/DiHiggsEvent.h"
 #include "Processors/Variables/interface/JetKinematics.h"
+#include "Processors/Variables/interface/FatJetSelection.h"
 
 #include "TPRegexp.h"
 using namespace TAna;
@@ -30,6 +31,9 @@ public:
         if(match->GetSize())
             prefix = ((TObjString *)match->At(1))->GetString();
         else std::cout <<" No pre!"<<std::endl;
+
+        fjProc = DefaultFatJetSelections::getDefaultFatJetProcessor();
+
     }
     void loadVariables() override {
         reader_event    = (EventReader*)load(new EventReader("event",isRealData()));
@@ -48,7 +52,7 @@ public:
 
 
     void getAK4Sel(const DiHiggsEvent& diHiggsEvt, const MomentumF& lepton, const float weight ) {
-        const float selOff = 10;
+        const float selOff = 11;
         if(diHiggsEvt.b1->pt() < 20 || diHiggsEvt.b2->pt() < 20 || diHiggsEvt.b1->absEta() > 2.4 ||diHiggsEvt.b1->absEta() > 2.4)
             return;
         plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(0.0 +  selOff,weight);
@@ -192,7 +196,8 @@ public:
         if(PhysicsUtilities::deltaR(*diHiggsEvt.b1,*diHiggsEvt.b2) > 0.8 ) return false;
         plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(4.0,weight);
 
-        auto fjs = JetKinematics::selectObjects(reader_fatjet->jets,50,2.4);
+
+        auto fjs = fjProc.loadFatJets(&lepton,reader_fatjet);
         double minDR = 0;
         int fjIDX = PhysicsUtilities::findNearestDRDeref(hbb,fjs,minDR);
         const auto* fj = fjs[fjIDX];
@@ -203,6 +208,24 @@ public:
 
         if(minDR > 0.5) return false;
         plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(6.0,weight);
+
+        double minDRLEP = 0;
+        const auto* wjjfj = fjProc.getWjjCand();
+        if(wjjfj == fj ) return false;
+        plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(7.0,weight);
+
+
+        std::vector<const FatJet*> tempFJs; tempFJs.reserve(fjs.size());
+        int new_idx = -1;
+        int tempFJIDX =-1;
+        for(unsigned int iJ = 0; iJ < fjs.size(); ++iJ ){
+            if(wjjfj == fjs[iJ]) continue;
+            new_idx++;
+            if(iJ == fjIDX) tempFJIDX = new_idx;
+            tempFJs.push_back(fjs[iJ]);
+        }
+        fjs = tempFJs;
+        fjIDX = tempFJIDX;
 
         int ptRank = 0;
         std::vector<std::pair<float,int>> rankedPTS(fjs.size());
@@ -255,7 +278,7 @@ public:
         plotter.getOrMake1DPre(prefix,"leadpt_dphiWRank",";higgs fj #Delta#phi(W) rank; arbitrary units",3,-1.5,1.5 )->Fill(leadpt_dphiWRank,weight);
         plotter.getOrMake1DPre(prefix,"leadpt_dphilepRank",";higgs fj #Delta#phi(lep) rank; arbitrary units",3,-1.5,1.5 )->Fill(leadpt_dphilepRank,weight);
 
-        std::vector<FatJet*> highDPhiJets;
+        std::vector<const FatJet*> highDPhiJets;
         for(unsigned int iJ = 0; iJ < fjs.size(); ++iJ){
             if(PhysicsUtilities::absDeltaPhi(lepton,*fjs[iJ]) < 2) continue;
             highDPhiJets.push_back(fjs[iJ]);
@@ -273,12 +296,12 @@ public:
         plotter.getOrMake1DPre(prefix,"dphiW",";higgs fj #Delta#phi(W); arbitrary units",500,0,5.0 )->Fill(PhysicsUtilities::absDeltaPhi(recoW,*fj),weight);
         plotter.getOrMake1DPre(prefix,"dphilep",";higgs fj #Delta#phi(lep); arbitrary units",500,0,5.0 )->Fill(PhysicsUtilities::absDeltaPhi(lepton,*fj),weight);
 
-        if(ptRank > 1) return false;
-        plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(7.0,weight);
-        if(leadpt_dphilepRank != 0) return false;
+        if(ptRank != 0) return false;
         plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(8.0,weight);
+//        if(leadpt_dphilepRank != 0) return false;
+//        plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(9.0,weight);
         if(PhysicsUtilities::absDeltaPhi(lepton,*fj) < 2.0) return false;
-        plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(9.0,weight);
+        plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(10.0,weight);
 
 
 
@@ -302,6 +325,8 @@ public:
 
     HistGetter plotter;
     TString prefix;
+    FatJetProcessor fjProc;
+
 
 
 

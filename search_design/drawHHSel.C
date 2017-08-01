@@ -15,50 +15,52 @@
     4500
 
   };
-    vector<TString> bkgs = {
+    vector<TString> bkgs 
+    = {
       "ttbar",
       "wjets",
-      "qcd",
+      // "qcd",
       "rare"
     };
     vector<TString> bkgNamess = {
       "t#bar{t}",
       "w+jets",
-      "QCD",
+      // "QCD",
       "other"
     };
   vector<unsigned int> sigMasses = {
     // 600,
-    800,
-    1000,
+    // 800,
+    // 1000
     // 1200,
     // 1400,
     1600
     // 1800,
     // 2000,
     // 2500
-    // 3000,
+    // 3000
     // 3500,
-    // 4000,
+    // 4000
     // 4500
 
   };
 
-  TFile * f = new TFile("getHHSel_plots.root","read");
+  // TFile * f = new TFile("getHHSel_plots.root","read");
+    TFile * f = new TFile("checkControlRegions_plots.root","read");
   
 
 
 
-  auto distPlots = [&](TString name, const std::vector<TString>& vars, const std::vector<TString>& pres, bool doNorm, float rebin = -1){
+  auto distPlots = [&](TString name, const std::vector<TString>& vars, const std::vector<TString>& pres, bool doNorm, float rebin = -1, bool addLumi=false){
     for(auto v : vars)     for(auto p : pres){
       Plotter * plots = new Plotter;      
       
       for(unsigned int iS = 0; bkgs[iS][0]; ++iS){
-        TH1 * h = 0;        
-        f->GetObject(TString::Format("%s_%s%s",bkgs[iS].Data(),p.Data(),v.Data()),h);        
+        TH1 * h = 0;
+        f->GetObject(TString::Format("%s_%s%s",bkgs[iS].Data(),p.Data(),v.Data()),h);
         if(h == 0) continue;
-        plots->addStackHist(h,bkgNamess[iS]);        
-      }      
+        plots->addStackHist(h,bkgNamess[iS]);
+      }
       
       for(unsigned int iM = 0; iM < sigMasses.size(); ++iM){
         TH1 * h = 0;
@@ -72,9 +74,13 @@
            h->Add(plots->getTotStack());
          }
 
-        plots->addHistLine(h,TString::Format("#it{m}(X) %u GeV",sigMasses[iM]));
+        plots->addHistLine(h,TString::Format("#it{m}(X) %.1f TeV",float(sigMasses[iM])/1000.));
     }
     if(rebin > 0) plots->rebin(rebin);
+    if(addLumi){
+    plots->setCMSLumi(33, "36 fb^{-1} (13 TeV)", "Simulation preliminary" );
+    plots->setYTitle("Events / 10 GeV");
+    }
     plots->draw(false,TString::Format("%s_%s_%s",name.Data(),p.Data(),v.Data()));
     // plots->yAxis()->SetTitleOffset(1.5);
   }
@@ -138,16 +144,18 @@ auto makeRocs  = [&](std::vector<TString> vars,TString prefix, TString name,  bo
 
             // p->draw(false);
 };
-
-std::vector<TString> vars = {"hh_mass"};
+std::vector<TString> vars = {"hh_mass","hh700to900_hbb_mass","hh900to1100_hbb_mass","hh1400to1800_hbb_mass"};
+// std::vector<TString> vars = {"hh_mass"};
 // std::vector<TString> vars = {"lepW_pt","met_o_fj","met_o_fjNoSD","met_dPhifj","met_dPhihbb","highDPhi_lepW_pt"};
 // std::vector<TString> vars = {"hWW_mass","hWW_pt","hh_mass","W_W_dR"};
 // std::vector<TString> pres = {"hbb_hHT_tCSV_","hbb_lHT_tCSV_","hbb_hHT_lCSV_","hbb_lHT_lCSV_","hbbpairNoHbb_hHT_tCSV_","hbbpairNoHbb_lHT_tCSV_","hbbpairNoHbb_hHT_lCSV_","hbbpairNoHbb_lHT_lCSV_"};
-std::vector<TString> pres = {"hbb_hHT_tCSV_","hbb_hHT_lCSV_"};
+// std::vector<TString> pres = {"hbb_hHT_tCSV_","hbb_hHT_lCSV_","hbb_lHT_tCSV_","hbb_lHT_lCSV_"};
+// std::vector<TString> pres = {"stdWjj_stdHBB_","stdWjj_stdHBBT_","oneBWjj_stdHBB_","oneBWjj_stdHBBT_"};
+std::vector<TString> pres = {"stdWjj_stdHBB_","stdWjj_stdHBBT_","stdWjj_oneBHBB_","stdWjj_noBHBB_"};
 
 
 // distPlots("plots",vars,pres,true);
-distPlots("plots",vars,pres,false,10);
+distPlots("plots",vars,pres,false,2,true);
 
 // std::vector<TString> rocvars = {"hbb_fj_mass","hbb_fj_sd_mass","hbb_fj_rawsd_mass"};
 // std::vector<TString> rocvars = {"hbb_fj_oM_bbcsv","hbb_fj_oM_minsdcsv","hbb_fj_oM_maxMed_minsdcsv"};
@@ -168,7 +176,7 @@ vector<TString> cutNames = {
   "!passHbbPair && passHbb",
   "!passHbbPair && passHbb + tightCSV"
 };
-effPlots("cutflow",cuts,cutNames);
+// effPlots("cutflow",cuts,cutNames);
 
 
 }

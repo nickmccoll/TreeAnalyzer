@@ -17,6 +17,9 @@
 #include "Processors/Corrections/interface/EventWeights.h"
 #include "Processors/GenTools/interface/DiHiggsEvent.h"
 #include "Processors/Variables/interface/JetKinematics.h"
+#include "Processors/Variables/interface/FatJetSelection.h"
+#include "Processors/Variables/interface/BTagging.h"
+
 
 #include "TPRegexp.h"
 using namespace TAna;
@@ -34,6 +37,9 @@ public:
         if(nrSubStr>1)
             prefix = ((TObjString *)match->At(1))->GetString();
         else std::cout <<" No pre!"<<std::endl;
+
+        fjProc = DefaultFatJetSelections::getDefaultFatJetProcessor();
+
     }
     void loadVariables() override {
         reader_event    = (EventReader*)load(new EventReader("event",isRealData()));
@@ -49,7 +55,7 @@ public:
         setBranchAddress("skim" ,"selLep_muon",   &selLep_muon         ,true);
     }
 
-    const FatJet * getSignalFJ(const DiHiggsEvent& diHiggsEvt, const MomentumF* lepton, const std::vector<FatJet*>& fjs){
+    const FatJet * getSignalFJ(const DiHiggsEvent& diHiggsEvt, const MomentumF* lepton, const std::vector<const FatJet*>& fjs){
 
         double genLepDR = PhysicsUtilities::deltaR(*lepton,*diHiggsEvt.w1_d1);
         if(genLepDR > 0.2) return 0;
@@ -104,30 +110,6 @@ public:
             return  std::make_pair((const Jet*)(0),(const Jet*)(0));
     }
 
-    const FatJet* getFJ(const MomentumF* lepton, const std::vector<FatJet*>& fjs) {
-        std::vector<FatJet*> sortedFJ = fjs;
-        std::sort(sortedFJ.begin(), sortedFJ.end(),PhysicsUtilities::greaterPTDeref<FatJet>());
-
-        const size nFJ = sortedFJ.size();
-        const FatJet * fj = 0;
-        if (nFJ >= 2) fj =
-                PhysicsUtilities::absDeltaPhi(*lepton,*sortedFJ[0]) > PhysicsUtilities::absDeltaPhi(*lepton,*sortedFJ[1])
-                ?  sortedFJ[0] : sortedFJ[1];
-        else if(nFJ == 1) fj = sortedFJ[0];
-        else return 0;
-
-        if(PhysicsUtilities::absDeltaPhi(*lepton,*fj) < 2.0) return 0;
-        return fj;
-    }
-
-    const float CSVT = 0.9535;
-    const float CSVM = 0.8484;
-    const float CSVL = 0.5426;
-    const float DoubleBL  = 0.3;
-    const float DoubleBM1 = 0.6;
-    const float DoubleBM2 = 0.8;
-    const float DoubleBT  = 0.9;
-
 
     void makeHbbPairPlots(TString pre, const std::pair<const Jet*,const Jet*>& jetPair){
 
@@ -138,27 +120,27 @@ public:
         plotter.getOrMake1DPre(pre,"hbb_pair_mass"             ,";hbb pair mass [GeV]; a.u."       ,250,0,500)->Fill(pairMass,weight );
         plotter.getOrMake1DPre(pre,"hbb_pair_minsdcsv"         ,";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(minCSV,weight );
         plotter.getOrMake1DPre(pre,"hbb_pair_maxsdcsv"         ,";hbb pair bb max sj csv; a.u."    ,100,0,1  )->Fill(maxCSV,weight );
-        plotter.getOrMake1DPre(pre,"hbb_pair_maxMed_minsdcsv"  ,";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(maxCSV >= CSVM ? minCSV :0.0,weight );
-        plotter.getOrMake1DPre(pre,"hbb_pair_maxTight_minsdcsv",";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(maxCSV >= CSVT ? minCSV :0.0,weight );
+        plotter.getOrMake1DPre(pre,"hbb_pair_maxMed_minsdcsv"  ,";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(maxCSV >= BTagging::CSVWP_VALS[BTagging::CSV_M] ? minCSV :0.0,weight );
+        plotter.getOrMake1DPre(pre,"hbb_pair_maxTight_minsdcsv",";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(maxCSV >= BTagging::CSVWP_VALS[BTagging::CSV_T] ? minCSV :0.0,weight );
 
         bool passMassL = (pairMass > 20);
         bool passMass = (pairMass > 90 && pairMass< 140);
-        bool passCSV = (maxCSV >= CSVM && minCSV >= CSVL  );
-        bool passCSVT = (minCSV >= CSVM  );
+        bool passCSV = (maxCSV >= BTagging::CSVWP_VALS[BTagging::CSV_M] && minCSV >= BTagging::CSVWP_VALS[BTagging::CSV_L]  );
+        bool passCSVT = (minCSV >= BTagging::CSVWP_VALS[BTagging::CSV_M]  );
 
         if(passMass)
-            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(7.0,weight);
+            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(12.0,weight);
         if(passMass&&passCSV)
-            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(8.0,weight);
+            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(13.0,weight);
         if(passMass && passCSVT)
-            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(9.0,weight);
+            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(14.0,weight);
 
 
         if(passMass){
             plotter.getOrMake1DPre(pre,"hbb_pair_oM_minsdcsv"         ,";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(minCSV,weight );
             plotter.getOrMake1DPre(pre,"hbb_pair_oM_maxsdcsv"         ,";hbb pair bb max sj csv; a.u."    ,100,0,1  )->Fill(maxCSV,weight );
-            plotter.getOrMake1DPre(pre,"hbb_pair_oM_maxMed_minsdcsv"  ,";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(maxCSV >= CSVM ? minCSV :0.0,weight );
-            plotter.getOrMake1DPre(pre,"hbb_pair_oM_maxTight_minsdcsv",";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(maxCSV >= CSVT ? minCSV :0.0,weight );
+            plotter.getOrMake1DPre(pre,"hbb_pair_oM_maxMed_minsdcsv"  ,";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(maxCSV >= BTagging::CSVWP_VALS[BTagging::CSV_M] ? minCSV :0.0,weight );
+            plotter.getOrMake1DPre(pre,"hbb_pair_oM_maxTight_minsdcsv",";hbb pair bb min sj csv; a.u."    ,100,0,1  )->Fill(maxCSV >= BTagging::CSVWP_VALS[BTagging::CSV_T] ? minCSV :0.0,weight );
         }
 
         if(passCSV&&passMassL){
@@ -169,7 +151,7 @@ public:
 
 
 
-    void makeHbbPlots(TString pre, const FatJet* fj){
+    void makeHbbPlots(TString pre, const FatJet* fj, bool goodSignal){
 
         plotter.getOrMake1DPre(pre,"hbb_fj_mass"             ,";hbb fj mass [GeV]; a.u."       ,250,0,500)->Fill(fj->mass(),weight );
         plotter.getOrMake1DPre(pre,"hbb_fj_sd_mass"          ,";hbb fj sd mass [GeV]; a.u."    ,250,0,500)->Fill(fj->sdMom().mass(),weight );
@@ -179,23 +161,34 @@ public:
         plotter.getOrMake1DPre(pre,"hbb_fj_bbcsv"            ,";hbb fj bb csv; a.u."           ,100,0,1  )->Fill(fj->bbt(),weight );
         plotter.getOrMake1DPre(pre,"hbb_fj_minsdcsv"         ,";hbb fj bb min sj csv; a.u."    ,100,0,1  )->Fill(fj->minSJCSV(),weight );
         plotter.getOrMake1DPre(pre,"hbb_fj_maxsdcsv"         ,";hbb fj bb max sj csv; a.u."    ,100,0,1  )->Fill(fj->maxSJCSV(),weight );
-        plotter.getOrMake1DPre(pre,"hbb_fj_maxMed_minsdcsv"  ,";hbb fj bb min sj csv; a.u."    ,100,0,1  )->Fill(fj->maxSJCSV() >= CSVM ? fj->minSJCSV() :0.0,weight );
-        plotter.getOrMake1DPre(pre,"hbb_fj_maxTight_minsdcsv",";hbb fj bb min sj csv; a.u."    ,100,0,1  )->Fill(fj->maxSJCSV() >= CSVT? fj->minSJCSV() :0.0,weight );
+        plotter.getOrMake1DPre(pre,"hbb_fj_maxMed_minsdcsv"  ,";hbb fj bb min sj csv; a.u."    ,100,0,1  )->Fill(fj->maxSJCSV() >= BTagging::CSVWP_VALS[BTagging::CSV_M] ? fj->minSJCSV() :0.0,weight );
+        plotter.getOrMake1DPre(pre,"hbb_fj_maxTight_minsdcsv",";hbb fj bb min sj csv; a.u."    ,100,0,1  )->Fill(fj->maxSJCSV() >= BTagging::CSVWP_VALS[BTagging::CSV_T]? fj->minSJCSV() :0.0,weight );
 
-        bool passMassL = (fj->rawSdMom().mass() > 20);
+        bool passMassL = (fj->sdMom().mass() > 10);
         bool passMass = (fj->sdMom().mass() > 90 && fj->sdMom().mass() < 140);
         bool passTau = fj->tau2otau1() < 0.55;
-        bool passCSV = (fj->maxSJCSV() >= CSVM && fj->minSJCSV() >= CSVL  );
-        bool passCSVT = (fj->minSJCSV() >= CSVM  );
+        bool passCSV = (fj->maxSJCSV() >= BTagging::CSVWP_VALS[BTagging::CSV_M] && fj->minSJCSV() >= BTagging::CSVWP_VALS[BTagging::CSV_L]  );
+        bool passCSVT = (fj->minSJCSV() >= BTagging::CSVWP_VALS[BTagging::CSV_M]  );
 
-        if(passMass)
+        if(passMassL){
             plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(2.0,weight);
-        if(passMass&&passTau)
+            if(goodSignal) plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(7.0,weight);
+        }
+        if(passTau&&passMassL){
             plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(3.0,weight);
-        if(passMass&&passTau&&passCSV)
+            if(goodSignal) plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(8.0,weight);
+        }
+        if(passTau&&passCSV&&passMassL){
             plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(4.0,weight);
-        if(passMass && passTau&& passCSVT)
+            if(goodSignal) plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(9.0,weight);
+
+        }
+        if(passTau&& passCSVT&&passMassL){
             plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(5.0,weight);
+             if(goodSignal) plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(10.0,weight);
+        }
+
+
 
 
         if(passMass && passTau){
@@ -203,8 +196,8 @@ public:
             plotter.getOrMake1DPre(pre,"hbb_fj_oM_bbcsv"            ,";hbb fj bb csv; a.u."       ,100,0,1)->Fill(fj->bbt(),weight );
             plotter.getOrMake1DPre(pre,"hbb_fj_oM_minsdcsv"         ,";hbb fj bb min sj csv; a.u.",100,0,1)->Fill(fj->minSJCSV(),weight );
             plotter.getOrMake1DPre(pre,"hbb_fj_oM_maxsdcsv"         ,";hbb fj bb max sj csv; a.u.",100,0,1)->Fill(fj->maxSJCSV(),weight );
-            plotter.getOrMake1DPre(pre,"hbb_fj_oM_maxMed_minsdcsv"  ,";hbb fj bb min sj csv; a.u.",100,0,1)->Fill(fj->maxSJCSV() >= CSVM ? fj->minSJCSV() :0.0,weight );
-            plotter.getOrMake1DPre(pre,"hbb_fj_oM_maxTight_minsdcsv",";hbb fj bb min sj csv; a.u.",100,0,1)->Fill(fj->maxSJCSV() >= CSVT? fj->minSJCSV() :0.0,weight );
+            plotter.getOrMake1DPre(pre,"hbb_fj_oM_maxMed_minsdcsv"  ,";hbb fj bb min sj csv; a.u.",100,0,1)->Fill(fj->maxSJCSV() >= BTagging::CSVWP_VALS[BTagging::CSV_M] ? fj->minSJCSV() :0.0,weight );
+            plotter.getOrMake1DPre(pre,"hbb_fj_oM_maxTight_minsdcsv",";hbb fj bb min sj csv; a.u.",100,0,1)->Fill(fj->maxSJCSV() >= BTagging::CSVWP_VALS[BTagging::CSV_T]? fj->minSJCSV() :0.0,weight );
         }
         if(passMass&&passCSV){
             plotter.getOrMake1DPre(pre,"hbb_fj_oM_tau2otau1",";hbb fj #tau_{2}/#tau_{1}; a.u.",100,0,1)->Fill(fj->tau2otau1(),weight );
@@ -228,10 +221,11 @@ public:
 
     bool runEvent() override {
         DiHiggsEvent diHiggsEvt;
+        if(!EventWeights::passEventFilters(reader_event)) return false;
 
         if(reader_event->process !=
                 FillerConstants::SIGNAL){
-            prefix = reader_event->process >= FillerConstants::ZJETS ? "rare" :
+            prefix = (reader_event->process >= FillerConstants::ZJETS &&  reader_event->process != FillerConstants::QCD)  ? "rare" :
                     FillerConstants::MCProcessNames[reader_event->process];
         } else {
             diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
@@ -240,22 +234,25 @@ public:
 
         MomentumF lepton(ASTypes::CylLorentzVectorF(selLep_pt,selLep_eta,selLep_phi,0));
         weight = EventWeights::getNormalizedEventWeight(reader_event,xsec(),nSampEvt(),lumi());
-        auto fjs = JetKinematics::selectObjects(reader_fatjet->jets,50,2.4);
+        if(reader_event->process == FillerConstants::QCD) weight /= 20;
+
+        auto fjs = fjProc.loadFatJets(&lepton,reader_fatjet);
 
         plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(0.0,weight);
 
         //Do fat jets
-        const auto* fj = getFJ(&lepton,fjs);
+        const auto* fj = fjProc.getHBBCand();
         if(fj){
-            bool process = true;
+            bool goodSignal = true;
             if(reader_event->process == FillerConstants::SIGNAL) {
                 const auto* sigfj = getSignalFJ(diHiggsEvt,&lepton,fjs);
-                if(sigfj != fj) process = false;
+                if(sigfj != fj) goodSignal = false;
             }
-            if(process){
-                plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(1.0,weight);
-                makeHbbPlots(prefix,fj);
-            }
+
+            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(1.0,weight);
+            if(goodSignal) plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(6.0,weight);
+
+            makeHbbPlots(prefix,fj,goodSignal);
         }
         //do unmerged jets
         auto jets = JetKinematics::selectObjects(reader_jet->jets,20,2.4);
@@ -268,7 +265,7 @@ public:
                 if(sigfj.second != jetPair.first && sigfj.second != jetPair.second ) process = false;
             }
             if(process){
-                plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(6.0,weight);
+                plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(11.0,weight);
                 makeHbbPairPlots(prefix,jetPair);
             }
         }
@@ -297,6 +294,7 @@ public:
     HistGetter plotter;
     TString prefix;
 
+    FatJetProcessor fjProc;
 
 
 };

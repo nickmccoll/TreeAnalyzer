@@ -114,7 +114,7 @@ auto makeRocs  = [&](std::vector<TString> vars,TString prefix, TString name,  bo
   auto effPlots = [&](TString name, std::vector<unsigned int>& cuts, std::vector<TString>& cutNames){
       std::vector<TH1*> hists;
       for(unsigned int iN = 0; iN < cuts.size(); ++iN){
-        hists.push_back(new TH1F(TString::Format("%s_%u",name.Data(),iN),";#it{m}(X) [GeV]",40,550,4550));
+        hists.push_back(new TH1F(TString::Format("%s_%u",name.Data(),iN),";#it{m}(X) [TeV]",40,0.550,4.550));
       }
 
       for(auto m : fullSigMasses){
@@ -122,7 +122,7 @@ auto makeRocs  = [&](std::vector<TString> vars,TString prefix, TString name,  bo
         f->GetObject(TString::Format("m%u_selection",m),h);
         if(h==0){continue;}
         for(unsigned int iC = 0; iC < cuts.size(); ++iC){
-          hists[iC]->SetBinContent(hists[iC]->FindFixBin(m),h->GetBinContent(cuts[iC]+1));
+          hists[iC]->SetBinContent(hists[iC]->FindFixBin(float(m)/1000.),h->GetBinContent(cuts[iC]+1));
         }
       }
       Plotter * p = new Plotter;
@@ -144,13 +144,18 @@ std::vector<TString> rocvars = {"hbb_fj_mass","hbb_fj_sd_mass","hbb_fj_rawsd_mas
 // makeRocs(rocvars,"","roc",true);
 
 std::vector<unsigned int> cuts = {0,1,2,3,4};
+// std::vector<unsigned int> cuts = {0,1,5,6,7,8};
 
 vector<TString> cutNames = {
   "inclusive",
-  "wjj fj cand",
-  "+ pass mass",
-  "+ pass #tau_{3/2}",
-  "+ pass CSV"
+  "fatjet candidate",
+  "+ softdrop mass  > 10 GeV",
+  "+ #tau_{3/2} < 0.55",
+  "+ no medium CSV subjet",
+  "wjj fj cand truth matched",
+  "+ softdrop mass  > 10 GeV",
+  "+ #tau_{3/2} < 0.55",
+  "+ no medium CSV subjet"
 };
 effPlots("cutflow",cuts,cutNames);
 

@@ -17,6 +17,8 @@
 #include "Processors/Corrections/interface/EventWeights.h"
 #include "Processors/GenTools/interface/DiHiggsEvent.h"
 #include "Processors/Variables/interface/JetKinematics.h"
+#include "Processors/Variables/interface/BTagging.h"
+#include "Processors/Variables/interface/FatJetSelection.h"
 
 #include "TPRegexp.h"
 using namespace TAna;
@@ -31,6 +33,9 @@ public:
         if(nrSubStr>1)
             prefix = ((TObjString *)match->At(1))->GetString();
         else std::cout <<" No pre!"<<std::endl;
+
+        fjProc = DefaultFatJetSelections::getDefaultFatJetProcessor();
+
     }
     void loadVariables() override {
         reader_event    = (EventReader*)load(new EventReader("event",isRealData()));
@@ -46,7 +51,7 @@ public:
         setBranchAddress("skim" ,"selLep_muon",   &selLep_muon         ,true);
     }
 
-    const FatJet * getSignalFJ(const DiHiggsEvent& diHiggsEvt, const MomentumF* lepton, const std::vector<FatJet*>& fjs){
+    const FatJet * getSignalFJ(const DiHiggsEvent& diHiggsEvt, const MomentumF* lepton, const std::vector<const FatJet*>& fjs){
         double genLepDR = PhysicsUtilities::deltaR(*lepton,*diHiggsEvt.w1_d1);
         if(genLepDR > 0.2) return 0;
         const MomentumF wjj = diHiggsEvt.w2_d1->p4() + diHiggsEvt.w2_d2->p4();
@@ -60,26 +65,8 @@ public:
         return fjs[fjIDX];
     }
 
-    const FatJet* getFJ(const MomentumF* lepton, const std::vector<FatJet*>& fjs) {
-        double minDR = 100000;
-        int fjIDX = PhysicsUtilities::findNearestDRDeref(*lepton,fjs,minDR);
-        if(fjIDX < 0 || minDR > 1.2) return 0;
-        return fjs[fjIDX];
-    }
 
-    const float CSVT = 0.9535;
-    const float CSVM = 0.8484;
-    const float CSVL = 0.5426;
-    const float DoubleBL  = 0.3;
-    const float DoubleBM1 = 0.6;
-    const float DoubleBM2 = 0.8;
-    const float DoubleBT  = 0.9;
-
-
-
-
-
-    void makeWjjPlots(TString pre, const FatJet* fj){
+    void makeWjjPlots(TString pre, const FatJet* fj, bool goodSignal){
 
         plotter.getOrMake1DPre(pre,"wjj_fj_mass"             ,";wjj fj mass [GeV]; a.u."       ,250,0,500)->Fill(fj->mass(),weight );
         plotter.getOrMake1DPre(pre,"wjj_fj_sd_mass"          ,";wjj fj sd mass [GeV]; a.u."    ,250,0,500)->Fill(fj->sdMom().mass(),weight );
@@ -92,14 +79,23 @@ public:
 
         bool passMass = (fj->sdMom().mass() > 10);
         bool passTau = fj->tau2otau1() < 0.55;
-        bool passCSV = (fj->maxSJCSV() < CSVM);
+        bool passCSV = (fj->maxSJCSV() < BTagging::CSVWP_VALS[BTagging::CSV_M]);
 
-        if(passMass)
+        if(passMass){
             plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(2.0,weight);
-        if(passMass&&passTau)
+            if(goodSignal) plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(6.0,weight);
+
+        }
+        if(passMass&&passTau){
             plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(3.0,weight);
-        if(passMass&&passTau&&passCSV)
+            if(goodSignal) plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(7.0,weight);
+
+        }
+        if(passMass&&passTau&&passCSV){
             plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(4.0,weight);
+            if(goodSignal) plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(8.0,weight);
+
+        }
 
         if(passMass && passTau){
             plotter.getOrMake1DPre(pre,"wjj_fj_oM_csv"              ,";wjj fj csv; a.u."          ,100,0,1)->Fill(fj->csv(),weight );
@@ -118,11 +114,13 @@ public:
 
 
     bool runEvent() override {
+        if(!EventWeights::passEventFilters(reader_event)) return false;
+
         DiHiggsEvent diHiggsEvt;
 
         if(reader_event->process !=
                 FillerConstants::SIGNAL){
-            prefix = reader_event->process >= FillerConstants::ZJETS ? "rare" :
+            prefix = (reader_event->process >= FillerConstants::ZJETS &&  reader_event->process != FillerConstants::QCD)  ? "rare" :
                     FillerConstants::MCProcessNames[reader_event->process];
         } else {
             diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
@@ -131,22 +129,24 @@ public:
 
         MomentumF lepton(ASTypes::CylLorentzVectorF(selLep_pt,selLep_eta,selLep_phi,0));
         weight = EventWeights::getNormalizedEventWeight(reader_event,xsec(),nSampEvt(),lumi());
-        auto fjs = JetKinematics::selectObjects(reader_fatjet->jets,50,2.4);
+        if(reader_event->process == FillerConstants::QCD) weight /= 20;
+
 
         plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(0.0,weight);
 
         //Do fat jets
-        const auto* fj = getFJ(&lepton,fjs);
-        if(fj){
-            bool process = true;
+
+        auto fjs = fjProc.loadFatJets(&lepton,reader_fatjet);
+        const auto* wjjfj = fjProc.getWjjCand();
+        if(wjjfj){
+            bool goodSignal = true;
             if(reader_event->process == FillerConstants::SIGNAL) {
                 const auto* sigfj = getSignalFJ(diHiggsEvt,&lepton,fjs);
-                if(sigfj != fj) process = false;
+                if(sigfj != wjjfj) goodSignal = false;
             }
-            if(process){
-                plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(1.0,weight);
-                makeWjjPlots(prefix,fj);
-            }
+            plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(1.0,weight);
+            if(goodSignal) plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(5.0,weight);
+            makeWjjPlots(prefix,wjjfj, goodSignal);
         }
 
         return true;
@@ -170,6 +170,7 @@ public:
     HistGetter plotter;
     TString prefix;
 
+    FatJetProcessor fjProc;
 
 
 };

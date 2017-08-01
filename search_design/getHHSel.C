@@ -105,19 +105,19 @@ public:
             makeMPlots(pre+"_tCSV");
         else
             makeMPlots(pre+"_lCSV");
-        if(ht >= 400)
+        if(ht >= 500)
             makeMPlots(pre+"_hHT");
-        else if( ht < 400 && lepton.pt() >= 30)
+        else if( ht < 500 && lepton.pt() >= 30)
             makeMPlots(pre+"_lHT");
 
-        if(passTightCSV && ht >= 400 )
+        if(passTightCSV && ht >= 500 )
             makeMPlots(pre+"_hHT_tCSV");
-        if(passTightCSV &&  ht < 400 && lepton.pt() >= 30 )
+        if(passTightCSV &&  ht < 500 && lepton.pt() >= 30 )
             makeMPlots(pre+"_lHT_tCSV");
 
-        if(!passTightCSV && ht >= 400 )
+        if(!passTightCSV && ht >= 500 )
             makeMPlots(pre+"_hHT_lCSV");
-        if(!passTightCSV &&  ht < 400 && lepton.pt() >= 30 )
+        if(!passTightCSV &&  ht < 500 && lepton.pt() >= 30 )
             makeMPlots(pre+"_lHT_lCSV");
     }
 
@@ -146,16 +146,8 @@ public:
         const bool goodWJJFJ  = fjProc.passWjjSel();
 
         plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(0.0,weight);
+        if(!EventWeights::passEventFilters(reader_event)) return false;
 
-
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_goodVertices) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_globalTightHalo2016Filter) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_HBHENoiseFilter) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_HBHENoiseIsoFilter) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_EcalDeadCellTriggerPrimitiveFilter) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_eeBadScFilter) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::AnaTM_badMuons) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::AnaTM_badChargedHadrons) ) return false;
         plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(1.0,weight);
 
 
@@ -170,8 +162,8 @@ public:
             const float pairMass = (jetPair.first->p4()+jetPair.second->p4() ).mass();
             const float minCSV = std::min(jetPair.first->csv(),jetPair.second->csv());
             const float maxCSV = std::max(jetPair.first->csv(),jetPair.second->csv());
-            passHbbPair = pairMass > 90 && pairMass< 140 && maxCSV >= BTagging::CSV_M && minCSV >= BTagging::CSV_L;
-            passHbbPairT = passHbbPair && minCSV >= BTagging::CSV_M;
+            passHbbPair = pairMass > 90 && pairMass< 140 && maxCSV >= BTagging::CSVWP_VALS[BTagging::CSV_M] && minCSV >= BTagging::CSVWP_VALS[BTagging::CSV_L];
+            passHbbPairT = passHbbPair && minCSV >= BTagging::CSVWP_VALS[BTagging::CSV_M];
         }
 
         if(!goodWJJFJ) return false;
