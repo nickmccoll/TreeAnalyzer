@@ -4,12 +4,12 @@
 #include "TreeReaders/interface/FillerConstants.h"
 namespace TAna {
 namespace EventWeights {
-    float calcNormalizedEventWeight(const EventReader * reader_event, const float cross, const float numE, const float lumi) {
-        return (reader_event->weight > 0 ? 1.0 : -1.0) *lumi * cross *1000 /numE;
+    float calcNormalizedEventWeight(const EventReader& reader_event, const float cross, const float numE, const float lumi) {
+        return (reader_event.weight > 0 ? 1.0 : -1.0) *lumi * cross *1000 /numE;
     }
-    float getNormalizedEventWeight(const EventReader * reader_event, const float cross, const float numE, const float lumi) {
-        if(reader_event->normWeightLoaded) return lumi*reader_event->normWeight;
-        if(cross < 0 ||numE < 0) return reader_event->weight;
+    float getNormalizedEventWeight(const EventReader& reader_event, const float cross, const float numE, const float lumi) {
+        if(reader_event.normWeightLoaded) return lumi*reader_event.normWeight;
+        if(cross < 0 ||numE < 0) return reader_event.weight;
         return calcNormalizedEventWeight(reader_event,cross,numE,lumi);
     }
     float get4bXSecLimit(size mass) {
@@ -42,16 +42,16 @@ namespace EventWeights {
     }
 
 
-    bool passEventFilters(const EventReader * reader_event) {
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_goodVertices) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_globalTightHalo2016Filter) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_HBHENoiseFilter) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_HBHENoiseIsoFilter) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_EcalDeadCellTriggerPrimitiveFilter) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_eeBadScFilter) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::AnaTM_badMuons) ) return false;
-        if(!FillerConstants::doesPass(reader_event->metFilters,FillerConstants::AnaTM_badChargedHadrons) ) return false;
-        if(reader_event->goodVtx == 0) return false;
+    bool passEventFilters(const EventReader& reader_event) {
+        if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::Flag_goodVertices) ) return false;
+        if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::Flag_globalTightHalo2016Filter) ) return false;
+        if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::Flag_HBHENoiseFilter) ) return false;
+        if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::Flag_HBHENoiseIsoFilter) ) return false;
+        if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::Flag_EcalDeadCellTriggerPrimitiveFilter) ) return false;
+        if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::Flag_eeBadScFilter) ) return false;
+        if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::AnaTM_badMuons) ) return false;
+        if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::AnaTM_badChargedHadrons) ) return false;
+        if(reader_event.goodVtx == 0) return false;
         return true;
     }
 }

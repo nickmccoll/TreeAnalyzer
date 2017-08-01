@@ -5,6 +5,7 @@
 #include "AnalysisSupport/TreeInterface/interface/TreeReadingWrapper.h"
 #include "AnalysisSupport/TreeInterface/interface/TreeWriter.h"
 #include "TreeReaders/interface/BaseReader.h"
+#include <memory>
 
 using ASTypes::size;
 
@@ -70,7 +71,7 @@ public:
 	//--------------------------------------------------------------------------------------------------
 	// Variable loading
 	//--------------------------------------------------------------------------------------------------
-	BaseReader*         load(BaseReader * inReader);
+	void load(std::shared_ptr<BaseReader> inReader);
 	template<typename varType>
 	void setBranchAddress(const std::string  branchName,const std::string varName, varType **var, bool require = false, bool verbose = true)
 	{ tree.setBranchAddressPre(branchName,varName,var,require,verbose); }
@@ -99,12 +100,11 @@ public:
 	void bookOutTree()   {outTree->book();}
     void resetOutData()  {outTree->reset();}
     void fillOutTree()   {outTree->fillTree(); }
-    TreeWriter * outData() {return outTree;}
 
 	//--------------------------------------------------------------------------------------------------
 	// Information
 	//--------------------------------------------------------------------------------------------------
-	TRandom3 * getRndGen()  { return randGen;}
+    std::shared_ptr<TRandom3> getRndGen()  { return randGen;}
 	int  getEventNumber() const { return eventNumber;  }
 	int  getEntries()     const { return tree.getEntries(); }
 	bool isRealData()     const {return treeType == TREE_DATA;}
@@ -114,7 +114,7 @@ protected:
     const TreeType           treeType;
 	TreeReadingWrapper       tree;
 	int                      eventNumber; //current event number
-	TRandom3*                randGen;
+	std::shared_ptr<TRandom3> randGen;
 
 private:
 	//Standard variables for normalization
@@ -126,9 +126,9 @@ protected:
 	std::string        outTreeName = "";
 	std::string        outTreeDirectory = "";
 
-    TreeWriter*        outTree        =0;
+	std::unique_ptr<TreeWriter>        outTree;
     TreeCopyingOptions outTreeCopyOpt = COPY_ERROR;
-	std::vector<BaseReader*> readers;
+	std::vector<std::shared_ptr<BaseReader> > readers;
 };
 
 }

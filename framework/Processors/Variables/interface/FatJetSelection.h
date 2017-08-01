@@ -18,7 +18,7 @@ class FatJetReader;
 
 namespace FatJetSelHelpers {
     typedef  bool (FatJet::*fjFunBool)() const;
-    std::vector<const FatJet*> selectFatJets(const FatJetReader* reader_fatjet, float minPT, float maxETA, fjFunBool jetID = 0 );
+    std::vector<const FatJet*> selectFatJets(const FatJetReader& reader_fatjet, float minPT, float maxETA, fjFunBool jetID = 0 );
     const FatJet* getWjjCand(const MomentumF* lepton, const std::vector<const FatJet*>& jets, float minPT, float maxLepDR);
     const FatJet* getHbbCand(const FatJet* wjjCand, const MomentumF* lepton, const std::vector<const FatJet*>& jets,float minPT, float hbb_minLepDPhi);
     bool passHbbSelection(const FatJet* fj, double maxTau2oTau1 = -1,BTagging::CSVWP firMinCSVWP = BTagging::CSV_INCL, BTagging::CSVWP secMinCSVWP = BTagging::CSV_INCL, double minMass=-1, double maxMass=-1);
@@ -28,7 +28,7 @@ namespace FatJetSelHelpers {
 class FatJetProcessor {
 public:
 
-    std::vector<const FatJet *> loadFatJets(const MomentumF* lepton, const FatJetReader* reader_fatjet);
+    std::vector<const FatJet *> loadFatJets( const FatJetReader& reader_fatjet, const MomentumF* lepton);
 
     const FatJet * getHBBCand() const;
     const FatJet * getWjjCand() const;
@@ -65,7 +65,7 @@ private:
 };
 
 namespace DefaultFatJetSelections {
-FatJetProcessor  getDefaultFatJetProcessor()     ;
+void setDefaultFatJetProcessor(FatJetProcessor& proc);
 }
 
 

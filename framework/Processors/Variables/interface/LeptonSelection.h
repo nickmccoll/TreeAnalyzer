@@ -50,17 +50,17 @@ namespace LepSelHelpers {
 
 class LeptonProcessor {
 public:
-    std::vector<const Muon    *> getMuons    (const EventReader* reader_event, const MuonReader* reader_muon);
-    std::vector<const Electron*> getElectrons(const ElectronReader* reader_electron);
-    std::vector<const Lepton  *> getLeptons  (const EventReader* reader_event, const MuonReader* reader_muon, const ElectronReader* reader_electron);
+    std::vector<const Muon    *> getMuons    (const EventReader& reader_event, const MuonReader& reader_muon);
+    std::vector<const Electron*> getElectrons(const ElectronReader& reader_electron);
+    std::vector<const Lepton  *> getLeptons  (const EventReader& reader_event, const MuonReader& reader_muon, const ElectronReader& reader_electron);
     LepSelParameters lepSelParams;
     LepSelParameters lepSelParams_dataABCDEF;
 };
 
 namespace DefaultLeptonSelections {
-LepSelParameters  getDefaultLepSelParams()       ;
-LepSelParameters  getDefaultLepSelParams_dataAF();
-LeptonProcessor  getDefaultLeptonProcessor()     ;
+void setDefaultLepSelParams(LepSelParameters& par)       ;
+void setDefaultLepSelParams_dataAF(LepSelParameters& par);
+void setDefaultLeptonProcessor(LeptonProcessor& proc)     ;
 }
 
 

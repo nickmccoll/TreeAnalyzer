@@ -37,19 +37,19 @@ public:
         }
         else std::cout <<" No pre!"<<std::endl;
 
-        fjProc            = DefaultFatJetSelections::getDefaultFatJetProcessor();
-        fjProc_inclWBtag  = DefaultFatJetSelections::getDefaultFatJetProcessor();
+        DefaultFatJetSelections::setDefaultFatJetProcessor(fjProc);
+        DefaultFatJetSelections::setDefaultFatJetProcessor(fjProc_inclWBtag);
         fjProc_inclWBtag.wjj_maxCSVWP =BTagging::CSV_INCL;
-        fjProc_inclHbbBtag = DefaultFatJetSelections::getDefaultFatJetProcessor();
+        DefaultFatJetSelections::setDefaultFatJetProcessor(fjProc_inclHbbBtag);
         fjProc_inclHbbBtag.hbb_l_firMinCSVWP =BTagging::CSV_INCL;
         fjProc_inclHbbBtag.hbb_l_secMinCSVWP =BTagging::CSV_INCL;
     }
     void loadVariables() override {
-        reader_event    = (EventReader*)load(new EventReader("event",isRealData()));
+        reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
         if(treeType == TREE_OTHER)
-            reader_genpart  = (GenParticleReader*)load(new GenParticleReader("genParticle"));
-        reader_fatjet   = (FatJetReader*)load(new FatJetReader("ak8PuppiNoLepJet",isRealData(),false));
-        reader_jet = (JetReader*)load(new JetReader("ak4PuppiNoLepJet",isRealData(),false));
+            reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
+        reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);  load(reader_fatjet  );
+        reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData(),false);  load(reader_jet     );
 
         setBranchAddress("skim" ,"ht"         ,   &ht                  ,true);
         setBranchAddress("skim" ,"selLep_pt"  ,   &selLep_pt           ,true);
@@ -86,17 +86,17 @@ public:
                     FillerConstants::MCProcessNames[reader_event->process];
         }
         if(ht < 500) return false;
-        if(!EventWeights::passEventFilters(reader_event)) return false;
+        if(!EventWeights::passEventFilters(*reader_event)) return false;
 
 
         MomentumF lepton(ASTypes::CylLorentzVectorF(selLep_pt,selLep_eta,selLep_phi,0));
-        weight = EventWeights::getNormalizedEventWeight(reader_event,xsec(),nSampEvt(),lumi());
+        weight = EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
 //        if(reader_event->process == FillerConstants::SIGNAL) weight *=  (0.8241887906 * EventWeights::get4bXSecLimit(mass)/1000.0);
         if(reader_event->process == FillerConstants::SIGNAL) weight *=  20.0/1000.0;
 
-        fjProc.loadFatJets(&lepton,reader_fatjet);
-        fjProc_inclHbbBtag.loadFatJets(&lepton,reader_fatjet);
-        fjProc_inclWBtag.loadFatJets(&lepton,reader_fatjet);
+        fjProc.loadFatJets(*reader_fatjet,&lepton);
+        fjProc_inclHbbBtag.loadFatJets(*reader_fatjet,&lepton);
+        fjProc_inclWBtag.loadFatJets(*reader_fatjet,&lepton);
         const auto* hbbfj = fjProc.getHBBCand();
         const auto* wjjfj = fjProc.getWjjCand();
         const bool goodHBBFJ  = fjProc.passHbbSel();
@@ -124,12 +124,12 @@ public:
 
     void write(TString fileName){ plotter.write(fileName);}
 
-    EventReader       * reader_event = 0;
-    GenParticleReader * reader_genpart  = 0;
-    ElectronReader    * reader_electron = 0;
-    MuonReader        * reader_muon     = 0;
-    JetReader         * reader_jet      = 0;
-    FatJetReader      * reader_fatjet   = 0;
+    std::shared_ptr<EventReader      > reader_event    ;
+    std::shared_ptr<GenParticleReader> reader_genpart  ;
+    std::shared_ptr<ElectronReader   > reader_electron ;
+    std::shared_ptr<MuonReader       > reader_muon     ;
+    std::shared_ptr<FatJetReader     > reader_fatjet   ;
+    std::shared_ptr<JetReader        > reader_jet      ;
     float   ht         =0;
     float   selLep_pt  =0;
     float   selLep_eta =0;

@@ -23,7 +23,7 @@ class FirstAnalyzer : public BaseTreeAnalyzer {
 public:
 
     FirstAnalyzer(std::string fileName, std::string treeName, int treeInt) : BaseTreeAnalyzer(fileName,treeName,treeInt){
-        leptonProc = DefaultLeptonSelections::getDefaultLeptonProcessor();
+        leptonProc .reset(new LeptonProcessor ()); DefaultLeptonSelections::setDefaultLeptonProcessor(*leptonProc);
     }
 
     virtual BaseEventAnalyzer * setupEventAnalyzer() override {return new CopierEventAnalyzer();}
@@ -39,27 +39,27 @@ public:
     }
 
     void loadVariables() override {
-        reader_event    = (EventReader*)load(new EventReader("event",isRealData()));
+        reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
 
         if(treeType == TREE_OTHER)
-            reader_genpart  = (GenParticleReader*)load(new GenParticleReader("genParticle"));
+            reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
 
-        reader_electron = (ElectronReader*)load(new ElectronReader("electron"));
-        reader_muon     = (MuonReader*)load(new MuonReader("muon"));
-        reader_jet      = (JetReader*)load(new JetReader("ak4Jet",isRealData(),false));
-        reader_jetnolep = (JetReader*)load(new JetReader("ak4PuppiNoLepJet",isRealData(),false));
-        reader_fatjet   = (FatJetReader*)load(new FatJetReader("ak8PuppiNoLepJet",isRealData(),false));
+        reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
+        reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
+        reader_jetwlep =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jet     );
+        reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData());  load(reader_jet     );
+        reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData());  load(reader_fatjet  );
     }
 
     bool runEvent() override {
-        auto leptons = leptonProc.getLeptons(reader_event,reader_muon,reader_electron);
+        auto leptons = leptonProc->getLeptons(*reader_event,*reader_muon,*reader_electron);
 //        std::cout <<"\nE ";
 //        for(const auto* l : leptons) cout << l->isMuon()<<(*l)<<" ";
 
         if(leptons.size() != 1.0) return false;
 
-        float normEventWeight = EventWeights::getNormalizedEventWeight(reader_event,xsec(),nSampEvt(),lumi());
-        auto jets = JetKinematics::selectObjects(reader_jet->jets,30);
+        float normEventWeight = EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
+        auto jets = JetKinematics::selectObjects(reader_jetwlep->jets,30);
         const float ht = JetKinematics::ht(jets);
 
         if(!isRealData())
@@ -73,15 +73,15 @@ public:
 
     }
 
-    EventReader       * reader_event = 0;
-    GenParticleReader * reader_genpart  = 0;
-    ElectronReader    * reader_electron = 0;
-    MuonReader        * reader_muon     = 0;
-    JetReader         * reader_jet      = 0;
-    JetReader         * reader_jetnolep = 0;
-    FatJetReader      * reader_fatjet   = 0;
+    std::shared_ptr<EventReader      > reader_event    ;
+    std::shared_ptr<GenParticleReader> reader_genpart  ;
+    std::shared_ptr<ElectronReader   > reader_electron ;
+    std::shared_ptr<MuonReader       > reader_muon     ;
+    std::shared_ptr<FatJetReader     > reader_fatjet   ;
+    std::shared_ptr<JetReader        > reader_jet      ;
+    std::shared_ptr<JetReader        > reader_jetwlep  ;
 
-    LeptonProcessor leptonProc;
+    std::unique_ptr<LeptonProcessor> leptonProc ;
 
     size i_normWeight = 0;
     size i_ht         = 0;
@@ -104,13 +104,13 @@ public:
     }
 
     void loadVariables() override {
-        reader_event    = (EventReader*)load(new EventReader("event",isRealData()));
+        reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
 
         if(treeType == TREE_OTHER)
-            reader_genpart  = (GenParticleReader*)load(new GenParticleReader("genParticle"));
+            reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
 
-        reader_jetnolep = (JetReader*)load(new JetReader("ak4PuppiNoLepJet",isRealData(),false));
-        reader_fatjet   = (FatJetReader*)load(new FatJetReader("ak8PuppiNoLepJet",isRealData(),false));
+        reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData());  load(reader_jet     );
+        reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData());  load(reader_fatjet  );
 
        setBranchAddress("skim" ,"ht"         ,   &ht                  ,true);
        setBranchAddress("skim" ,"selLep_pt"  ,   &selLep_pt           ,true);
@@ -125,10 +125,10 @@ public:
 
     }
 
-    EventReader       * reader_event = 0;
-    GenParticleReader * reader_genpart  = 0;
-    JetReader         * reader_jetnolep = 0;
-    FatJetReader      * reader_fatjet   = 0;
+    std::shared_ptr<EventReader      > reader_event    ;
+    std::shared_ptr<GenParticleReader> reader_genpart  ;
+    std::shared_ptr<FatJetReader     > reader_fatjet   ;
+    std::shared_ptr<JetReader        > reader_jet      ;
 
     float   ht         =0;
     float   selLep_pt  =0;

@@ -25,12 +25,12 @@ public:
     Analyzer(std::string fileName, std::string treeName, int treeInt) : BaseTreeAnalyzer(fileName,treeName,treeInt){
     }
     void loadVariables() override {
-        reader_event    = (EventReader*)load(new EventReader("event",isRealData()));
-        reader_genpart  = (GenParticleReader*)load(new GenParticleReader("genParticle"));
-        reader_electron = (ElectronReader*)load(new ElectronReader("electron"));
-        reader_muon     = (MuonReader*)load(new MuonReader("muon"));
-        reader_jet      = (JetReader*)load(new JetReader("ak4Jet",isRealData()));
-        reader_fatjet   = (FatJetReader*)load(new FatJetReader("ak8PuppiNoLepJet",isRealData()));
+        reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
+        reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
+        reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
+        reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
+        reader_jet     =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jetwlep );
+        reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData());  load(reader_fatjet  );
     }
 
     const Lepton * getMatchedLepton(const GenParticle& genLepton,const std::vector<const Muon *> muons, const std::vector<const Electron*> electrons){
@@ -48,7 +48,7 @@ public:
     }
 
     bool runEvent() override {
-        const float weight = EventWeights::getNormalizedEventWeight(reader_event,xsec(),nSampEvt(),lumi());
+        const float weight = EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
         DiHiggsEvent diHiggsEvt; diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
 
         plotter.getOrMake1D("type",";type; arbitrary units",20,-0.5,19.5 )->Fill(diHiggsEvt.type,weight);
@@ -178,12 +178,12 @@ public:
 
     void write(TString fileName){ plotter.write(fileName);}
 
-    EventReader       * reader_event = 0;
-    GenParticleReader * reader_genpart  = 0;
-    ElectronReader    * reader_electron = 0;
-    MuonReader        * reader_muon     = 0;
-    JetReader         * reader_jet      = 0;
-    FatJetReader      * reader_fatjet   = 0;
+    std::shared_ptr<EventReader      > reader_event    ;
+    std::shared_ptr<GenParticleReader> reader_genpart  ;
+    std::shared_ptr<ElectronReader   > reader_electron ;
+    std::shared_ptr<MuonReader       > reader_muon     ;
+    std::shared_ptr<JetReader        > reader_jet      ;
+    std::shared_ptr<FatJetReader     > reader_fatjet   ;
     HistGetter plotter;
 
 };

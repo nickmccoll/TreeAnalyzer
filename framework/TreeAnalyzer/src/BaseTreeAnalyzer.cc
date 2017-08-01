@@ -45,7 +45,7 @@ void BaseEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequency
 
 //--------------------------------------------------------------------------------------------------
 BaseTreeAnalyzer::BaseTreeAnalyzer(std::string fileName, std::string treeName, int inputTreeType, size randomSeed) :
-        treeType(getTreeType(inputTreeType)),tree(fileName,treeName), eventNumber(0), randGen (new TRandom3(randomSeed))
+        treeType(getTreeType(inputTreeType)),tree(fileName,treeName), eventNumber(0), randGen (std::make_shared<TRandom3>(randomSeed))
 {
     std::cout << " \033[1;34m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\033[0m"  << std::endl;
     std::cout << " ++  Setting up BaseTreeAnalyzer"<<std::endl;
@@ -56,8 +56,6 @@ BaseTreeAnalyzer::BaseTreeAnalyzer(std::string fileName, std::string treeName, i
 
 //--------------------------------------------------------------------------------------------------
 BaseTreeAnalyzer::~BaseTreeAnalyzer() {
-    for(auto * r : readers) delete r;
-    delete randGen;
     if(outTree){outTree->write();}
 }
 
@@ -69,15 +67,14 @@ void BaseTreeAnalyzer::analyze(int reportFrequency, int numEvents, int startEven
 }
 
 //--------------------------------------------------------------------------------------------------
-BaseReader* BaseTreeAnalyzer::load(BaseReader * reader) {
+void BaseTreeAnalyzer::load(std::shared_ptr<BaseReader> reader) {
     readers.push_back(reader);
-    return readers.back();
 }
 
 //--------------------------------------------------------------------------------------------------
-void BaseTreeAnalyzer::setupReaders() {for(auto * r : readers) r->initialize(&tree);}
+void BaseTreeAnalyzer::setupReaders() {for(auto& r : readers) r->initialize(&tree);}
 //--------------------------------------------------------------------------------------------------
-void BaseTreeAnalyzer::processReaders() {for(auto * r : readers) r->processVars();}
+void BaseTreeAnalyzer::processReaders() {for(auto& r : readers) r->processVars();}
 //--------------------------------------------------------------------------------------------------
 void BaseTreeAnalyzer::initializeTreeCopy(std::string outFileName, TreeCopyingOptions copyOptions, std::string directory) {
     outTreeName = outFileName;
@@ -114,7 +111,7 @@ void BaseTreeAnalyzer::setupOutTree(){
         newTree = new TTree(tree.getTree()->GetName(),tree.getTree()->GetTitle());
         std::cout <<", and will copy no branches from the input tree.\n";
     }
-    outTree = new TreeWriter(outFile, newTree,cdtof);
+    outTree.reset(new TreeWriter(outFile, newTree,cdtof));
 }
 
 //--------------------------------------------------------------------------------------------------

@@ -41,11 +41,11 @@ bool LepSelHelpers::isGoodElectron(const Electron* lep, const LepSelParameters& 
             );
 }
 //_____________________________________________________________________________
-std::vector<const Muon    *> LeptonProcessor::getMuons(const EventReader* reader_event, const MuonReader* reader_muon){
+std::vector<const Muon    *> LeptonProcessor::getMuons(const EventReader& reader_event, const MuonReader& reader_muon){
     std::vector<const Muon    *>  leps;
-    bool useDataAF =  reader_event->realData &&
-            !(FillerConstants::doesPass(reader_event->dataRun,FillerConstants::RUN2016G)||FillerConstants::doesPass(reader_event->dataRun,FillerConstants::RUN2016H));
-    for(const auto& lep :reader_muon->muons){
+    bool useDataAF =  reader_event.realData &&
+            !(FillerConstants::doesPass(reader_event.dataRun,FillerConstants::RUN2016G)||FillerConstants::doesPass(reader_event.dataRun,FillerConstants::RUN2016H));
+    for(const auto& lep :reader_muon.muons){
         if(LepSelHelpers::isGoodMuon(&lep,  useDataAF? lepSelParams_dataABCDEF : lepSelParams    ))
             leps.push_back(&lep);
     }
@@ -53,9 +53,9 @@ std::vector<const Muon    *> LeptonProcessor::getMuons(const EventReader* reader
     return leps;
 }
 //_____________________________________________________________________________
-std::vector<const Electron    *> LeptonProcessor::getElectrons(const ElectronReader* reader_electron){
+std::vector<const Electron    *> LeptonProcessor::getElectrons(const ElectronReader& reader_electron){
     std::vector<const Electron    *>  leps;
-    for(const auto& lep :reader_electron->electrons){
+    for(const auto& lep :reader_electron.electrons){
         if(LepSelHelpers::isGoodElectron(&lep,lepSelParams))
             leps.push_back(&lep);
     }
@@ -63,7 +63,7 @@ std::vector<const Electron    *> LeptonProcessor::getElectrons(const ElectronRea
     return leps;
 }
 //_____________________________________________________________________________
-std::vector<const Lepton    *> LeptonProcessor::getLeptons(const EventReader* reader_event, const MuonReader* reader_muon, const ElectronReader* reader_electron){
+std::vector<const Lepton    *> LeptonProcessor::getLeptons(const EventReader& reader_event, const MuonReader& reader_muon, const ElectronReader& reader_electron){
     std::vector<const Lepton    *>  leps;
 
     auto electrons = getElectrons(reader_electron);
@@ -76,8 +76,7 @@ std::vector<const Lepton    *> LeptonProcessor::getLeptons(const EventReader* re
 }
 
 namespace DefaultLeptonSelections {
-LepSelParameters  getDefaultLepSelParams()        {
-    LepSelParameters par;
+void setDefaultLepSelParams(LepSelParameters& par)        {
     par.el_minPT   = 20  ;
     par.el_maxETA  = 2.4 ;
     par.el_maxDZ   = 0.1 ;
@@ -93,19 +92,14 @@ LepSelParameters  getDefaultLepSelParams()        {
     par.mu_maxISO  = 0.2 ;
     par.mu_getID   = &Muon::passMedID;
     par.mu_getISO  = &Muon::miniIso;
-
-    return par;
 }
-LepSelParameters  getDefaultLepSelParams_dataAF()        {
-    LepSelParameters par =getDefaultLepSelParams();
+void setDefaultLepSelParams_dataAF(LepSelParameters& par)        {
+    setDefaultLepSelParams(par);
     par.mu_getID   = &Muon::passMed16ID;
-    return par;
 }
-LeptonProcessor getDefaultLeptonProcessor() {
-    LeptonProcessor proc;
-    proc.lepSelParams = getDefaultLepSelParams();
-    proc.lepSelParams_dataABCDEF = getDefaultLepSelParams_dataAF();
-    return proc;
+void setDefaultLeptonProcessor(LeptonProcessor& proc) {
+    setDefaultLepSelParams(proc.lepSelParams);
+    setDefaultLepSelParams_dataAF(proc.lepSelParams_dataABCDEF);
 }
 }
 

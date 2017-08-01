@@ -7,12 +7,9 @@
 
 namespace TAna {
 
-
-
-
 //_____________________________________________________________________________
-std::vector<const FatJet*> FatJetSelHelpers::selectFatJets(const FatJetReader* reader_fatjet, float minPT, float maxETA, fjFunBool jetID ){
-    const auto& inJ = reader_fatjet->jets;
+std::vector<const FatJet*> FatJetSelHelpers::selectFatJets(const FatJetReader& reader_fatjet, float minPT, float maxETA, fjFunBool jetID ){
+    const auto& inJ = reader_fatjet.jets;
     std::vector<const FatJet*> outJ;
     outJ.reserve(inJ.size());
     for(const auto& j : inJ){
@@ -66,7 +63,7 @@ bool FatJetSelHelpers::passWjjSelection(const FatJet* fj, double maxTau2oTau1,  
     return true;
 }
 //_____________________________________________________________________________
-std::vector<const FatJet *> FatJetProcessor::loadFatJets(const MomentumF* lepton, const FatJetReader* reader_fatjet) {
+std::vector<const FatJet *> FatJetProcessor::loadFatJets(const FatJetReader& reader_fatjet, const MomentumF* lepton) {
     auto fjs = FatJetSelHelpers::selectFatJets(reader_fatjet,cand_minPT, cand_maxETA, fjJetID);
     wjjCand = FatJetSelHelpers::getWjjCand(lepton,fjs,wjj_minPT,wjj_maxLepDR);
     hbbCand = FatJetSelHelpers::getHbbCand(wjjCand,lepton,fjs,hbb_minPT,hbb_minLepDPhi);
@@ -91,8 +88,7 @@ bool FatJetProcessor::passHbbSelTightBTag() const{
             FatJetSelHelpers::passHbbSelection(hbbCand,hbb_maxT2oT1,hbb_t_firMinCSVWP,hbb_t_secMinCSVWP,hbb_minMass,hbb_maxMass);
 }
 //_____________________________________________________________________________
-FatJetProcessor DefaultFatJetSelections::getDefaultFatJetProcessor() {
-    FatJetProcessor proc;
+void DefaultFatJetSelections::setDefaultFatJetProcessor(FatJetProcessor& proc) {
     proc.cand_minPT     = 50                   ;
     proc.cand_maxETA    = 2.4                  ;
     proc.fjJetID        = &FatJet::passTightID ;
@@ -113,6 +109,5 @@ FatJetProcessor DefaultFatJetSelections::getDefaultFatJetProcessor() {
     proc.hbb_l_secMinCSVWP= BTagging::CSV_L;
     proc.hbb_t_firMinCSVWP= BTagging::CSV_M;
     proc.hbb_t_secMinCSVWP= BTagging::CSV_M;
-    return proc;
 }
 }
