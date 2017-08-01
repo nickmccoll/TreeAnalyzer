@@ -13,6 +13,8 @@ namespace EventWeights {
     float getNormalizedEventWeight(const EventReader * reader_event, const float cross, const float numE, const float lumi = 1);
 
     float get4bXSecLimit(unsigned int  mass);
+
+    bool passEventFilters(const EventReader * reader_event);
 }
 }
 
