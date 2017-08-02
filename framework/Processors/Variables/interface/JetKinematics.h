@@ -26,6 +26,9 @@ namespace JetKinematics {
   std::vector<Jet*> selectObjects(std::vector<Jet>& jets, const double minPT = 0, const double maxEta = 9999, const std::vector<bool>* selected = 0);
 
   template<typename Jet>
+  std::vector<const Jet*> selectObjectsConst(std::vector<Jet>& jets, const double minPT = 0, const double maxEta = 9999, const std::vector<bool>* selected = 0);
+
+  template<typename Jet>
   Jet mht(const std::vector<Jet*>& jets, const double minPT = 0, const double maxEta = 9999, const std::vector<bool>* selected = 0);
 
   template<typename Jet>
