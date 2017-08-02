@@ -21,10 +21,11 @@ public :
         : Lepton(mom, idx,q,d0,dz,sip3D,miniIso,false) {}
     ~Electron() {}
 
-    void addElectronInfo(float scEta, float mvaID, float eaRelISO, ASTypes::size16 id);
+    void addElectronInfo(float scEta, float mvaID, ASTypes::size8 mvaIDCat, float eaRelISO, ASTypes::size16 id);
 
     float scEta      () const;
     float mvaID      () const;
+    size  mvaIDCat   () const;
     float eaRelISO   () const;
 
     bool  passVetoID () const;
@@ -32,6 +33,8 @@ public :
     bool  passMedID  () const;
     bool  passTightID() const;
     bool  passHEEPID () const;
+    bool  passMVA80ID() const;
+    bool  passMVA90ID() const;
 
     bool  passVetoID_noISO () const;
     bool  passLooseID_noISO() const;
@@ -44,6 +47,7 @@ protected :
     float           _mvaID     =0;
     float           _eaRelISO  =0;
     ASTypes::size16 _id        =0;
+    ASTypes::size8  _mvaIDCat  =0;
 
 };
 
