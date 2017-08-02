@@ -47,7 +47,7 @@ void ElectronReader::processVars() {
     for(unsigned int iO = 0; iO < pt->size(); ++iO){
         electrons.emplace_back(ASTypes::CylLorentzVectorF(pt->at(iO),eta->at(iO),phi->at(iO),0),iO,
                 q->at(iO),d0->at(iO),dz->at(iO),sip3D->at(iO),miniIso->at(iO));
-        electrons.back().addElectronInfo(scEta->at(iO),mvaID->at(iO),eaRelISO->at(iO),id->at(iO));
+        electrons.back().addElectronInfo(scEta->at(iO),mvaID->at(iO),mvaID_cat->at(iO),eaRelISO->at(iO),id->at(iO));
     }
     std::sort(electrons.begin(), electrons.end(), PhysicsUtilities::greaterPT<Electron>());
 }
