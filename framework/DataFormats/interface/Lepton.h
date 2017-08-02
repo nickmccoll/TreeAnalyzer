@@ -30,6 +30,9 @@ public :
 
     bool isMuon   () const {return _muon;}
 
+    bool  passInclID () const {return true;}
+    float inclIso ()    const {return 0.0;}
+
 
 protected :
     ASTypes::int8  _q         = 0;
