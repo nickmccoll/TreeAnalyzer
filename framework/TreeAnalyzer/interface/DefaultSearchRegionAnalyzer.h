@@ -25,9 +25,9 @@ class Lepton            ;
 class DefaultSearchRegionAnalyzer : public BaseTreeAnalyzer {
 public:
 
-    DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt) : BaseTreeAnalyzer(fileName,treeName,treeInt){
-        setupProcessors(fileName);
-    }
+    DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt);
+
+    virtual ~DefaultSearchRegionAnalyzer();
 
     //all of the processor/variable constructing
     virtual void setupProcessors(std::string fileName);

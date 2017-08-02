@@ -20,6 +20,12 @@
 
 namespace TAna {
 //--------------------------------------------------------------------------------------------------
+DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt) : BaseTreeAnalyzer(fileName,treeName,treeInt){
+    setupProcessors(fileName);
+}
+//--------------------------------------------------------------------------------------------------
+DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
+//--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     TPRegexp r1(".*m(\\d+)_[0-9]*\\..*$");
     auto match = r1.MatchS(fileName);
@@ -35,7 +41,7 @@ void DefaultSearchRegionAnalyzer::loadVariables()  {
     reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
     reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData());  load(reader_fatjet  );
     reader_jetwlep =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jetwlep );
-    reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData());  load(reader_jet     );
+    reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData(),false);  load(reader_jet     );
     reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
     reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
 
