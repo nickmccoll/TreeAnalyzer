@@ -41,14 +41,15 @@ public:
     void loadVariables() override {
         reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
 
-        if(treeType == TREE_OTHER)
+        if(treeType == TREE_OTHER){
             reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
+        }
 
         reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
         reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
-        reader_jetwlep =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jet     );
-        reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData());  load(reader_jet     );
-        reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData());  load(reader_fatjet  );
+        reader_jetwlep =std::make_shared<JetReader>     ("ak4Jet",isRealData(),false);            load(reader_jetwlep     );
+        reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData(),false);  load(reader_jet     );
+        reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);  load(reader_fatjet  );
     }
 
     bool runEvent() override {
@@ -58,9 +59,12 @@ public:
 
         if(leptons.size() != 1.0) return false;
 
+
         float normEventWeight = EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
         auto jets = JetKinematics::selectObjects(reader_jetwlep->jets,30);
         const float ht = JetKinematics::ht(jets);
+
+        if(treeType != TREE_OTHER && ht < 500) return false;
 
         if(!isRealData())
             outTree->fill(i_normWeight ,normEventWeight);
@@ -106,11 +110,11 @@ public:
     void loadVariables() override {
         reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
 
-        if(treeType == TREE_OTHER)
+        if(treeType == TREE_OTHER){
             reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
-
-        reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData());  load(reader_jet     );
-        reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData());  load(reader_fatjet  );
+        }
+        reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData(),false);  load(reader_jet     );
+        reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);  load(reader_fatjet  );
 
        setBranchAddress("skim" ,"ht"         ,   &ht                  ,true);
        setBranchAddress("skim" ,"selLep_pt"  ,   &selLep_pt           ,true);
