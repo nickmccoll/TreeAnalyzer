@@ -215,6 +215,49 @@ public:
             }
         }
     }
+
+    void testMuSIP3D(const TString& prefix, bool passTight, bool isSignal, float signalPT, const Muon* signalLep){
+        LeptonProcessor proc;
+        DefaultLeptonSelections::setDefaultLeptonProcessor(proc);
+
+        static const std::vector<float>                     mu_S3Ds = {2,3,4,5,6,7,8};
+
+        addPlots(prefix,"muS3","incl",0,isSignal ?signalPT :-1);
+        if(passTight) addPlots(prefix+"_passTight","muS3","incl",0,isSignal ?signalPT :-1);
+
+        if(isSignal){
+            addPlots(prefix+"_matchedMu","muS3","incl",0,signalPT);
+            if(passTight)  addPlots(prefix+"_matchedMu_passTight","muS3","incl",0,signalPT);
+        }
+
+
+        for(unsigned int iS = 0; iS < mu_S3Ds.size(); ++iS){
+            proc.lepSelParams.mu_maxD0   = 999.9;
+            proc.lepSelParams_dataABCDEF.mu_maxD0   = 999.9;
+            TString name = TString::Format("%.0f",mu_S3Ds[iS]);name.ReplaceAll(".","p");
+            auto leps = proc.getMuons(*reader_event,*reader_muon);
+            float maxPT =-1;
+            bool foundSig = false;
+            for(const auto* l : leps ){
+                if(l->sip3D() >= mu_S3Ds[iS] ) continue;
+                if(l->pt() > maxPT) maxPT = l->pt();
+                if(isSignal && signalLep ) if(l->index() == signalLep->index()) foundSig = true;
+            }
+
+            if(maxPT > 0){
+                addPlots(prefix,"muS3",name,iS+1,isSignal ?signalPT  : maxPT);
+                if(passTight)  addPlots(prefix+"_passTight","muS3",name,iS+1,isSignal ?signalPT  : maxPT);
+            }
+            if(isSignal && signalLep ){
+                if(foundSig){
+                    addPlots(prefix+"_matchedMu","muS3",name,iS+1,signalPT);
+                    if(passTight)  addPlots(prefix+"_matchedMu_passTight","muS3",name,iS+1,signalPT);
+                }
+            }
+        }
+    }
+
+
     void testMuDZ(const TString& prefix, bool passTight, bool isSignal, float signalPT, const Muon* signalLep){
         LeptonProcessor proc;
         DefaultLeptonSelections::setDefaultLeptonProcessor(proc);
@@ -277,6 +320,45 @@ public:
                 if(found){
                     addPlots(prefix+"_matchedEl","elD0",name,iS+1,signalPT);
                     if(passTight)  addPlots(prefix+"_matchedEl_passTight","elD0",name,iS+1,signalPT);
+                }
+
+            }
+        }
+    }
+    void testElSIP3D(const TString& prefix, bool passTight, bool isSignal, float signalPT, const Electron* signalLep){
+        LeptonProcessor proc;
+        DefaultLeptonSelections::setDefaultLeptonProcessor(proc);
+
+        static const std::vector<float>                     el_S3Ds = {2,3,4,5,6,7,8};
+
+        addPlots(prefix,"elS3","incl",0,isSignal ?signalPT :-1);
+        if(passTight) addPlots(prefix+"_passTight","elS3","incl",0,isSignal ?signalPT :-1);
+
+        if(isSignal){
+            addPlots(prefix+"_matchedEl","elS3","incl",0,signalPT);
+            if(passTight)  addPlots(prefix+"_matchedEl_passTight","elS3","incl",0,signalPT);
+        }
+
+
+        for(unsigned int iS = 0; iS < el_S3Ds.size(); ++iS){
+            proc.lepSelParams.el_maxD0   = 999.9;
+            TString name = TString::Format("%.0f",el_S3Ds[iS]);name.ReplaceAll(".","p");
+            auto leps = proc.getElectrons(*reader_electron);
+            double maxPT =-1;
+            bool foundSig = false;
+            for(const auto* l : leps ){
+                if(l->sip3D() >= el_S3Ds[iS] ) continue;
+                if(l->pt() > maxPT) maxPT = l->pt();
+                if(isSignal && signalLep ) if(l->index() == signalLep->index()) foundSig = true;
+            }
+            if(maxPT > 0){
+                addPlots(prefix,"elS3",name,iS+1,isSignal ?signalPT  : leps.front()->pt());
+                if(passTight)  addPlots(prefix+"_passTight","elS3",name,iS+1,isSignal ?signalPT  : maxPT);
+            }
+            if(isSignal && signalLep ){
+                if(foundSig){
+                    addPlots(prefix+"_matchedEl","elS3",name,iS+1,signalPT);
+                    if(passTight)  addPlots(prefix+"_matchedEl_passTight","elS3",name,iS+1,signalPT);
                 }
 
             }
@@ -345,11 +427,13 @@ public:
                 testMuISO(prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Muon*)recoL);
                 testMuDZ (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Muon*)recoL);
                 testMuD0 (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Muon*)recoL);
+                testMuSIP3D (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Muon*)recoL);
             } else  {
                 testElID (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Electron*)recoL);
                 testElISO(prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Electron*)recoL);
                 testElDZ (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Electron*)recoL);
                 testElD0 (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Electron*)recoL);
+                testElSIP3D (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Electron*)recoL);
             }
         }
         if(reader_event->process != FillerConstants::SIGNAL){
@@ -357,10 +441,12 @@ public:
             testMuISO(prefix,passTight,false,0,0);
             testMuDZ (prefix,passTight,false,0,0);
             testMuD0 (prefix,passTight,false,0,0);
+            testMuSIP3D(prefix,passTight,false,0,0);
             testElID (prefix,passTight,false,0,0);
             testElISO(prefix,passTight,false,0,0);
             testElDZ (prefix,passTight,false,0,0);
             testElD0 (prefix,passTight,false,0,0);
+            testElSIP3D(prefix,passTight,false,0,0);
         }
 
         return true;
