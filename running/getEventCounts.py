@@ -37,7 +37,7 @@ def get_num_data_events(filelist, prefix='', selection=''):
     return totposentries
 
 def addSample(name,sample,datarun,cross,numE,numF,cmdLine,dasName,configs) :
-	if(re.match(".+-ext\d*", dasName)) : return
+	if(re.match(".+-ext\d*", name)) : return
 	
 	files = []
 	
