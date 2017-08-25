@@ -97,7 +97,7 @@
 std::vector<TString> vars = {"genLepWDR","genlep_pt","ht"};
 std::vector<TString> pres = {"all_incl"};
 
-std::vector<unsigned int> cuts = {0,1,2,3,4};
+std::vector<unsigned int> cuts = {0,1,2,3,4,5};
 // std::vector<unsigned int> cuts = {0,4,5};
 // std::vector<unsigned int> cuts = {0,4,11,12};
 

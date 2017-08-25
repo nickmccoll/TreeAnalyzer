@@ -29,7 +29,7 @@ public:
         reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
         reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
         reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
-        reader_jet     =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jetwlep );
+        reader_jetwlep =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jetwlep );
         reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData());  load(reader_fatjet  );
     }
 
@@ -61,7 +61,7 @@ public:
         double maxAK8 = 0;
         double maxMassiveAK8 = 0;
 
-        for(const auto& j : reader_jet->jets){
+        for(const auto& j : reader_jetwlep->jets){
             if(j.pt() < 30) continue;
             ht += j.pt();
         }
@@ -182,7 +182,7 @@ public:
     std::shared_ptr<GenParticleReader> reader_genpart  ;
     std::shared_ptr<ElectronReader   > reader_electron ;
     std::shared_ptr<MuonReader       > reader_muon     ;
-    std::shared_ptr<JetReader        > reader_jet      ;
+    std::shared_ptr<JetReader        > reader_jetwlep      ;
     std::shared_ptr<FatJetReader     > reader_fatjet   ;
     HistGetter plotter;
 

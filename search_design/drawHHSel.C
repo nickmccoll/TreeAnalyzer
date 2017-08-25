@@ -19,19 +19,19 @@
     = {
       "ttbar",
       "wjets",
-      // "qcd",
+      "qcd",
       "rare"
     };
     vector<TString> bkgNamess = {
       "t#bar{t}",
       "w+jets",
-      // "QCD",
+      "QC D",
       "other"
     };
   vector<unsigned int> sigMasses = {
     // 600,
-    // 800,
-    // 1000
+    800,
+    1000,
     // 1200,
     // 1400,
     1600
@@ -144,15 +144,17 @@ auto makeRocs  = [&](std::vector<TString> vars,TString prefix, TString name,  bo
 
             // p->draw(false);
 };
-std::vector<TString> vars = {"hh_mass","hh700to900_hbb_mass","hh900to1100_hbb_mass","hh1400to1800_hbb_mass"};
+// std::vector<TString> vars = {"hh_mass","hh700to900_hbb_mass","hh900to1100_hbb_mass","hh1400to1800_hbb_mass"};
+std::vector<TString> vars = {"hh_mass","hh900to1100_hbb_mass","hh1400to1800_hbb_mass"};
 // std::vector<TString> vars = {"hh_mass"};
 // std::vector<TString> vars = {"lepW_pt","met_o_fj","met_o_fjNoSD","met_dPhifj","met_dPhihbb","highDPhi_lepW_pt"};
 // std::vector<TString> vars = {"hWW_mass","hWW_pt","hh_mass","W_W_dR"};
 // std::vector<TString> pres = {"hbb_hHT_tCSV_","hbb_lHT_tCSV_","hbb_hHT_lCSV_","hbb_lHT_lCSV_","hbbpairNoHbb_hHT_tCSV_","hbbpairNoHbb_lHT_tCSV_","hbbpairNoHbb_hHT_lCSV_","hbbpairNoHbb_lHT_lCSV_"};
 // std::vector<TString> pres = {"hbb_hHT_tCSV_","hbb_hHT_lCSV_","hbb_lHT_tCSV_","hbb_lHT_lCSV_"};
 // std::vector<TString> pres = {"stdWjj_stdHBB_","stdWjj_stdHBBT_","oneBWjj_stdHBB_","oneBWjj_stdHBBT_"};
-std::vector<TString> pres = {"stdWjj_stdHBB_","stdWjj_stdHBBT_","stdWjj_oneBHBB_","stdWjj_noBHBB_"};
-
+// std::vector<TString> pres = {"stdWjj_stdHBB_","stdWjj_stdHBBT_","stdWjj_oneBHBB_","stdWjj_noBHBB_"};
+// std::vector<TString> pres = {"stdWjj_stdHBB_","el_stdWjj_stdHBB_","mu_stdWjj_stdHBB_"};
+std::vector<TString> pres = {"stdWjj_stdHBB_","stdWjj_stdHBBT_"};
 
 // distPlots("plots",vars,pres,true);
 distPlots("plots",vars,pres,false,2,true);

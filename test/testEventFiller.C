@@ -16,11 +16,11 @@ public:
 
     }
     void loadVariables() override {
-        reader_event = (EventReader*)load(new EventReader("event",isRealData()));
+        reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
     }
 
     bool runEvent() override {
-        float eventWeight = EventWeights::getNormalizedEventWeight(reader_event,xsec(),nSampEvt(),lumi());
+        float eventWeight = EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
 
         plotter.getOrMake1D("met",";#slash{E}_{T}",200,0,1000)->Fill(reader_event->met.pt(),eventWeight);
         plotter.getOrMake1D("met_o_rawmet",";#slash{E}_{T}/raw #slash{E}_{T}",200,0,10)->Fill(reader_event->met.pt()/reader_event->rawMet.pt(),eventWeight);
@@ -54,7 +54,7 @@ public:
 
     void write(TString fileName){ plotter.write(fileName);}
 
-    EventReader * reader_event = 0;
+    std::shared_ptr<EventReader      > reader_event    ;
     HistGetter plotter;
 
 };
