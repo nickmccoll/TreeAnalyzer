@@ -46,8 +46,9 @@ public:
     }
     void loadVariables() override {
         reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
-        if(treeType == TREE_OTHER)
-            reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
+        if(treeType == TREE_OTHER){
+            reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");                load(reader_genpart   );
+        }
         reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);  load(reader_fatjet  );
         reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData(),false);  load(reader_jet     );
 
@@ -117,6 +118,29 @@ public:
             makeCRPlots(prefix+"_stdWjj_noBHBB",hWW,hbbfj->sdMom());
         if(fjProc_inclWBtag.passWjjSel() && wjjfj->maxSJCSV()>= BTagging::BBT_VALS[BTagging::CSV_T] && goodHBBFJ) makeCRPlots(prefix+"_oneBWjj_stdHBB",hWW,hbbfj->sdMom());
         if(fjProc_inclWBtag.passWjjSel() && wjjfj->maxSJCSV()>= BTagging::BBT_VALS[BTagging::CSV_T]  && goodHBBFJT) makeCRPlots(prefix+"_oneBWjj_stdHBBT",hWW,hbbfj->sdMom());
+
+        if(selLep_muon==1){
+            TString tempP = prefix + "_mu";
+            if(goodWJJFJ && goodHBBFJ) makeCRPlots(tempP+"_stdWjj_stdHBB",hWW,hbbfj->sdMom());
+            if(goodWJJFJ && goodHBBFJT) makeCRPlots(tempP+"_stdWjj_stdHBBT",hWW,hbbfj->sdMom());
+            if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && hbbfj->maxSJCSV() >= BTagging::BBT_VALS[BTagging::CSV_M] && hbbfj->minSJCSV() < BTagging::BBT_VALS[BTagging::CSV_L]  )
+                makeCRPlots(tempP+"_stdWjj_oneBHBB",hWW,hbbfj->sdMom());
+            if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && hbbfj->maxSJCSV() < BTagging::BBT_VALS[BTagging::CSV_L])
+                makeCRPlots(tempP+"_stdWjj_noBHBB",hWW,hbbfj->sdMom());
+            if(fjProc_inclWBtag.passWjjSel() && wjjfj->maxSJCSV()>= BTagging::BBT_VALS[BTagging::CSV_T] && goodHBBFJ) makeCRPlots(tempP+"_oneBWjj_stdHBB",hWW,hbbfj->sdMom());
+            if(fjProc_inclWBtag.passWjjSel() && wjjfj->maxSJCSV()>= BTagging::BBT_VALS[BTagging::CSV_T]  && goodHBBFJT) makeCRPlots(tempP+"_oneBWjj_stdHBBT",hWW,hbbfj->sdMom());
+        } else {
+            TString tempP = prefix + "_el";
+            if(goodWJJFJ && goodHBBFJ) makeCRPlots(tempP+"_stdWjj_stdHBB",hWW,hbbfj->sdMom());
+            if(goodWJJFJ && goodHBBFJT) makeCRPlots(tempP+"_stdWjj_stdHBBT",hWW,hbbfj->sdMom());
+            if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && hbbfj->maxSJCSV() >= BTagging::BBT_VALS[BTagging::CSV_M] && hbbfj->minSJCSV() < BTagging::BBT_VALS[BTagging::CSV_L]  )
+                makeCRPlots(tempP+"_stdWjj_oneBHBB",hWW,hbbfj->sdMom());
+            if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && hbbfj->maxSJCSV() < BTagging::BBT_VALS[BTagging::CSV_L])
+                makeCRPlots(tempP+"_stdWjj_noBHBB",hWW,hbbfj->sdMom());
+            if(fjProc_inclWBtag.passWjjSel() && wjjfj->maxSJCSV()>= BTagging::BBT_VALS[BTagging::CSV_T] && goodHBBFJ) makeCRPlots(tempP+"_oneBWjj_stdHBB",hWW,hbbfj->sdMom());
+            if(fjProc_inclWBtag.passWjjSel() && wjjfj->maxSJCSV()>= BTagging::BBT_VALS[BTagging::CSV_T]  && goodHBBFJT) makeCRPlots(tempP+"_oneBWjj_stdHBBT",hWW,hbbfj->sdMom());
+        }
+
 
         return true;
     }
