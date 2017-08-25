@@ -9,20 +9,22 @@
 
 namespace TAna {
 //_____________________________________________________________________________
-bool LepSelHelpers::isGoodMuon(const Muon* lep, const float minPT, const float maxETA, const float maxDZ, const float maxD0, const float maxISO, muFunBool getID, muFunFloat getISO) {
+bool LepSelHelpers::isGoodMuon(const Muon* lep, const float minPT, const float maxETA, const float maxDZ, const float maxD0,const float maxSIP3D, const float maxISO, muFunBool getID, muFunFloat getISO) {
     if(lep->pt() < minPT) return false;
     if(lep->absEta() >= maxETA) return false;
-    if(std::fabs(lep->dz()) >= maxDZ) return false;
-    if(std::fabs(lep->d0()) >= maxD0) return false;
-    if((lep->*getISO)()  >= maxISO) return false;
+    if(maxDZ > 0 && std::fabs(lep->dz()) >= maxDZ) return false;
+    if(maxD0 > 0 && std::fabs(lep->d0()) >= maxD0) return false;
+    if(maxSIP3D > 0 && lep->sip3D() >= maxSIP3D) return false;
+    if(maxISO >0 && (lep->*getISO)()  >= maxISO) return false;
     if((lep->*getID)()  == false) return false;
     return true;
 }
 //_____________________________________________________________________________
-bool LepSelHelpers::isGoodElectron(const Electron* lep, const float minPT, const float maxETA, const float maxDZ, const float maxD0, const float maxISO, elFunBool getID, elFunFloat getISO) {
+bool LepSelHelpers::isGoodElectron(const Electron* lep, const float minPT, const float maxETA, const float maxDZ, const float maxD0,const float maxSIP3D, const float maxISO, elFunBool getID, elFunFloat getISO) {
     if(lep->pt() < minPT) return false;
     if(lep->absEta() >= maxETA) return false;
     if(std::fabs(lep->dz()) >= maxDZ) return false;
+    if(std::fabs(lep->d0()) >= maxD0) return false;
     if(std::fabs(lep->d0()) >= maxD0) return false;
     if((lep->*getISO)()  >= maxISO) return false;
     if((lep->*getID)()  == false) return false;
@@ -31,13 +33,13 @@ bool LepSelHelpers::isGoodElectron(const Electron* lep, const float minPT, const
 //_____________________________________________________________________________
 bool LepSelHelpers::isGoodMuon(const Muon* lep, const LepSelParameters& params) {
     return isGoodMuon(lep,params.mu_minPT , params.mu_maxETA, params.mu_maxDZ ,
-            params.mu_maxD0 , params.mu_maxISO, params.mu_getID , params.mu_getISO
+            params.mu_maxD0 ,params.mu_maxSip3D , params.mu_maxISO, params.mu_getID , params.mu_getISO
             );
 }
 //_____________________________________________________________________________
 bool LepSelHelpers::isGoodElectron(const Electron* lep, const LepSelParameters& params) {
     return isGoodElectron(lep,params.el_minPT , params.el_maxETA, params.el_maxDZ ,
-            params.el_maxD0 , params.el_maxISO, params.el_getID , params.el_getISO
+            params.el_maxD0 ,params.el_maxSip3D,  params.el_maxISO, params.el_getID , params.el_getISO
             );
 }
 //_____________________________________________________________________________
@@ -81,14 +83,16 @@ void setDefaultLepSelParams(LepSelParameters& par)        {
     par.el_maxETA  = 2.4 ;
     par.el_maxDZ   = 0.1 ;
     par.el_maxD0   = 0.05;
+    par.el_maxSip3D   = 4   ;
     par.el_maxISO  = 0.1 ;
-    par.el_getID   = &Electron::passMedID_noISO;
+    par.el_getID   = &Electron::passTightID_noISO;
     par.el_getISO  = &Electron::miniIso;
 
     par.mu_minPT   = 20  ;
     par.mu_maxETA  = 2.4 ;
     par.mu_maxDZ   = 0.1 ;
     par.mu_maxD0   = 0.05;
+    par.mu_maxSip3D   = 4   ;
     par.mu_maxISO  = 0.2 ;
     par.mu_getID   = &Muon::passMedID;
     par.mu_getISO  = &Muon::miniIso;
