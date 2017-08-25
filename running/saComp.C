@@ -1,4 +1,5 @@
 #include <sstream>
+#include "TFormula.h"
 int main(int argc, char* argv[])
 {
     int treeInt = 0;
@@ -11,8 +12,10 @@ int main(int argc, char* argv[])
         convertTreeInt >> treeInt;
     }
     if(argc > 5){
-        std::stringstream convertxSec(argv[4]);
-        convertxSec >> xSec;
+        TFormula xsec("xsec",argv[4]);
+        xSec = xsec.Eval(0);
+//        std::stringstream convertxSec(argv[4]);
+//        convertxSec >> xSec;
         std::stringstream convertnumEvent(argv[5]);
         convertnumEvent >> numEvent;
     }
