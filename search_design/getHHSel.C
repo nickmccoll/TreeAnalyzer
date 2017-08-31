@@ -43,8 +43,9 @@ public:
     }
     void loadVariables() override {
         reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
-        if(treeType == TREE_OTHER)
+        if(treeType == TREE_OTHER){
             reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
+        }
         reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);  load(reader_fatjet  );
         reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData(),false);  load(reader_jet     );
 
@@ -94,6 +95,7 @@ public:
             if(PhysicsUtilities::absDeltaPhi(met,hbb) > 0.8)
                 plotter.getOrMake1DPre(pre, "highDPhi_lepW_pt"  ,";lep W pT [GeV]; arbitrary units",200,0,1000)->Fill((met.p4()+lepton.p4() ).pt(),weight);
             plotter.getOrMake1DPre(pre, "lepPT"    ,";lep pt [GeV]; arbitrary units",200,0,1000)->Fill(lepton.pt(),weight);
+            plotter.getOrMake1DPre(pre, "ht"    ,";ht [GeV]; arbitrary units",500,0,5000)->Fill(ht,weight);
             plotter.getOrMake1DPre(pre, "hWW_mass",";hWW mass [GeV]; arbitrary units",200,0,1000)->Fill(hWW.mass(),weight);
             plotter.getOrMake1DPre(pre, "hWW_pt"  ,";hWW #it{p}_{T} [GeV]; arbitrary units",250,0,2500)->Fill(hWW.pt(),weight);
             plotter.getOrMake1DPre(pre, "hh_mass" ,";hh mass [GeV]; arbitrary units",500,0,5000)->Fill(hh.mass(),weight);
@@ -109,6 +111,9 @@ public:
             makeMPlots(pre+"_hHT");
         else if( ht < 500 && lepton.pt() >= 30)
             makeMPlots(pre+"_lHT");
+
+        if(ht >= 500 && hh.mass() >= 800)
+            makeMPlots(pre+"_hHThMass");
 
         if(passTightCSV && ht >= 500 )
             makeMPlots(pre+"_hHT_tCSV");
