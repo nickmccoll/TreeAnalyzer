@@ -15,6 +15,8 @@
 #include "Processors/Variables/interface/LeptonSelection.h"
 #include "Processors/Variables/interface/FatJetSelection.h"
 
+#include "Processors/EventSelection/interface/EventSelection.h"
+
 #include "TPRegexp.h"
 
 
@@ -61,7 +63,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         ht_wlep = JetKinematics::ht(jets);
     }
     weight = EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
-    passEventFilters= EventWeights::passEventFilters(*reader_event);
+    passEventFilters= EventSelection::passEventFilters(*reader_event);
 
     if(reader_genpart && reader_event->process == FillerConstants::SIGNAL)
         diHiggsEvt.setDecayInfo(reader_genpart->genParticles);

@@ -19,8 +19,9 @@ DATAFORMATS  = DataFormats/src
 CORRECTIONS   = Processors/Corrections/src
 GENTOOLS   = Processors/GenTools/src
 VARIABLES   = Processors/Variables/src
+EVENTSEL   = Processors/EventSelection/src
 
-SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(DATAFORMATS)/*.cc) $(wildcard $(CORRECTIONS)/*.cc) $(wildcard $(TREEREADING)/*.cc)  $(wildcard $(TREEANALYZER)/*.cc) $(wildcard $(GENTOOLS)/*.cc) $(wildcard $(VARIABLES)/*.cc)
+SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(DATAFORMATS)/*.cc) $(wildcard $(CORRECTIONS)/*.cc) $(wildcard $(TREEREADING)/*.cc)  $(wildcard $(TREEANALYZER)/*.cc) $(wildcard $(GENTOOLS)/*.cc) $(wildcard $(VARIABLES)/*.cc) $(wildcard $(EVENTSEL)/*.cc)
 OBJ=$(join $(addsuffix ../obj/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.o))) 
 DEPENDS=$(join $(addsuffix ../.dep/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.d)))
 
@@ -143,5 +144,17 @@ $(VARIABLES)/../.dep/%.d: $(VARIABLES)/%.cc
 	@echo "============="
 	@echo Building dependencies file for $*.o
 	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(VARIABLES)/../obj/$*.o^" > $@'
+	
+	
+$(EVENTSEL)/../obj/%.o : $(EVENTSEL)/%.cc
+	@mkdir -p $(dir $@)
+	@echo "============="
+	@echo "Compiling $<"
+	$(CXX) $(CXXFLAGS) -c $<  -o $@
+$(EVENTSEL)/../.dep/%.d: $(EVENTSEL)/%.cc
+	@mkdir -p $(dir $@)
+	@echo "============="
+	@echo Building dependencies file for $*.o
+	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(EVENTSEL)/../obj/$*.o^" > $@'
 
 -include $(DEPENDS)

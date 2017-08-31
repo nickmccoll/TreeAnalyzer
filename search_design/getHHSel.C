@@ -20,7 +20,7 @@
 #include "Processors/Variables/interface/FatJetSelection.h"
 #include "Processors/Variables/interface/BTagging.h"
 #include "Processors/Variables/interface/HiggsSolver.h"
-
+#include "Processors/EventSelection/interface/EventSelection.h"
 #include "TPRegexp.h"
 using namespace TAna;
 
@@ -151,7 +151,7 @@ public:
         const bool goodWJJFJ  = fjProc.passWjjSel();
 
         plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(0.0,weight);
-        if(!EventWeights::passEventFilters(*reader_event)) return false;
+        if(!EventSelection::passEventFilters(*reader_event)) return false;
 
         plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(1.0,weight);
 

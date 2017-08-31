@@ -20,7 +20,7 @@
 #include "Processors/Variables/interface/FatJetSelection.h"
 #include "Processors/Variables/interface/BTagging.h"
 #include "Processors/Variables/interface/HiggsSolver.h"
-
+#include "Processors/EventSelection/interface/EventSelection.h"
 #include "TPRegexp.h"
 using namespace TAna;
 
@@ -87,7 +87,7 @@ public:
                     FillerConstants::MCProcessNames[reader_event->process];
         }
         if(ht < 500) return false;
-        if(!EventWeights::passEventFilters(*reader_event)) return false;
+        if(!EventSelection::passEventFilters(*reader_event)) return false;
 
 
         MomentumF lepton(ASTypes::CylLorentzVectorF(selLep_pt,selLep_eta,selLep_phi,0));

@@ -1,0 +1,14 @@
+#ifndef TREEANALYZER_FRAMEWORK_PROCESSORS_EVENTSELECTION_INTERFACE_EVENTSELECTION_H_
+#define TREEANALYZER_FRAMEWORK_PROCESSORS_EVENTSELECTION_INTERFACE_EVENTSELECTION_H_
+namespace TAna {
+class EventReader;
+namespace EventSelection {
+
+bool passEventFilters(const EventReader& reader_event);
+
+}
+}
+
+
+
+#endif /* FRAMEWORK_PROCESSORS_INTERFACE_EVENTWEIGHTS_H_ */

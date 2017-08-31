@@ -19,7 +19,7 @@
 #include "Processors/Variables/interface/JetKinematics.h"
 #include "Processors/Variables/interface/FatJetSelection.h"
 #include "Processors/Variables/interface/BTagging.h"
-
+#include "Processors/EventSelection/interface/EventSelection.h"
 
 #include "TPRegexp.h"
 using namespace TAna;
@@ -221,7 +221,7 @@ public:
 
     bool runEvent() override {
         DiHiggsEvent diHiggsEvt;
-        if(!EventWeights::passEventFilters(*reader_event)) return false;
+        if(!EventSelection::passEventFilters(*reader_event)) return false;
 
         if(reader_event->process !=
                 FillerConstants::SIGNAL){
