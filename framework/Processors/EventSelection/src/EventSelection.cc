@@ -21,6 +21,57 @@ bool passEventFilters(const EventReader& reader_event) {
     return true;
 }
 
+bool passTriggerSuite(const EventReader& reader_event   ) {
+    auto passTrig = [&](FillerConstants::Triggers trig) -> bool {
+        return FillerConstants::doesPass(reader_event.triggerAccepts,trig);
+    };
+
+    const bool passMuon = passTrig(FillerConstants::HLT_IsoMu24) || passTrig(FillerConstants::HLT_IsoTkMu24)
+            || passTrig(FillerConstants::HLT_TkMu50)|| passTrig(FillerConstants::HLT_Mu50);
+    const bool passEle = passTrig(FillerConstants::HLT_Ele27_WPTight_Gsf)
+            || passTrig(FillerConstants::HLT_Ele45_WPLoose_Gsf)|| passTrig(FillerConstants::HLT_Ele115_CaloIdVT_GsfTrkIdT);
+    const bool passJetHT = passTrig(FillerConstants::HLT_PFHT800) || passTrig(FillerConstants::HLT_PFHT900) ||
+            passTrig(FillerConstants::HLT_AK8PFJet450) || passTrig(FillerConstants::HLT_AK8PFJet360_TrimMass30);
+    const bool passMET = passTrig(FillerConstants::HLT_PFMETNoMu110_PFMHTNoMu110_IDTight) || passTrig(FillerConstants::HLT_PFMETNoMu120_PFMHTNoMu120_IDTight);
+
+    if(reader_event.realData){
+        const bool passMCross = (reader_event.run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
+        const bool passECross = (reader_event.run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
+        if(FillerConstants::doesPass(reader_event.dataset,FillerConstants::SINGLEMU)){
+            return (passMuon || passMCross);
+        } else if(FillerConstants::doesPass(reader_event.dataset,FillerConstants::SINGLEE)){
+            return (passEle || passECross) && !(passMuon || passMCross);
+        } else if(FillerConstants::doesPass(reader_event.dataset,FillerConstants::JETHT)){
+            return passJetHT && !(passEle || passECross) && !(passMuon || passMCross);
+        } else if(FillerConstants::doesPass(reader_event.dataset,FillerConstants::MET)){
+            return passMET && !passJetHT && !(passEle || passECross) && !(passMuon || passMCross);
+        } else return false;
+    } else {
+        const bool passMCross = passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
+        const bool passECross = passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
+        return (passMuon || passMCross) || (passEle || passECross)  || passJetHT || passMET;
+    }
+}
+
+bool passTriggerPreselection(const EventReader& reader_event,const float ht, const std::vector<const Lepton    *>& selectedLeptons ){
+    if(!passTriggerSuite(reader_event)) return false;
+
+    const float minHT = 500;
+    const float minElePT = 30;
+    const float minMuPT = 26;
+
+    if(ht < minHT) return false;
+
+    float maxElePT = 0;
+    float maxMuPT = 0;
+    for(const auto * l : selectedLeptons ) {
+        if(l->isMuon()) maxMuPT = std::max(maxMuPT, l->pt());
+        else maxElePT = std::max(maxElePT, l->pt());
+    }
+
+    if(maxElePT < minElePT && maxMuPT < minMuPT ) return false;
+    return true;
+};
 
 
 
