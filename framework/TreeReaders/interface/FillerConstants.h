@@ -13,6 +13,7 @@ bool doesPass(const storage passList, const type checkPassed ) {return  (static_
 
 enum DataRun   {NODATARUN, RUN2016A,RUN2016B,RUN2016C,RUN2016D,RUN2016E,RUN2016F,RUN2016G,RUN2016H};
 enum Dataset   {NODATASET, SINGLEE,SINGLEMU, JETHT,MET};
+const std::vector<std::string> DatasetNames = { "none","singlee","singlemu","jetht","met"};
 enum MCProcess {NOPROCESS, SIGNAL,TTBAR,WJETS,ZJETS,SINGLET,DIBOSON,TTX,QCD};
 const std::vector<std::string> MCProcessNames = { "none","signal","ttbar","wjets","zjets","singlet","diboson","ttX","qcd"};
 
