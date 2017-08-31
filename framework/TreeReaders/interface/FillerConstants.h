@@ -8,6 +8,8 @@ namespace FillerConstants{
 template <class storage, class type>
 void addPass(storage& passList, const type passed ) { passList |= (static_cast<storage>(1) << passed);}
 template <class storage, class type>
+void removePass(storage& passList, const type passed ) { passList &= ~(static_cast<storage>(1) << passed);}
+template <class storage, class type>
 bool doesPass(const storage passList, const type checkPassed ) {return  (static_cast<storage>(1) << checkPassed) & passList;};
 
 
