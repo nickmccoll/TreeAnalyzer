@@ -10,6 +10,8 @@ echo `hostname`
 echo "${_CONDOR_SCRATCH_DIR}"
 echo "workdir: $workdir"
 echo "args: $*"
+tar -xf data.tar.gz
+rm data.tar.gz
 ls -l -a
 
 source /cvmfs/cms.cern.ch/cmsset_default.sh

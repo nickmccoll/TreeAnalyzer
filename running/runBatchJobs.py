@@ -19,6 +19,7 @@ parser.add_argument("-c", "--compCommand"  , dest="compCommand", default="runnin
 parser.add_argument("-l", "--libDir"       , dest="libDir", default="$CMSSW_BASE/../TreeAnalyzer/framework/", help="Include location for batch (use none if not needed) [Default: $CMSSW_BASE/../TreeAnalyzer/framework/]")
 parser.add_argument("-n", "--numFiles",      dest="numFiles", default=5, help="Number of files per job if no config [Default: 5]")
 parser.add_argument("-t", "--treeInt",       dest="treeInt" , default=1, help="treeInt if no config [Default: 1]")
+parser.add_argument("-d", "--dataDir",       dest="datadir" , default="data", help="where the data directory is (for batch mode) [Default: data]")
 if len(sys.argv)==1:
     parser.print_help()
     sys.exit(1)
@@ -26,8 +27,23 @@ args = parser.parse_args()
 
 
 
+def makeDataTar() :
+    if not os.path.exists(args.datadir) :
+        print "could not find: " + args.datadir
+        exit()    
+    print "Creating data archive:"
+    tarP = os.path.normpath(os.path.join(os.path.join(os.getcwd(), args.jobdir),"data.tar.gz"))
+    tarCmd = ("tar -chzf  {TARP} {DD}" .format (TARP=tarP,DD=args.datadir))
+    ps = subprocess.Popen(tarCmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output = ps.communicate()
+    if not os.path.isfile(tarP) :
+        print "could not find " + tarP
+        print output[0]
+        print output[1]
+        exit()    
+    print "Created!"
 
-
+        
 def compileSAMacro() :
     compM = args.macro
     bareM = os.path.splitext(os.path.basename(args.macro))[0]
@@ -129,7 +145,7 @@ Log                     = logs/job_{samp}_{num}.log
 use_x509userproxy       = true
 initialdir              = {jobdir}
 Should_Transfer_Files   = YES
-transfer_input_files    = {workdir}/{libdir},{workdir}/files_{samp}_{num}.txt
+transfer_input_files    = {workdir}/{libdir},{workdir}/files_{samp}_{num}.txt,{workdir}/data.tar.gz
 WhenToTransferOutput    = ON_EXIT
 Queue
 """.format(
@@ -172,6 +188,7 @@ else :
     
 if args.runBatch:
     libName = compileSAMacro()
+    makeDataTar()
 else :
     libName = compileLOCMacro()
     
