@@ -35,6 +35,7 @@ void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     }
     fjProc     .reset(new FatJetProcessor ()); DefaultFatJetSelections::setDefaultFatJetProcessor(*fjProc);
     leptonProc .reset(new LeptonProcessor ()); DefaultLeptonSelections::setDefaultLeptonProcessor(*leptonProc);
+    setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
 }
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::loadVariables()  {
@@ -51,6 +52,10 @@ void DefaultSearchRegionAnalyzer::loadVariables()  {
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
+    if(isRealData()) smpName = FillerConstants::DatasetNames[reader_event->dataset];
+    else if (reader_event->process == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
+    else smpName = FillerConstants::MCProcessNames[reader_event->process];
+
     if(reader_jetwlep){
         auto jets = JetKinematics::selectObjects(reader_jetwlep->jets,30);
         ht_wlep = JetKinematics::ht(jets);

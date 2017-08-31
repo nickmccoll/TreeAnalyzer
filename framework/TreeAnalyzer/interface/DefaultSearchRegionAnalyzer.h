@@ -48,6 +48,7 @@ public:
 
 
     int             signal_mass=0;
+    TString         smpName  = "";
 
     float           ht_wlep    =0;
     float           weight     =0;
