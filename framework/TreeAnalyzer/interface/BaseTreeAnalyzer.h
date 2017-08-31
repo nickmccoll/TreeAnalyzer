@@ -116,6 +116,13 @@ protected:
 	int                      eventNumber; //current event number
 	std::shared_ptr<TRandom3> randGen;
 
+	//Base directory to keep all data files
+	//It can be set by setting the env var:
+	//TREEANALYZER_DATA
+	//Otherwise looks for a "data" directory
+	//in your local area
+	std::string dataDirectory ="data/";
+
 private:
 	//Standard variables for normalization
 	float _xsec            = -1;

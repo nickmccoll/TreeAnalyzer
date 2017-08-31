@@ -47,9 +47,14 @@ void BaseEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequency
 BaseTreeAnalyzer::BaseTreeAnalyzer(std::string fileName, std::string treeName, int inputTreeType, size randomSeed) :
         treeType(getTreeType(inputTreeType)),tree(fileName,treeName), eventNumber(0), randGen (std::make_shared<TRandom3>(randomSeed))
 {
+    //if the enviornment variable is set, use it
+    char* datap = getenv ("TREEANALYZER_DATA");
+    if(datap != NULL) dataDirectory = datap;
+
     std::cout << " \033[1;34m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\033[0m"  << std::endl;
     std::cout << " ++  Setting up BaseTreeAnalyzer"<<std::endl;
     std::cout << " ++  Will be analyzing a "<<getTreeTypeName(inputTreeType) <<" tree"<<std::endl;
+    std::cout << " ++  Data dir: "<<datap<<std::endl;
     std::cout << " \033[1;34m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\033[0m"  << std::endl;
 
 }
