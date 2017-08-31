@@ -16,6 +16,7 @@
 #include "Processors/Variables/interface/FatJetSelection.h"
 
 #include "Processors/EventSelection/interface/EventSelection.h"
+#include "Processors/Corrections/interface/TriggerScaleFactors.h"
 
 #include "TPRegexp.h"
 
@@ -28,6 +29,10 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, s
 //--------------------------------------------------------------------------------------------------
 DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
 //--------------------------------------------------------------------------------------------------
+bool DefaultSearchRegionAnalyzer::isCorrOn(Corrections corr) const {return FillerConstants::doesPass(corrections,corr);}
+void DefaultSearchRegionAnalyzer::turnOnCorr(Corrections corr) {FillerConstants::addPass(corrections,corr);}
+void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr) {FillerConstants::removePass(corrections,corr);}
+//--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     TPRegexp r1(".*m(\\d+)_[0-9]*\\..*$");
     auto match = r1.MatchS(fileName);
@@ -37,7 +42,11 @@ void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     }
     fjProc     .reset(new FatJetProcessor ()); DefaultFatJetSelections::setDefaultFatJetProcessor(*fjProc);
     leptonProc .reset(new LeptonProcessor ()); DefaultLeptonSelections::setDefaultLeptonProcessor(*leptonProc);
+    trigSFProc .reset(new TriggerScaleFactors (dataDirectory));
     setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
+
+    turnOnCorr(CORR_XSEC);
+    turnOnCorr(CORR_TRIG);
 }
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::loadVariables()  {
@@ -62,8 +71,6 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         auto jets = JetKinematics::selectObjects(reader_jetwlep->jets,30);
         ht_wlep = JetKinematics::ht(jets);
     }
-    weight = EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
-    passEventFilters= EventSelection::passEventFilters(*reader_event);
 
     if(reader_genpart && reader_event->process == FillerConstants::SIGNAL)
         diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
@@ -72,6 +79,8 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         selectedLeptons = leptonProc->getLeptons(*reader_event,*reader_muon,*reader_electron);
         selectedLepton = selectedLeptons.size() ? selectedLeptons.front() : 0;
     }
+    passEventFilters= EventSelection::passEventFilters(*reader_event);
+    passTriggerPreselection= EventSelection::passTriggerPreselection(*reader_event,ht_wlep,selectedLeptons);
 
     if(reader_fatjet && selectedLepton){
         fatjetCands = fjProc->loadFatJets(*reader_fatjet,selectedLepton);
@@ -94,6 +103,14 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         neutrino   =  MomentumF();
         hh         =  MomentumF();
     }
+    weight = 1;
+    if(!isRealData()){
+        if(isCorrOn(CORR_XSEC))
+            weight *= EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
+        if(isCorrOn(CORR_TRIG) )
+            weight *= trigSFProc->getLeptonTriggerSF(ht_wlep, (selectedLepton && selectedLepton->isMuon()));
+    }
+
 
     return true;
 }

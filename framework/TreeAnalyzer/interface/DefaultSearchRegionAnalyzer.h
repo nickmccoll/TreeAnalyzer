@@ -18,12 +18,15 @@ class FatJetReader      ;
 
 class FatJetProcessor   ;
 class LeptonProcessor   ;
+class TriggerScaleFactors;
 
 class FatJet            ;
 class Lepton            ;
 
 class DefaultSearchRegionAnalyzer : public BaseTreeAnalyzer {
 public:
+    //corrections that can be applied
+    enum Corrections {CORR_XSEC,CORR_TRIG};
 
     DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt);
 
@@ -31,6 +34,11 @@ public:
 
     //all of the processor/variable constructing
     virtual void setupProcessors(std::string fileName);
+
+    //turn on, off correction
+    bool isCorrOn(Corrections corr) const;
+    void turnOnCorr(Corrections corr);
+    void turnOffCorr(Corrections corr);
 
     //default variable loading
     virtual void loadVariables() override;
@@ -51,8 +59,13 @@ public:
     TString         smpName  = "";
 
     float           ht_wlep    =0;
-    float           weight     =0;
-    bool            passEventFilters = 0;
+
+    ASTypes::size   corrections=0; //list of corrections to carry out
+    float           weight     =0; //std weight after all corrections
+
+    bool            passEventFilters = false;
+    bool            passTriggerPreselection = false;
+
     DiHiggsEvent    diHiggsEvt;
 
     std::vector<const Lepton    *> selectedLeptons;
@@ -68,8 +81,9 @@ public:
     MomentumF                  neutrino           ;
     MomentumF                  hh                 ;
 
-    std::unique_ptr<FatJetProcessor> fjProc     ;
-    std::unique_ptr<LeptonProcessor> leptonProc ;
+    std::unique_ptr<FatJetProcessor>     fjProc     ;
+    std::unique_ptr<LeptonProcessor>     leptonProc ;
+    std::unique_ptr<TriggerScaleFactors> trigSFProc ;
 };
 }
 #endif
