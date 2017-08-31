@@ -30,3 +30,17 @@ Rint.Logon:              rootlogon.C
 Rint.Logoff:             rootlogoff.C
 Unix.*.Root.MacroPath:    .:$(HOME):
 ```
+
+## Data directory
+Download the data directory:  
+
+```Shell
+mkdir data
+cd data
+wget -O data.zip  https://www.dropbox.com/sh/xo9djqy4trdtoww/AAAKKZK4xez-ICT09xgIDu7Aa?dl=1
+unzip data.zip
+rm data.zip
+cd ..
+```
+
+You can download it into your work directory, jobs will run automatically if they are run with the "data" directory in the execution directory. Otherwise you can set an enviornment variable to pick it up from some other location: `TREEANALYZER_DATA="/Users/nmccoll/Dropbox/Work/Projects/HHbbWW/hbbww_data"`
