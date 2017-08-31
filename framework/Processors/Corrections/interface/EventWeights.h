@@ -14,7 +14,7 @@ namespace EventWeights {
 
     float get4bXSecLimit(unsigned int  mass);
 
-    bool passEventFilters(const EventReader& reader_event);
+bool passEventFilters(const EventReader& reader_event);
 }
 }
 
