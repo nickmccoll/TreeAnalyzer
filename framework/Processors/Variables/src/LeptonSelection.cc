@@ -25,7 +25,7 @@ bool LepSelHelpers::isGoodElectron(const Electron* lep, const float minPT, const
     if(lep->absEta() >= maxETA) return false;
     if(std::fabs(lep->dz()) >= maxDZ) return false;
     if(std::fabs(lep->d0()) >= maxD0) return false;
-    if(std::fabs(lep->d0()) >= maxD0) return false;
+    if(maxSIP3D > 0 && lep->sip3D() >= maxSIP3D) return false;
     if((lep->*getISO)()  >= maxISO) return false;
     if((lep->*getID)()  == false) return false;
     return true;
