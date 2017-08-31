@@ -313,6 +313,8 @@
   TFile * fMC = new TFile("all_triggerTurnons.root");
   Plotter * pt = new Plotter();
   
+  TFile * of = new TFile("triggerSF.root","recreate");
+  
   auto getEff = [&](TFile * f, TString pn, TString prefix,TString sel, TString var, TString trig, float rebin = 0, int nR = 0, double * rebins = 0)->TH1*{
     TH1 * hd = 0;
     f->GetObject(TString::Format("%s_%s_%s_%s",pn.Data(),prefix.Data(),sel.Data(),var.Data()),hd);
@@ -342,7 +344,7 @@
     // return PlotTools::getBinomErrors(hn,hd);   
   };
   
-  auto plotTurnons =[&](TString name, TString prefix,TString dataName,TString mcName, const TString& sel, TString var, TString trig, float rebin = 0, int nR = 0, double * rebins = 0 ){      
+  auto plotTurnons =[&](TString oHName, TString name, TString prefix,TString dataName,TString mcName, const TString& sel, TString var, TString trig, float rebin = 0, int nR = 0, double * rebins = 0 ){      
       Plotter * p = new Plotter();
         auto * mcEff = getEff(fMC,mcName,prefix,sel,var,trig,rebin,nR,rebins);
         auto * dataEff = getEff(fd,dataName,prefix,sel,var,trig,rebin,nR,rebins);
@@ -359,6 +361,12 @@
         p->setLegendPos(0.7,0.4,0.95,0.65);
         // p->setXTitleBot("data/MC");
         p->drawSplitRatio(0,"stack",false,true,TString::Format("%s.pdf",name.Data()));
+
+        of->cd();        
+        TH1 * rat = (TH1*)dataEff->Clone(oHName);
+        rat->SetDirectory(0);
+        rat->Divide(mcEff);
+        rat->Write();
   };
   
   std::vector<TString> muSels = {"mupt_25to30","mupt_30to35","mupt_35to40","mupt_40to50","mupt_50to100","mupt_100"};
@@ -371,11 +379,12 @@
     int nHTBins = 28;
     double htBins[] = {100,125,150,175,200,225,250,275,300,325,350,375,400,425,450,475,500,525,550,575,600,700,800,900,1000,1100,1200,1600,2000};
     
-    
-    plotTurnons(TString::Format("turnOn_muon_ht"),"GL_passSE","singlee","ttbar","mupt_26","ht","passSMuoHtMuoBu"        ,0,nHTBins,htBins);
-    plotTurnons(TString::Format("turnOn_electron_ht"),"GL_passSMu","singlemu","ttbar","elpt_30","ht","passSEloHtEloBu"        ,0,nHTBins,htBins);
+
+    plotTurnons("muonSF",TString::Format("turnOn_muon_ht"),"GL_passSE","singlee","ttbar","mupt_26","ht","passSMuoHtMuoBu"        ,0,nHTBins,htBins);
+    plotTurnons("electronSF",TString::Format("turnOn_electron_ht"),"GL_passSMu","singlemu","ttbar","elpt_30","ht","passSEloHtEloBu"        ,0,nHTBins,htBins);
     
     // plotTurnons(TString::Format("turnOn_ht_muon"),"GL_passSE","singlee","ttbar","ht_500","mu_pt","passSMuoHtMuoBu"        ,0,nLepBins,lepBins);
     // plotTurnons(TString::Format("turnOn_ht_electron"),"GL_passSMu","singlemu","ttbar","ht_500","el_pt","passSEloHtEloBu"        ,0,nLepBins,lepBins);
     
+    delete of;
 }
