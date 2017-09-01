@@ -13,6 +13,10 @@
 #include "TreeReaders/interface/ElectronReader.h"
 #include "TreeReaders/interface/GenParticleReader.h"
 #include "TreeReaders/interface/EventReader.h"
+#include "TreeReaders/interface/JetReader.h"
+
+#include "Processors/Corrections/interface/EventWeights.h"
+
 using namespace TAna;
 using namespace FillerConstants;
 class Analyzer : public DefaultSearchRegionAnalyzer {
@@ -316,7 +320,12 @@ public:
     }
 
 
-
+    void loadVariables() override {
+        reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
+        reader_jetwlep =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jetwlep );
+        reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
+        reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
+    }
 
     bool runEvent() override {
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
@@ -347,8 +356,6 @@ public:
             if(FillerConstants::doesPass(reader_event->triggerPrescales, iT))
                 plotter.getOrMake2DPre(smpName,"trigger_prescale",";trigger;isPrescaled",64,-0.5,63.5,2,-0.5,1.5)->Fill(iT,1.0);
         }
-
-
 
         return true;
     }
