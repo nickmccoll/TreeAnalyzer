@@ -43,6 +43,7 @@ void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     fjProc     .reset(new FatJetProcessor ()); DefaultFatJetSelections::setDefaultFatJetProcessor(*fjProc);
     leptonProc .reset(new LeptonProcessor ()); DefaultLeptonSelections::setDefaultLeptonProcessor(*leptonProc);
     trigSFProc .reset(new TriggerScaleFactors (dataDirectory));
+    puSFProc .reset(new PUScaleFactors (dataDirectory));
     setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
 
     turnOnCorr(CORR_XSEC);
@@ -109,9 +110,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
             weight *= EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
         if(isCorrOn(CORR_TRIG) )
             weight *= trigSFProc->getLeptonTriggerSF(ht_wlep, (selectedLepton && selectedLepton->isMuon()));
+        if(isCorrOn(CORR_PU) )
+            weight *= puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL);
     }
-
-
     return true;
 }
 }

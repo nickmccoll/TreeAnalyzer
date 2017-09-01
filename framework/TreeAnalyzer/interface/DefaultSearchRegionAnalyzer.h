@@ -13,12 +13,12 @@ class GenParticleReader ;
 class ElectronReader    ;
 class MuonReader        ;
 class JetReader         ;
-class JetReader         ;
 class FatJetReader      ;
 
 class FatJetProcessor   ;
 class LeptonProcessor   ;
 class TriggerScaleFactors;
+class PUScaleFactors;
 
 class FatJet            ;
 class Lepton            ;
@@ -26,7 +26,7 @@ class Lepton            ;
 class DefaultSearchRegionAnalyzer : public BaseTreeAnalyzer {
 public:
     //corrections that can be applied
-    enum Corrections {CORR_XSEC,CORR_TRIG};
+    enum Corrections {CORR_XSEC,CORR_TRIG, CORR_PU};
 
     DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt);
 
@@ -84,6 +84,7 @@ public:
     std::unique_ptr<FatJetProcessor>     fjProc     ;
     std::unique_ptr<LeptonProcessor>     leptonProc ;
     std::unique_ptr<TriggerScaleFactors> trigSFProc ;
+    std::unique_ptr<PUScaleFactors>      puSFProc ;
 };
 }
 #endif
