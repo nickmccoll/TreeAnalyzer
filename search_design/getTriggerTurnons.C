@@ -13,7 +13,6 @@
 #include "TreeReaders/interface/ElectronReader.h"
 #include "TreeReaders/interface/GenParticleReader.h"
 #include "TreeReaders/interface/EventReader.h"
-
 using namespace TAna;
 using namespace FillerConstants;
 class Analyzer : public DefaultSearchRegionAnalyzer {
@@ -35,6 +34,8 @@ public:
         leptonProc->lepSelParams.mu_minPT = 5;
         leptonProc->lepSelParams_dataABCDEF.el_minPT = 5;
         leptonProc->lepSelParams_dataABCDEF.mu_minPT = 5;
+
+        turnOffCorr(CORR_TRIG);
     }
 
 
@@ -116,8 +117,9 @@ public:
 
         TString preName = prefix + "_passSMu";
         makeHTPlots(preName,"el_pt",ht_wlep,maxLepPT);
+        bool passECross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
 
-        if(passTrig(HLT_Ele15_IsoVVVL_PFHT350) || passTrig(HLT_Ele15_IsoVVVL_PFHT400))
+        if(passECross)
             makeHTPlots(preName + "_passElHT_","el_pt",ht_wlep,maxLepPT);
     }
     void doMuonLeg(const TString& prefix){
@@ -129,8 +131,9 @@ public:
 
         TString preName = prefix + "_passSE";
         makeHTPlots(preName,"mu_pt",ht_wlep,maxLepPT);
+        bool passMCross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
 
-        if(passTrig(HLT_Mu15_IsoVVVL_PFHT350) || passTrig(HLT_Mu15_IsoVVVL_PFHT400))
+        if(passMCross)
             makeHTPlots(preName + "_passMuHT_","mu_pt",ht_wlep,maxLepPT);
     }
 
@@ -143,14 +146,16 @@ public:
         TString preName = prefix + "_passSMu";
         makeLepPlots(preName,"ht","elpt",maxOtherPT,ht_wlep);
         makeLepPlots(preName,"ht","mupt",maxSamePT,ht_wlep);
-        if(passTrig(HLT_Ele15_IsoVVVL_PFHT350) || passTrig(HLT_Ele15_IsoVVVL_PFHT400))
+        bool passMCross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
+        bool passECross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
+        if(passECross)
             makeLepPlots(preName + "_passElHT_","ht","elpt",maxOtherPT,ht_wlep);
-        if(passTrig(HLT_Mu15_IsoVVVL_PFHT350) || passTrig(HLT_Mu15_IsoVVVL_PFHT400))
+        if(passMCross)
             makeLepPlots(preName + "_passMuHT_","ht","mupt",maxSamePT,ht_wlep);
 
-        if(passTrig(HLT_Ele15_IsoVVVL_PFHT350) || passTrig(HLT_Ele15_IsoVVVL_PFHT400)|| passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30))
+        if(passECross|| passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30))
             makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxOtherPT,ht_wlep);
-        if(passTrig(HLT_Mu15_IsoVVVL_PFHT350) || passTrig(HLT_Mu15_IsoVVVL_PFHT400)|| passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30))
+        if(passMCross|| passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30))
             makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxSamePT,ht_wlep);
     }
     void doHTLegWithElDenom(const TString& prefix){
@@ -163,15 +168,18 @@ public:
         TString preName = prefix + "_passSE";
         makeLepPlots(preName,"ht","mupt",maxOtherPT,ht_wlep);
         makeLepPlots(preName,"ht","elpt",maxSamePT,ht_wlep);
-        if(passTrig(HLT_Ele15_IsoVVVL_PFHT350) || passTrig(HLT_Ele15_IsoVVVL_PFHT400))
+        bool passMCross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
+        bool passECross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
+
+        if(passECross)
             makeLepPlots(preName + "_passElHT_","ht","elpt",maxSamePT,ht_wlep);
-        if(passTrig(HLT_Mu15_IsoVVVL_PFHT350) || passTrig(HLT_Mu15_IsoVVVL_PFHT400))
+        if(passMCross)
             makeLepPlots(preName + "_passMuHT_","ht","mupt",maxOtherPT,ht_wlep);
 
-        if(passTrig(HLT_Ele15_IsoVVVL_PFHT350) || passTrig(HLT_Ele15_IsoVVVL_PFHT400)|| passTrig(HLT_PFHT800) ||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30))
+        if(passECross|| passTrig(HLT_PFHT800) ||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30))
             makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxSamePT,ht_wlep);
 
-        if(passTrig(HLT_Mu15_IsoVVVL_PFHT350) || passTrig(HLT_Mu15_IsoVVVL_PFHT400)  || passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30) )
+        if(passMCross || passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30) )
             makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxOtherPT,ht_wlep);
     }
 
@@ -185,7 +193,8 @@ public:
         TString preName = prefix + "_GL_passSE";
 
         bool passSMu = passTrig(HLT_IsoTkMu24) || passTrig(HLT_IsoTkMu24);
-        bool passSMuoHtMu = passSMu || passTrig(HLT_Mu15_IsoVVVL_PFHT350) || passTrig(HLT_Mu15_IsoVVVL_PFHT400);
+        bool passMCross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
+        bool passSMuoHtMu = passSMu || passMCross;
         bool passBu = passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30)|| passTrig(HLT_PFMETNoMu110_PFMHTNoMu110_IDTight) || passTrig(HLT_PFMETNoMu120_PFMHTNoMu120_IDTight);
         bool passSMuoHtMuoBu = passSMuoHtMu || passBu ||  passTrig(HLT_TkMu50)|| passTrig(HLT_Mu50);
 
@@ -221,7 +230,8 @@ public:
         TString preName = prefix + "_GL_passSMu";
 
         bool passSEl = passTrig(HLT_Ele27_WPTight_Gsf);
-        bool passSEloHtEl = passSEl  || passTrig(HLT_Ele15_IsoVVVL_PFHT350) || passTrig(HLT_Ele15_IsoVVVL_PFHT400);
+        bool passECross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
+        bool passSEloHtEl = passSEl  || passECross;
         bool passBu = passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30)|| passTrig(HLT_PFMETNoMu110_PFMHTNoMu110_IDTight) || passTrig(HLT_PFMETNoMu120_PFMHTNoMu120_IDTight);
         bool passSEloHtEloBu = passSEloHtEl || passBu ||  passTrig(HLT_Ele45_WPLoose_Gsf)|| passTrig(HLT_Ele115_CaloIdVT_GsfTrkIdT);
 
@@ -259,10 +269,12 @@ public:
         bool passBu = passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30) || passTrig(HLT_PFMETNoMu110_PFMHTNoMu110_IDTight) || passTrig(HLT_PFMETNoMu120_PFMHTNoMu120_IDTight);
 
         bool passSMu = passTrig(HLT_IsoTkMu24) || passTrig(HLT_IsoMu24);
-        bool passSMuoHtMu = passSMu || passTrig(HLT_Mu15_IsoVVVL_PFHT350) || passTrig(HLT_Mu15_IsoVVVL_PFHT400);
+        bool passMCross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
+        bool passSMuoHtMu = passSMu || passMCross;
         bool passSMuoHtMuoBu = passSMuoHtMu || passBu ||  passTrig(HLT_TkMu50)|| passTrig(HLT_Mu50);
         bool passSEl = passTrig(HLT_Ele27_WPTight_Gsf);
-        bool passSEloHtEl = passSEl  || passTrig(HLT_Ele15_IsoVVVL_PFHT350) || passTrig(HLT_Ele15_IsoVVVL_PFHT400);
+        bool passECross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
+        bool passSEloHtEl = passSEl  || passECross;
         bool passSEloHtEloBu = passSEloHtEl || passBu ||  passTrig(HLT_Ele45_WPLoose_Gsf)|| passTrig(HLT_Ele115_CaloIdVT_GsfTrkIdT);
 
 

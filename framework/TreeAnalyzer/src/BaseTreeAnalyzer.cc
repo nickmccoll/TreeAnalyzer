@@ -54,7 +54,7 @@ BaseTreeAnalyzer::BaseTreeAnalyzer(std::string fileName, std::string treeName, i
     std::cout << " \033[1;34m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\033[0m"  << std::endl;
     std::cout << " ++  Setting up BaseTreeAnalyzer"<<std::endl;
     std::cout << " ++  Will be analyzing a "<<getTreeTypeName(inputTreeType) <<" tree"<<std::endl;
-    std::cout << " ++  Data dir: "<<datap<<std::endl;
+    std::cout << " ++  Data dir: "<<dataDirectory<<std::endl;
     std::cout << " \033[1;34m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\033[0m"  << std::endl;
 
 }
