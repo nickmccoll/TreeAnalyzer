@@ -350,10 +350,10 @@ public:
         }
         if(!isRealData()) doMCLepton(smpName);
 
-        for(unsigned int iT = 0; iT <= FillerConstants::HLT_PFMET120_PFMHT120_IDTight; ++iT ){
-            if(FillerConstants::doesPass(reader_event->triggerAccepts, iT))
+        for(unsigned int iT = 0; iT <= triggerStrings.size(); ++iT ){
+            if(FillerConstants::doesPass(reader_event->triggerAccepts, size64(1) << iT))
                 plotter.getOrMake2DPre(smpName,"trigger_prescale",";trigger;isPrescaled",64,-0.5,63.5,2,-0.5,1.5)->Fill(iT,0.0);
-            if(FillerConstants::doesPass(reader_event->triggerPrescales, iT))
+            if(FillerConstants::doesPass(reader_event->triggerPrescales, size64(1) << iT))
                 plotter.getOrMake2DPre(smpName,"trigger_prescale",";trigger;isPrescaled",64,-0.5,63.5,2,-0.5,1.5)->Fill(iT,1.0);
         }
 

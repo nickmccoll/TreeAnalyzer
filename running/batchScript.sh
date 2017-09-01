@@ -10,7 +10,7 @@ echo `hostname`
 echo "${_CONDOR_SCRATCH_DIR}"
 echo "workdir: $workdir"
 echo "args: $*"
-tar -xf data.tar.gz
+tar -xf data.tar.gz --warning=no-timestamp
 rm data.tar.gz
 ls -l -a
 

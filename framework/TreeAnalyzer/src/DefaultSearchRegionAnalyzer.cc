@@ -48,6 +48,7 @@ void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
 
     turnOnCorr(CORR_XSEC);
     turnOnCorr(CORR_TRIG);
+    turnOnCorr(CORR_PU  );
 }
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::loadVariables()  {

@@ -26,7 +26,10 @@ class Lepton            ;
 class DefaultSearchRegionAnalyzer : public BaseTreeAnalyzer {
 public:
     //corrections that can be applied
-    enum Corrections {CORR_XSEC,CORR_TRIG, CORR_PU};
+    enum Corrections {CORR_XSEC =(1<<0)
+                     ,CORR_TRIG =(1<<1)
+                     ,CORR_PU   =(1<<2)
+    };
 
     DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt);
 
