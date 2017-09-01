@@ -133,9 +133,9 @@ enum Triggers{
     ,HLT_PFHT900                           = (ASTypes::size64(1) << 37)
     //met
     ,HLT_PFMETNoMu110_PFMHTNoMu110_IDTight = (ASTypes::size64(1) << 38)
-    ,HLT_PFMETNoMu120_PFMHTNoMu120_IDTight = (ASTypes::size64(1) << 38)
-    ,HLT_PFMET110_PFMHT110_IDTight         = (ASTypes::size64(1) << 39)
-    ,HLT_PFMET120_PFMHT120_IDTight         = (ASTypes::size64(1) << 40)
+    ,HLT_PFMETNoMu120_PFMHTNoMu120_IDTight = (ASTypes::size64(1) << 39)
+    ,HLT_PFMET110_PFMHT110_IDTight         = (ASTypes::size64(1) << 40)
+    ,HLT_PFMET120_PFMHT120_IDTight         = (ASTypes::size64(1) << 41)
 };
 
 const std::vector<std::string> triggerStrings = {
