@@ -42,6 +42,28 @@ float get4bXSecLimit(size mass) {
 }
 }
 
+
+PUScaleFactors::PUScaleFactors(const std::string& dataDir, const std::string& sfFile, bool verbose ){
+    TFile * file = TObjectHelper::getFile(dataDir+sfFile,"read",verbose);
+    nominalSF.reset(new  TObjectHelper::Hist1DContainer(file,"puSF_nominal",verbose) );
+    downSF.reset(new  TObjectHelper::Hist1DContainer(file,"puSF_down",verbose) );
+    upSF.reset(new  TObjectHelper::Hist1DContainer(file,"puSF_up",verbose) );
+    delete file;
+}
+float PUScaleFactors::getCorrection(const unsigned int trueNumInteractions, const CorrHelp::CORRTYPE corrType) const {
+    switch(corrType) {
+    case CorrHelp::NOMINAL :
+        return  nominalSF->getBinContentByValue(trueNumInteractions).val();
+    case CorrHelp::NONE :
+        return  1.0;
+    case CorrHelp::UP :
+        return  upSF->getBinContentByValue(trueNumInteractions).val();
+    case CorrHelp::DOWN :
+        return  downSF->getBinContentByValue(trueNumInteractions).val();
+    default:
+        return 1.0;
+    }
+}
 }
 
 

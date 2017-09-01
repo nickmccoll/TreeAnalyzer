@@ -1,5 +1,9 @@
 #ifndef TREEANALYZER_FRAMEWORK_PROCESSORS_INTERFACE_EVENTWEIGHTS_H_
 #define TREEANALYZER_FRAMEWORK_PROCESSORS_INTERFACE_EVENTWEIGHTS_H_
+
+#include "AnalysisSupport/Utilities/interface/TObjectHelper.h"
+#include "CorrectionHelper.h"
+
 namespace TAna {
 class EventReader;
 namespace EventWeights {
@@ -15,7 +19,21 @@ namespace EventWeights {
     float get4bXSecLimit(unsigned int  mass);
 
 }
+
+class PUScaleFactors {
+public:
+    PUScaleFactors(const std::string& dataDir, const std::string& sfFile = "corrections/puSF.root", bool verbose = false);
+    float getCorrection(const unsigned int trueNumInteractions, const CorrHelp::CORRTYPE corrType = CorrHelp::NOMINAL) const;
+
+private:
+    std::unique_ptr<TObjectHelper::Hist1DContainer> nominalSF;
+    std::unique_ptr<TObjectHelper::Hist1DContainer> upSF;
+    std::unique_ptr<TObjectHelper::Hist1DContainer> downSF;
+};
 }
+
+
+
 
 
 
