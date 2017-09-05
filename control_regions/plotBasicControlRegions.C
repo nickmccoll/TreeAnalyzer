@@ -134,7 +134,6 @@ public:
 
         if(reader_event->process >= FillerConstants::SINGLET && reader_event->process <= FillerConstants::TTX )
             smpName = "other";
-        if(isRealData()) smpName = "data";
 
 
         std::vector<const Jet*>  filteredJets = JetKinematics::selectObjectsConst(reader_jetwlep->jets,20.0,2.4);

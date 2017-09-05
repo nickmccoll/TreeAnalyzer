@@ -330,6 +330,9 @@ public:
     bool runEvent() override {
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
         if(!passEventFilters) return false;
+
+        if(isRealData()) smpName = FillerConstants::DatasetNames[reader_event->dataset];
+
         triggerAccepts = reader_event->triggerAccepts;
 
         tagElectrons = tagLeptonProc->getElectrons(*reader_electron);

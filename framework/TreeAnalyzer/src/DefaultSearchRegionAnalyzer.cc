@@ -65,7 +65,7 @@ void DefaultSearchRegionAnalyzer::loadVariables()  {
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
-    if(isRealData()) smpName = FillerConstants::DatasetNames[reader_event->dataset];
+    if(isRealData()) smpName = "data";
     else if (reader_event->process == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
     else smpName = FillerConstants::MCProcessNames[reader_event->process];
 
