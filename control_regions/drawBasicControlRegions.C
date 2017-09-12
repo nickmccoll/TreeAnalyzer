@@ -126,12 +126,16 @@ hadd data_met_basicCRPlots.root ../jobs_cr2/*data_met*.root &
 // vector<TString> vars = { "ak4Nolep_nJets","ak4Nolep_nMedBtags"};
   // vector<TString> vars = { "ak8_nJets","ak8_jetPT","ak8_jetETA","ak8_jetMass","ak8_jetSDMass","ak8_jetRSDMass","ak8_NSubjets"};
   // vector<TString> vars = { "ak8_leadingJetNSubjets","ak8_leadingJetMinSJCSV","ak8_leadingJetMaxSJCSV","ak8_leadingJetTau2oTau1","ak8_leadingJetSDMass"};
+    // vector<TString> vars = {"ak8_leadingJetSDMass"};
+  // vector<TString> vars = { "ak8_leadingJetNSubjets","ak8_leadingJetMinSJCSV","ak8_leadingJetMaxSJCSV","ak8_leadingJetTau2oTau1","ak8_leadingJetSDMass"};
   // vector<TString> vars = { "hhMass","hbbMass","hbbPT","hbbSDMass","hbbRSDMass"};
   vector<TString> vars = { "hhMass","hbbSDMass"};
-  
+  // vector<TString> vars = { "ak4Wlep_nJets","ak4Nolep_nJets"};
   // vector<TString> pres = { "1mu","1el","2lsf","2lof"};
+    // vector<TString> pres = { "1mu_0b","1el_0b","1mu_2b","1el_2b"};
   // vector<TString> pres = { "1mu","1el","1mu_2b","1el_2b"};
-    vector<TString> pres = { "1mu_wjjBtagCR","1el_wjjBtagCR"};
+    vector<TString> pres = { "1mu_HbbAntiBCR","1el_HbbAntiBCR"};
+    // vector<TString> pres = { "1mu_wjjBtagTauCR","1el_wjjBtagTauCR"};
   distPlots("plots",vars,pres,false,5);
 
 }

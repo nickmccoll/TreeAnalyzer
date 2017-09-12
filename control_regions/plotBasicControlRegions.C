@@ -119,11 +119,19 @@ public:
     }
 
     void plotHH(const TString prefix){
-        plotter.getOrMake1DPre(prefix,"hhMass",";hh mass [GeV]",400,0,2000)->Fill(hh.mass(),weight);
-        plotter.getOrMake1DPre(prefix,"hbbMass",";h(bb) mass [GeV]",500,0,500)->Fill(hbbCand->mass(),weight);
-        plotter.getOrMake1DPre(prefix,"hbbPT"     ,";h(bb) p_{T} [GeV]"             ,400,0,2000)->Fill(hbbCand->pt(),weight);
-        plotter.getOrMake1DPre(prefix,"hbbSDMass" ,";h(bb) soft-drop mass [GeV]"    ,500,0,500)->Fill(hbbCand->sdMom().mass(),weight);
-        plotter.getOrMake1DPre(prefix,"hbbRSDMass",";h(bb) raw soft-drop mass [GeV]",500,0,500)->Fill(hbbCand->rawSdMom().mass(),weight);
+        plotter.getOrMake1DPre(prefix,"hhMass",";HH mass [GeV]",400,0,2000)->Fill(hh.mass(),weight);
+        plotter.getOrMake1DPre(prefix,"hbbMass",";H(bb) mass [GeV]",500,0,500)->Fill(hbbCand->mass(),weight);
+        plotter.getOrMake1DPre(prefix,"hbbPT"     ,";H(bb) p_{T} [GeV]"             ,400,0,2000)->Fill(hbbCand->pt(),weight);
+        plotter.getOrMake1DPre(prefix,"hbbSDMass" ,";H(bb) soft-drop mass [GeV]"    ,500,0,500)->Fill(hbbCand->sdMom().mass(),weight);
+        plotter.getOrMake1DPre(prefix,"hbbRSDMass",";H(bb) raw soft-drop mass [GeV]",500,0,500)->Fill(hbbCand->rawSdMom().mass(),weight);
+
+        if(hbbCand->sdMom().mass() >10){
+            plotter.getOrMake1DPre(prefix+"_hbbM10","hhMass",";HH mass [GeV]",400,0,2000)->Fill(hh.mass(),weight);
+            plotter.getOrMake1DPre(prefix+"_hbbM10","hbbMass",";H(bb) mass [GeV]",500,0,500)->Fill(hbbCand->mass(),weight);
+            plotter.getOrMake1DPre(prefix+"_hbbM10","hbbPT"     ,";H(bb) p_{T} [GeV]"             ,400,0,2000)->Fill(hbbCand->pt(),weight);
+            plotter.getOrMake1DPre(prefix+"_hbbM10","hbbSDMass" ,";H(bb) soft-drop mass [GeV]"    ,500,0,500)->Fill(hbbCand->sdMom().mass(),weight);
+            plotter.getOrMake1DPre(prefix+"_hbbM10","hbbRSDMass",";H(bb) raw soft-drop mass [GeV]",500,0,500)->Fill(hbbCand->rawSdMom().mass(),weight);
+        }
     }
 
 
@@ -155,10 +163,29 @@ public:
         };
         auto mkHHPlots = [&](const TString& prefix){
             if(wjjCand && hbbCand){
-                bool crWjj = FatJetSelHelpers::passWjjSelection(wjjCand,fjProc->wjj_maxT2oT1,BTagging::CSV_INCL,fjProc->wjj_minMass,fjProc->wjj_maxMass) &&
-                        wjjCand->maxSJCSV() >= BTagging::CSVWP_VALS[BTagging::CSV_T];
-                if(crWjj)
+
+                const bool bTaggedW = FatJetSelHelpers::passWjjSelection(wjjCand,fjProc->wjj_maxT2oT1,BTagging::CSV_INCL,fjProc->wjj_minMass,fjProc->wjj_maxMass) && wjjCand->maxSJCSV() >= BTagging::CSVWP_VALS[BTagging::CSV_T];
+                const bool stdW = FatJetSelHelpers::passWjjSelection(wjjCand,fjProc->wjj_maxT2oT1,fjProc->wjj_maxCSVWP,fjProc->wjj_minMass,fjProc->wjj_maxMass);
+//                const bool stdHbb =  FatJetSelHelpers::passHbbSelection(hbbCand,fjProc->hbb_maxT2oT1,fjProc->hbb_l_firMinCSVWP,fjProc->hbb_l_secMinCSVWP,fjProc->hbb_minMass,fjProc->hbb_maxMass);
+                const bool antiHbb = FatJetSelHelpers::passHbbSelection(hbbCand,fjProc->hbb_maxT2oT1,BTagging::CSV_INCL,BTagging::CSV_INCL,fjProc->hbb_minMass,fjProc->hbb_maxMass)&&
+                        hbbCand->maxSJCSV() < BTagging::CSVWP_VALS[BTagging::CSV_L];
+
+                const bool tauHbb = FatJetSelHelpers::passHbbSelection(hbbCand,fjProc->hbb_maxT2oT1,BTagging::CSV_INCL,BTagging::CSV_INCL,fjProc->hbb_minMass,fjProc->hbb_maxMass);
+
+
+                bool cr_btaggedWjj = bTaggedW;
+                bool cr_btaggedWjj2 = bTaggedW && tauHbb;
+                bool cr_antiBHbb = antiHbb && stdW;
+
+
+
+
+                if(cr_btaggedWjj)
                     plotHH(prefix + "_wjjBtagCR");
+                if(cr_btaggedWjj2)
+                    plotHH(prefix + "_wjjBtagTauCR");
+                if(cr_antiBHbb)
+                    plotHH(prefix + "_HbbAntiBCR");
             }
         };
         if(selectedLeptons.size() == 1){
