@@ -52,9 +52,12 @@ namespace LepSelHelpers {
 
 class LeptonProcessor {
 public:
-    std::vector<const Muon    *> getMuons    (const EventReader& reader_event, const MuonReader& reader_muon);
-    std::vector<const Electron*> getElectrons(const ElectronReader& reader_electron);
-    std::vector<const Lepton  *> getLeptons  (const EventReader& reader_event, const MuonReader& reader_muon, const ElectronReader& reader_electron);
+    bool isGoodMuon(const EventReader& reader_event, const Muon * lep)const;
+    bool isGoodElectron(const Electron * lep) const;
+    bool isGoodLepton(const EventReader& reader_event, const Lepton * lep) const;
+    std::vector<const Muon    *> getMuons    (const EventReader& reader_event, const MuonReader& reader_muon) const;
+    std::vector<const Electron*> getElectrons(const ElectronReader& reader_electron ) const ;
+    std::vector<const Lepton  *> getLeptons  (const EventReader& reader_event, const MuonReader& reader_muon, const ElectronReader& reader_electron) const;
     LepSelParameters lepSelParams;
     LepSelParameters lepSelParams_dataABCDEF;
 };
