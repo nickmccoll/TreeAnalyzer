@@ -25,6 +25,8 @@ namespace TAna {
 //--------------------------------------------------------------------------------------------------
 DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt) : BaseTreeAnalyzer(fileName,treeName,treeInt){
     setupProcessors(fileName);
+    if(!reader_event)
+        std::cout << " ++  Warning! the EventReader was not loaded!"<<std::endl;
 }
 //--------------------------------------------------------------------------------------------------
 DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
