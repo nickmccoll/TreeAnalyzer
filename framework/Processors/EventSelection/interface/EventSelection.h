@@ -8,6 +8,8 @@ namespace EventSelection {
 
 bool passEventFilters(const EventReader& reader_event);
 bool passTriggerSuite(const EventReader& reader_event);
+bool passMuonTriggerSuite(const EventReader& reader_event);
+bool passElectronTriggerSuite(const EventReader& reader_event);
 bool passTriggerPreselection(const EventReader& reader_event,const float ht, const std::vector<const Lepton    *>& selectedLeptons);
 
 
