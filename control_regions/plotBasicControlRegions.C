@@ -207,14 +207,14 @@ public:
         } else if(selectedLeptons.size() == 2){
             const float llMass = (selectedLeptons[0]->p4() + selectedLeptons[1]->p4()).mass();
             const bool goodMass = (llMass >= 50 && llMass < 80) || llMass >= 100;
-            const bool goodDiLep = (selectedLeptons[0]->q() != selectedLeptons[1]->q()) && goodMass ;
-            if(goodDiLep && selectedLeptons[0]->isMuon()  == selectedLeptons[1]->isMuon()  ){
+            const bool goodCharge = (selectedLeptons[0]->q() != selectedLeptons[1]->q());
+            if(goodCharge && goodMass && selectedLeptons[0]->isMuon()  == selectedLeptons[1]->isMuon()  ){
                 TString prefix = smpName + "_2lsf";
                 mkSTDPlots(prefix);
                 if(nBM == 0){ mkSTDPlots(prefix + "_0b");}
                 else if(nBM ==1) { mkSTDPlots(prefix + "_1b");}
                 else if(nBM >=2) { mkSTDPlots(prefix + "_2b");}
-            } else if(goodDiLep) {
+            } else if(goodCharge && selectedLeptons[0]->isMuon()  != selectedLeptons[1]->isMuon()  ) {
                 TString prefix = smpName + "_2lof";
                 mkSTDPlots(prefix);
                 if(nBM == 0){ mkSTDPlots(prefix + "_0b");}
