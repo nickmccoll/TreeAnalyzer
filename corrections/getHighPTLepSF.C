@@ -17,6 +17,8 @@
 #include "TreeReaders/interface/FatJetReader.h"
 #include "Processors/GenTools/interface/SMDecayEvent.h"
 #include "Processors/Variables/interface/BTagging.h"
+#include "Processors/EventSelection/interface/EventSelection.h"
+
 
 using namespace TAna;
 using namespace FillerConstants;
@@ -40,109 +42,112 @@ public:
         reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
         reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
 
-//        if(!isRealData()){
-//            reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
-//        }
+        if(!isRealData()){
+            reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
+        }
     }
-    void doFJ(TString prefix, const FatJet *fj,const std::vector<const Muon*>& muons, const std::vector<const Jet     *>& jets){
-        std::vector<const Jet*> btags;
-        for(const auto* j : jets){
-            if(j->absEta() > 2.4) continue;
-            if(j->csv() < BTagging::CSVWP_VALS[BTagging::CSV_M]) continue;
-            if(PhysicsUtilities::deltaPhi(*fj,*j) < TMath::PiOver2() ) continue;
-            btags.push_back(j);
+
+
+    bool isRealLepton(const Lepton* lepton){
+        int l_pdgid =  lepton->isMuon() ?  ParticleInfo::p_muminus  : ParticleInfo::p_eminus;
+        if(lepton->q() > 0) l_pdgid *= -1;
+
+        for(const auto& p : reader_genpart->genParticles ){
+            if(p.pdgId() != l_pdgid ) continue;
+            if(!ParticleInfo::isLastInChain(&p)) continue;
+            if(PhysicsUtilities::deltaR2(p,*lepton) > 0.2*0.2 ) continue;
+            return true;
         }
-        if(btags.size() != 1) return;
-        std::vector<const Muon*> gmuons;
-        for(const auto* m : muons){
-            if(PhysicsUtilities::deltaPhi(*fj,*m) < TMath::PiOver2() ) continue;
-            if(JetKinematics::transverseMass(*m,reader_event->met) >= 100) continue;
-            double nearDR = 10;
-            int iJ = PhysicsUtilities::findNearestDRDeref(*m,jets,nearDR);
-            if(nearDR > 0.4) continue;
-            if(jets[iJ]->index() != btags.front()->index()) continue;
-            gmuons.push_back(m);
-        }
-        plotter.getOrMake1DPre(prefix,"nGoodMuons",";nGoodMuons",10,-0.5,9.5)->Fill(gmuons.size(),weight);
-
-        if(gmuons.size() == 0) return;
-
-        const auto * j = btags.front();
-        const auto *l = gmuons.front();
+        return false;
+    }
 
 
+    void doPlots(const TString& prefix, const Lepton* l, float r, float rN, float ptRat){
+        plotter.getOrMake1DPre(prefix,"drN"           ,";#DeltaR_{N}",200,0,4)->Fill(rN,weight);
+        plotter.getOrMake1DPre(prefix,"dr"            ,";#DeltaR",200,0,4)->Fill(r,weight);
+        plotter.getOrMake1DPre(prefix,"ptRat"         ,";p_{T}(jet - lep)/p_{T}(lep)",100,0,10)->Fill(ptRat,weight);
 
-        plotter.getOrMake1DPre(prefix,"mt",";mt",125,0,125)->Fill(JetKinematics::transverseMass(*l,reader_event->met),weight);
-        const MomentumF jetMLep = j->p4() - l->p4();
-        const float ratio= jetMLep.pt()/l->pt();
-        const float rC  = std::max(0.05,std::min(0.2, 10.0/l->pt()));
-        const float dR = PhysicsUtilities::deltaR(l->p4(),jetMLep.p4());
-        plotter.getOrMake1DPre(prefix,"jml_drN_l",";#DeltaR(jet - lep,lep)/(iso. cone size)",200,0,4)->Fill(dR/rC,weight );
-        plotter.getOrMake1DPre(prefix,"jml_dr_l",";#DeltaR(jet - lep,lep)",200,0,0.4)->Fill(dR,weight );
-
-        if(jetMLep.pt() >= 0.5 * l->pt()){
-            plotter.getOrMake1DPre(prefix,"pt0p5_jml_drN_l",";#DeltaR(jet - lep,lep)/(iso. cone size)",200,0,4)->Fill(dR/rC,weight );
-            plotter.getOrMake1DPre(prefix,"pt0p5_jml_dr_l",";#DeltaR(jet - lep,lep)",200,0,0.4)->Fill(dR,weight );
-        }
-        if(jetMLep.pt() >=  l->pt()){
-            plotter.getOrMake1DPre(prefix,"pt1_jml_drN_l",";#DeltaR(jet - lep,lep)/(iso. cone size)",200,0,4)->Fill(dR/rC,weight );
-            plotter.getOrMake1DPre(prefix,"pt1_jml_dr_l",";#DeltaR(jet - lep,lep)",200,0,0.4)->Fill(dR,weight );
-        }
-
-        const bool passISO = leptonProc->isGoodLepton(*reader_event,l);
-        if(!passISO) return;
-
-        prefix += "_pass";
-        plotter.getOrMake1DPre(prefix,"jml_drN_l",";#DeltaR(jet - lep,lep)/(iso. cone size)",200,0,4)->Fill(dR/rC,weight );
-        plotter.getOrMake1DPre(prefix,"jml_dr_l",";#DeltaR(jet - lep,lep)",200,0,0.4)->Fill(dR,weight );
-        if(jetMLep.pt() >= 0.5 * l->pt()){
-            plotter.getOrMake1DPre(prefix,"pt0p5_jml_drN_l",";#DeltaR(jet - lep,lep)/(iso. cone size)",200,0,4)->Fill(dR/rC,weight );
-            plotter.getOrMake1DPre(prefix,"pt0p5_jml_dr_l",";#DeltaR(jet - lep,lep)",200,0,0.4)->Fill(dR,weight );
-        }
-        if(jetMLep.pt() >=  l->pt()){
-            plotter.getOrMake1DPre(prefix,"pt1_jml_drN_l",";#DeltaR(jet - lep,lep)/(iso. cone size)",200,0,4)->Fill(dR/rC,weight );
-            plotter.getOrMake1DPre(prefix,"pt1_jml_dr_l",";#DeltaR(jet - lep,lep)",200,0,0.4)->Fill(dR,weight );
-        }
-
+        plotter.getOrMake1DPre(prefix,"pt"            ,";lepton p_{T}",500,0,500)->Fill(l->pt(),weight);
+        plotter.getOrMake1DPre(prefix,"eta"           ,";lepton |#eta|",25,0,2.5)->Fill(l->absEta(),weight);
     }
 
     bool runEvent() override {
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
+
+        if(!isRealData()){
+            switch(reader_event->process){
+            case SIGNAL:
+            case TTBAR:
+                smpName = FillerConstants::MCProcessNames[reader_event->process];
+                break;
+            case SINGLET:
+            case TTX:
+                smpName = "singlet";
+                break;
+            default:
+                "other";
+            }
+        }
+        if(reader_event->process >= FillerConstants::SINGLET && reader_event->process <= FillerConstants::TTX )
+            smpName = "other";
+
         if(!passEventFilters) return false;
-        const bool passJetHT = FillerConstants::doesPass(reader_event->triggerAccepts,FillerConstants::HLT_PFHT800) || FillerConstants::doesPass(reader_event->triggerAccepts,FillerConstants::HLT_PFHT900) ;
-        if(!passJetHT) return false;
-        if(ht_wlep < 1200) return false;
+        if(!EventSelection::passElectronTriggerSuite(*reader_event)) return false;
 
-        if(!isRealData() && reader_event->process >= MCProcess::ZJETS && reader_event->process <= MCProcess::TTX  ) smpName = "other";
+        std::vector<const Electron*> tagLeptons = leptonProc->getElectrons(*reader_electron);
+        std::vector<const Muon*>     probeLeptons = leptonProcNoISO->getMuons(*reader_event,*reader_muon);
+        const std::vector<const Jet*>jets      = JetKinematics::selectObjectsConst(reader_jetwlep->jets,20,10);
 
-        const std::vector<const Jet     *> jets      = JetKinematics::selectObjectsConst(reader_jetwlep->jets,20,10);
-        const std::vector<const FatJet  *> fatJets   = JetKinematics::selectObjectsConst(reader_fatjet->jets,400,2.4);
-        const std::vector<const Muon*> iDMuons = leptonProcNoISO->getMuons(*reader_event,*reader_muon);
+        if(tagLeptons.size() != 1) return false;
+        const auto* tagLepton = tagLeptons.front();
+        if(tagLepton->pt() < 30) return false;
 
-        const FatJet *topJet = 0;
-        const FatJet *topJetT = 0;
-        for(const auto* fj: fatJets){
-            if(fj->sdMom().mass() < 105) continue;
-            if(fj->sdMom().mass() > 210) continue;
-            if(fj->tau3otau2() > 0.8) continue;
-            if(fj->maxSJCSV() >= BTagging::CSVWP_VALS[BTagging::CSV_L] && topJet == 0 ) {
-                topJet = fj;
-            }
-            if(fj->maxSJCSV() >= BTagging::CSVWP_VALS[BTagging::CSV_M] && topJetT == 0) {
-                topJetT = fj;
-            }
+        std::vector<const Jet*>  filteredJets = JetKinematics::selectObjectsConst(reader_jetwlep->jets,20.0,2.4);
+        std::vector<const Jet*> bjets;
+        for(const auto* j : filteredJets) if(BTagging::isMediumCSVTagged(*j)) bjets.push_back(j);
+        const size nBjs = bjets.size();
+        if(nBjs == 0) return false;
 
+        std::sort(probeLeptons.begin(), probeLeptons.end(),     [&](const Lepton * a, const Lepton * b) -> bool
+                {
+                    return PhysicsUtilities::deltaR2(*a,*tagLepton) > PhysicsUtilities::deltaR2(*b,*tagLepton);
+                });
+
+        plotter.getOrMake1DPre(smpName,"nCands"         ,";number of lepton candidates",20,-0.5,19.5)->Fill(probeLeptons.size(),weight);
+
+        int nCandPio2 = 0;
+        for(unsigned int iR = 0; iR < probeLeptons.size(); ++iR){
+            if(PhysicsUtilities::deltaR2(*probeLeptons[iR],*tagLepton) < TMath::PiOver2()*TMath::PiOver2() ) break;
+            nCandPio2++;
         }
+        plotter.getOrMake1DPre(smpName,"nHighETACands"         ,";number of lepton candidates",20,-0.5,19.5)->Fill(nCandPio2,weight);
 
-        if(topJet) doFJ(smpName + "_ltj",topJet,iDMuons,jets);
-        if(topJetT) doFJ(smpName + "_mtj",topJet,iDMuons,jets);
-        if(topJet){
-            plotter.getOrMake1DPre(smpName,"topmass",";topmass",165,75,240)->Fill(topJet->sdMom().mass(),weight);
-        plotter.getOrMake1DPre(smpName,"tau32",";tau32",200,0,1)->Fill(topJet->tau3otau2(),weight);
-        plotter.getOrMake1DPre(smpName,"csv",";csv",200,0,1)->Fill(topJet->maxSJCSV(),weight);
-        plotter.getOrMake1DPre(smpName,"toppt","toppt",200,0,2000)->Fill(topJet->pt(),weight);
+        if(!nCandPio2) return false;
+        const auto* probeLepton = probeLeptons.front();
+        bool realLep = false;
+        if(!isRealData()) realLep = isRealLepton(probeLepton);
+
+
+        TString prefix = "data";
+        if(!isRealData()) prefix = realLep ? "real" : "fake";
+
+        double nearDR = 10;
+        int iJ = PhysicsUtilities::findNearestDRDeref(*probeLepton,jets,nearDR);
+        if(nearDR > 0.4) return false;
+        const MomentumF jetMLep = jets[iJ]->p4() - probeLepton->p4();
+        const float jetML_frac = jetMLep.pt()/probeLepton->pt();
+
+        const float rC  = std::max(0.05,std::min(0.2, 10.0/probeLepton->pt()));
+        const float dR = PhysicsUtilities::deltaR(probeLepton->p4(),jetMLep.p4());
+        const float ratN = dR/rC;
+
+        bool passISO = leptonProc->isGoodMuon(*reader_event,probeLepton);
+        doPlots(prefix,probeLepton,dR,ratN,jetML_frac);
+        if(passISO) doPlots(prefix + "_iso",probeLepton,dR,ratN,jetML_frac);
+        if(jetML_frac >= 0.5){
+            doPlots(prefix+"_jml0p5",probeLepton,dR,ratN,jetML_frac);
+            if(passISO) doPlots(prefix + "_jml0p5_iso",probeLepton,dR,ratN,jetML_frac);
         }
-
 
         return true;
     }
@@ -163,6 +168,6 @@ void getHighPTLepSF(std::string fileName, int treeInt, std::string outFileName){
 void getHighPTLepSF(std::string fileName, int treeInt, std::string outFileName, float xSec, float numEvent){
     Analyzer a(fileName,"treeMaker/Events",treeInt);
     a.setSampleInfo(xSec,numEvent);
-    a.analyze(10000);
+    a.analyze(10000,100000);
     a.write(outFileName);
 }
