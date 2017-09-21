@@ -15,6 +15,7 @@
 #include "TreeReaders/interface/EventReader.h"
 #include "TreeReaders/interface/JetReader.h"
 #include "Processors/GenTools/interface/SMDecayEvent.h"
+#include "Processors/Variables/interface/BTagging.h"
 
 using namespace TAna;
 using namespace FillerConstants;
@@ -163,6 +164,114 @@ public:
     }
 
 
+    void plotDileptonKine(TString prefix, const std::vector<const Jet*>& jets) {
+        if(selectedLeptons.size() != 2) return;
+        if(selectedLeptons[0]->q() == selectedLeptons[1]->q()) return;
+        if(selectedLeptons[0]->isMuon() == selectedLeptons[1]->isMuon() ){
+            const float llMass = (selectedLeptons[0]->p4() + selectedLeptons[1]->p4()).mass();
+            if(llMass >= 80 && llMass < 100) return;
+            prefix += "_2lsf";
+        } else {
+            prefix += "_2lof";
+        }
+        std::vector<const Jet*>  filteredJets = JetKinematics::selectObjectsConst(reader_jetwlep->jets,20.0,2.4);
+
+
+        std::vector<const Jet*> bjets;
+        for(const auto* j : filteredJets) if(BTagging::isMediumCSVTagged(*j)) bjets.push_back(j);
+        const size nBjs = bjets.size();
+        if(nBjs == 0) return;
+
+        const std::vector<const Lepton*> allNoISOLeptons = leptonProcNoISO->getLeptons(*reader_event,*reader_muon,*reader_electron);
+
+
+        for(const auto* l : selectedLeptons){
+            double nearDR = 10;
+            int iJ = PhysicsUtilities::findNearestDRDeref(*l,jets,nearDR);
+            if(nearDR > 0.4) continue;
+            const MomentumF jetMLep = jets[iJ]->p4() - l->p4();
+            const float rC  = std::max(0.05,std::min(0.2, 10.0/l->pt()));
+            const float dR = PhysicsUtilities::deltaR(l->p4(),jetMLep.p4());
+            const float ratN = dR/rC;
+            const float jetML_pt = jetMLep.pt();
+            const Lepton * ol = selectedLeptons[0] == l ? selectedLeptons[1] : selectedLeptons[0];
+
+
+
+            std::vector<const Lepton*> lepCands; for(const auto *c : allNoISOLeptons) if(c->isMuon() == l->isMuon() && c != ol) lepCands.push_back(c);
+            int drIDX = -1;
+            int drIDXPio2 = -1;
+            int nCandPio2 = 0;
+            std::sort(lepCands.begin(), lepCands.end(),     [&](const Lepton * a, const Lepton * b) -> bool
+                    {
+                        return PhysicsUtilities::deltaR2(*a,*ol) > PhysicsUtilities::deltaR2(*b,*ol);
+                    });
+            for(unsigned int iR = 0; iR < lepCands.size(); ++iR) if(lepCands[iR] == l) {drIDX = iR; break;}
+            for(unsigned int iR = 0; iR < lepCands.size(); ++iR){
+                if(PhysicsUtilities::deltaR2(*lepCands[iR],*ol) < TMath::PiOver2()*TMath::PiOver2() ) break;
+                if(lepCands[iR] == l) {drIDXPio2 = iR;}
+                nCandPio2++;
+            }
+
+            const Jet* btag =0;
+              const Jet* oBtag = 0;
+            if(nBjs == 1)  {
+                if(PhysicsUtilities::deltaR2(*bjets[0], *l ) < PhysicsUtilities::deltaR2(*bjets[0], *ol ))
+                    btag = bjets[0];
+                else oBtag = bjets[0];
+            } else if(PhysicsUtilities::deltaR2(*bjets[0], *l ) < PhysicsUtilities::deltaR2(*bjets[1], *l )) {
+                btag = bjets[0];
+                oBtag = bjets[1];
+
+            } else {
+                btag = bjets[1];
+                oBtag = bjets[0];
+            }
+
+            MomentumF pair = btag ? btag->p4() + l->p4() : l->p4();
+            MomentumF opair = oBtag ? oBtag->p4() + ol->p4() : ol->p4();
+
+            auto mkPlots = [&](const TString& prefix){
+                plotter.getOrMake1DPre(prefix,"drNearestBTag"  ,";#DeltaR(l,b-tag)",320,0,3.2)->Fill(btag ? PhysicsUtilities::deltaR(*l,*btag) : 3.3,weight );
+                plotter.getOrMake1DPre(prefix,"dPhiOtherLepton",";#Delta#phi(l,l)",320,0,3.2)->Fill(std::fabs(PhysicsUtilities::deltaPhi(*l,*ol)),weight);
+                plotter.getOrMake1DPre(prefix,"dROtherLepton"  ,";#DeltaR(l,l)",320,0,3.2)->Fill(PhysicsUtilities::deltaR(*l,*ol),weight);
+                plotter.getOrMake1DPre(prefix,"dPhiPair"       ,";#Delta#phi(pair)",320,0,3.2)->Fill(std::fabs(PhysicsUtilities::deltaPhi(pair,opair)),weight);
+                plotter.getOrMake1DPre(prefix,"dRPair"         ,";#DeltaR(pair)",320,0,3.2)->Fill(PhysicsUtilities::deltaR(pair,opair),weight);
+                plotter.getOrMake1DPre(prefix,"ht"             ,";#it{H}_{T}",300,0,3000)->Fill(ht_wlep,weight);
+                plotter.getOrMake1DPre(prefix,"drN"            ,";#deltaR_{N}",200,0,4)->Fill(ratN,weight);
+                plotter.getOrMake1DPre(prefix,"drRank"         ,";lepton candidate rank (furthest is 0)",10,-1.5,8.5)->Fill(drIDX,weight);
+                plotter.getOrMake1DPre(prefix,"nCands"         ,";number of lepton candidates",20,-0.5,19.5)->Fill(lepCands.size(),weight);
+                plotter.getOrMake1DPre(prefix,"drRankPio2"     ,";lepton candidate rank (furthest is 0)",10,-1.5,8.5)->Fill(drIDXPio2,weight);
+                plotter.getOrMake1DPre(prefix,"nCandsPio2"     ,";number of lepton candidates",20,-0.5,19.5)->Fill(nCandPio2,weight);
+
+
+            };
+            auto doDRN = [&](const TString& cString){
+                if(ratN >= 0.1 && ratN < 1){ mkPlots(cString+"_drN_0p1to1");}
+                mkPlots(cString);
+            };
+            auto doJml = [&](const TString& cString){
+                if(jetML_pt > 0.5*l->pt()){doDRN(cString + "_jml0p5"); }
+                doDRN(cString);
+            };
+            auto doHTs = [&](const TString& cString){
+              if(ht_wlep >= 500){ doJml(cString + "_ht500"); }
+              doJml(cString);
+            };
+
+            auto doBjs =[&](const TString& cString){
+                if(nBjs == 1){ doHTs(cString + "_1b"); }
+                else if(nBjs >= 2){ doHTs(cString + "_2b");}
+                doHTs(cString + "_geq1b");
+            };
+
+
+            doBjs(prefix+ (l->isMuon() ? "_mu" : "_el"));
+        }
+
+
+    }
+
     bool runEvent() override {
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
         if(!passEventFilters) return false;
@@ -227,6 +336,8 @@ public:
 
 
         }
+
+        if(reader_event->process == FillerConstants::TTBAR) plotDileptonKine(smpName,jets);
         return true;
     }
 
