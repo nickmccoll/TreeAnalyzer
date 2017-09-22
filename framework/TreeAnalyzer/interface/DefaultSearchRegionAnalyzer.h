@@ -4,6 +4,7 @@
 #include "TreeAnalyzer/interface/BaseTreeAnalyzer.h"
 #include "DataFormats/interface/Momentum.h"
 #include "Processors/GenTools/interface/DiHiggsEvent.h"
+#include "Processors/GenTools/interface/SMDecayEvent.h"
 
 
 
@@ -19,7 +20,9 @@ class FatJetProcessor   ;
 class LeptonProcessor   ;
 class TriggerScaleFactors;
 class PUScaleFactors;
+class LeptonScaleFactors;
 
+class Jet               ;
 class FatJet            ;
 class Lepton            ;
 
@@ -29,6 +32,7 @@ public:
     enum Corrections {CORR_XSEC =(1<<0)
                      ,CORR_TRIG =(1<<1)
                      ,CORR_PU   =(1<<2)
+                     ,CORR_LEP  =(1<<3)
     };
 
     DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt);
@@ -46,6 +50,9 @@ public:
     //default variable loading
     virtual void loadVariables() override;
 
+    //check configuration
+    virtual void checkConfig();
+
     //fills class member variables....can be run before child runEvent
     virtual bool runEvent() override;
 
@@ -61,7 +68,8 @@ public:
     int             signal_mass=0;
     TString         smpName  = "";
 
-    float           ht_wlep    =0;
+    std::vector<const Jet*> jets_wlep;
+    float                   ht_wlep    =0;
 
     ASTypes::size   corrections=0; //list of corrections to carry out
     float           weight     =0; //std weight after all corrections
@@ -70,6 +78,7 @@ public:
     bool            passTriggerPreselection = false;
 
     DiHiggsEvent    diHiggsEvt;
+    SMDecayEvent    smDecayEvt;
 
     std::vector<const Lepton    *> selectedLeptons;
     const Lepton *                 selectedLepton=0;
@@ -88,6 +97,7 @@ public:
     std::unique_ptr<LeptonProcessor>     leptonProc ;
     std::unique_ptr<TriggerScaleFactors> trigSFProc ;
     std::unique_ptr<PUScaleFactors>      puSFProc ;
+    std::unique_ptr<LeptonScaleFactors>  leptonSFProc ;
 };
 }
 #endif

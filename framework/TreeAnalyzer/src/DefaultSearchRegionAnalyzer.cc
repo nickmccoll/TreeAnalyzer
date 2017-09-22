@@ -17,6 +17,7 @@
 
 #include "Processors/EventSelection/interface/EventSelection.h"
 #include "Processors/Corrections/interface/TriggerScaleFactors.h"
+#include "Processors/Corrections/interface/LeptonScaleFactors.h"
 
 #include "TPRegexp.h"
 
@@ -25,8 +26,6 @@ namespace TAna {
 //--------------------------------------------------------------------------------------------------
 DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt) : BaseTreeAnalyzer(fileName,treeName,treeInt){
     setupProcessors(fileName);
-    if(!reader_event)
-        std::cout << " ++  Warning! the EventReader was not loaded!"<<std::endl;
 }
 //--------------------------------------------------------------------------------------------------
 DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
@@ -42,15 +41,17 @@ void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     if(nrSubStr>1){
         signal_mass = (((TObjString *)match->At(1))->GetString()).Atoi();
     }
-    fjProc     .reset(new FatJetProcessor ()); DefaultFatJetSelections::setDefaultFatJetProcessor(*fjProc);
-    leptonProc .reset(new LeptonProcessor ()); DefaultLeptonSelections::setDefaultLeptonProcessor(*leptonProc);
-    trigSFProc .reset(new TriggerScaleFactors (dataDirectory));
-    puSFProc .reset(new PUScaleFactors (dataDirectory));
+    fjProc      .reset(new FatJetProcessor ()); DefaultFatJetSelections::setDefaultFatJetProcessor(*fjProc);
+    leptonProc  .reset(new LeptonProcessor ()); DefaultLeptonSelections::setDefaultLeptonProcessor(*leptonProc);
+    trigSFProc  .reset(new TriggerScaleFactors (dataDirectory));
+    puSFProc    .reset(new PUScaleFactors (dataDirectory));
+    leptonSFProc.reset(new POGLeptonScaleFactors (dataDirectory));
     setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
 
     turnOnCorr(CORR_XSEC);
     turnOnCorr(CORR_TRIG);
     turnOnCorr(CORR_PU  );
+    turnOnCorr(CORR_LEP );
 }
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::loadVariables()  {
@@ -64,6 +65,22 @@ void DefaultSearchRegionAnalyzer::loadVariables()  {
     if(!isRealData()){
         reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
     }
+
+    checkConfig();
+}
+//--------------------------------------------------------------------------------------------------
+void DefaultSearchRegionAnalyzer::checkConfig()  {
+    auto mkErr = [&](const std::string& reader, const std::string corr) {
+        throw std::invalid_argument(std::string("DefaultSearchRegionAnalyzer::checkConfig() -> Must load ") + reader + std::string(" if you want ") + corr);};
+    if(!reader_event) mkErr("event","anything");
+    if(isCorrOn(CORR_XSEC) && !reader_event) mkErr("event","CORR_XSEC");
+    if(isCorrOn(CORR_TRIG) && !reader_jetwlep) mkErr("ak4Jet","CORR_TRIG");
+    if(isCorrOn(CORR_TRIG) && !reader_electron) mkErr("electron","CORR_TRIG");
+    if(isCorrOn(CORR_TRIG) && !reader_muon) mkErr("muon","CORR_TRIG");
+    if(isCorrOn(CORR_PU)   && !reader_event) mkErr("event","CORR_PU");
+    if(isCorrOn(CORR_LEP) && !reader_jetwlep) mkErr("ak4Jet","CORR_LEP");
+    if(isCorrOn(CORR_LEP) && !reader_electron) mkErr("electron","CORR_LEP");
+    if(isCorrOn(CORR_LEP) && !reader_muon) mkErr("muon","CORR_LEP");
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
@@ -72,17 +89,22 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     else smpName = FillerConstants::MCProcessNames[reader_event->process];
 
     if(reader_jetwlep){
-        auto jets = JetKinematics::selectObjects(reader_jetwlep->jets,30);
-        ht_wlep = JetKinematics::ht(jets);
+        jets_wlep = JetKinematics::selectObjectsConst(reader_jetwlep->jets,20);
+        ht_wlep = JetKinematics::ht(jets_wlep,30);
     }
 
     if(reader_genpart && reader_event->process == FillerConstants::SIGNAL)
         diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
+    if(reader_genpart){
+        if(reader_event->process == FillerConstants::SIGNAL) diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
+        smDecayEvt.setDecayInfo(reader_genpart->genParticles);
+    }
 
     if(reader_electron && reader_muon){
         selectedLeptons = leptonProc->getLeptons(*reader_event,*reader_muon,*reader_electron);
         selectedLepton = selectedLeptons.size() ? selectedLeptons.front() : 0;
     }
+
     passEventFilters= EventSelection::passEventFilters(*reader_event);
     passTriggerPreselection= EventSelection::passTriggerPreselection(*reader_event,ht_wlep,selectedLeptons);
 
@@ -107,6 +129,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         neutrino   =  MomentumF();
         hh         =  MomentumF();
     }
+
     weight = 1;
     if(!isRealData()){
         if(isCorrOn(CORR_XSEC))
@@ -115,6 +138,11 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
             weight *= trigSFProc->getLeptonTriggerSF(ht_wlep, (selectedLepton && selectedLepton->isMuon()));
         if(isCorrOn(CORR_PU) )
             weight *= puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL);
+        if(isCorrOn(CORR_LEP) ){
+            leptonSFProc->load(smDecayEvt,selectedLeptons,&jets_wlep);
+            weight *= leptonSFProc->getSF();
+        }
+
     }
     return true;
 }
