@@ -56,7 +56,7 @@ protected:
             if(matchedRLeps.size() > 1){
                 for(const auto& m : matchedRLeps){
                     //negative charge == positive pdgid for e/mu
-                    if(selectedLeptons[m.second]->q() >0  != gl->pdgId() > 0 ){
+                    if((selectedLeptons[m.second]->q() >0)  != (gl->pdgId() > 0) ){
                         rLIDX = m.second;
                         break;
                     }
