@@ -8,6 +8,11 @@ namespace TAna {
 void SMDecayEvent::reset() {
     for(auto& d :  bosonDecays) d.reset();
     for(auto& d :  topDecays) d.reset();
+    promptElectrons   .clear();
+    nonPromptElectrons.clear();
+    promptMuons       .clear();
+    nonPromptMuons    .clear();
+
 }
 
 void SMDecayEvent::setDecayInfo(const GenParticleCollection& genparts) {
@@ -116,19 +121,28 @@ void SMDecayEvent::setDecayInfo(const GenParticleCollection& genparts) {
     };
 
     for(unsigned int iP = 0;  iP < genparts.size(); ++iP){
-        GenParticleRef gp(&genparts[iP],iP);
+        if(!ParticleInfo::isLastInChain(&genparts[iP])) continue;
 
+        GenParticleRef gp(&genparts[iP],iP);
         const size absID = gp->absPdgId();
-        if(absID == ParticleInfo::p_t){
-            if(!ParticleInfo::isLastInChain(&*gp)) continue; //take the last top
+
+        if(absID == ParticleInfo::p_eminus || absID == ParticleInfo::p_muminus){
+            auto fo = ParticleInfo::getOriginal(gp); //get original version to check if prompt
+            if( ParticleInfo::hasMother(&*fo,
+                    [](const GenParticle* p) -> bool{
+                return  ParticleInfo::isDoc(p->status() ) && ParticleInfo::isEWKBoson(p->pdgId()) && ParticleInfo::isLastInChain(p); })
+            ) {
+                (absID == ParticleInfo::p_eminus  ? promptElectrons :  promptMuons  ).push_back(&*gp);
+            } else {
+                (absID == ParticleInfo::p_eminus  ? nonPromptElectrons :  nonPromptMuons  ).push_back(&*gp);
+            }
+        } else if(absID == ParticleInfo::p_t){
             topDecays.push_back(getTopDecay(gp));
         } else if(absID == ParticleInfo::p_Wplus){
-            if(ParticleInfo::hasMother(&*gp,ParticleInfo::p_Wplus)) continue; //take the first W to check if comes from top
-            if(ParticleInfo::hasMother(&*gp,ParticleInfo::p_t)) continue;
-            auto fp = ParticleInfo::getFinal(gp); //but use the last to classify
-            bosonDecays.push_back(getBosonDecay(fp));
+            auto fo = ParticleInfo::getOriginal(gp); //get original
+            if(ParticleInfo::hasMother(&*fo,ParticleInfo::p_t,false))  continue;
+            bosonDecays.push_back(getBosonDecay(gp));
         } else if(absID == ParticleInfo::p_Z0){
-            if(!ParticleInfo::isLastInChain(&*gp)) continue; //take the last Z
             bosonDecays.push_back(getBosonDecay(gp));
         }
     }
