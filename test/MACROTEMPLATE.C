@@ -14,9 +14,6 @@ public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt) : BaseTreeAnalyzer(fileName,treeName,treeInt){
     }
-    void loadVariables() override {
-        reader_event = (EventReader*)load(new EventReader("event",isRealData()));
-    }
 
     bool runEvent() override {
         return true;
@@ -24,8 +21,6 @@ public:
 
 
     void write(TString fileName){ plotter.write(fileName);}
-
-    EventReader * reader_event = 0;
     HistGetter plotter;
 
 };

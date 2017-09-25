@@ -36,6 +36,9 @@ public:
     virtual void load(const SMDecayEvent& genDecays, const std::vector<const Lepton*>& selectedLeptons,
             const std::vector<const Jet*>* jets = 0);
 
+    const std::vector<const Muon*>& getPromptMuons() const {return promptMuons;}
+    const std::vector<const Electron*>& getPromptElectrons() const {return promptElectrons;}
+
 protected:
     template<typename RecoL>
     void loadPromptLeptons(const std::vector<const GenParticle*>& genLeptons, const std::vector<const RecoL*>& selectedLeptons,std::vector<const RecoL*>& promptLeptons) {
@@ -86,12 +89,12 @@ public:
             const CorrHelp::CORRTYPE recoT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE idT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE isoT = CorrHelp::NOMINAL
     ) const;
 
-    float flatSFUNC_e_reco = 0.00;
-    float flatSFUnc_e_id   = 0.01;
-    float flatSFUnc_e_iso  = 0.005;
-    float flatSFUNC_m_reco = 0.01;
-    float flatSFUnc_m_id   = 0.00;
-    float flatSFUnc_m_iso  = 0.00;
+    float flatSFUNC_m_reco = 0.00;
+    float flatSFUnc_m_id   = 0.01;
+    float flatSFUnc_m_iso  = 0.005;
+    float flatSFUNC_e_reco = 0.01;
+    float flatSFUnc_e_id   = 0.00;
+    float flatSFUnc_e_iso  = 0.00;
 
 private:
     std::unique_ptr<TObjectHelper::Hist2DContainer> electronRecoSFs;

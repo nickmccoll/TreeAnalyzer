@@ -6,8 +6,8 @@
 namespace TAna {
 
 void SMDecayEvent::reset() {
-    for(auto& d :  bosonDecays) d.reset();
-    for(auto& d :  topDecays) d.reset();
+    bosonDecays.clear();
+    topDecays.clear();
     promptElectrons   .clear();
     nonPromptElectrons.clear();
     promptMuons       .clear();
@@ -128,10 +128,19 @@ void SMDecayEvent::setDecayInfo(const GenParticleCollection& genparts) {
 
         if(absID == ParticleInfo::p_eminus || absID == ParticleInfo::p_muminus){
             auto fo = ParticleInfo::getOriginal(gp); //get original version to check if prompt
-            if( ParticleInfo::hasMother(&*fo,
-                    [](const GenParticle* p) -> bool{
-                return  ParticleInfo::isDoc(p->status() ) && ParticleInfo::isEWKBoson(p->pdgId()) && ParticleInfo::isLastInChain(p); })
-            ) {
+
+            auto isFromPromptEWK = [](const GenParticle* p) -> bool{
+                return  ParticleInfo::isDoc(p->status() ) && ParticleInfo::isEWKBoson(p->pdgId()) && ParticleInfo::isLastInChain(p);
+            };
+            auto isFromPromptTau = [&](const GenParticle* p) -> bool{
+                if( std::fabs(p->pdgId()) != ParticleInfo::p_tauminus ) return false;
+                const auto* fo = ParticleInfo::getOriginal(p);
+                return ParticleInfo::hasMother(&*fo,isFromPromptEWK);
+            };
+
+            if(ParticleInfo::hasMother(&*fo,
+                    [&](const GenParticle* p) -> bool{ return isFromPromptEWK(p) || isFromPromptTau(p);  }))
+            {
                 (absID == ParticleInfo::p_eminus  ? promptElectrons :  promptMuons  ).push_back(&*gp);
             } else {
                 (absID == ParticleInfo::p_eminus  ? nonPromptElectrons :  nonPromptMuons  ).push_back(&*gp);

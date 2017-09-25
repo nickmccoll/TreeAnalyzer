@@ -77,10 +77,12 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_TRIG) && !reader_jetwlep) mkErr("ak4Jet","CORR_TRIG");
     if(isCorrOn(CORR_TRIG) && !reader_electron) mkErr("electron","CORR_TRIG");
     if(isCorrOn(CORR_TRIG) && !reader_muon) mkErr("muon","CORR_TRIG");
+    if(isCorrOn(CORR_TRIG) && !reader_genpart) mkErr("genParticle","CORR_TRIG");
     if(isCorrOn(CORR_PU)   && !reader_event) mkErr("event","CORR_PU");
     if(isCorrOn(CORR_LEP) && !reader_jetwlep) mkErr("ak4Jet","CORR_LEP");
     if(isCorrOn(CORR_LEP) && !reader_electron) mkErr("electron","CORR_LEP");
     if(isCorrOn(CORR_LEP) && !reader_muon) mkErr("muon","CORR_LEP");
+    if(isCorrOn(CORR_LEP) && !reader_genpart) mkErr("genParticle","CORR_LEP");
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
@@ -134,11 +136,11 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     if(!isRealData()){
         if(isCorrOn(CORR_XSEC))
             weight *= EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
-        if(isCorrOn(CORR_TRIG) )
+        if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size())   )
             weight *= trigSFProc->getLeptonTriggerSF(ht_wlep, (selectedLepton && selectedLepton->isMuon()));
         if(isCorrOn(CORR_PU) )
             weight *= puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL);
-        if(isCorrOn(CORR_LEP) ){
+        if(isCorrOn(CORR_LEP)){
             leptonSFProc->load(smDecayEvt,selectedLeptons,&jets_wlep);
             weight *= leptonSFProc->getSF();
         }
