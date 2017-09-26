@@ -18,6 +18,7 @@
 #include "Processors/EventSelection/interface/EventSelection.h"
 #include "Processors/Corrections/interface/TriggerScaleFactors.h"
 #include "Processors/Corrections/interface/LeptonScaleFactors.h"
+#include "Processors/Corrections/interface/BTagScaleFactors.h"
 
 #include "TPRegexp.h"
 
@@ -46,6 +47,7 @@ void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     trigSFProc  .reset(new TriggerScaleFactors (dataDirectory));
     puSFProc    .reset(new PUScaleFactors (dataDirectory));
     leptonSFProc.reset(new POGLeptonScaleFactors (dataDirectory));
+    ak4btagSFProc.reset(new BTagScaleFactors (dataDirectory));
     setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
 
     turnOnCorr(CORR_XSEC);
@@ -89,6 +91,10 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     if(isRealData()) smpName = "data";
     else if (reader_event->process == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
     else smpName = FillerConstants::MCProcessNames[reader_event->process];
+
+//    if(reader_jet){
+//
+//    }
 
     if(reader_jetwlep){
         jets_wlep = JetKinematics::selectObjectsConst(reader_jetwlep->jets,20);
@@ -143,6 +149,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         if(isCorrOn(CORR_LEP)){
             leptonSFProc->load(smDecayEvt,selectedLeptons,&jets_wlep);
             weight *= leptonSFProc->getSF();
+        }
+        if(isCorrOn(CORR_AK4BTAG)){
+            weight *= ak4btagSFProc->getSF(jets);
         }
 
     }

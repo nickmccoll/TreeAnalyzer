@@ -2,9 +2,6 @@
 #ifndef PROCESSORS_VARIABLES_BTAGGING_H
 #define PROCESSORS_VARIABLES_BTAGGING_H
 
-
-
-
 namespace TAna {
 
 namespace BTagging{
@@ -23,6 +20,19 @@ bool isTightCSVTagged(const Jet& jet) { return jet.csv() >=  CSVWP_VALS[CSV_T];}
 template<typename Jet>
 bool csvTagged(const Jet& jet, CSVWP wp) { return jet.csv() >=  CSVWP_VALS[wp];}
 
+enum  FLAVOR { FLV_B, FLV_C, FLV_L};
+
+template<typename Jet>
+FLAVOR jetFlavor(const Jet& jet) {
+    switch(jet.hadronFlv()){
+    case 5:
+        return FLV_B;
+    case 4:
+        return FLV_C;
+    default:
+        return FLV_L;
+    }
+}
 
 enum  BBTWP { BBT_INCL, BBT_L, BBT_M1, BBT_M2, BBT_T};
 const float BBT_VALS[] = {-100,0.3,0.6,0.8,0.9};

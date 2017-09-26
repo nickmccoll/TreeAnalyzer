@@ -21,6 +21,7 @@ class LeptonProcessor   ;
 class TriggerScaleFactors;
 class PUScaleFactors;
 class LeptonScaleFactors;
+class BTagScaleFactors;
 
 class Jet               ;
 class FatJet            ;
@@ -33,6 +34,7 @@ public:
                      ,CORR_TRIG =(1<<1)
                      ,CORR_PU   =(1<<2)
                      ,CORR_LEP  =(1<<3)
+                     ,CORR_AK4BTAG  =(1<<4)
     };
 
     DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt);
@@ -68,6 +70,8 @@ public:
     int             signal_mass=0;
     TString         smpName  = "";
 
+    std::vector<const Jet*> jets;
+
     std::vector<const Jet*> jets_wlep;
     float                   ht_wlep    =0;
 
@@ -98,6 +102,7 @@ public:
     std::unique_ptr<TriggerScaleFactors> trigSFProc ;
     std::unique_ptr<PUScaleFactors>      puSFProc ;
     std::unique_ptr<LeptonScaleFactors>  leptonSFProc ;
+    std::unique_ptr<BTagScaleFactors>    ak4btagSFProc ;
 };
 }
 #endif
