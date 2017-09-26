@@ -419,8 +419,8 @@ public:
 
 
         if(reader_event->process == FillerConstants::SIGNAL && diHiggsEvt.type >= DiHiggsEvent::MU){
-            const auto muons = JetKinematics::selectObjectsConst(reader_muon->muons,20,2.4);
-            const auto electrons = JetKinematics::selectObjectsConst(reader_electron->electrons,20,2.4);
+            const auto muons = PhysicsUtilities::selObjsMom(reader_muon->muons,20,2.4);
+            const auto electrons = PhysicsUtilities::selObjsMom(reader_electron->electrons,20,2.4);
             const auto* recoL = getMatchedLepton(*diHiggsEvt.w1_d1,muons,electrons);
             if(diHiggsEvt.w1_d1->absPdgId() == ParticleInfo::p_muminus){
                 testMuID (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Muon*)recoL);

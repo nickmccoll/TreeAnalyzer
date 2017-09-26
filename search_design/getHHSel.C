@@ -55,7 +55,7 @@ public:
         setBranchAddress("skim" ,"selLep_phi" ,   &selLep_phi          ,true);
         setBranchAddress("skim" ,"selLep_muon",   &selLep_muon         ,true);
     }
-    const std::pair<const Jet *, const Jet*> getJetPair(const MomentumF* lepton, const std::vector<Jet*>& jets){
+    const std::pair<const Jet *, const Jet*> getJetPair(const MomentumF* lepton, const std::vector<const Jet*>& jets){
         std::vector<std::pair<const Jet*,const Jet*> > jetPairs;
         for(unsigned int iJ1 = 0; iJ1 < jets.size(); ++iJ1){
             if(PhysicsUtilities::absDeltaPhi(*jets[iJ1],*lepton) < TMath::PiOver2()) continue;
@@ -156,7 +156,7 @@ public:
         plotter.getOrMake1DPre(prefix,"selection",";selection; a.u.",20,-0.5,19.5 )->Fill(1.0,weight);
 
 
-        auto jets = JetKinematics::selectObjects(reader_jet->jets,20,2.4);
+        auto jets = PhysicsUtilities::selObjsMom(reader_jet->jets,20,2.4);
         const auto jetPair = getJetPair(&lepton,jets);
         const float ht = JetKinematics::ht(jets,30,2.4);
 

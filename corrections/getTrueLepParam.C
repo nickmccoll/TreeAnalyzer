@@ -174,7 +174,7 @@ public:
         } else {
             prefix += "_2lof";
         }
-        std::vector<const Jet*>  filteredJets = JetKinematics::selectObjectsConst(reader_jetwlep->jets,20.0,2.4);
+        std::vector<const Jet*>  filteredJets = PhysicsUtilities::selObjsMom(reader_jetwlep->jets,20.0,2.4);
 
 
         std::vector<const Jet*> bjets;
@@ -276,9 +276,9 @@ public:
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
         if(!passEventFilters) return false;
 
-        const std::vector<const Muon    *> muons     = JetKinematics::selectObjectsConst(reader_muon->muons,26,2.4);
-        const std::vector<const Electron*> electrons = JetKinematics::selectObjectsConst(reader_electron->electrons,30,2.4);
-        const std::vector<const Jet     *> jets      = JetKinematics::selectObjectsConst(reader_jetwlep->jets,20,10);
+        const std::vector<const Muon    *> muons     = PhysicsUtilities::selObjsMom(reader_muon->muons,26,2.4);
+        const std::vector<const Electron*> electrons = PhysicsUtilities::selObjsMom(reader_electron->electrons,30,2.4);
+        const std::vector<const Jet     *> jets      = PhysicsUtilities::selObjsMom(reader_jetwlep->jets,20,10);
 
         if(reader_event->process == FillerConstants::SIGNAL){
             if(diHiggsEvt.type < DiHiggsEvent::MU) return false;

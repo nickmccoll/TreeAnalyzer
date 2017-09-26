@@ -38,7 +38,7 @@ public:
     }
 
     void plotAK4Kinematics(const TString& prefix, const std::vector<Jet>& jets) {
-        std::vector<const Jet*>  filteredJets = JetKinematics::selectObjectsConst(jets,20.0,2.4);
+        std::vector<const Jet*>  filteredJets = PhysicsUtilities::selObjsMom(jets,20.0,2.4);
 
         plotter.getOrMake1DPre(prefix,"nJets",";# of jets",20,-0.5,19.5)->Fill(filteredJets.size(),weight);
 
@@ -144,7 +144,7 @@ public:
             smpName = "other";
 
 
-        std::vector<const Jet*>  filteredJets = JetKinematics::selectObjectsConst(reader_jetwlep->jets,20.0,2.4);
+        std::vector<const Jet*>  filteredJets = PhysicsUtilities::selObjsMom(reader_jetwlep->jets,20.0,2.4);
         size nBL = 0;
         size nBM = 0;
         size nBT = 0;

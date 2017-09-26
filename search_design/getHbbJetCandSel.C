@@ -56,7 +56,7 @@ public:
         if(diHiggsEvt.b1->pt() < 20 || diHiggsEvt.b2->pt() < 20 || diHiggsEvt.b1->absEta() > 2.4 ||diHiggsEvt.b1->absEta() > 2.4)
             return;
         plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(0.0 +  selOff,weight);
-        auto jets = JetKinematics::selectObjects(reader_jet->jets,20,2.4);
+        auto jets = PhysicsUtilities::selObjsMom(reader_jet->jets,20,2.4);
         double minDR1 = 0;
         int j1IDX = PhysicsUtilities::findNearestDRDeref(*diHiggsEvt.b1,jets,minDR1);
         if(j1IDX < 0) return;

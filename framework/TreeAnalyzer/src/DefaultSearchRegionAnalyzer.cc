@@ -97,7 +97,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 //    }
 
     if(reader_jetwlep){
-        jets_wlep = JetKinematics::selectObjectsConst(reader_jetwlep->jets,20);
+        jets_wlep = PhysicsUtilities::selObjsMom(reader_jetwlep->jets,20);
         ht_wlep = JetKinematics::ht(jets_wlep,30);
     }
 

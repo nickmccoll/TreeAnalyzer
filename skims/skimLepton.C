@@ -61,7 +61,7 @@ public:
 
 
         float normEventWeight = EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
-        auto jets = JetKinematics::selectObjects(reader_jetwlep->jets,30);
+        auto jets = PhysicsUtilities::selObjsMom(reader_jetwlep->jets,30);
         const float ht = JetKinematics::ht(jets);
 
         if(treeType != TREE_OTHER && ht < 500) return false;

@@ -255,7 +255,7 @@ public:
             makeHbbPlots(prefix,fj,goodSignal);
         }
         //do unmerged jets
-        auto jets = JetKinematics::selectObjects(reader_jet->jets,20,2.4);
+        auto jets = PhysicsUtilities::selObjsMom(reader_jet->jets,20,2.4);
         const auto jetPair = getJetPair(&lepton,jets);
         if(jetPair.first && jetPair.second){
             bool process = true;

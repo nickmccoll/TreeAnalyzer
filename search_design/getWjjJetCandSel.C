@@ -74,7 +74,7 @@ public:
         if(PhysicsUtilities::deltaR(*diHiggsEvt.w2_d1,*diHiggsEvt.w2_d2) > 0.8 ) return false;
         plotter.getOrMake1DPre(prefix,"selection",";selection; arbitrary units",20,-0.5,19.5 )->Fill(4.0,weight);
 
-        auto fjs = JetKinematics::selectObjects(reader_fatjet->jets,50,2.4);
+        auto fjs = PhysicsUtilities::selObjsMom(reader_fatjet->jets,50,2.4);
         double minDR = 0;
         int fjIDX = PhysicsUtilities::findNearestDRDeref(wjj,fjs,minDR);
         const auto* fj = fjs[fjIDX];
@@ -137,7 +137,7 @@ public:
         plotter.getOrMake1DPre(prefix,"leadpt_dphiWRank",";wjj fj #Delta#phi(W) rank; arbitrary units",3,-1.5,1.5 )->Fill(leadpt_dphiWRank,weight);
         plotter.getOrMake1DPre(prefix,"leadpt_dphilepRank",";wjj fj #Delta#phi(lep) rank; arbitrary units",3,-1.5,1.5 )->Fill(leadpt_dphilepRank,weight);
 
-        std::vector<FatJet*> highDPhiJets;
+        std::vector<const FatJet*> highDPhiJets;
         for(unsigned int iJ = 0; iJ < fjs.size(); ++iJ){
             if(PhysicsUtilities::absDeltaPhi(lepton,*fjs[iJ]) > 2) continue;
             highDPhiJets.push_back(fjs[iJ]);

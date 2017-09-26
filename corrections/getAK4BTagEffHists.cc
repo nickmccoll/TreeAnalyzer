@@ -49,7 +49,7 @@ public:
         if(!hbbCand || !wjjCand) return false;
         if(hbbCand->sdMom().mass() < 10 || wjjCand->sdMom().mass() < 10) return false;
 
-        auto jets = JetKinematics::selectObjectsConst(reader_jet->jets,20,2.4);
+        auto jets = PhysicsUtilities::selObjsMom(reader_jet->jets,20,2.4);
         for(const auto* j : jets){
             if(!j->passTightID()) continue;
             auto flvI = BTagging::jetFlavor(*j);

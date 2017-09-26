@@ -38,7 +38,7 @@ public:
     }
 
     bool runEvent() override {
-        auto jets = JetKinematics::selectObjects(reader_jetwlep->jets,30);
+        auto jets = PhysicsUtilities::selObjsMom(reader_jetwlep->jets,30);
         const float ht_wlep = JetKinematics::ht(jets);
         std::vector<const Lepton    *> selectedLeptons;
 

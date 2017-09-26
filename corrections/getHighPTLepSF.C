@@ -96,13 +96,13 @@ public:
 
         std::vector<const Electron*> tagLeptons = leptonProc->getElectrons(*reader_electron);
         std::vector<const Muon*>     probeLeptons = leptonProcNoISO->getMuons(*reader_event,*reader_muon);
-        const std::vector<const Jet*>jets      = JetKinematics::selectObjectsConst(reader_jetwlep->jets,20,10);
+        const std::vector<const Jet*>jets      = PhysicsUtilities::selObjsMom(reader_jetwlep->jets,20,10);
 
         if(tagLeptons.size() != 1) return false;
         const auto* tagLepton = tagLeptons.front();
         if(tagLepton->pt() < 30) return false;
 
-        std::vector<const Jet*>  filteredJets = JetKinematics::selectObjectsConst(reader_jetwlep->jets,20.0,2.4);
+        std::vector<const Jet*>  filteredJets = PhysicsUtilities::selObjsMom(reader_jetwlep->jets,20.0,2.4);
         std::vector<const Jet*> bjets;
         for(const auto* j : filteredJets) if(BTagging::isMediumCSVTagged(*j)) bjets.push_back(j);
         const size nBjs = bjets.size();

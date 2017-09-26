@@ -14,48 +14,6 @@ using ASTypes::size;
 namespace TAna {
 //_____________________________________________________________________________
 template<typename Jet>
-std::vector<Jet*> JetKinematics::selectObjectsDref(const std::vector<Jet*>& jets, const double minPT, const double maxEta, const std::vector<bool>* selected){
-    const size                    numJets = jets.size();
-    std::vector<Jet*>             out;
-    out.reserve(jets.size());
-    for (size iJet = 0; iJet < numJets; ++iJet) {
-      const Jet&             jet     = (*jets[iJet]);
-      if (selected && !(*selected)[iJet]) continue;
-      if (!passCuts(jet,minPT,maxEta)) continue;
-      out.push_back(jets[iJet]);
-    } // end loop over jets
-    return out;
-}
-//_____________________________________________________________________________
-template<typename Jet>
-std::vector<Jet*> JetKinematics::selectObjects(std::vector<Jet>& jets, const double minPT, const double maxEta, const std::vector<bool>* selected){
-    const size                    numJets = jets.size();
-    std::vector<Jet*>             out;
-    out.reserve(jets.size());
-    for (size iJet = 0; iJet < numJets; ++iJet) {
-      const Jet&             jet     = (jets[iJet]);
-      if (selected && !(*selected)[iJet]) continue;
-      if (!passCuts(jet,minPT,maxEta)) continue;
-      out.push_back(&jets[iJet]);
-    } // end loop over jets
-    return out;
-}
-//_____________________________________________________________________________
-template<typename Jet>
-std::vector<const Jet*> JetKinematics::selectObjectsConst(const std::vector<Jet>& jets, const double minPT, const double maxEta, const std::vector<bool>* selected){
-    const size                    numJets = jets.size();
-    std::vector<const Jet*>             out;
-    out.reserve(jets.size());
-    for (size iJet = 0; iJet < numJets; ++iJet) {
-      const Jet&             jet     = (jets[iJet]);
-      if (selected && !(*selected)[iJet]) continue;
-      if (!passCuts(jet,minPT,maxEta)) continue;
-      out.push_back(&jets[iJet]);
-    } // end loop over jets
-    return out;
-}
-//_____________________________________________________________________________
-template<typename Jet>
 Jet JetKinematics::mht(const std::vector<Jet*>& jets, const double minPT, const double maxEta, const std::vector<bool>* selected)
 {
   const size                    numJets = jets.size();
