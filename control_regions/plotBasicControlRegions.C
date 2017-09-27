@@ -19,6 +19,8 @@
 #include "Processors/Variables/interface/BTagging.h"
 #include "Processors/Corrections/interface/EventWeights.h"
 #include "Processors/Variables/interface/FatJetSelection.h"
+#include "Processors/Corrections/interface/LeptonScaleFactors.h"
+#include "Processors/Corrections/interface/BTagScaleFactors.h"
 
 
 using namespace TAna;
@@ -27,17 +29,18 @@ class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
+        turnOffCorr(CORR_LEP );
     }
 
 
-    void plotEventVariables(const TString& prefix){
+    void plotEventVariables(const TString& prefix, const float weight){
         plotter.getOrMake1DPre(prefix,"numvtx",";# of verticies",75,0,75)->Fill(reader_event->npv,weight);
         const float puW = isRealData() ? 1.0 : puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL);
         plotter.getOrMake1DPre(prefix,"woPUW_numvtx",";# of verticies",75,0,75)->Fill(reader_event->npv,weight/puW);
         plotter.getOrMake1DPre(prefix,"ht",";#it{H}_{T} [GeV]",400,0,4000)->Fill(ht_wlep,weight);
     }
 
-    void plotAK4Kinematics(const TString& prefix, const std::vector<Jet>& jets) {
+    void plotAK4Kinematics(const TString& prefix, const std::vector<Jet>& jets, const float weight) {
         std::vector<const Jet*>  filteredJets = PhysicsUtilities::selObjsMom(jets,20.0,2.4);
 
         plotter.getOrMake1DPre(prefix,"nJets",";# of jets",20,-0.5,19.5)->Fill(filteredJets.size(),weight);
@@ -70,7 +73,7 @@ public:
 
     }
 
-    void plotAK8Kinematics(const TString& prefix) {
+    void plotAK8Kinematics(const TString& prefix, const float weight) {
 
         plotter.getOrMake1DPre(prefix,"nJets",";# of jets",20,-0.5,19.5)->Fill(fatjetCands.size(),weight);
 
@@ -106,7 +109,7 @@ public:
         for(const auto* j : fatjetCands ){ mkPlot(j,"jet","jet");}
     }
 
-    void plotLeptons(const TString& prefix){
+    void plotLeptons(const TString& prefix, const float weight){
         for(const auto * l : selectedLeptons){
             plotter.getOrMake1DPre(prefix,"leptonPT",";lepton p_{T} [GeV]",200,0,1000)->Fill(l->pt(),weight);
             plotter.getOrMake1DPre(prefix,"leptonETA",";lepton #eta",50,-2.5,2.5)->Fill(l->eta(),weight);
@@ -118,7 +121,7 @@ public:
         plotter.getOrMake1DPre(prefix,"mt",";m_{T} [GeV]",500,0,500)->Fill(JetKinematics::transverseMass(*selectedLepton,reader_event->met),weight);
     }
 
-    void plotHH(const TString prefix){
+    void plotHH(const TString prefix, const float weight){
         plotter.getOrMake1DPre(prefix,"hhMass",";HH mass [GeV]",400,0,2000)->Fill(hh.mass(),weight);
         plotter.getOrMake1DPre(prefix,"hbbMass",";H(bb) mass [GeV]",500,0,500)->Fill(hbbCand->mass(),weight);
         plotter.getOrMake1DPre(prefix,"hbbPT"     ,";H(bb) p_{T} [GeV]"             ,400,0,2000)->Fill(hbbCand->pt(),weight);
@@ -154,14 +157,14 @@ public:
             if(BTagging::isTightCSVTagged(*j)) nBT++;
         }
 
-        auto mkSTDPlots = [&](const TString& prefix){
-            plotEventVariables(prefix);
-            plotAK4Kinematics(prefix +"_ak4Wlep",reader_jetwlep->jets);
-            plotAK4Kinematics(prefix +"_ak4Nolep",reader_jet->jets);
-            plotAK8Kinematics(prefix +"_ak8");
-            plotLeptons(prefix);
+        auto mkSTDPlots = [&](const TString& prefix, const float weight){
+            plotEventVariables(prefix,weight);
+            plotAK4Kinematics(prefix +"_ak4Wlep",reader_jetwlep->jets,weight);
+            plotAK4Kinematics(prefix +"_ak4Nolep",reader_jet->jets,weight);
+            plotAK8Kinematics(prefix +"_ak8",weight);
+            plotLeptons(prefix,weight);
         };
-        auto mkHHPlots = [&](const TString& prefix){
+        auto mkHHPlots = [&](const TString& prefix, const float weight){
             if(wjjCand && hbbCand){
 
                 const bool bTaggedW = FatJetSelHelpers::passWjjSelection(wjjCand,fjProc->wjj_maxT2oT1,BTagging::CSV_INCL,fjProc->wjj_minMass,fjProc->wjj_maxMass) && wjjCand->maxSJCSV() >= BTagging::CSVWP_VALS[BTagging::CSV_T];
@@ -181,51 +184,58 @@ public:
 
 
                 if(cr_btaggedWjj)
-                    plotHH(prefix + "_wjjBtagCR");
+                    plotHH(prefix + "_wjjBtagCR",weight);
                 if(cr_btaggedWjj2)
-                    plotHH(prefix + "_wjjBtagTauCR");
+                    plotHH(prefix + "_wjjBtagTauCR",weight);
                 if(cr_antiBHbb)
-                    plotHH(prefix + "_HbbAntiBCR");
+                    plotHH(prefix + "_HbbAntiBCR",weight);
             }
         };
-        if(selectedLeptons.size() == 1){
-            if(selectedLepton->isMuon()){
-                TString prefix = smpName + "_1mu";
-                mkSTDPlots(prefix);
-                mkHHPlots(prefix);
-                if(nBM == 0){ mkSTDPlots(prefix + "_0b");}
-                else if(nBM ==1) { mkSTDPlots(prefix + "_1b");}
-                else if(nBM >=2) { mkSTDPlots(prefix + "_2b");}
-            } else {
-                TString prefix = smpName + "_1el";
-                mkSTDPlots(prefix);
-                mkHHPlots(prefix);
-                if(nBM == 0){ mkSTDPlots(prefix + "_0b");}
-                else if(nBM ==1) { mkSTDPlots(prefix + "_1b");}
-                else if(nBM >=2) { mkSTDPlots(prefix + "_2b");}
+
+
+        auto doASet = [&](TString smpName, const float weight){
+            if(selectedLeptons.size() == 1){
+                if(selectedLepton->isMuon()){
+                    TString prefix = smpName + "_1mu";
+                    mkSTDPlots(prefix,weight);
+                    mkHHPlots(prefix,weight);
+                    if(nBM == 0){ mkSTDPlots(prefix + "_0b",weight);}
+                    else if(nBM ==1) { mkSTDPlots(prefix + "_1b",weight);}
+                    else if(nBM >=2) { mkSTDPlots(prefix + "_2b",weight);}
+                } else {
+                    TString prefix = smpName + "_1el";
+                    mkSTDPlots(prefix,weight);
+                    mkHHPlots(prefix,weight);
+                    if(nBM == 0){ mkSTDPlots(prefix + "_0b",weight);}
+                    else if(nBM ==1) { mkSTDPlots(prefix + "_1b",weight);}
+                    else if(nBM >=2) { mkSTDPlots(prefix + "_2b",weight);}
+                }
+            } else if(selectedLeptons.size() == 2){
+                const float llMass = (selectedLeptons[0]->p4() + selectedLeptons[1]->p4()).mass();
+                const bool goodMass = (llMass >= 50 && llMass < 80) || llMass >= 100;
+                const bool goodCharge = (selectedLeptons[0]->q() != selectedLeptons[1]->q());
+                if(goodCharge && goodMass && selectedLeptons[0]->isMuon()  == selectedLeptons[1]->isMuon()  ){
+                    TString prefix = smpName + "_2lsf";
+                    mkSTDPlots(prefix,weight);
+                    if(nBM == 0){ mkSTDPlots(prefix + "_0b",weight);}
+                    else if(nBM ==1) { mkSTDPlots(prefix + "_1b",weight);}
+                    else if(nBM >=2) { mkSTDPlots(prefix + "_2b",weight);}
+                } else if(goodCharge && selectedLeptons[0]->isMuon()  != selectedLeptons[1]->isMuon()  ) {
+                    TString prefix = smpName + "_2lof";
+                    mkSTDPlots(prefix,weight);
+                    if(nBM == 0){ mkSTDPlots(prefix + "_0b",weight);}
+                    else if(nBM ==1) { mkSTDPlots(prefix + "_1b",weight);}
+                    else if(nBM >=2) { mkSTDPlots(prefix + "_2b",weight);}
+                }
+
+
             }
-        } else if(selectedLeptons.size() == 2){
-            const float llMass = (selectedLeptons[0]->p4() + selectedLeptons[1]->p4()).mass();
-            const bool goodMass = (llMass >= 50 && llMass < 80) || llMass >= 100;
-            const bool goodCharge = (selectedLeptons[0]->q() != selectedLeptons[1]->q());
-            if(goodCharge && goodMass && selectedLeptons[0]->isMuon()  == selectedLeptons[1]->isMuon()  ){
-                TString prefix = smpName + "_2lsf";
-                mkSTDPlots(prefix);
-                if(nBM == 0){ mkSTDPlots(prefix + "_0b");}
-                else if(nBM ==1) { mkSTDPlots(prefix + "_1b");}
-                else if(nBM >=2) { mkSTDPlots(prefix + "_2b");}
-            } else if(goodCharge && selectedLeptons[0]->isMuon()  != selectedLeptons[1]->isMuon()  ) {
-                TString prefix = smpName + "_2lof";
-                mkSTDPlots(prefix);
-                if(nBM == 0){ mkSTDPlots(prefix + "_0b");}
-                else if(nBM ==1) { mkSTDPlots(prefix + "_1b");}
-                else if(nBM >=2) { mkSTDPlots(prefix + "_2b");}
-            }
+        };
 
-
-        }
-
-
+        doASet(smpName,weight);
+        leptonSFProc->load(smDecayEvt,selectedLeptons,&jets_wlep);
+        doASet(smpName+"_lepSF", isRealData() ? weight : weight*leptonSFProc->getSF());
+        doASet(smpName+"_lepBTagSF", isRealData() ? weight : weight*leptonSFProc->getSF()*ak4btagSFProc->getSF(jets));
         return true;
     }
 
