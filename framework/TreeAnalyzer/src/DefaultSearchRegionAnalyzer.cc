@@ -75,6 +75,9 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     auto mkErr = [&](const std::string& reader, const std::string corr) {
         throw std::invalid_argument(std::string("DefaultSearchRegionAnalyzer::checkConfig() -> Must load ") + reader + std::string(" if you want ") + corr);};
     if(!reader_event) mkErr("event","anything");
+
+    if(isRealData()) return;
+
     if(isCorrOn(CORR_XSEC) && !reader_event) mkErr("event","CORR_XSEC");
     if(isCorrOn(CORR_TRIG) && !reader_jetwlep) mkErr("ak4Jet","CORR_TRIG");
     if(isCorrOn(CORR_TRIG) && !reader_electron) mkErr("electron","CORR_TRIG");
