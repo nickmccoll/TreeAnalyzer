@@ -85,6 +85,7 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_LEP) && !reader_electron) mkErr("electron","CORR_LEP");
     if(isCorrOn(CORR_LEP) && !reader_muon) mkErr("muon","CORR_LEP");
     if(isCorrOn(CORR_LEP) && !reader_genpart) mkErr("genParticle","CORR_LEP");
+    if(isCorrOn(CORR_AK4BTAG) && !reader_jet) mkErr("ak4PuppiNoLepJet","CORR_AK4BTAG");
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
@@ -92,9 +93,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     else if (reader_event->process == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
     else smpName = FillerConstants::MCProcessNames[reader_event->process];
 
-//    if(reader_jet){
-//
-//    }
+    if(reader_jet){
+        jets = PhysicsUtilities::selObjsMom(reader_jet->jets,20,2.4,[](const Jet* j){return j->passTightID();} );
+    }
 
     if(reader_jetwlep){
         jets_wlep = PhysicsUtilities::selObjsMom(reader_jetwlep->jets,20);

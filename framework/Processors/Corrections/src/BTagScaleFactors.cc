@@ -42,6 +42,7 @@ float BTagScaleFactors::getJetCorr(const Jet* jet,  CorrHelp::CORRTYPE lightT,  
     const float eta = jet->eta();
     const auto flv = jetFlavor(*jet);
     const CorrHelp::CORRTYPE corrT =  flv == FLV_L ? lightT : heavyT;
+    if(corrT == NONE) return 1.0;
 
     float lE = 1;
     float hE = 1;
@@ -89,7 +90,6 @@ float BTagScaleFactors::getJetEff(const BTagging::FLAVOR flv, const float pt, co
 }
 float BTagScaleFactors::getJetSF(const BTagging::FLAVOR flv, const float pt, const float eta, const BTagging::CSVWP wp,
         CorrHelp::CORRTYPE corrT) const{
-    if(corrT == NONE) return 1.0;
     //wp[0] = inclusive
     return calibReaders[wp-1]->eval_auto_bounds(systNames[corrT],BTagEntry::JetFlavor(flv), eta,pt  );   // BTagEntry::JetFlavor set to have same order as BTagging::Flavor
 }
