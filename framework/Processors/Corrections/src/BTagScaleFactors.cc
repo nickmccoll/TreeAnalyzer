@@ -9,7 +9,7 @@ namespace TAna {
 using namespace CorrHelp;
 using namespace BTagging;
 BTagScaleFactors::BTagScaleFactors(const std::string& dataDir, const std::string& sfFile, const std::string& effFile, bool verbose) :
-                calib(new BTagCalibration("CSVv2", sfFile))
+                calib(new BTagCalibration("CSVv2", dataDir+sfFile))
 {
 
     auto makeNewReader = [&] (const BTagEntry::OperatingPoint op){
@@ -41,6 +41,7 @@ float BTagScaleFactors::getJetCorr(const Jet* jet,  CorrHelp::CORRTYPE lightT,  
     const float pt = jet->pt();
     const float eta = jet->eta();
     const auto flv = jetFlavor(*jet);
+    const float csv = jet->csv();
     const CorrHelp::CORRTYPE corrT =  flv == FLV_L ? lightT : heavyT;
     if(corrT == NONE) return 1.0;
 
@@ -52,26 +53,26 @@ float BTagScaleFactors::getJetCorr(const Jet* jet,  CorrHelp::CORRTYPE lightT,  
     auto gE = [&](const BTagging::CSVWP wp)->float{return getJetEff(flv,pt,eta,wp);};
     auto gS = [&](const BTagging::CSVWP wp)->float{return getJetSF(flv,pt,eta,wp,corrT);};
 
-    if(jet->csv() <  CSVWP_VALS[CSV_L]){
+    if(csv <  CSVWP_VALS[CSV_L]){
         lE = 1.0;
         hE = gE(CSV_L);
         lSF = 1.0;
-        hE = gS(CSV_L);
-    } else if(jet->csv() <  CSVWP_VALS[CSV_M]){
+        hSF = gS(CSV_L);
+    } else if(csv <  CSVWP_VALS[CSV_M]){
         lE = gE(CSV_L);
         hE = gE(CSV_M);
         lSF = gS(CSV_L);
-        hE = gS(CSV_M);
-    } else if(jet->csv() <  CSVWP_VALS[CSV_T]){
+        hSF = gS(CSV_M);
+    } else if(csv <  CSVWP_VALS[CSV_T]){
         lE = gE(CSV_M);
         hE = gE(CSV_T);
         lSF = gS(CSV_M);
-        hE = gS(CSV_T);
+        hSF = gS(CSV_T);
     } else {
         lE = gE(CSV_T);
         hE = 0;
         lSF = gS(CSV_T);
-        hE = 0;
+        hSF = 0;
     }
 
     const float origEff = lE - hE;
