@@ -23,14 +23,14 @@ float     FatJet::tau3otau2() const{return _tau2 == 0 ? 99 : _tau3/_tau2;}
 size     FatJet::nSubJets()  const{return _sjs.size();}
 float     FatJet::minSJCSV()  const{
     if(!_sjs.size()) return 0;
-    float minSJCSV = 1;
-    for(const auto& sj : _sjs) { minSJCSV = std::min(minSJCSV,sj.csv());}
-    return std::max(minSJCSV,float(0.0));
+    float minCSV = 1;
+    for(const auto& sj : _sjs) { minCSV = std::min(minCSV,sj.csv());}
+    return std::max(minCSV,float(0.0));
 }
 float     FatJet::maxSJCSV()  const{
-    float maxSJCSV = 0;
-    for(const auto& sj : _sjs) { maxSJCSV = std::max(maxSJCSV,sj.csv());}
-    return maxSJCSV;
+    float maxCSV = 0;
+    for(const auto& sj : _sjs) { maxCSV = std::max(maxCSV,sj.csv());}
+    return maxCSV;
 }
 MomentumF FatJet::sdMom()     const{
     MomentumF sd;
@@ -53,4 +53,5 @@ SubJet&           FatJet::subJet(const size idx) {
         throw std::out_of_range("FatJet::subJet() -> Not a valid SubJet idx!)");
     return _sjs[idx];
 }
+const std::vector<SubJet>& FatJet::subJets() const {return _sjs;}
 }

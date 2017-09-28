@@ -71,6 +71,7 @@ public :
 
     const SubJet&     subJet(const size idx)  const;
     SubJet&           subJet(const size idx);
+    const std::vector<SubJet>& subJets() const;
 
 protected :
 

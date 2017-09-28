@@ -57,7 +57,6 @@ public :
     ~Jet() {}
 
 
-    float csv() const {return _csv;}
     bool passPUID() const;
     bool passLooseID() const;
     bool passTightID() const;
