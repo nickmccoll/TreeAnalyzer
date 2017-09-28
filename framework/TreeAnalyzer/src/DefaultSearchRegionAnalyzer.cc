@@ -19,8 +19,9 @@
 #include "Processors/Corrections/interface/TriggerScaleFactors.h"
 #include "Processors/Corrections/interface/LeptonScaleFactors.h"
 #include "Processors/Corrections/interface/BTagScaleFactors.h"
-
 #include "TPRegexp.h"
+
+
 
 
 namespace TAna {
@@ -47,13 +48,15 @@ void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     trigSFProc  .reset(new TriggerScaleFactors (dataDirectory));
     puSFProc    .reset(new PUScaleFactors (dataDirectory));
     leptonSFProc.reset(new POGLeptonScaleFactors (dataDirectory));
-    ak4btagSFProc.reset(new BTagScaleFactors (dataDirectory));
+    ak4btagSFProc.reset(new JetBTagScaleFactors (dataDirectory));
+    sjbtagSFProc.reset(new SubJetBTagScaleFactors (dataDirectory));
     setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
 
     turnOnCorr(CORR_XSEC);
     turnOnCorr(CORR_TRIG);
     turnOnCorr(CORR_PU  );
     turnOnCorr(CORR_LEP );
+    turnOnCorr(CORR_SJBTAG);
 }
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::loadVariables()  {
@@ -89,6 +92,7 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_LEP) && !reader_muon) mkErr("muon","CORR_LEP");
     if(isCorrOn(CORR_LEP) && !reader_genpart) mkErr("genParticle","CORR_LEP");
     if(isCorrOn(CORR_AK4BTAG) && !reader_jet) mkErr("ak4PuppiNoLepJet","CORR_AK4BTAG");
+    if(isCorrOn(CORR_SJBTAG) && !reader_fatjet) mkErr("ak8PuppiNoLepJet","CORR_SJBTAG");
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
@@ -153,6 +157,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         if(isCorrOn(CORR_LEP)){
             leptonSFProc->load(smDecayEvt,selectedLeptons,&jets_wlep);
             weight *= leptonSFProc->getSF();
+        }
+        if(isCorrOn(CORR_SJBTAG)){
+            weight *= sjbtagSFProc->getSF({wjjCand,hbbCand});
         }
         if(isCorrOn(CORR_AK4BTAG)){
             weight *= ak4btagSFProc->getSF(jets);
