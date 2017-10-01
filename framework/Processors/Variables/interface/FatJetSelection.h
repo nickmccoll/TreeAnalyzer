@@ -16,40 +16,43 @@ class FatJet;
 class FatJetReader;
 
 
+struct FatJetParameters;
+
 namespace FatJetSelHelpers {
     typedef  bool (FatJet::*fjFunBool)() const;
-    std::vector<const FatJet*> selectFatJets(const FatJetReader& reader_fatjet, float minPT, float maxETA, fjFunBool jetID = 0 );
-    const FatJet* getWjjCand(const MomentumF* lepton, const std::vector<const FatJet*>& jets, float minPT, float maxLepDR);
-    const FatJet* getHbbCand(const FatJet* wjjCand, const MomentumF* lepton, const std::vector<const FatJet*>& jets,float minPT, float hbb_minLepDPhi);
-    bool passHbbSelection(const FatJet* fj, double maxTau2oTau1 = -1,BTagging::CSVWP firMinCSVWP = BTagging::CSV_INCL, BTagging::CSVWP secMinCSVWP = BTagging::CSV_INCL, double minMass=-1, double maxMass=-1);
-    bool passWjjSelection(const FatJet* fj, double maxTau2oTau1 = -1,BTagging::CSVWP maxCSVWP    = BTagging::CSV_INCL, float minMass = -1, float maxMass = -1 );
+    std::vector<const FatJet*> selectFatJets(const FatJetReader& reader_fatjet, const FatJetParameters& param );
+    const FatJet* getWjjCand(const MomentumF* lepton, const std::vector<const FatJet*>& jets, const FatJetParameters& param);
+    const FatJet* getHbbCand(const FatJet* wjjCand, const MomentumF* lepton, const std::vector<const FatJet*>& jets,const FatJetParameters& param);
+    bool passHbbSelection(const FatJet* fj, const FatJetParameters& param, const bool tight);
+    bool passWjjSelection(const FatJet* fj,const FatJetParameters& param);
 }
 
-class FatJetProcessor {
-public:
 
-    std::vector<const FatJet *> loadFatJets( const FatJetReader& reader_fatjet, const MomentumF* lepton);
-
-    const FatJet * getHBBCand() const;
-    const FatJet * getWjjCand() const;
-    bool passWjjSel() const;
-    bool passHbbSel() const;
-    bool passHbbSelTightBTag() const;
-
+struct FatJetParameters{
+    //parameters to select jets om the loadFatJets func
     float cand_minPT     =-1;
     float cand_maxETA    =-1;
     FatJetSelHelpers::fjFunBool fjJetID =0 ;
 
+    //parameters applied to both wjj and hbb
+    float sj_minPT       =-1; //cand sel
+    float sj_maxETA      =-1; //cand sel
+    float sj_minBTagPT       =-1;  //For counting btags in pass sel
+    float sj_maxBTagETA      =-1;  //For counting btags in pass sel
 
+    //parameters applied to wjj candidate sel
     float wjj_maxLepDR   =-1;
     float wjj_minPT      =-1;
+    //parameters applied to wjj pass sel
     float wjj_maxT2oT1   =-1;
     float wjj_minMass    =-1;
     float wjj_maxMass    =-1;
     BTagging::CSVWP wjj_maxCSVWP   = BTagging::CSV_INCL;
 
+    //parameters applied to hbb candidate sel
     float hbb_minLepDPhi =-1;
     float hbb_minPT      =-1;
+    //parameters applied to hbb pass sel
     float hbb_maxT2oT1   =-1;
     float hbb_minMass    =-1;
     float hbb_maxMass    =-1;
@@ -58,6 +61,30 @@ public:
     BTagging::CSVWP hbb_t_firMinCSVWP= BTagging::CSV_INCL;
     BTagging::CSVWP hbb_t_secMinCSVWP= BTagging::CSV_INCL;
 
+};
+
+class FatJetProcessor {
+public:
+
+    //uses built in FatJetParameters
+    std::vector<const FatJet *> loadFatJets( const FatJetReader& reader_fatjet, const MomentumF* lepton);
+
+    const FatJet * getHBBCand() const;
+    const FatJet * getWjjCand() const;
+    //use built in FatJetParameters
+    bool passWjjSel() const;
+    bool passHbbSel() const;
+    bool passHbbSelTightBTag() const;
+
+    //use custom in FatJetParameters
+    bool passWjjSel(const FatJetParameters& param ) const;
+    bool passHbbSel(const FatJetParameters& param ) const;
+    bool passHbbSelTightBTag(const FatJetParameters& param) const;
+
+
+    FatJetParameters param;
+
+
 private:
     const FatJet* hbbCand = 0;
     const FatJet* wjjCand = 0;
@@ -65,6 +92,7 @@ private:
 };
 
 namespace DefaultFatJetSelections {
+void setDefaultFatJetProcessor(FatJetParameters& proc);
 void setDefaultFatJetProcessor(FatJetProcessor& proc);
 }
 
