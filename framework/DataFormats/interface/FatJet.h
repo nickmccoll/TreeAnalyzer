@@ -63,8 +63,6 @@ public :
     float     tau3otau2() const;
 
     size      nSubJets()  const;
-    float     minSJCSV()  const;
-    float     maxSJCSV()  const;
     MomentumF sdMom()     const;
     MomentumF rawSdMom()  const;
 
