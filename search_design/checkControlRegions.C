@@ -1,7 +1,7 @@
 
 #if !defined(__CINT__) || defined(__MAKECINT__)
 
-#include "TreeAnalyzer/interface/BaseTreeAnalyzer.h"
+#include "TreeAnalyzer/interface/DefaultSearchRegionAnalyzer.h"
 #include "TreeReaders/interface/EventReader.h"
 
 #include "TreeReaders/interface/GenParticleReader.h"
@@ -24,39 +24,18 @@
 #include "TPRegexp.h"
 using namespace TAna;
 
-class Analyzer : public BaseTreeAnalyzer {
+class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt) : BaseTreeAnalyzer(fileName,treeName,treeInt){
-        TPRegexp r1(".*m(\\d+)_[0-9]*\\..*$");
-        auto match = r1.MatchS(fileName);
-        const Int_t nrSubStr = match->GetLast()+1;
-        if(nrSubStr>1){
-            mass = (((TObjString *)match->At(1))->GetString()).Atoi();
-            prefix = "m" + ((TObjString *)match->At(1))->GetString();
-        }
-        else std::cout <<" No pre!"<<std::endl;
+    Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
 
-        DefaultFatJetSelections::setDefaultFatJetProcessor(fjProc);
+
         DefaultFatJetSelections::setDefaultFatJetProcessor(fjProc_inclWBtag);
-        fjProc_inclWBtag.wjj_maxCSVWP =BTagging::CSV_INCL;
-        DefaultFatJetSelections::setDefaultFatJetProcessor(fjProc_inclHbbBtag);
-        fjProc_inclHbbBtag.hbb_l_firMinCSVWP =BTagging::CSV_INCL;
-        fjProc_inclHbbBtag.hbb_l_secMinCSVWP =BTagging::CSV_INCL;
-    }
-    void loadVariables() override {
-        reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
-        if(treeType == TREE_OTHER){
-            reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");                load(reader_genpart   );
-        }
-        reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);  load(reader_fatjet  );
-        reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData(),false);  load(reader_jet     );
 
-        setBranchAddress("skim" ,"ht"         ,   &ht                  ,true);
-        setBranchAddress("skim" ,"selLep_pt"  ,   &selLep_pt           ,true);
-        setBranchAddress("skim" ,"selLep_eta" ,   &selLep_eta          ,true);
-        setBranchAddress("skim" ,"selLep_phi" ,   &selLep_phi          ,true);
-        setBranchAddress("skim" ,"selLep_muon",   &selLep_muon         ,true);
+        fjProc_inclWBtag.param.wjj_maxCSVWP =BTagging::CSV_INCL;
+        DefaultFatJetSelections::setDefaultFatJetProcessor(fjProc_inclHbbBtag);
+        fjProc_inclHbbBtag.param.hbb_l_firMinCSVWP =BTagging::CSV_INCL;
+        fjProc_inclHbbBtag.param.hbb_l_secMinCSVWP =BTagging::CSV_INCL;
     }
 
     void makeCRPlots(TString pre, const MomentumF& hWW, const MomentumF& hbb){
@@ -81,64 +60,84 @@ public:
 
 
     bool runEvent() override {
+        if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
+
         if(reader_event->process !=
                 FillerConstants::SIGNAL){
             prefix = (reader_event->process >= FillerConstants::ZJETS &&  reader_event->process != FillerConstants::QCD)  ? "rare" :
                     FillerConstants::MCProcessNames[reader_event->process];
         }
-        if(ht < 500) return false;
-        if(!EventSelection::passEventFilters(*reader_event)) return false;
+        if(!passTriggerPreselection) return false;
+        if(!passEventFilters) return false;
+        if(selectedLeptons.size() != 1) return false;
 
+        auto lepton = selectedLepton->p4();
 
-        MomentumF lepton(ASTypes::CylLorentzVectorF(selLep_pt,selLep_eta,selLep_phi,0));
-        weight = EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
-//        if(reader_event->process == FillerConstants::SIGNAL) weight *=  (0.8241887906 * EventWeights::get4bXSecLimit(mass)/1000.0);
         if(reader_event->process == FillerConstants::SIGNAL) weight *=  20.0/1000.0;
 
-        fjProc.loadFatJets(*reader_fatjet,&lepton);
-        fjProc_inclHbbBtag.loadFatJets(*reader_fatjet,&lepton);
-        fjProc_inclWBtag.loadFatJets(*reader_fatjet,&lepton);
-        const auto* hbbfj = fjProc.getHBBCand();
-        const auto* wjjfj = fjProc.getWjjCand();
-        const bool goodHBBFJ  = fjProc.passHbbSel();
-        const bool goodHBBFJT = fjProc.passHbbSelTightBTag();
-        const bool goodWJJFJ  = fjProc.passWjjSel();
+        const auto* hbbfj = fjProc->getHBBCand();
+        const auto* wjjfj = fjProc->getWjjCand();
+        const bool goodHBBFJ  = fjProc->passHbbSel();
+        const bool goodHBBFJT = fjProc->passHbbSelTightBTag();
+        const bool goodWJJFJ  = fjProc->passWjjSel();
+
+
+
+        fjProc_inclHbbBtag.loadFatJets(*reader_fatjet,selectedLepton);
+        fjProc_inclWBtag.loadFatJets(*reader_fatjet,selectedLepton);
 
         if(!wjjfj || !hbbfj) return false;
-        auto neutrino = HiggsSolver::getInvisible(reader_event->met,(lepton.p4() + wjjfj->sdMom().p4()) );
-        MomentumF Wlnu = lepton.p4() + neutrino.p4();
+        auto neutrino = HiggsSolver::getInvisible(reader_event->met,(lepton + wjjfj->sdMom().p4()) );
+        MomentumF Wlnu = lepton + neutrino.p4();
         MomentumF hWW = Wlnu.p4() + wjjfj->sdMom().p4();
         if(PhysicsUtilities::deltaR(Wlnu, wjjfj->sdMom().p4()) > 0.5) return false;
 
         if(goodWJJFJ && goodHBBFJ) makeCRPlots(prefix+"_stdWjj_stdHBB",hWW,hbbfj->sdMom());
         if(goodWJJFJ && goodHBBFJT) makeCRPlots(prefix+"_stdWjj_stdHBBT",hWW,hbbfj->sdMom());
-        if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && hbbfj->maxSJCSV() >= BTagging::BBT_VALS[BTagging::CSV_M] && hbbfj->minSJCSV() < BTagging::BBT_VALS[BTagging::CSV_L]  )
-            makeCRPlots(prefix+"_stdWjj_oneBHBB",hWW,hbbfj->sdMom());
-        if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && hbbfj->maxSJCSV() < BTagging::BBT_VALS[BTagging::CSV_L])
-            makeCRPlots(prefix+"_stdWjj_noBHBB",hWW,hbbfj->sdMom());
-        if(fjProc_inclWBtag.passWjjSel() && wjjfj->maxSJCSV()>= BTagging::BBT_VALS[BTagging::CSV_T] && goodHBBFJ) makeCRPlots(prefix+"_oneBWjj_stdHBB",hWW,hbbfj->sdMom());
-        if(fjProc_inclWBtag.passWjjSel() && wjjfj->maxSJCSV()>= BTagging::BBT_VALS[BTagging::CSV_T]  && goodHBBFJT) makeCRPlots(prefix+"_oneBWjj_stdHBBT",hWW,hbbfj->sdMom());
 
-        if(selLep_muon==1){
+
+        auto minSJCSV = [](const FatJet* fj)->float{
+            if(!fj->nSubJets()) return 0;
+            float minCSV = 1;
+            for(const auto& sj : fj->subJets()) { minCSV = std::min(minCSV,sj.csv());}
+            return std::max(minCSV,float(0.0));
+        };
+        auto  maxSJCSV = [](const FatJet* fj)->float{
+            float maxCSV = 0;
+            for(const auto& sj : fj->subJets()) { maxCSV = std::max(maxCSV,sj.csv());}
+            return maxCSV;
+        };
+
+
+
+
+        if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && maxSJCSV(hbbfj) >= BTagging::BBT_VALS[BTagging::CSV_M] && minSJCSV(hbbfj) < BTagging::BBT_VALS[BTagging::CSV_L]  )
+            makeCRPlots(prefix+"_stdWjj_oneBHBB",hWW,hbbfj->sdMom());
+        if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && maxSJCSV(hbbfj) < BTagging::BBT_VALS[BTagging::CSV_L])
+            makeCRPlots(prefix+"_stdWjj_noBHBB",hWW,hbbfj->sdMom());
+        if(fjProc_inclWBtag.passWjjSel() && maxSJCSV(wjjfj)>= BTagging::BBT_VALS[BTagging::CSV_T] && goodHBBFJ) makeCRPlots(prefix+"_oneBWjj_stdHBB",hWW,hbbfj->sdMom());
+        if(fjProc_inclWBtag.passWjjSel() && maxSJCSV(wjjfj)>= BTagging::BBT_VALS[BTagging::CSV_T]  && goodHBBFJT) makeCRPlots(prefix+"_oneBWjj_stdHBBT",hWW,hbbfj->sdMom());
+
+        if(selectedLepton->isMuon()){
             TString tempP = prefix + "_mu";
             if(goodWJJFJ && goodHBBFJ) makeCRPlots(tempP+"_stdWjj_stdHBB",hWW,hbbfj->sdMom());
             if(goodWJJFJ && goodHBBFJT) makeCRPlots(tempP+"_stdWjj_stdHBBT",hWW,hbbfj->sdMom());
-            if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && hbbfj->maxSJCSV() >= BTagging::BBT_VALS[BTagging::CSV_M] && hbbfj->minSJCSV() < BTagging::BBT_VALS[BTagging::CSV_L]  )
+            if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && maxSJCSV(hbbfj) >= BTagging::BBT_VALS[BTagging::CSV_M] && minSJCSV(hbbfj)  < BTagging::BBT_VALS[BTagging::CSV_L]  )
                 makeCRPlots(tempP+"_stdWjj_oneBHBB",hWW,hbbfj->sdMom());
-            if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && hbbfj->maxSJCSV() < BTagging::BBT_VALS[BTagging::CSV_L])
+            if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && maxSJCSV(hbbfj) < BTagging::BBT_VALS[BTagging::CSV_L])
                 makeCRPlots(tempP+"_stdWjj_noBHBB",hWW,hbbfj->sdMom());
-            if(fjProc_inclWBtag.passWjjSel() && wjjfj->maxSJCSV()>= BTagging::BBT_VALS[BTagging::CSV_T] && goodHBBFJ) makeCRPlots(tempP+"_oneBWjj_stdHBB",hWW,hbbfj->sdMom());
-            if(fjProc_inclWBtag.passWjjSel() && wjjfj->maxSJCSV()>= BTagging::BBT_VALS[BTagging::CSV_T]  && goodHBBFJT) makeCRPlots(tempP+"_oneBWjj_stdHBBT",hWW,hbbfj->sdMom());
+            if(fjProc_inclWBtag.passWjjSel() && maxSJCSV(wjjfj)>= BTagging::BBT_VALS[BTagging::CSV_T] && goodHBBFJ) makeCRPlots(tempP+"_oneBWjj_stdHBB",hWW,hbbfj->sdMom());
+            if(fjProc_inclWBtag.passWjjSel() && maxSJCSV(wjjfj)>= BTagging::BBT_VALS[BTagging::CSV_T]  && goodHBBFJT) makeCRPlots(tempP+"_oneBWjj_stdHBBT",hWW,hbbfj->sdMom());
         } else {
             TString tempP = prefix + "_el";
             if(goodWJJFJ && goodHBBFJ) makeCRPlots(tempP+"_stdWjj_stdHBB",hWW,hbbfj->sdMom());
             if(goodWJJFJ && goodHBBFJT) makeCRPlots(tempP+"_stdWjj_stdHBBT",hWW,hbbfj->sdMom());
-            if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && hbbfj->maxSJCSV() >= BTagging::BBT_VALS[BTagging::CSV_M] && hbbfj->minSJCSV() < BTagging::BBT_VALS[BTagging::CSV_L]  )
+            if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && maxSJCSV(hbbfj) >= BTagging::BBT_VALS[BTagging::CSV_M] && minSJCSV(hbbfj) < BTagging::BBT_VALS[BTagging::CSV_L]  )
                 makeCRPlots(tempP+"_stdWjj_oneBHBB",hWW,hbbfj->sdMom());
-            if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && hbbfj->maxSJCSV() < BTagging::BBT_VALS[BTagging::CSV_L])
+            if(goodWJJFJ &&  fjProc_inclHbbBtag.passHbbSel() && maxSJCSV(hbbfj) < BTagging::BBT_VALS[BTagging::CSV_L])
                 makeCRPlots(tempP+"_stdWjj_noBHBB",hWW,hbbfj->sdMom());
-            if(fjProc_inclWBtag.passWjjSel() && wjjfj->maxSJCSV()>= BTagging::BBT_VALS[BTagging::CSV_T] && goodHBBFJ) makeCRPlots(tempP+"_oneBWjj_stdHBB",hWW,hbbfj->sdMom());
-            if(fjProc_inclWBtag.passWjjSel() && wjjfj->maxSJCSV()>= BTagging::BBT_VALS[BTagging::CSV_T]  && goodHBBFJT) makeCRPlots(tempP+"_oneBWjj_stdHBBT",hWW,hbbfj->sdMom());
+            if(fjProc_inclWBtag.passWjjSel() && maxSJCSV(wjjfj)>= BTagging::BBT_VALS[BTagging::CSV_T] && goodHBBFJ) makeCRPlots(tempP+"_oneBWjj_stdHBB",hWW,hbbfj->sdMom());
+            if(fjProc_inclWBtag.passWjjSel() && maxSJCSV(wjjfj)>= BTagging::BBT_VALS[BTagging::CSV_T]  && goodHBBFJT) makeCRPlots(tempP+"_oneBWjj_stdHBBT",hWW,hbbfj->sdMom());
         }
 
 
@@ -148,23 +147,14 @@ public:
 
     void write(TString fileName){ plotter.write(fileName);}
 
-    std::shared_ptr<EventReader      > reader_event    ;
-    std::shared_ptr<GenParticleReader> reader_genpart  ;
-    std::shared_ptr<ElectronReader   > reader_electron ;
-    std::shared_ptr<MuonReader       > reader_muon     ;
-    std::shared_ptr<FatJetReader     > reader_fatjet   ;
-    std::shared_ptr<JetReader        > reader_jet      ;
-    float   ht         =0;
-    float   selLep_pt  =0;
-    float   selLep_eta =0;
-    float   selLep_phi =0;
-    size8   selLep_muon=0;
-    float weight  = 0;
+//    float   ht         =0;
+//    float   selLep_pt  =0;
+//    float   selLep_eta =0;
+//    float   selLep_phi =0;
+//    size8   selLep_muon=0;
     HistGetter plotter;
     TString prefix;
-    int mass=0;
 
-    FatJetProcessor fjProc           ;
     FatJetProcessor fjProc_inclWBtag      ;
     FatJetProcessor fjProc_inclHbbBtag ;
 
@@ -176,14 +166,12 @@ public:
 
 void checkControlRegions(std::string fileName, int treeInt, std::string outFileName){
     Analyzer a(fileName,"treeMaker/Events",treeInt);
-    a.setLumi(36);
     a.analyze();
     a.write(outFileName);
 }
 void checkControlRegions(std::string fileName, int treeInt, std::string outFileName, float xSec, float numEvent){
     Analyzer a(fileName,"treeMaker/Events",treeInt);
     a.setSampleInfo(xSec,numEvent);
-    a.setLumi(36);
     a.analyze();
     a.write(outFileName);
 }

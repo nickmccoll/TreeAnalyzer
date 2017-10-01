@@ -21,6 +21,7 @@
 #include "Processors/Variables/interface/FatJetSelection.h"
 #include "Processors/Corrections/interface/LeptonScaleFactors.h"
 #include "Processors/Corrections/interface/BTagScaleFactors.h"
+#include "Processors/Corrections/interface/TriggerScaleFactors.h"
 
 
 using namespace TAna;
@@ -29,7 +30,22 @@ class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
-        turnOffCorr(CORR_LEP );
+//        turnOffCorr(CORR_LEP );
+        DefaultFatJetSelections::setDefaultFatJetProcessor(wwjCR);
+        DefaultFatJetSelections::setDefaultFatJetProcessor(hbbCR);
+
+        wwjCR.wjj_maxCSVWP =BTagging::CSV_INCL;
+        wwjCR.hbb_l_firMinCSVWP =BTagging::CSV_INCL;
+        wwjCR.hbb_l_secMinCSVWP =BTagging::CSV_INCL;
+        wwjCR.hbb_t_firMinCSVWP =BTagging::CSV_INCL;
+        wwjCR.hbb_t_secMinCSVWP =BTagging::CSV_INCL;
+        wwjCR.wjj_maxT2oT1      =-1;
+
+        hbbCR.hbb_l_firMinCSVWP =BTagging::CSV_INCL;
+        hbbCR.hbb_l_secMinCSVWP =BTagging::CSV_INCL;
+        hbbCR.hbb_t_firMinCSVWP =BTagging::CSV_INCL;
+        hbbCR.hbb_t_secMinCSVWP =BTagging::CSV_INCL;
+
     }
 
 
@@ -90,8 +106,8 @@ public:
             plotter.getOrMake1DPre(prefix,TString::Format("%sNSubjets",namePre.Data()),TString::Format(";%s # of subjets",titlePre.Data()),4,-0.5,3.5)->Fill(j->nSubJets(),weight);
 
             if(j->nSubJets() > 1){
-                plotter.getOrMake1DPre(prefix,TString::Format("%sMinSJCSV",namePre.Data()),TString::Format(";%s min subjet csv",titlePre.Data()),110,-.1,1)->Fill(j->minSJCSV(),weight);
-                plotter.getOrMake1DPre(prefix,TString::Format("%sMaxSJCSV",namePre.Data()),TString::Format(";%s max subjet csv",titlePre.Data()),110,-.1,1)->Fill(j->maxSJCSV(),weight);
+                plotter.getOrMake1DPre(prefix,TString::Format("%sMinSJCSV",namePre.Data()),TString::Format(";%s min subjet csv",titlePre.Data()),110,-.1,1)->Fill(std::min(j->subJet(0).csv(),j->subJet(1).csv()),weight);
+                plotter.getOrMake1DPre(prefix,TString::Format("%sMaxSJCSV",namePre.Data()),TString::Format(";%s max subjet csv",titlePre.Data()),110,-.1,1)->Fill(std::max(j->subJet(0).csv(),j->subJet(1).csv()),weight);
                 plotter.getOrMake1DPre(prefix,TString::Format("%sTau2oTau1",namePre.Data()),TString::Format(";%s #tau_{2}/#tau_{1}",titlePre.Data()),100,0,1)->Fill(j->tau2otau1(),weight);
                 plotter.getOrMake1DPre(prefix,TString::Format("%sTau3oTau1",namePre.Data()),TString::Format(";%s #tau_{3}/#tau_{1}",titlePre.Data()),100,0,1)->Fill(j->tau3otau1(),weight);
                 plotter.getOrMake1DPre(prefix,TString::Format("%sTau3oTau2",namePre.Data()),TString::Format(";%s #tau_{3}/#tau_{2}",titlePre.Data()),100,0,1)->Fill(j->tau3otau2(),weight);
@@ -166,17 +182,21 @@ public:
         };
         auto mkHHPlots = [&](const TString& prefix, const float weight){
             if(wjjCand && hbbCand){
+                auto wjjbtagSJs = PhysicsUtilities::selObjsMom(wjjCand->subJets(),
+                        wwjCR.sj_minBTagPT, wwjCR.sj_maxBTagETA < 0 ? 999.0 : wwjCR.sj_maxBTagETA);
+                std::sort(wjjbtagSJs.begin(),wjjbtagSJs.end(), [](const SubJet* a,const SubJet* b) {return a->csv() > b->csv();} );
 
-                const bool bTaggedW = FatJetSelHelpers::passWjjSelection(wjjCand,fjProc->wjj_maxT2oT1,BTagging::CSV_INCL,fjProc->wjj_minMass,fjProc->wjj_maxMass) && wjjCand->maxSJCSV() >= BTagging::CSVWP_VALS[BTagging::CSV_T];
-                const bool stdW = FatJetSelHelpers::passWjjSelection(wjjCand,fjProc->wjj_maxT2oT1,fjProc->wjj_maxCSVWP,fjProc->wjj_minMass,fjProc->wjj_maxMass);
-//                const bool stdHbb =  FatJetSelHelpers::passHbbSelection(hbbCand,fjProc->hbb_maxT2oT1,fjProc->hbb_l_firMinCSVWP,fjProc->hbb_l_secMinCSVWP,fjProc->hbb_minMass,fjProc->hbb_maxMass);
-                const bool antiHbb = FatJetSelHelpers::passHbbSelection(hbbCand,fjProc->hbb_maxT2oT1,BTagging::CSV_INCL,BTagging::CSV_INCL,fjProc->hbb_minMass,fjProc->hbb_maxMass)&&
-                        hbbCand->maxSJCSV() < BTagging::CSVWP_VALS[BTagging::CSV_L];
+                auto hbbbtagSJs = PhysicsUtilities::selObjsMom(hbbCand->subJets(),
+                        wwjCR.sj_minBTagPT, wwjCR.sj_maxBTagETA < 0 ? 999.0 : wwjCR.sj_maxBTagETA);
+                std::sort(hbbbtagSJs.begin(),hbbbtagSJs.end(), [](const SubJet* a,const SubJet* b) {return a->csv() > b->csv();} );
 
-                const bool tauHbb = FatJetSelHelpers::passHbbSelection(hbbCand,fjProc->hbb_maxT2oT1,BTagging::CSV_INCL,BTagging::CSV_INCL,fjProc->hbb_minMass,fjProc->hbb_maxMass);
+                const bool bTaggedW = fjProc->passWjjSel(wwjCR) && wjjbtagSJs.size() && wjjbtagSJs.front()->csv() >= BTagging::CSVWP_VALS[BTagging::CSV_T];
+                const bool stdW = fjProc->passWjjSel();
+                const bool antiHbb = fjProc->passHbbSel(hbbCR) && hbbbtagSJs.size() && hbbbtagSJs.front()->csv()< BTagging::CSVWP_VALS[BTagging::CSV_L];
+                const bool incHbb = fjProc->passHbbSel(wwjCR);
+                const bool tauHbb = fjProc->passHbbSel(hbbCR);
 
-
-                bool cr_btaggedWjj = bTaggedW;
+                bool cr_btaggedWjj = bTaggedW && incHbb;
                 bool cr_btaggedWjj2 = bTaggedW && tauHbb;
                 bool cr_antiBHbb = antiHbb && stdW;
 
@@ -233,15 +253,23 @@ public:
         };
 
         doASet(smpName,weight);
-        leptonSFProc->load(smDecayEvt,selectedLeptons,&jets_wlep);
-        doASet(smpName+"_lepSF", isRealData() ? weight : weight*leptonSFProc->getSF());
-        doASet(smpName+"_lepBTagSF", isRealData() ? weight : weight*leptonSFProc->getSF()*ak4btagSFProc->getSF(jets));
+        plotter.getOrMake1DPre(smpName,"trigW","trigW",2000,-10,10)->Fill(trigSFProc->getLeptonTriggerSF(ht_wlep, (selectedLepton && selectedLepton->isMuon())));
+        plotter.getOrMake1DPre(smpName,"puW"  ,"puW"  ,2000,-10,10)->Fill(puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL));
+        plotter.getOrMake1DPre(smpName,"lepW" ,"lepW" ,2000,-10,10)->Fill(leptonSFProc->getSF());
+        plotter.getOrMake1DPre(smpName,"jetW" ,"jetW" ,2000,-10,10)->Fill(ak4btagSFProc->getSF(jets));
+        plotter.getOrMake1DPre(smpName,"sjW"  ,"sjW"  ,2000,-10,10)->Fill(sjbtagSFProc->getSF({wjjCand,hbbCand}));
+
+//        leptonSFProc->load(smDecayEvt,selectedLeptons,&jets_wlep);
+//        doASet(smpName+"_lepSF", isRealData() ? weight : weight*leptonSFProc->getSF());
+//        doASet(smpName+"_lepBTagSF", isRealData() ? weight : weight*leptonSFProc->getSF()*ak4btagSFProc->getSF(jets));
         return true;
     }
 
 
     void write(TString fileName){ plotter.write(fileName);}
     HistGetter plotter;
+    FatJetParameters wwjCR;
+    FatJetParameters hbbCR;
 
 };
 
