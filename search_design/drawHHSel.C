@@ -183,3 +183,36 @@ vector<TString> cutNames = {
 
 
 }
+
+//check tau eff{
+
+TFile * f = new TFile("testTauEff.root","read");
+//std::vector<TString> samps = {"m800","m1000","m1600","m3000","ttbar","bkg"};
+std::vector<TString> samps = {"ttbar","wjets"};
+
+std::vector<TString> sels = {"tHtW_","tW_","tH_",""};
+std::vector<TString> pres = {"hbbL","hbbL_hh900to1100","hbbL_hh1400to1800"};
+//std::vector<TString> pres = {"hbbT"};
+//std::vector<TString> pres = {"hbbT","hbbT_hh900to1100","hbbT_hh1400to1800"};
+
+for(const auto& s : samps){
+for(const auto& pr : pres){
+Plotter * p = new Plotter();
+for(const auto& l : sels){
+TH1 * h = 0;
+f->GetObject(TString::Format("%s_%s%s_hbb_mass",s.Data(),l.Data(),pr.Data()),h);
+if(h == 0) continue;
+p->addHistLine(h,l);
+}
+ //p->setMinMax(1.,5.);
+//p->rebin(5);
+//p->drawRatio(0,"stack",false,false,s + "_"+pr);
+p->rebin(2);
+p->draw(false,s + "_"+pr);
+}
+}
+
+
+
+
+}
