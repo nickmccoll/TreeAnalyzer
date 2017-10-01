@@ -43,4 +43,4 @@ rm data.zip
 cd ..
 ```
 
-You can download it into your work directory, jobs will run automatically if they are run with the "data" directory in the execution directory. Otherwise you can set an enviornment variable to pick it up from some other location: `TREEANALYZER_DATA="/Users/nmccoll/Dropbox/Work/Projects/HHbbWW/hbbww_data"`
+You can download it into your work directory, jobs will run automatically if they are run with the "data" directory in the execution directory. Otherwise you can set an enviornment variable to pick it up from some other location: `export TREEANALYZER_DATA="/Users/nmccoll/Dropbox/Work/Projects/HHbbWW/hbbww_data/"`
