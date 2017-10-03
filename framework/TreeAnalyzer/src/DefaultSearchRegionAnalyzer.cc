@@ -32,6 +32,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, s
 //--------------------------------------------------------------------------------------------------
 DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
 //--------------------------------------------------------------------------------------------------
+void DefaultSearchRegionAnalyzer::resetCorr() {corrections = 0;}
 bool DefaultSearchRegionAnalyzer::isCorrOn(Corrections corr) const {return FillerConstants::doesPass(corrections,corr);}
 void DefaultSearchRegionAnalyzer::turnOnCorr(Corrections corr) {FillerConstants::addPass(corrections,corr);}
 void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr) {FillerConstants::removePass(corrections,corr);}

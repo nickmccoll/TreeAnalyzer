@@ -47,6 +47,7 @@ public:
     virtual void setupProcessors(std::string fileName);
 
     //turn on, off correction
+    void resetCorr() ;
     bool isCorrOn(Corrections corr) const;
     void turnOnCorr(Corrections corr);
     void turnOffCorr(Corrections corr);
