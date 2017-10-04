@@ -19,6 +19,7 @@
 #include "Processors/Corrections/interface/TriggerScaleFactors.h"
 #include "Processors/Corrections/interface/LeptonScaleFactors.h"
 #include "Processors/Corrections/interface/BTagScaleFactors.h"
+#include "Processors/Corrections/interface/FatJetScaleFactors.h"
 #include "TPRegexp.h"
 
 
@@ -51,6 +52,7 @@ void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     leptonSFProc.reset(new POGLeptonScaleFactors (dataDirectory));
     ak4btagSFProc.reset(new JetBTagScaleFactors (dataDirectory));
     sjbtagSFProc.reset(new SubJetBTagScaleFactors (dataDirectory));
+    sdMassSFProc.reset(new SoftDropMassScaleFactors (dataDirectory));
     setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
 
     turnOnCorr(CORR_XSEC);
@@ -58,6 +60,7 @@ void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     turnOnCorr(CORR_PU  );
     turnOnCorr(CORR_LEP );
     turnOnCorr(CORR_SJBTAG);
+    turnOnCorr(CORR_SDMASS);
 }
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::loadVariables()  {
@@ -133,8 +136,11 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         passHbbTSel = fjProc->passHbbSelTightBTag();
         passWjjSel  = fjProc->passWjjSel();
 
-        neutrino = wjjCand ? HiggsSolver::getInvisible(reader_event->met,(selectedLepton->p4() + wjjCand->sdMom().p4()) ) : MomentumF();
-        hh =  wjjCand && hbbCand ? (selectedLepton->p4() + neutrino.p4()+ wjjCand->sdMom().p4() + hbbCand->sdMom().p4()) :  MomentumF();
+        if(hbbCand)
+            hbbMass    =   isCorrOn(CORR_SDMASS) ? sdMassSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
+
+        neutrino = wjjCand ? HiggsSolver::getInvisible(reader_event->met,(selectedLepton->p4() + wjjCand->p4()) ) : MomentumF();
+        hh =  wjjCand && hbbCand ? (selectedLepton->p4() + neutrino.p4()+ wjjCand->p4() + hbbCand->p4()) :  MomentumF();
 
     } else {
         fatjetCands.clear();
@@ -145,6 +151,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         passHbbTSel=  false;
         neutrino   =  MomentumF();
         hh         =  MomentumF();
+        hbbMass    = 0;
     }
 
     weight = 1;
