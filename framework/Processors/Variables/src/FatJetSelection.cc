@@ -48,8 +48,6 @@ const FatJet* FatJetSelHelpers::getHbbCand(const FatJet* wjjCand, const Momentum
 }
 //_____________________________________________________________________________
 bool FatJetSelHelpers::passHbbSelection(const FatJet* fj, const FatJetParameters& param, const bool tight){
-    if(param.hbb_minMass > 0 && fj->sdMom().mass() < param.hbb_minMass  ) return false;
-    if(param.hbb_maxMass > 0 && fj->sdMom().mass() >= param.hbb_maxMass ) return false;
     if(param.hbb_maxT2oT1 > 0 && fj->tau2otau1() >= param.hbb_maxT2oT1 ) return false;
 
     auto btagSJs = PhysicsUtilities::selObjsMom(fj->subJets(),
@@ -68,8 +66,9 @@ bool FatJetSelHelpers::passHbbSelection(const FatJet* fj, const FatJetParameters
 }
 //_____________________________________________________________________________
 bool FatJetSelHelpers::passWjjSelection(const FatJet* fj, const FatJetParameters& param){
-    if(param.wjj_minMass > 0 && fj->sdMom().mass() < param.wjj_minMass  ) return false;
-    if(param.wjj_maxMass > 0 && fj->sdMom().mass() >= param.wjj_maxMass ) return false;
+    const float mass = fj->sdMom().mass();
+    if(param.wjj_minMass > 0 && mass < param.wjj_minMass  ) return false;
+    if(param.wjj_maxMass > 0 && mass >= param.wjj_maxMass ) return false;
     if(param.wjj_maxT2oT1 > 0 && fj->tau2otau1() >= param.wjj_maxT2oT1) return false;
 
     auto btagSJs = PhysicsUtilities::selObjsMom(fj->subJets(),
@@ -130,10 +129,8 @@ void DefaultFatJetSelections::setDefaultFatJetProcessor(FatJetParameters& proc) 
     proc.wjj_maxCSVWP   = BTagging::CSV_M  ;
 
     proc.hbb_minLepDPhi = 2.0    ;
-    proc.hbb_minPT      = 50     ;
+    proc.hbb_minPT      = 200    ;
     proc.hbb_maxT2oT1   = -1     ;
-    proc.hbb_minMass    = 10     ;
-    proc.hbb_maxMass    = -1     ;
     proc.hbb_l_firMinCSVWP= BTagging::CSV_M;
     proc.hbb_l_secMinCSVWP= BTagging::CSV_L;
     proc.hbb_t_firMinCSVWP= BTagging::CSV_M;

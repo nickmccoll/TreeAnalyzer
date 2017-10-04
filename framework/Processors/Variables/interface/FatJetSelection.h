@@ -54,8 +54,6 @@ struct FatJetParameters{
     float hbb_minPT      =-1;
     //parameters applied to hbb pass sel
     float hbb_maxT2oT1   =-1;
-    float hbb_minMass    =-1;
-    float hbb_maxMass    =-1;
     BTagging::CSVWP hbb_l_firMinCSVWP= BTagging::CSV_INCL;
     BTagging::CSVWP hbb_l_secMinCSVWP= BTagging::CSV_INCL;
     BTagging::CSVWP hbb_t_firMinCSVWP= BTagging::CSV_INCL;
