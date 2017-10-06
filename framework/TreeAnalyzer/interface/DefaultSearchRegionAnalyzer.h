@@ -23,7 +23,7 @@ class PUScaleFactors;
 class LeptonScaleFactors;
 class JetBTagScaleFactors;
 class SubJetBTagScaleFactors;
-class SoftDropMassScaleFactors;
+class HbbFatJetScaleFactors;
 
 class Jet               ;
 class FatJet            ;
@@ -110,7 +110,7 @@ public:
     std::unique_ptr<LeptonScaleFactors>  leptonSFProc ;
     std::unique_ptr<JetBTagScaleFactors>    ak4btagSFProc ;
     std::unique_ptr<SubJetBTagScaleFactors>    sjbtagSFProc ;
-    std::unique_ptr<SoftDropMassScaleFactors>    sdMassSFProc ;
+    std::unique_ptr<HbbFatJetScaleFactors>    hbbFJSFProc ;
 };
 }
 #endif

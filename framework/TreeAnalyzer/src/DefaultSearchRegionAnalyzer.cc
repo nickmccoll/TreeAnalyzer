@@ -52,7 +52,7 @@ void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     leptonSFProc.reset(new POGLeptonScaleFactors (dataDirectory));
     ak4btagSFProc.reset(new JetBTagScaleFactors (dataDirectory));
     sjbtagSFProc.reset(new SubJetBTagScaleFactors (dataDirectory));
-    sdMassSFProc.reset(new SoftDropMassScaleFactors (dataDirectory));
+    hbbFJSFProc.reset(new HbbFatJetScaleFactors (dataDirectory));
     setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
 
     turnOnCorr(CORR_XSEC);
@@ -137,7 +137,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         passWjjSel  = fjProc->passWjjSel();
 
         if(hbbCand)
-            hbbMass    =   isCorrOn(CORR_SDMASS) ? sdMassSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
+            hbbMass    =   isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
 
         neutrino = wjjCand ? HiggsSolver::getInvisible(reader_event->met,(selectedLepton->p4() + wjjCand->p4()) ) : MomentumF();
         hh =  wjjCand && hbbCand ? (selectedLepton->p4() + neutrino.p4()+ wjjCand->p4() + hbbCand->p4()) :  MomentumF();
