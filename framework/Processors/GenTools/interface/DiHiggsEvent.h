@@ -2,6 +2,8 @@
 #define TREEANALYZER_FRAMEWORK_PROCESSORS_GENTOOLS_INTERFACE_DIHIGGSEVENT_H_
 
 #include <vector>
+#include "DataFormats/interface/GenParticle.h"
+#include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
 
 namespace TAna {
 class GenParticle;
@@ -10,6 +12,17 @@ typedef std::vector<GenParticle> GenParticleCollection;
 class DiHiggsEvent {
 public:
     enum DECAYTYPE {BAD,bbZZ,HAD,DILEP, TAU_HAD,TAU_MU,TAU_E, MU,E};
+
+    int Tau_search(CandidateRef<GenParticle> dau);
+    bool isWpair(CandidateRef<GenParticle> f1, CandidateRef<GenParticle> f2);
+    int isPair(CandidateRef<GenParticle> f1, CandidateRef<GenParticle> f2);
+    int classify_W_pair(CandidateRef<GenParticle> p1, CandidateRef<GenParticle> p2);
+    std::tuple<const GenParticle*, const GenParticle*> assign_gp(const GenParticle* p1, const GenParticle* p2);
+
+    std::vector<int> search_4_daughters(CandidateRef<GenParticle> gp);
+    std::vector<int> search_3_daughters(CandidateRef<GenParticle> gp);
+    std::vector<int> search_2_daughters(CandidateRef<GenParticle> gp);
+
     void setDecayInfo(const GenParticleCollection& genparts);
     void reset();
 
