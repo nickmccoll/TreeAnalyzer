@@ -60,6 +60,7 @@ public :
     bool passPUID() const;
     bool passLooseID() const;
     bool passTightID() const;
+    ASTypes::size8 jetID() const {return _jetID;}
 
     const GenJet  *genJet()        const { return _gj;  }
     GenJet        *genJet()        { return _gj;  }

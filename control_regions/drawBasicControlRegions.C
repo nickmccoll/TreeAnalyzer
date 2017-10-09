@@ -78,7 +78,7 @@ hadd data_met_basicCRPlots.root ../jobs_cr2/*data_met*.root &
   };
   const float sigNorm = 20.0/1000.0;
 
-    TFile * f = new TFile("basicCRPlots.root","read");
+    TFile * f = new TFile("plotBasicControlRegions.root","read");
   
 
 
@@ -134,8 +134,9 @@ hadd data_met_basicCRPlots.root ../jobs_cr2/*data_met*.root &
   // vector<TString> pres = { "1mu","1el","2lsf","2lof"};
     // vector<TString> pres = { "1mu_0b","1el_0b","1mu_2b","1el_2b"};
   // vector<TString> pres = { "1mu","1el","1mu_2b","1el_2b"};
-    vector<TString> pres = { "1mu_HbbAntiBCR","1el_HbbAntiBCR"};
+    vector<TString> pres = { "1mu_wjjBtagTauCR","1el_wjjBtagTauCR"};
     // vector<TString> pres = { "1mu_wjjBtagTauCR","1el_wjjBtagTauCR"};
   distPlots("plots",vars,pres,false,5);
 
 }
+

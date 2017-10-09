@@ -113,7 +113,14 @@ void BaseTreeAnalyzer::setupOutTree(){
         std::cout <<", and will copy only loaded branches from the input tree.\n";
         break;
     default:
-        newTree = new TTree(tree.getTree()->GetName(),tree.getTree()->GetTitle());
+        TString name = tree.getTree()->GetName();
+        if(name.Contains("/")){ //strip the directory
+            const int start = name.Last('/') +1;
+            if(start != name.Length()){
+                name = name(start, name.Length() - start);
+            }
+        }
+        newTree = new TTree(name,tree.getTree()->GetTitle());
         std::cout <<", and will copy no branches from the input tree.\n";
     }
     outTree.reset(new TreeWriter(outFile, newTree,cdtof));

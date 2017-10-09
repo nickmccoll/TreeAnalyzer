@@ -23,6 +23,7 @@ class PUScaleFactors;
 class LeptonScaleFactors;
 class JetBTagScaleFactors;
 class SubJetBTagScaleFactors;
+class HbbFatJetScaleFactors;
 
 class Jet               ;
 class FatJet            ;
@@ -37,16 +38,15 @@ public:
                      ,CORR_LEP  =(1<<3)
                      ,CORR_SJBTAG  =(1<<4)
                      ,CORR_AK4BTAG  =(1<<5)
+                     ,CORR_SDMASS  =(1<<6)
     };
 
     DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt);
 
     virtual ~DefaultSearchRegionAnalyzer();
 
-    //all of the processor/variable constructing
-    virtual void setupProcessors(std::string fileName);
-
     //turn on, off correction
+    void resetCorr() ;
     bool isCorrOn(Corrections corr) const;
     void turnOnCorr(Corrections corr);
     void turnOffCorr(Corrections corr);
@@ -98,6 +98,7 @@ public:
     bool                       passHbbTSel = false;
     MomentumF                  neutrino           ;
     MomentumF                  hh                 ;
+    float                      hbbMass     =0     ;
 
     std::unique_ptr<FatJetProcessor>     fjProc     ;
     std::unique_ptr<LeptonProcessor>     leptonProc ;
@@ -106,6 +107,7 @@ public:
     std::unique_ptr<LeptonScaleFactors>  leptonSFProc ;
     std::unique_ptr<JetBTagScaleFactors>    ak4btagSFProc ;
     std::unique_ptr<SubJetBTagScaleFactors>    sjbtagSFProc ;
+    std::unique_ptr<HbbFatJetScaleFactors>    hbbFJSFProc ;
 };
 }
 #endif

@@ -21,17 +21,6 @@ float     FatJet::tau3otau1() const{return _tau1 == 0 ? 99 : _tau3/_tau1;}
 float     FatJet::tau3otau2() const{return _tau2 == 0 ? 99 : _tau3/_tau2;}
 //--------------------------------------------------------------------------------------------------
 size     FatJet::nSubJets()  const{return _sjs.size();}
-float     FatJet::minSJCSV()  const{
-    if(!_sjs.size()) return 0;
-    float minCSV = 1;
-    for(const auto& sj : _sjs) { minCSV = std::min(minCSV,sj.csv());}
-    return std::max(minCSV,float(0.0));
-}
-float     FatJet::maxSJCSV()  const{
-    float maxCSV = 0;
-    for(const auto& sj : _sjs) { maxCSV = std::max(maxCSV,sj.csv());}
-    return maxCSV;
-}
 MomentumF FatJet::sdMom()     const{
     MomentumF sd;
     for(const auto& sj : _sjs) { sd.p4() += sj.p4(); }
