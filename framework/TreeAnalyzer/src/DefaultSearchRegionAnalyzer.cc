@@ -28,17 +28,6 @@
 namespace TAna {
 //--------------------------------------------------------------------------------------------------
 DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt) : BaseTreeAnalyzer(fileName,treeName,treeInt){
-    setupProcessors(fileName);
-}
-//--------------------------------------------------------------------------------------------------
-DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
-//--------------------------------------------------------------------------------------------------
-void DefaultSearchRegionAnalyzer::resetCorr() {corrections = 0;}
-bool DefaultSearchRegionAnalyzer::isCorrOn(Corrections corr) const {return FillerConstants::doesPass(corrections,corr);}
-void DefaultSearchRegionAnalyzer::turnOnCorr(Corrections corr) {FillerConstants::addPass(corrections,corr);}
-void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr) {FillerConstants::removePass(corrections,corr);}
-//--------------------------------------------------------------------------------------------------
-void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     TPRegexp r1(".*m(\\d+)_[0-9]*\\..*$");
     auto match = r1.MatchS(fileName);
     const Int_t nrSubStr = match->GetLast()+1;
@@ -52,7 +41,7 @@ void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     leptonSFProc.reset(new POGLeptonScaleFactors (dataDirectory));
     ak4btagSFProc.reset(new JetBTagScaleFactors (dataDirectory));
     sjbtagSFProc.reset(new SubJetBTagScaleFactors (dataDirectory));
-    hbbFJSFProc.reset(new HbbFatJetScaleFactors (dataDirectory));
+    hbbFJSFProc .reset(new HbbFatJetScaleFactors (dataDirectory));
     setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
 
     turnOnCorr(CORR_XSEC);
@@ -62,6 +51,14 @@ void DefaultSearchRegionAnalyzer::setupProcessors(std::string fileName) {
     turnOnCorr(CORR_SJBTAG);
     turnOnCorr(CORR_SDMASS);
 }
+//--------------------------------------------------------------------------------------------------
+DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
+//--------------------------------------------------------------------------------------------------
+void DefaultSearchRegionAnalyzer::resetCorr() {corrections = 0;}
+bool DefaultSearchRegionAnalyzer::isCorrOn(Corrections corr) const {return FillerConstants::doesPass(corrections,corr);}
+void DefaultSearchRegionAnalyzer::turnOnCorr(Corrections corr) {FillerConstants::addPass(corrections,corr);}
+void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr) {FillerConstants::removePass(corrections,corr);}
+
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::loadVariables()  {
     reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
