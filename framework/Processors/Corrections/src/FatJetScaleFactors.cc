@@ -20,9 +20,9 @@ float HbbFatJetScaleFactors::getMassScaleFactor(const float corrJetPT, const flo
     if(jetAbsETA < 0.8)
         return sdMassCorr_eta_0p0_0p8->eval(corrJetPT);
     else if(jetAbsETA < 1.6)
-        return sdMassCorr_eta_0p0_0p8->eval(corrJetPT);
-    else
         return sdMassCorr_eta_0p8_1p6->eval(corrJetPT);
+    else
+        return sdMassCorr_eta_1p6_2p4->eval(corrJetPT);
 }
 //--------------------------------------------------------------------------------------------------
 float HbbFatJetScaleFactors::getJEC(const FatJet* fj) const {
