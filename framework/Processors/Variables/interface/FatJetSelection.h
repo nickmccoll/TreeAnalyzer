@@ -47,6 +47,7 @@ struct FatJetParameters{
     float wjj_maxT2oT1   =-1;
     float wjj_minMass    =-1;
     float wjj_maxMass    =-1;
+    BTagging::CSVWP wjj_minCSVWP   = BTagging::CSV_INCL;
     BTagging::CSVWP wjj_maxCSVWP   = BTagging::CSV_INCL;
 
     //parameters applied to hbb candidate sel
@@ -92,6 +93,9 @@ private:
 namespace DefaultFatJetSelections {
 void setDefaultFatJetProcessor(FatJetParameters& proc);
 void setDefaultFatJetProcessor(FatJetProcessor& proc);
+
+void setTTBarCRFatJetProcessor(FatJetParameters& proc);
+void setTTBarCRFatJetProcessor(FatJetProcessor& proc);
 }
 
 

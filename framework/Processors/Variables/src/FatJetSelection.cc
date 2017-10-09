@@ -76,7 +76,9 @@ bool FatJetSelHelpers::passWjjSelection(const FatJet* fj, const FatJetParameters
     std::sort(btagSJs.begin(),btagSJs.end(), [](const SubJet* a,const SubJet* b) {return a->csv() > b->csv();} );
 
     if(param.wjj_maxCSVWP > BTagging::CSV_INCL && btagSJs.size())
-        if(btagSJs.front()->csv() >= BTagging::CSVWP_VALS[param.wjj_maxCSVWP]) return false;
+        if(btagSJs[0]->csv() >= BTagging::CSVWP_VALS[param.wjj_maxCSVWP]) return false;
+    if(param.wjj_minCSVWP > BTagging::CSV_INCL)
+        if(btagSJs.size() == 0 || btagSJs[0]->csv() < BTagging::CSVWP_VALS[param.wjj_minCSVWP]) return false;
     return true;
 }
 //_____________________________________________________________________________
@@ -126,7 +128,8 @@ void DefaultFatJetSelections::setDefaultFatJetProcessor(FatJetParameters& proc) 
     proc.wjj_maxT2oT1   = 0.55   ;
     proc.wjj_minMass    = 10     ;
     proc.wjj_maxMass    = -1     ;
-    proc.wjj_maxCSVWP   = BTagging::CSV_M  ;
+    proc.wjj_minCSVWP   = BTagging::CSV_INCL;
+    proc.wjj_maxCSVWP   = BTagging::CSV_M   ;
 
     proc.hbb_minLepDPhi = 2.0    ;
     proc.hbb_minPT      = 200    ;
@@ -140,4 +143,20 @@ void DefaultFatJetSelections::setDefaultFatJetProcessor(FatJetParameters& proc) 
 void DefaultFatJetSelections::setDefaultFatJetProcessor(FatJetProcessor& proc) {
     setDefaultFatJetProcessor(proc.param);
 }
+//_____________________________________________________________________________
+void DefaultFatJetSelections::setTTBarCRFatJetProcessor(FatJetParameters& proc){
+    setDefaultFatJetProcessor(proc);
+    proc.hbb_l_firMinCSVWP= BTagging::CSV_INCL;
+    proc.hbb_l_secMinCSVWP= BTagging::CSV_INCL;
+    proc.hbb_t_firMinCSVWP= BTagging::CSV_INCL;
+    proc.hbb_t_secMinCSVWP= BTagging::CSV_INCL;
+
+    proc.wjj_minCSVWP   = BTagging::CSV_M   ;
+    proc.wjj_maxCSVWP   = BTagging::CSV_INCL;
+}
+//_____________________________________________________________________________
+void DefaultFatJetSelections::setTTBarCRFatJetProcessor(FatJetProcessor& proc) {
+    setTTBarCRFatJetProcessor(proc.param);
+}
+
 }
