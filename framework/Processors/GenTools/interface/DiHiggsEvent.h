@@ -3,26 +3,21 @@
 
 #include <vector>
 #include "DataFormats/interface/GenParticle.h"
-#include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
 
 namespace TAna {
 class GenParticle;
 typedef std::vector<GenParticle> GenParticleCollection;
 
+struct WDecay {
+    const GenParticle* id = 0;
+    const GenParticle* d1 = 0;
+    const GenParticle* d2 = 0;
+    int decaytype = 0; // 0 is BAD, others defined above in enum decayidentifier
+};
+
 class DiHiggsEvent {
 public:
     enum DECAYTYPE {BAD,bbZZ,HAD,DILEP, TAU_HAD,TAU_MU,TAU_E, MU,E};
-
-    int Tau_search(CandidateRef<GenParticle> dau);
-    bool isWpair(CandidateRef<GenParticle> f1, CandidateRef<GenParticle> f2);
-    int isPair(CandidateRef<GenParticle> f1, CandidateRef<GenParticle> f2);
-    int classify_W_pair(CandidateRef<GenParticle> p1, CandidateRef<GenParticle> p2);
-    std::tuple<const GenParticle*, const GenParticle*> assign_gp(const GenParticle* p1, const GenParticle* p2);
-
-    std::vector<int> search_4_daughters(CandidateRef<GenParticle> gp);
-    std::vector<int> search_3_daughters(CandidateRef<GenParticle> gp);
-    std::vector<int> search_2_daughters(CandidateRef<GenParticle> gp);
-
     void setDecayInfo(const GenParticleCollection& genparts);
     void reset();
 
@@ -38,9 +33,17 @@ public:
     const GenParticle * w2  =0;
     const GenParticle * w2_d1=0;
     const GenParticle * w2_d2=0;
-    DECAYTYPE type = BAD;
+    int type = BAD;
 
-
+private:
+    int tau_search(CandidateRef<GenParticle> dau);
+    bool isWpair(CandidateRef<GenParticle> f1, CandidateRef<GenParticle> f2);
+    int isPair(CandidateRef<GenParticle> f1, CandidateRef<GenParticle> f2);
+    int classify_W_pair(CandidateRef<GenParticle> p1, CandidateRef<GenParticle> p2);
+    std::tuple<const GenParticle*, const GenParticle*> assign_gp(const GenParticle* p1, const GenParticle* p2);
+    WDecay assign_W(const GenParticle* w);
+    int classify_decaytype(std::vector<int> items);
+    std::vector<int> search_4_daughters(CandidateRef<GenParticle> gp);
 };
 
 

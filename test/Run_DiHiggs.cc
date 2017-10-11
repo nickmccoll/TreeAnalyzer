@@ -21,8 +21,6 @@
 
 using namespace TAna;
 
-enum decayidentifier {Z = 1, HADRON, LEPTON, ELECTRON, MUON, TAU_H, TAU_E, TAU_MU};
-
 class Analyzer : public BaseTreeAnalyzer {
 public:
 
@@ -42,13 +40,10 @@ public:
         event.setDecayInfo(reader_genParticles->genParticles);
 
         plotter.getOrMake1D("h_decaymode","Distribution of Decay Modes",9,-0.5,8.5)->Fill(event.type);
-
-
         return true;
     }
 
     void write(TString fileName){ plotter.write(fileName);}
-
 
     std::shared_ptr<EventReader> reader_event;
     std::shared_ptr<GenParticleReader> reader_genParticles;
@@ -63,7 +58,6 @@ void Run_DiHiggs(std::string fileName, int treeInt, std::string outFileName){
     for (int iX = 1; iX <= h_decaymode->GetNbinsX(); ++iX) {
      	std::cout << h_decaymode->GetBinContent(iX) << std::endl;
     }
-
     a.write(outFileName);
 }
 
