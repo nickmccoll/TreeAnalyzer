@@ -7,44 +7,41 @@ namespace TAna {
 enum decayidentifier {Z = 1, HADRON, LEPTON, ELECTRON, MUON, TAU_H, TAU_EL, TAU_MUON};
 
 // Function to search and classify the decay channel of a Tau lepton
-int DiHiggsEvent::tau_search(CandidateRef<GenParticle> dau) {
+int DiHiggsEvent::tau_search(const GenParticle* dau) {
     // get final state of the tau
     auto p = ParticleInfo::getFinal(dau);
 
     int n = p->numberOfDaughters();
-    int e_num = 0;
-    int mu_num = 0;
     for (int i = 0; i<n; i++) {
         int pp = p->daughter(i)->absPdgId();
-        if (pp == ParticleInfo::p_eminus || pp == ParticleInfo::p_nu_e) {e_num++;}
-        if (pp == ParticleInfo::p_muminus || pp == ParticleInfo::p_nu_mu) {mu_num++;}
+        if (pp == ParticleInfo::p_eminus || pp == ParticleInfo::p_nu_e) {return TAU_EL;}
+        if (pp == ParticleInfo::p_muminus || pp == ParticleInfo::p_nu_mu) {return TAU_MUON;}
     }
-
-    if (e_num > 0) {return TAU_EL;}
-    if (mu_num > 0) {return TAU_MUON;}
     return TAU_H;
 }
 
 // Function that determines if a pair of GenParticles were birthed by a W boson -> 
-bool DiHiggsEvent::isWpair(CandidateRef<GenParticle> f1, CandidateRef<GenParticle> f2) {
+bool DiHiggsEvent::isWpair(const GenParticle* f1, const GenParticle* f2) {
+    int f1id = f1->pdgId();
+    int f2id = f2->pdgId();
     // if first particle is a lepton and the second is a neutrino of the same flavor, then they are products of a W
-    if (ParticleInfo::isLepton(f1->absPdgId())) {
-        if (ParticleInfo::isANeutrino(f2->absPdgId()) && (f2->pdgId() == f1->absPdgId() + 1) && ((f1->pdgId()/f1->absPdgId()) == (-1)*(f2->pdgId()/f2->absPdgId()))) {
+    if (ParticleInfo::isLepton(f1id)) {
+        if (ParticleInfo::isANeutrino(f2id) && (std::abs(f2id) == std::abs(f1id) + 1) && (f1id < 0 != f2id < 0)) {
             return true;
         }
         else {return false;}
     }
     // if the first is a neutrino and the second is a charged lepton of the same flavour, they come from a W
-    else if (ParticleInfo::isANeutrino(f1->absPdgId())) {
-        if (ParticleInfo::isLepton(f2->absPdgId()) && (f2->absPdgId() == f1->absPdgId() - 1) && ((f1->pdgId()/f1->absPdgId()) == (-1)*(f2->pdgId()/f2->absPdgId()))) {
+    else if (ParticleInfo::isANeutrino(f1id)) {
+        if (ParticleInfo::isLepton(f2id) && (std::abs(f2id) == std::abs(f1id) - 1) && (f1id < 0 != f2id < 0)) {
             return true;
         }
         else {return false;}
     }
     // if both particles comprise a quark-antiquark pair, then they come from a W 
     // (IMPORTANT: products of a Z will never enter this function in the code)
-    else if (ParticleInfo::isQuark(f1->absPdgId())) {
-        if ((ParticleInfo::isQuark(f2->absPdgId())) && ((f1->pdgId()/f1->absPdgId()) == (-1)*(f2->pdgId()/f2->absPdgId()))) {
+    else if (ParticleInfo::isQuark(f1id)) {
+        if ((ParticleInfo::isQuark(f2id)) && (f1id<0 != f2id<0)) {
             return true;
         }
         else {return false;}
@@ -56,7 +53,7 @@ bool DiHiggsEvent::isWpair(CandidateRef<GenParticle> f1, CandidateRef<GenParticl
 }
 
 // Function that returns 1 if a pair of particles comes from a Z (particle-antiparticle pair), 2 if from a W, and 0 otherwise
-int DiHiggsEvent::isPair(CandidateRef<GenParticle> f1, CandidateRef<GenParticle> f2) {
+int DiHiggsEvent::isPair(const GenParticle* f1, const GenParticle* f2) {
     // Z
     if (f1->pdgId() == (-1)*f2->pdgId()) {return 1;}
     // W
@@ -66,22 +63,25 @@ int DiHiggsEvent::isPair(CandidateRef<GenParticle> f1, CandidateRef<GenParticle>
 }
 
 // Function that intakes a pair of candidate W daughters (and so far does nothing if it fails) and classifies the W decay channel
-int DiHiggsEvent::classify_W_pair(CandidateRef<GenParticle> p1, CandidateRef<GenParticle> p2) {
-    if (ParticleInfo::isQuark(p1->absPdgId())) {return HADRON;}
-    else if ((p1->absPdgId() == ParticleInfo::p_eminus) || (p1->absPdgId() == ParticleInfo::p_nu_e)) {return ELECTRON;}
-    else if ((p1->absPdgId() == ParticleInfo::p_muminus) || (p1->absPdgId() == ParticleInfo::p_nu_mu)) {return MUON;}
+int DiHiggsEvent::classify_W_pair(const GenParticle* p1, const GenParticle* p2) {
+    int p1id = p1->absPdgId();
 
-    else if (p1->absPdgId() == ParticleInfo::p_tauminus) {
+    if (ParticleInfo::isQuark(p1id)) {return HADRON;}
+    else if ((p1id == ParticleInfo::p_eminus) || (p1id == ParticleInfo::p_nu_e)) {return ELECTRON;}
+    else if ((p1id == ParticleInfo::p_muminus) || (p1id == ParticleInfo::p_nu_mu)) {return MUON;}
+
+    else if (p1id == ParticleInfo::p_tauminus) {
         int tau_daughter = tau_search(p1);
         return tau_daughter;
     }
-    else if (p1->absPdgId() == ParticleInfo::p_nu_tau) {
+    else if (p1id == ParticleInfo::p_nu_tau) {
         int tau_daughter = tau_search(p2);
         return tau_daughter;
     }
     else {return 0;}
 }
 
+// Function that takes two GenParticles and organizes such that if they are leptonic, d1 is the Lepton, d2 is the Neutrino
 std::tuple<const GenParticle*, const GenParticle*> DiHiggsEvent::assign_gp(const GenParticle* p1, const GenParticle* p2) {
     const GenParticle* d1;
     const GenParticle* d2;
@@ -95,25 +95,22 @@ std::tuple<const GenParticle*, const GenParticle*> DiHiggsEvent::assign_gp(const
     return std::make_tuple(d1,d2);
 }
 
-WDecay DiHiggsEvent::assign_W(const GenParticle* w) {
+DiHiggsEvent::WDecay DiHiggsEvent::assign_W(const GenParticle* w) {
     WDecay w_obj;
-    CandidateRef<GenParticle> w_ref(w,0);
-    auto w_final = ParticleInfo::getFinal(w_ref);
-    w_obj.id = &*w_final;
+    auto w_final = ParticleInfo::getFinal(w);
+
+    w_obj.id = w_final;
     if (w_final->numberOfDaughters() == 2) {
         auto dtup = assign_gp(w_final->daughter(0), w_final->daughter(1));
         w_obj.d1 = std::get<0>(dtup);
         w_obj.d2 = std::get<1>(dtup);
 
-        const CandidateRef<GenParticle> dau1(w_obj.d1,0);
-        const CandidateRef<GenParticle> dau2(w_obj.d2,0);
-
-        w_obj.decaytype = classify_W_pair(dau1, dau2);
+        w_obj.decaytype = classify_W_pair(w_obj.d1, w_obj.d2);
     }
     return w_obj;
 }
 
-int DiHiggsEvent::classify_decaytype(std::vector<int> items) {
+DiHiggsEvent::DECAYTYPE DiHiggsEvent::classify_decaytype(const std::vector<int>& items) {
     if (items.size() != 2) {
         type = BAD;
     }
@@ -159,19 +156,26 @@ int DiHiggsEvent::classify_decaytype(std::vector<int> items) {
 }
 
 // Function to classify the decay mode when the Higgs has 4 daughters in the Event. Returns a vector of ints (enums), items
-std::vector<int> DiHiggsEvent::search_4_daughters(CandidateRef<GenParticle> gp) {
+std::vector<int> DiHiggsEvent::search_4_daughters(const GenParticle* gp) {
 
     std::vector<int> items;
 
-    auto d1 = gp->daughterRef(0);
-    auto d2 = gp->daughterRef(1);
-    auto d3 = gp->daughterRef(2);
-    auto d4 = gp->daughterRef(3);
+    auto mkW = [&] (const GenParticle* d11, const GenParticle* d12, const GenParticle* d21, const GenParticle* d22) {
+        items.push_back(classify_W_pair(d11,d12));
+        auto op12 = assign_gp(d11,d12);
+        w1_d1 = std::get<0>(op12);
+        w1_d2 = std::get<1>(op12);
 
-    auto dd1 = gp->daughter(0);
-    auto dd2 = gp->daughter(1);
-    auto dd3 = gp->daughter(2);
-    auto dd4 = gp->daughter(3);
+        items.push_back(classify_W_pair(d21,d22));
+        auto op34 = assign_gp(d21,d22);
+        w2_d1 = std::get<0>(op34);
+        w2_d2 = std::get<1>(op34);
+    };
+
+    auto d1 = gp->daughter(0);
+    auto d2 = gp->daughter(1);
+    auto d3 = gp->daughter(2);
+    auto d4 = gp->daughter(3);
 
     int pair12 = isPair(d1,d2);
     int pair13 = isPair(d1,d3);
@@ -182,77 +186,16 @@ std::vector<int> DiHiggsEvent::search_4_daughters(CandidateRef<GenParticle> gp) 
 
     // The vector bosons are not explicitly defined in these decays, so they will not be filled
 
-    // If the pair is from a Z, then we have a ZZ decay
-    if ((pair12 == 1) && (pair34 == 1)) {
-        items.push_back(Z);
-        items.push_back(Z);
-    }
-
-    // If the pair is from a W
-    else if (pair12 == 2) {
-        items.push_back(classify_W_pair(d1,d2));
-        
-        // assignment of pair12
-        auto op12 = assign_gp(dd1, dd2);
-        w1_d1 = std::get<0>(op12);
-        w1_d2 = std::get<1>(op12);
-
-        // Now look at the d3,d4 pair, which should be another W if there are no errors
-        if (pair34 == 2) {
-            items.push_back(classify_W_pair(d3,d4));
-
-            // assignment of pair34
-            auto op34 = assign_gp(dd3, dd4);
-            w2_d1 = std::get<0>(op34);
-            w2_d2 = std::get<1>(op34);
-        }
-    }
-
-    // If a valid pair is not found, search between f1 and f3, and then if that fails as well, search between f1 and f4
-    else if (pair12 == 0) {
-        if (pair13 == 1) {
-            items.push_back(Z);
-            items.push_back(Z);
-        }
-        else if (pair13 == 2) {
-            items.push_back(classify_W_pair(d1,d3));
-
-            auto op13 = assign_gp(dd1, dd3);
-            w1_d1 = std::get<0>(op13);
-            w1_d2 = std::get<1>(op13);
-
-            // Now look at the d2,d4 pair, which should be another W if there are no errors
-            if (pair24 == 2) {
-                items.push_back(classify_W_pair(d2,d4));
-
-                auto op24 = assign_gp(dd2, dd4);
-                w2_d1 = std::get<0>(op24);
-                w2_d2 = std::get<1>(op24);
-            }
-        }
-        else {
-            if (pair14 == 1) {
-                items.push_back(Z);
-                items.push_back(Z);
-            } 
-            else if (pair14 == 2) {
-                items.push_back(classify_W_pair(d1,d4));
-
-                auto op14 = assign_gp(dd1, dd4);
-                w1_d1 = std::get<0>(op14);
-                w1_d2 = std::get<1>(op14);
-
-                if (pair23 == 2) {
-                    items.push_back(classify_W_pair(d2,d3));
-
-                    auto op23 = assign_gp(dd2, dd3);
-                    w2_d1 = std::get<0>(op23);
-                    w2_d2 = std::get<1>(op23);
-                }
-            }
-        }
-    }
+    if(pair12==1 && pair34==1) {items.push_back(Z);items.push_back(Z);}
+    else if(pair12==2 && pair34==2) mkW(d1,d2,d3,d4);
+    else if(pair13==1 && pair24==1) {items.push_back(Z);items.push_back(Z);}
+    else if(pair13==2 && pair24==2) mkW(d1,d3,d2,d4);
+    else if(pair14==1 && pair23==1) {items.push_back(Z);items.push_back(Z);}
+    else if(pair14==2 && pair23==2) mkW(d1,d4,d2,d3);
+    
     return items;
+
+
 }
 
 void DiHiggsEvent::reset() {
@@ -281,7 +224,7 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
         if (gp->absPdgId() != ParticleInfo::p_h0) {continue;}
         if (!ParticleInfo::isLastInChain(gp)) {continue;}
         // if this Higgs decays to b-bbar, set the appropriate GenParticles and then continue to the next iteration
-        if ((gp->daughter(0)->absPdgId() == ParticleInfo::p_b) && (gp->daughter(1)->absPdgId() == ParticleInfo::p_b) && (gp->numberOfDaughters() == 2)) {
+        if ((gp->numberOfDaughters() == 2) && (gp->daughter(0)->absPdgId() == ParticleInfo::p_b) && (gp->daughter(1)->absPdgId() == ParticleInfo::p_b)) {
             hbb = gp;
             if(hbb->daughter(0)->pt() > hbb->daughter(1)->pt()) {
                 b1 = hbb->daughter(0);
@@ -295,7 +238,7 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
             hww = gp;
     // Here is where I will organize the daughters of the Hww appropriately
             std::vector<int> zbosons;
-            std::vector<CandidateRef<GenParticle>> fermions;
+            std::vector<const GenParticle*> fermions;
             std::vector<WDecay> wDecays;
 
             // iterate over the daughters of this Higgs
@@ -305,7 +248,7 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
                 } else if (hww->daughter(k)->absPdgId() == ParticleInfo::p_Wplus) {
                     wDecays.push_back(assign_W(hww->daughter(k)));
                 } else {
-                    fermions.push_back(hww->daughterRef(k));
+                    fermions.push_back(hww->daughter(k));
                 }
             }
 
@@ -322,14 +265,13 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
             }
             // if fermions is of size 4, the protocol will be same as search_4_daughters
             else if (fermions.size() == 4) {
-                CandidateRef<GenParticle> href(hww,0);
-                fermIDs = search_4_daughters(href); // assignment of GenParticle class variables executed within this function
+                fermIDs = search_4_daughters(hww); // assignment of GenParticle class variables executed within this function
                 type = classify_decaytype(fermIDs);
             }
             // if there is one W and two fermions
             else if (wDecays.size() == 1 && fermions.size() == 2){
                 if (ParticleInfo::isLepton(fermions[0]->absPdgId()) || ParticleInfo::isANeutrino(fermions[0]->absPdgId())) {
-                    auto fs = assign_gp(&*fermions[0], &*fermions[1]);
+                    auto fs = assign_gp(fermions[0], fermions[1]);
                     w1_d1 = std::get<0>(fs);
                     w1_d2 = std::get<1>(fs);
 
@@ -346,7 +288,7 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
                     if (type == BAD) {std::cout << "yo ova here dickwad"<<std::endl;}
 
                 } else {
-                    auto fs = assign_gp(&*fermions[0], &*fermions[1]);
+                    auto fs = assign_gp(fermions[0], fermions[1]);
                     w2_d1 = std::get<0>(fs);
                     w2_d2 = std::get<1>(fs);
 

@@ -2,18 +2,11 @@
 #define TREEANALYZER_FRAMEWORK_PROCESSORS_GENTOOLS_INTERFACE_DIHIGGSEVENT_H_
 
 #include <vector>
-#include "DataFormats/interface/GenParticle.h"
 
 namespace TAna {
 class GenParticle;
 typedef std::vector<GenParticle> GenParticleCollection;
 
-struct WDecay {
-    const GenParticle* id = 0;
-    const GenParticle* d1 = 0;
-    const GenParticle* d2 = 0;
-    int decaytype = 0; // 0 is BAD, others defined above in enum decayidentifier
-};
 
 class DiHiggsEvent {
 public:
@@ -33,17 +26,24 @@ public:
     const GenParticle * w2  =0;
     const GenParticle * w2_d1=0;
     const GenParticle * w2_d2=0;
-    int type = BAD;
+    DECAYTYPE type = BAD;
 
 private:
-    int tau_search(CandidateRef<GenParticle> dau);
-    bool isWpair(CandidateRef<GenParticle> f1, CandidateRef<GenParticle> f2);
-    int isPair(CandidateRef<GenParticle> f1, CandidateRef<GenParticle> f2);
-    int classify_W_pair(CandidateRef<GenParticle> p1, CandidateRef<GenParticle> p2);
+    int tau_search(const GenParticle* dau);
+    bool isWpair(const GenParticle* f1, const GenParticle* f2);
+    int isPair(const GenParticle* f1, const GenParticle* f2);
+    int classify_W_pair(const GenParticle* p1, const GenParticle* p2);
     std::tuple<const GenParticle*, const GenParticle*> assign_gp(const GenParticle* p1, const GenParticle* p2);
+    struct WDecay {
+        const GenParticle* id = 0;
+        const GenParticle* d1 = 0;
+        const GenParticle* d2 = 0;
+        int decaytype = 0; // 0 is BAD, others defined above in enum decayidentifier
+    };
+
     WDecay assign_W(const GenParticle* w);
-    int classify_decaytype(std::vector<int> items);
-    std::vector<int> search_4_daughters(CandidateRef<GenParticle> gp);
+    DECAYTYPE classify_decaytype(const std::vector<int>& items);
+    std::vector<int> search_4_daughters(const GenParticle* gp);
 };
 
 
