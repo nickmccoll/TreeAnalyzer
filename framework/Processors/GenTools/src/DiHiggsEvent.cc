@@ -95,6 +95,7 @@ std::tuple<const GenParticle*, const GenParticle*> DiHiggsEvent::assign_gp(const
     return std::make_tuple(d1,d2);
 }
 
+// Function that fills the data variables of the WDecay structure 
 DiHiggsEvent::WDecay DiHiggsEvent::assign_W(const GenParticle* w) {
     WDecay w_obj;
     auto w_final = ParticleInfo::getFinal(w);
@@ -110,6 +111,7 @@ DiHiggsEvent::WDecay DiHiggsEvent::assign_W(const GenParticle* w) {
     return w_obj;
 }
 
+// Function that takes two identifiers for how the Higgs daughters decay, and then classifies the total decay channel of X -> HH
 DiHiggsEvent::DECAYTYPE DiHiggsEvent::classify_decaytype(const std::vector<int>& items) {
     if (items.size() != 2) {
         type = BAD;
@@ -194,8 +196,6 @@ std::vector<int> DiHiggsEvent::search_4_daughters(const GenParticle* gp) {
     else if(pair14==2 && pair23==2) mkW(d1,d4,d2,d3);
     
     return items;
-
-
 }
 
 void DiHiggsEvent::reset() {
@@ -285,7 +285,6 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
 
                     if (dtypes[0] == 0) {ParticleInfo::printGenInfo(genparts,-1);}
                     type = classify_decaytype(dtypes);
-                    if (type == BAD) {std::cout << "yo ova here dickwad"<<std::endl;}
 
                 } else {
                     auto fs = assign_gp(fermions[0], fermions[1]);
@@ -300,8 +299,6 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
                     dtypes.push_back(wDecays[0].decaytype);
                     dtypes.push_back(classify_W_pair(fermions[0], fermions[1]));
                     type = classify_decaytype(dtypes);
-                    if (type == BAD) {std::cout << "yo ova here damlingus"<<std::endl;}
-
                 }
             }
             // if there are two W objects
