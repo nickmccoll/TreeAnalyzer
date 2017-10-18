@@ -21,10 +21,10 @@ struct FatJetParameters;
 namespace FatJetSelHelpers {
     typedef  bool (FatJet::*fjFunBool)() const;
     std::vector<const FatJet*> selectFatJets(const FatJetReader& reader_fatjet, const FatJetParameters& param );
-    const FatJet* getWjjCand(const MomentumF* lepton, const std::vector<const FatJet*>& jets, const FatJetParameters& param);
-    const FatJet* getHbbCand(const FatJet* wjjCand, const MomentumF* lepton, const std::vector<const FatJet*>& jets,const FatJetParameters& param);
-    bool passHbbSelection(const FatJet* fj, const FatJetParameters& param, const bool tight);
-    bool passWjjSelection(const FatJet* fj,const FatJetParameters& param);
+    const FatJet* getWjjCand(const MomentumF* lepton, const std::vector<const FatJet*>& jets, const FatJetParameters& param, BTagging::CSVSJ_CAT& bCat);
+    const FatJet* getHbbCand(const FatJet* wjjCand, const MomentumF* lepton, const std::vector<const FatJet*>& jets,const FatJetParameters& param, BTagging::CSVSJ_CAT& bCat);
+    bool passHbbSelection(const FatJet* fj, const BTagging::CSVSJ_CAT csvCat, const FatJetParameters& param);
+    bool passWjjSelection(const FatJet* fj, const BTagging::CSVSJ_CAT csvCat,const FatJetParameters& param);
 }
 
 
@@ -47,18 +47,16 @@ struct FatJetParameters{
     float wjj_maxT2oT1   =-1;
     float wjj_minMass    =-1;
     float wjj_maxMass    =-1;
-    BTagging::CSVWP wjj_minCSVWP   = BTagging::CSV_INCL;
-    BTagging::CSVWP wjj_maxCSVWP   = BTagging::CSV_INCL;
+    BTagging::CSVSJ_CAT wjj_min_CSVSJCat   = BTagging::CSVSJ_INCL; //max means <, min means >=
+    BTagging::CSVSJ_CAT wjj_max_CSVSJCat   = BTagging::CSVSJ_INCL; //max means <, min means >=
 
     //parameters applied to hbb candidate sel
     float hbb_minLepDPhi =-1;
     float hbb_minPT      =-1;
     //parameters applied to hbb pass sel
     float hbb_maxT2oT1   =-1;
-    BTagging::CSVWP hbb_l_firMinCSVWP= BTagging::CSV_INCL;
-    BTagging::CSVWP hbb_l_secMinCSVWP= BTagging::CSV_INCL;
-    BTagging::CSVWP hbb_t_firMinCSVWP= BTagging::CSV_INCL;
-    BTagging::CSVWP hbb_t_secMinCSVWP= BTagging::CSV_INCL;
+    BTagging::CSVSJ_CAT hbb_min_CSVSJCat = BTagging::CSVSJ_INCL; //max means <, min means >=
+    BTagging::CSVSJ_CAT hbb_max_CSVSJCat = BTagging::CSVSJ_INCL; //max means <, min means >=
 
 };
 
@@ -70,6 +68,8 @@ public:
 
     const FatJet * getHBBCand() const;
     const FatJet * getWjjCand() const;
+    BTagging::CSVSJ_CAT getHbbCSVCat() const;
+    BTagging::CSVSJ_CAT getWjjCSVCat() const;
     //use built in FatJetParameters
     bool passWjjSel() const;
     bool passHbbSel() const;
@@ -78,7 +78,7 @@ public:
     //use custom in FatJetParameters
     bool passWjjSel(const FatJetParameters& param ) const;
     bool passHbbSel(const FatJetParameters& param ) const;
-    bool passHbbSelTightBTag(const FatJetParameters& param) const;
+
 
 
     FatJetParameters param;
@@ -87,6 +87,8 @@ public:
 private:
     const FatJet* hbbCand = 0;
     const FatJet* wjjCand = 0;
+    BTagging::CSVSJ_CAT hbbCSVCat = BTagging::CSVSJ_INCL;
+    BTagging::CSVSJ_CAT wjjCSVCat = BTagging::CSVSJ_INCL;
 
 };
 
@@ -96,6 +98,9 @@ void setDefaultFatJetProcessor(FatJetProcessor& proc);
 
 void setTTBarCRFatJetProcessor(FatJetParameters& proc);
 void setTTBarCRFatJetProcessor(FatJetProcessor& proc);
+
+void setNonTTBarCRFatJetProcessor(FatJetParameters& proc);
+void setNonTTBarCRFatJetProcessor(FatJetProcessor& proc);
 }
 
 

@@ -97,9 +97,10 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
+    mcProc = FillerConstants::MCProcess(reader_event->process);
     if(isRealData()) smpName = "data";
-    else if (reader_event->process == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
-    else smpName = FillerConstants::MCProcessNames[reader_event->process];
+    else if (mcProc == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
+    else smpName = FillerConstants::MCProcessNames[mcProc];
 
     if(reader_jet){
         jets = PhysicsUtilities::selObjsMom(reader_jet->jets,20,2.4,[](const Jet* j){return j->passTightID();} );
@@ -129,8 +130,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         fatjetCands = fjProc->loadFatJets(*reader_fatjet,selectedLepton);
         hbbCand     = fjProc->getHBBCand();
         wjjCand     = fjProc->getWjjCand();
+        hbbCSVCat   = fjProc->getHbbCSVCat();
+        wjjCSVCat   = fjProc->getWjjCSVCat();
         passHbbSel  = fjProc->passHbbSel();
-        passHbbTSel = fjProc->passHbbSelTightBTag();
         passWjjSel  = fjProc->passWjjSel();
 
         if(hbbCand)
@@ -143,9 +145,10 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         fatjetCands.clear();
         wjjCand    =  0;
         hbbCand    =  0;
+        hbbCSVCat   = BTagging::CSVSJ_INCL;
+        wjjCSVCat   = BTagging::CSVSJ_INCL;
         passWjjSel =  false;
         passHbbSel =  false;
-        passHbbTSel=  false;
         neutrino   =  MomentumF();
         hh         =  MomentumF();
         hbbMass    = 0;

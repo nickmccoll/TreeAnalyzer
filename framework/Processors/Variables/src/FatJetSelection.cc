@@ -17,7 +17,8 @@ std::vector<const FatJet*> FatJetSelHelpers::selectFatJets(const FatJetReader& r
     return outJ;
 }
 //_____________________________________________________________________________
-const FatJet* FatJetSelHelpers::getWjjCand(const MomentumF* lepton, const std::vector<const FatJet*>& jets, const FatJetParameters& param ){
+const FatJet* FatJetSelHelpers::getWjjCand(const MomentumF* lepton, const std::vector<const FatJet*>& jets, const FatJetParameters& param, BTagging::CSVSJ_CAT& bCat ){
+    bCat = BTagging::CSVSJ_INCL;
     double minDR = 100000;
     int fjIDX = PhysicsUtilities::findNearestDRDeref(*lepton,jets,minDR,param.wjj_minPT);
     if(fjIDX < 0 )return 0;
@@ -25,10 +26,13 @@ const FatJet* FatJetSelHelpers::getWjjCand(const MomentumF* lepton, const std::v
     if(  PhysicsUtilities::selObjsMom(jets[fjIDX]->subJets(),
             param.sj_minPT, param.sj_maxETA < 0 ? 999.0 : param.sj_maxETA).size() != 2
             ) return 0;
+    bCat = BTagging::getCSVSJCat(jets[fjIDX]->subJets(), param.sj_minBTagPT, param.sj_maxBTagETA);
     return jets[fjIDX];
 }
 //_____________________________________________________________________________
-const FatJet* FatJetSelHelpers::getHbbCand(const FatJet* wjjCand, const MomentumF* lepton,  const std::vector<const FatJet*>& jets, const FatJetParameters& param){
+const FatJet* FatJetSelHelpers::getHbbCand(const FatJet* wjjCand, const MomentumF* lepton,  const std::vector<const FatJet*>& jets, const FatJetParameters& param, BTagging::CSVSJ_CAT& bCat){
+    bCat = BTagging::CSVSJ_INCL;
+
     //assuming the jets collection is ordered by pT
     const FatJet * fj = 0;
     if(jets.size() == 0){
@@ -44,74 +48,53 @@ const FatJet* FatJetSelHelpers::getHbbCand(const FatJet* wjjCand, const Momentum
     if(  PhysicsUtilities::selObjsMom(fj->subJets(),
             param.sj_minPT, param.sj_maxETA < 0 ? 999.0 : param.sj_maxETA).size() != 2
             ) return 0;
+    bCat = BTagging::getCSVSJCat(fj->subJets(), param.sj_minBTagPT, param.sj_maxBTagETA);
     return fj;
 }
 //_____________________________________________________________________________
-bool FatJetSelHelpers::passHbbSelection(const FatJet* fj, const FatJetParameters& param, const bool tight){
+bool FatJetSelHelpers::passHbbSelection(const FatJet* fj, const BTagging::CSVSJ_CAT csvCat, const FatJetParameters& param){
     if(param.hbb_maxT2oT1 > 0 && fj->tau2otau1() >= param.hbb_maxT2oT1 ) return false;
-
-    auto btagSJs = PhysicsUtilities::selObjsMom(fj->subJets(),
-            param.sj_minBTagPT, param.sj_maxBTagETA < 0 ? 999.0 : param.sj_maxBTagETA);
-
-    std::sort(btagSJs.begin(),btagSJs.end(), [](const SubJet* a,const SubJet* b) {return a->csv() > b->csv();} );
-
-    auto passBSelBTag = [&](const BTagging::CSVWP firMinCSVWP, const BTagging::CSVWP secMinCSVWP  ) -> bool{
-        if(firMinCSVWP > BTagging::CSV_INCL)
-            if(btagSJs.size() == 0 || btagSJs[0]->csv() < BTagging::CSVWP_VALS[firMinCSVWP] ) return false;
-        if(secMinCSVWP > BTagging::CSV_INCL)
-            if(btagSJs.size() < 2 || btagSJs[1]->csv() < BTagging::CSVWP_VALS[secMinCSVWP] ) return false;
-        return true;
-    };
-    return tight ? passBSelBTag(param.hbb_t_firMinCSVWP,param.hbb_t_secMinCSVWP) : passBSelBTag(param.hbb_l_firMinCSVWP,param.hbb_l_secMinCSVWP);
+    if(param.hbb_min_CSVSJCat >= BTagging::CSVSJ_INCL && csvCat < param.hbb_min_CSVSJCat) return false;
+    if(param.hbb_max_CSVSJCat >= BTagging::CSVSJ_INCL && csvCat >= param.hbb_max_CSVSJCat) return false;
+    return true;
 }
 //_____________________________________________________________________________
-bool FatJetSelHelpers::passWjjSelection(const FatJet* fj, const FatJetParameters& param){
+bool FatJetSelHelpers::passWjjSelection(const FatJet* fj,const BTagging::CSVSJ_CAT csvCat, const FatJetParameters& param){
     const float mass = fj->sdMom().mass();
     if(param.wjj_minMass > 0 && mass < param.wjj_minMass  ) return false;
     if(param.wjj_maxMass > 0 && mass >= param.wjj_maxMass ) return false;
     if(param.wjj_maxT2oT1 > 0 && fj->tau2otau1() >= param.wjj_maxT2oT1) return false;
-
-    auto btagSJs = PhysicsUtilities::selObjsMom(fj->subJets(),
-            param.sj_minBTagPT, param.sj_maxBTagETA < 0 ? 999.0 : param.sj_maxBTagETA);
-    std::sort(btagSJs.begin(),btagSJs.end(), [](const SubJet* a,const SubJet* b) {return a->csv() > b->csv();} );
-
-    if(param.wjj_maxCSVWP > BTagging::CSV_INCL && btagSJs.size())
-        if(btagSJs[0]->csv() >= BTagging::CSVWP_VALS[param.wjj_maxCSVWP]) return false;
-    if(param.wjj_minCSVWP > BTagging::CSV_INCL)
-        if(btagSJs.size() == 0 || btagSJs[0]->csv() < BTagging::CSVWP_VALS[param.wjj_minCSVWP]) return false;
+    if(param.wjj_min_CSVSJCat >= BTagging::CSVSJ_INCL && csvCat < param.wjj_min_CSVSJCat) return false;
+    if(param.wjj_max_CSVSJCat >= BTagging::CSVSJ_INCL && csvCat >= param.wjj_max_CSVSJCat) return false;
     return true;
 }
 //_____________________________________________________________________________
 std::vector<const FatJet *> FatJetProcessor::loadFatJets(const FatJetReader& reader_fatjet, const MomentumF* lepton) {
     auto fjs = FatJetSelHelpers::selectFatJets(reader_fatjet,param);
-    wjjCand = FatJetSelHelpers::getWjjCand(lepton,fjs,param);
-    hbbCand = FatJetSelHelpers::getHbbCand(wjjCand,lepton,fjs,param);
+    wjjCand = FatJetSelHelpers::getWjjCand(lepton,fjs,param,wjjCSVCat);
+    hbbCand = FatJetSelHelpers::getHbbCand(wjjCand,lepton,fjs,param,hbbCSVCat);
     return fjs;
 }
 //_____________________________________________________________________________
 const FatJet * FatJetProcessor::getHBBCand() const {return hbbCand;}
 const FatJet * FatJetProcessor::getWjjCand() const {return wjjCand;}
 //_____________________________________________________________________________
+BTagging::CSVSJ_CAT FatJetProcessor::getHbbCSVCat() const {return hbbCSVCat;}
+BTagging::CSVSJ_CAT FatJetProcessor::getWjjCSVCat() const {return wjjCSVCat;}
+//_____________________________________________________________________________
 bool FatJetProcessor::passWjjSel(const FatJetParameters& param ) const {
     if(wjjCand == 0) return 0;
-    return FatJetSelHelpers::passWjjSelection(wjjCand,param);
+    return FatJetSelHelpers::passWjjSelection(wjjCand,wjjCSVCat,param);
 }
 //_____________________________________________________________________________
 bool FatJetProcessor::passHbbSel(const FatJetParameters& param ) const {
     if(hbbCand == 0) return 0;
-    return FatJetSelHelpers::passHbbSelection(hbbCand,param,false);
-}
-//_____________________________________________________________________________
-bool FatJetProcessor::passHbbSelTightBTag(const FatJetParameters& param ) const{
-    if(hbbCand == 0) return 0;
-    return FatJetSelHelpers::passHbbSelection(hbbCand,param,true);
+    return FatJetSelHelpers::passHbbSelection(hbbCand,hbbCSVCat,param);
 }
 //_____________________________________________________________________________
 bool FatJetProcessor::passWjjSel() const { return passWjjSel(param);}
 //_____________________________________________________________________________
 bool FatJetProcessor::passHbbSel() const { return  passHbbSel(param);}
-//_____________________________________________________________________________
-bool FatJetProcessor::passHbbSelTightBTag() const{ return passHbbSelTightBTag(param);}
 //_____________________________________________________________________________
 void DefaultFatJetSelections::setDefaultFatJetProcessor(FatJetParameters& proc) {
     proc.cand_minPT     = 50                   ;
@@ -128,16 +111,14 @@ void DefaultFatJetSelections::setDefaultFatJetProcessor(FatJetParameters& proc) 
     proc.wjj_maxT2oT1   = 0.55   ;
     proc.wjj_minMass    = 10     ;
     proc.wjj_maxMass    = -1     ;
-    proc.wjj_minCSVWP   = BTagging::CSV_INCL;
-    proc.wjj_maxCSVWP   = BTagging::CSV_M   ;
+    proc.wjj_min_CSVSJCat    = BTagging::CSVSJ_INCL;
+    proc.wjj_max_CSVSJCat    = BTagging::CSVSJ_MF   ;
 
     proc.hbb_minLepDPhi = 2.0    ;
     proc.hbb_minPT      = 200    ;
     proc.hbb_maxT2oT1   = -1     ;
-    proc.hbb_l_firMinCSVWP= BTagging::CSV_M;
-    proc.hbb_l_secMinCSVWP= BTagging::CSV_L;
-    proc.hbb_t_firMinCSVWP= BTagging::CSV_M;
-    proc.hbb_t_secMinCSVWP= BTagging::CSV_M;
+    proc.hbb_min_CSVSJCat= BTagging::CSVSJ_MF;
+    proc.hbb_max_CSVSJCat= BTagging::CSVSJ_INCL;
 }
 //_____________________________________________________________________________
 void DefaultFatJetSelections::setDefaultFatJetProcessor(FatJetProcessor& proc) {
@@ -146,17 +127,25 @@ void DefaultFatJetSelections::setDefaultFatJetProcessor(FatJetProcessor& proc) {
 //_____________________________________________________________________________
 void DefaultFatJetSelections::setTTBarCRFatJetProcessor(FatJetParameters& proc){
     setDefaultFatJetProcessor(proc);
-    proc.hbb_l_firMinCSVWP= BTagging::CSV_INCL;
-    proc.hbb_l_secMinCSVWP= BTagging::CSV_INCL;
-    proc.hbb_t_firMinCSVWP= BTagging::CSV_INCL;
-    proc.hbb_t_secMinCSVWP= BTagging::CSV_INCL;
+    proc.hbb_min_CSVSJCat= BTagging::CSVSJ_INCL;
+    proc.hbb_max_CSVSJCat= BTagging::CSVSJ_INCL;
 
-    proc.wjj_minCSVWP   = BTagging::CSV_M   ;
-    proc.wjj_maxCSVWP   = BTagging::CSV_INCL;
+    proc.wjj_min_CSVSJCat   = BTagging::CSVSJ_MF   ;
+    proc.wjj_max_CSVSJCat   = BTagging::CSVSJ_INCL   ;
 }
 //_____________________________________________________________________________
 void DefaultFatJetSelections::setTTBarCRFatJetProcessor(FatJetProcessor& proc) {
     setTTBarCRFatJetProcessor(proc.param);
+}
+//_____________________________________________________________________________
+void DefaultFatJetSelections::setNonTTBarCRFatJetProcessor(FatJetParameters& proc){
+    setDefaultFatJetProcessor(proc);
+    proc.hbb_min_CSVSJCat= BTagging::CSVSJ_INCL;
+    proc.hbb_max_CSVSJCat= BTagging::CSVSJ_LL  ;
+}
+//_____________________________________________________________________________
+void DefaultFatJetSelections::setNonTTBarCRFatJetProcessor(FatJetProcessor& proc) {
+    setNonTTBarCRFatJetProcessor(proc.param);
 }
 
 }

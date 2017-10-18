@@ -5,7 +5,8 @@
 #include "DataFormats/interface/Momentum.h"
 #include "Processors/GenTools/interface/DiHiggsEvent.h"
 #include "Processors/GenTools/interface/SMDecayEvent.h"
-
+#include "TreeReaders/interface/FillerConstants.h"
+#include "Processors/Variables/interface/BTagging.h"
 
 
 namespace TAna{
@@ -60,6 +61,8 @@ public:
     //fills class member variables....can be run before child runEvent
     virtual bool runEvent() override;
 
+    bool isSignal() const {return mcProc == FillerConstants::SIGNAL;}
+
     std::shared_ptr<EventReader      > reader_event    ;
     std::shared_ptr<GenParticleReader> reader_genpart  ;
     std::shared_ptr<ElectronReader   > reader_electron ;
@@ -68,7 +71,7 @@ public:
     std::shared_ptr<JetReader        > reader_jet      ;
     std::shared_ptr<JetReader        > reader_jetwlep  ;
 
-
+    FillerConstants::MCProcess mcProc = FillerConstants::NOPROCESS;
     int             signal_mass=0;
     TString         smpName  = "";
 
@@ -93,9 +96,11 @@ public:
     std::vector<const FatJet*> fatjetCands;
     const FatJet*              wjjCand     =0;
     const FatJet*              hbbCand     =0;
+    BTagging::CSVSJ_CAT        hbbCSVCat   = BTagging::CSVSJ_INCL;
+    BTagging::CSVSJ_CAT        wjjCSVCat   = BTagging::CSVSJ_INCL;
     bool                       passWjjSel  = false;
     bool                       passHbbSel  = false;
-    bool                       passHbbTSel = false;
+
     MomentumF                  neutrino           ;
     MomentumF                  hh                 ;
     float                      hbbMass     =0     ;
