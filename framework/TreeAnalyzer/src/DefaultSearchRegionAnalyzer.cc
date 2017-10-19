@@ -49,6 +49,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, s
     turnOnCorr(CORR_PU  );
     turnOnCorr(CORR_LEP );
     turnOnCorr(CORR_SJBTAG);
+    turnOnCorr(CORR_AK4BTAG);
     turnOnCorr(CORR_SDMASS);
 }
 //--------------------------------------------------------------------------------------------------
@@ -63,8 +64,8 @@ void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr) {FillerConstants
 void DefaultSearchRegionAnalyzer::loadVariables()  {
     reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
     reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData());  load(reader_fatjet  );
-    reader_jetwlep =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jetwlep );
-    reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData(),false);  load(reader_jet     );
+    reader_jet_chs =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jet_chs );
+    reader_jet     =std::make_shared<JetReader>     ("ak4PuppiJet",isRealData(),false);  load(reader_jet     );
     reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
     reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
 
@@ -83,12 +84,12 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isRealData()) return;
 
     if(isCorrOn(CORR_XSEC) && !reader_event) mkErr("event","CORR_XSEC");
-    if(isCorrOn(CORR_TRIG) && !reader_jetwlep) mkErr("ak4Jet","CORR_TRIG");
+    if(isCorrOn(CORR_TRIG) && !reader_jet_chs) mkErr("ak4Jet","CORR_TRIG");
     if(isCorrOn(CORR_TRIG) && !reader_electron) mkErr("electron","CORR_TRIG");
     if(isCorrOn(CORR_TRIG) && !reader_muon) mkErr("muon","CORR_TRIG");
     if(isCorrOn(CORR_TRIG) && !reader_genpart) mkErr("genParticle","CORR_TRIG");
     if(isCorrOn(CORR_PU)   && !reader_event) mkErr("event","CORR_PU");
-    if(isCorrOn(CORR_LEP) && !reader_jetwlep) mkErr("ak4Jet","CORR_LEP");
+    if(isCorrOn(CORR_LEP) && !reader_jet_chs) mkErr("ak4Jet","CORR_LEP");
     if(isCorrOn(CORR_LEP) && !reader_electron) mkErr("electron","CORR_LEP");
     if(isCorrOn(CORR_LEP) && !reader_muon) mkErr("muon","CORR_LEP");
     if(isCorrOn(CORR_LEP) && !reader_genpart) mkErr("genParticle","CORR_LEP");
@@ -102,13 +103,10 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     else if (mcProc == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
     else smpName = FillerConstants::MCProcessNames[mcProc];
 
-    if(reader_jet){
-        jets = PhysicsUtilities::selObjsMom(reader_jet->jets,20,2.4,[](const Jet* j){return j->passTightID();} );
-    }
 
-    if(reader_jetwlep){
-        jets_wlep = PhysicsUtilities::selObjsMom(reader_jetwlep->jets,20);
-        ht_wlep = JetKinematics::ht(jets_wlep,30);
+    if(reader_jet_chs){
+        jets_chs = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,30);
+        ht_chs = JetKinematics::ht(jets_chs);
     }
 
     if(reader_genpart && reader_event->process == FillerConstants::SIGNAL)
@@ -124,7 +122,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     }
 
     passEventFilters= EventSelection::passEventFilters(*reader_event);
-    passTriggerPreselection= EventSelection::passTriggerPreselection(*reader_event,ht_wlep,selectedLeptons);
+    passTriggerPreselection= EventSelection::passTriggerPreselection(*reader_event,ht_chs,selectedLeptons);
 
     if(reader_fatjet && selectedLepton){
         fatjetCands = fjProc->loadFatJets(*reader_fatjet,selectedLepton);
@@ -154,23 +152,37 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         hbbMass    = 0;
     }
 
+    if(reader_jet){
+        jets = PhysicsUtilities::selObjsMom(reader_jet->jets,30,2.4,[](const Jet* j){return j->passTightID();} );
+        nMedBTags = PhysicsUtilities::selObjsD(jets,[](const Jet* j){return BTagging::isMediumCSVTagged(*j);} ).size();
+        if(hbbCand){
+            jets_HbbV = PhysicsUtilities::selObjsD(jets,[&](const Jet* j){return  PhysicsUtilities::deltaR2(*j,*hbbCand ) >= 1.2*1.2 ;} );
+            nMedBTags_HbbV = PhysicsUtilities::selObjsD(jets_HbbV,[](const Jet* j){return BTagging::isMediumCSVTagged(*j);} ).size();
+        } else {
+            jets_HbbV = jets;
+            nMedBTags_HbbV = nMedBTags;
+        }
+    }
+
+
+
     weight = 1;
     if(!isRealData()){
         if(isCorrOn(CORR_XSEC))
             weight *= EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
         if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size())   )
-            weight *= trigSFProc->getLeptonTriggerSF(ht_wlep, (selectedLepton && selectedLepton->isMuon()));
+            weight *= trigSFProc->getLeptonTriggerSF(ht_chs, (selectedLepton && selectedLepton->isMuon()));
         if(isCorrOn(CORR_PU) )
             weight *= puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL);
         if(isCorrOn(CORR_LEP)){
-            leptonSFProc->load(smDecayEvt,selectedLeptons,&jets_wlep);
+            leptonSFProc->load(smDecayEvt,selectedLeptons,&jets_chs);
             weight *= leptonSFProc->getSF();
         }
         if(isCorrOn(CORR_SJBTAG)){
-            weight *= sjbtagSFProc->getSF({wjjCand,hbbCand});
+            weight *= sjbtagSFProc->getSF({hbbCand});
         }
         if(isCorrOn(CORR_AK4BTAG)){
-            weight *= ak4btagSFProc->getSF(jets);
+            weight *= ak4btagSFProc->getSF(jets_HbbV);
         }
 
     }

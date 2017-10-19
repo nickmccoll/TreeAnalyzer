@@ -69,16 +69,19 @@ public:
     std::shared_ptr<MuonReader       > reader_muon     ;
     std::shared_ptr<FatJetReader     > reader_fatjet   ;
     std::shared_ptr<JetReader        > reader_jet      ;
-    std::shared_ptr<JetReader        > reader_jetwlep  ;
+    std::shared_ptr<JetReader        > reader_jet_chs  ;
 
     FillerConstants::MCProcess mcProc = FillerConstants::NOPROCESS;
     int             signal_mass=0;
     TString         smpName  = "";
 
     std::vector<const Jet*> jets;
+    std::vector<const Jet*> jets_HbbV;
+    int nMedBTags = 0;
+    int nMedBTags_HbbV = 0;
 
-    std::vector<const Jet*> jets_wlep;
-    float                   ht_wlep    =0;
+    std::vector<const Jet*> jets_chs;
+    float                   ht_chs    =0;
 
     ASTypes::size   corrections=0; //list of corrections to carry out
     float           weight     =0; //std weight after all corrections

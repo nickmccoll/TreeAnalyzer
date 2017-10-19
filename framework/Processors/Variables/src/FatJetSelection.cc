@@ -112,7 +112,7 @@ void DefaultFatJetSelections::setDefaultFatJetProcessor(FatJetParameters& proc) 
     proc.wjj_minMass    = 10     ;
     proc.wjj_maxMass    = -1     ;
     proc.wjj_min_CSVSJCat    = BTagging::CSVSJ_INCL;
-    proc.wjj_max_CSVSJCat    = BTagging::CSVSJ_MF   ;
+    proc.wjj_max_CSVSJCat    = BTagging::CSVSJ_INCL   ;
 
     proc.hbb_minLepDPhi = 2.0    ;
     proc.hbb_minPT      = 200    ;
