@@ -54,8 +54,8 @@ const FatJet* FatJetSelHelpers::getHbbCand(const FatJet* wjjCand, const Momentum
 //_____________________________________________________________________________
 bool FatJetSelHelpers::passHbbSelection(const FatJet* fj, const BTagging::CSVSJ_CAT csvCat, const FatJetParameters& param){
     if(param.hbb_maxT2oT1 > 0 && fj->tau2otau1() >= param.hbb_maxT2oT1 ) return false;
-    if(param.hbb_min_CSVSJCat >= BTagging::CSVSJ_INCL && csvCat < param.hbb_min_CSVSJCat) return false;
-    if(param.hbb_max_CSVSJCat >= BTagging::CSVSJ_INCL && csvCat >= param.hbb_max_CSVSJCat) return false;
+    if(param.hbb_min_CSVSJCat > BTagging::CSVSJ_INCL && csvCat < param.hbb_min_CSVSJCat) return false;
+    if(param.hbb_max_CSVSJCat > BTagging::CSVSJ_INCL && csvCat >= param.hbb_max_CSVSJCat) return false;
     return true;
 }
 //_____________________________________________________________________________
@@ -64,8 +64,8 @@ bool FatJetSelHelpers::passWjjSelection(const FatJet* fj,const BTagging::CSVSJ_C
     if(param.wjj_minMass > 0 && mass < param.wjj_minMass  ) return false;
     if(param.wjj_maxMass > 0 && mass >= param.wjj_maxMass ) return false;
     if(param.wjj_maxT2oT1 > 0 && fj->tau2otau1() >= param.wjj_maxT2oT1) return false;
-    if(param.wjj_min_CSVSJCat >= BTagging::CSVSJ_INCL && csvCat < param.wjj_min_CSVSJCat) return false;
-    if(param.wjj_max_CSVSJCat >= BTagging::CSVSJ_INCL && csvCat >= param.wjj_max_CSVSJCat) return false;
+    if(param.wjj_min_CSVSJCat > BTagging::CSVSJ_INCL && csvCat < param.wjj_min_CSVSJCat) return false;
+    if(param.wjj_max_CSVSJCat > BTagging::CSVSJ_INCL && csvCat >= param.wjj_max_CSVSJCat) return false;
     return true;
 }
 //_____________________________________________________________________________
