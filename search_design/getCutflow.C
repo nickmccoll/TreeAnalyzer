@@ -131,6 +131,7 @@ public:
         if(reader_event->process >= FillerConstants::ZJETS &&  reader_event->process != FillerConstants::QCD)
             smpName = "other";
         if(!passTriggerPreselection) return false;
+        if(!passEventFilters) return;
         if(selectedLeptons.size() != 1) return false;
         if(!passWjjSel) return false;
         if(!hbbCand) return false;
