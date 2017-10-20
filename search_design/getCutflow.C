@@ -34,32 +34,17 @@ public:
         const bool passBase = DefaultSearchRegionAnalyzer::runEvent();
 
         float wjjSDMASS = 0;
-        float passWjjAB = false;
+        float passWjjAB = nMedBTags_HbbV == 0;
+        const bool hBBTM = (hbbMass > 105 && hbbMass < 145);
 
         if(wjjCand){
-            auto wbtagSJs = PhysicsUtilities::selObjsMom(wjjCand->subJets(),
-                    30, 2.4 < 0 ? 999.0 : 2.4);
-            std::sort(wbtagSJs.begin(),wbtagSJs.end(), [](const SubJet* a,const SubJet* b) {return a->csv() > b->csv();} );
-            if(wbtagSJs[0]->csv() < BTagging::CSVWP_VALS[BTagging::CSV_M ]) passWjjAB = true;
             wjjSDMASS = wjjCand->sdMom().mass();
-
         }
-
-        float wlnuDR = 999.;
-        float wwDRP = 999.;
-
-        if(wjjCand){
-            const auto wlnu = neutrino.p4() + selectedLepton->p4();
-            const auto hWW = wlnu + wjjCand->p4();
-            wlnuDR = PhysicsUtilities::deltaR(neutrino,*selectedLepton);
-            wwDRP = PhysicsUtilities::deltaR( wlnu,*wjjCand) * hWW.pt()/125.0;
-        }
-
 
         auto mkStatSect = [&](TH1* tots, int startN){
             if(passHbbSel) tots->Fill(startN,weight);
-            if(passHbbSel && wwDRP < 2.0) tots->Fill(startN+1,weight);
-            if(passHbbSel && wwDRP < 2.0 && wlnuDR < 3.2){
+            if(passHbbSel && passWWDM) tots->Fill(startN+1,weight);
+            if(passHbbSel && passWWDM && passWlnuDR){
                 tots->Fill(startN+2,weight);
                 if(hbbCSVCat == BTagging::CSVSJ_MF) tots->Fill(startN+3,weight);
                 if(hbbCSVCat == BTagging::CSVSJ_ML) tots->Fill(startN+4,weight);
@@ -89,7 +74,7 @@ public:
 
             mkStatSect(tots,9);
 
-            if(hbbMass > 105 && hbbMass < 145){
+            if(hBBTM){
             tots->Fill(15.0,weight);
             mkStatSect(tots,16);
             }
@@ -97,7 +82,7 @@ public:
             if(hh.mass() >= 900 && hh.mass() < 1100){
                 tots->Fill(22.0,weight);
                 mkStatSect(tots,23);
-                if(hbbMass > 105 && hbbMass < 145){
+                if(hBBTM){
                 tots->Fill(29.0,weight);
                 mkStatSect(tots,30);
                 }
@@ -106,7 +91,7 @@ public:
             if(hh.mass() >= 1400 && hh.mass() < 1800){
                 tots->Fill(36.0,weight);
                 mkStatSect(tots,37);
-                if(hbbMass > 105 && hbbMass < 145){
+                if(hBBTM){
                 tots->Fill(43.0,weight);
                 mkStatSect(tots,44);
                 }
@@ -131,14 +116,14 @@ public:
         if(reader_event->process >= FillerConstants::ZJETS &&  reader_event->process != FillerConstants::QCD)
             smpName = "other";
         if(!passTriggerPreselection) return false;
-        if(!passEventFilters) return;
+        if(!passEventFilters) return false;
         if(selectedLeptons.size() != 1) return false;
         if(!passWjjSel) return false;
         if(!hbbCand) return false;
-        if(wlnuDR >= 3.2) return false;
-        if(wwDRP >= 2.0) return false;
+        if(!passWlnuDR) return false;
+        if(!passWWDM) return false;
 
-        const bool hBBTM = (hbbMass > 105 && hbbMass < 145);
+
 
 
         auto pltSet = [&](const TString& prefix){

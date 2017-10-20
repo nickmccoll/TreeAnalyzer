@@ -104,26 +104,32 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     else smpName = FillerConstants::MCProcessNames[mcProc];
 
 
-    if(reader_jet_chs){
-        jets_chs = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,30);
-        ht_chs = JetKinematics::ht(jets_chs);
-    }
-
-    if(reader_genpart && reader_event->process == FillerConstants::SIGNAL)
-        diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
+    //|||||||||||||||||||||||||||||| GEN PARTICLES ||||||||||||||||||||||||||||||
     if(reader_genpart){
         if(reader_event->process == FillerConstants::SIGNAL) diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
         smDecayEvt.setDecayInfo(reader_genpart->genParticles);
     }
 
+    //|||||||||||||||||||||||||||||| CHS JETS ||||||||||||||||||||||||||||||
+    if(reader_jet_chs){
+        jets_chs = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,30);
+        ht_chs = JetKinematics::ht(jets_chs);
+    }
+
+
+    //|||||||||||||||||||||||||||||| LEPTONS ||||||||||||||||||||||||||||||
     if(reader_electron && reader_muon){
         selectedLeptons = leptonProc->getLeptons(*reader_event,*reader_muon,*reader_electron);
         selectedLepton = selectedLeptons.size() ? selectedLeptons.front() : 0;
     }
 
+
+    //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
     passEventFilters= EventSelection::passEventFilters(*reader_event);
     passTriggerPreselection= EventSelection::passTriggerPreselection(*reader_event,ht_chs,selectedLeptons);
 
+
+    //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
     if(reader_fatjet && selectedLepton){
         fatjetCands = fjProc->loadFatJets(*reader_fatjet,selectedLepton);
         hbbCand     = fjProc->getHBBCand();
@@ -132,13 +138,6 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         wjjCSVCat   = fjProc->getWjjCSVCat();
         passHbbSel  = fjProc->passHbbSel();
         passWjjSel  = fjProc->passWjjSel();
-
-        if(hbbCand)
-            hbbMass    =   isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
-
-        neutrino = wjjCand ? HiggsSolver::getInvisible(reader_event->met,(selectedLepton->p4() + wjjCand->p4()) ) : MomentumF();
-        hh =  wjjCand && hbbCand ? (selectedLepton->p4() + neutrino.p4()+ wjjCand->p4() + hbbCand->p4()) :  MomentumF();
-
     } else {
         fatjetCands.clear();
         wjjCand    =  0;
@@ -147,10 +146,35 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         wjjCSVCat   = BTagging::CSVSJ_INCL;
         passWjjSel =  false;
         passHbbSel =  false;
-        neutrino   =  MomentumF();
-        hh         =  MomentumF();
-        hbbMass    = 0;
     }
+
+    if(wjjCand){
+        neutrino    = HiggsSolver::getInvisible(reader_event->met,(selectedLepton->p4() + wjjCand->p4()) );
+        wlnu        =  neutrino.p4() + selectedLepton->p4();
+        hWW         = wlnu.p4() + wjjCand->p4();
+        wlnuDR      = PhysicsUtilities::deltaR(neutrino,*selectedLepton);
+        wwDM        = PhysicsUtilities::deltaR( wlnu,*wjjCand) * hWW.pt()/125.0;
+        passWlnuDR  = wlnuDR < 3.2;
+        passWWDM    = wwDM < 2.0;
+    } else {
+        neutrino    =  MomentumF();
+        wlnu        =  MomentumF();
+        hWW         = MomentumF();
+        wlnuDR      = 0;
+        wwDM        = 0;
+        passWlnuDR  = false;
+        passWWDM    = false;
+    }
+
+    if(hbbCand){
+        hbbMass    =   isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
+        hh =  wjjCand  ? (hWW.p4() + hbbCand->p4()) :  MomentumF();
+    } else {
+        hbbMass    = 0;
+        hh         =  MomentumF();
+    }
+
+    //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
 
     if(reader_jet){
         jets = PhysicsUtilities::selObjsMom(reader_jet->jets,30,2.4,[](const Jet* j){return j->passTightID();} );
@@ -165,7 +189,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     }
 
 
-
+    //|||||||||||||||||||||||||||||| EVENT WEIGHTS ||||||||||||||||||||||||||||||
     weight = 1;
     if(!isRealData()){
         if(isCorrOn(CORR_XSEC))

@@ -37,6 +37,7 @@ hadd -f test_all.root test_m*.root
 
 
     TFile * f = new TFile("getCutflow.root","read");
+    // TFile * f = new TFile("test_all.root","read");
   
 
 
@@ -142,8 +143,8 @@ hadd -f test_all.root test_m*.root
     
     // TString bkgNames = ";t#bar{t} / W+jets / Z+jets / t / VV / t#bar{t}X / QCD";
 
-
-    TFile * f = new TFile("getCutflow.root","read");
+    TFile * f = new TFile("test_all.root","read");
+    // TFile * f = new TFile("getCutflow.root","read");
     
     auto effPlots = [&](TString name, const TString& pre, std::vector<unsigned int>& cuts, std::vector<TString>& cutNames){
         std::vector<TH1*> hists;
@@ -204,9 +205,9 @@ hadd -f test_all.root test_m*.root
         // std::vector<unsigned int> cuts = {0,3,5,7,8,9,10,11,12};  
 // std::vector<unsigned int> cuts = {0,3,5,7,8,14,15,16,17};
 // std::vector<unsigned int> cuts = {0,20,26,27,28,29,30,31};
-std::vector<unsigned int> cuts = {0,1,2,3,4,5,6,7,8,9,10,11,12};
+std::vector<unsigned int> cuts = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14};
   vector<TString> cutNames = {
-    "inclusive",
+    "inclusive",  //emu
     "trigger presel",
     "cleaning",
     "lepton veto",
@@ -219,36 +220,42 @@ std::vector<unsigned int> cuts = {0,1,2,3,4,5,6,7,8,9,10,11,12};
     "WW #DeltaR < 2",
     "Wl#nu #DeltaR < #pi/2",
     "Hbb loose b-tag",
+    "Hbb med b-tag",
     "Hbb tight b-tag",
-    "Hbb mass window", //14
+    "Hbb mass window", //15
     "Hbb LT tag",
     "WW #DeltaR < 2",
     "Wl#nu #DeltaR < #pi/2",
     "Hbb loose b-tag",
+    "Hbb med b-tag",
     "Hbb tight b-tag",
-    "HH mass 9-1.1 TeV", //20
+    "HH mass 9-1.1 TeV", //22
     "Hbb LT tag",
     "WW #DeltaR < 2",
     "Wl#nu #DeltaR < #pi/2",
     "Hbb loose b-tag",
+    "Hbb med b-tag",
     "Hbb tight b-tag",
-    "HH mass 9-1.1 TeV, Hbb mass window", //26
+    "HH mass 9-1.1 TeV, Hbb mass window", //29
     "Hbb LT tag",
     "WW #DeltaR < 2",
     "Wl#nu #DeltaR < #pi/2",
     "Hbb loose b-tag",
+    "Hbb med b-tag",
     "Hbb tight b-tag",
-    "HH mass 1.4-1.8 TeV", //32
+    "HH mass 1.4-1.8 TeV", //36
     "Hbb LT tag",
     "WW #DeltaR < 2",
     "Wl#nu #DeltaR < #pi/2",
     "Hbb loose b-tag",
+    "Hbb med b-tag",
     "Hbb tight b-tag",
-    "HH mass 1.4-1.8 TeV, Hbb mass window", //38
+    "HH mass 1.4-1.8 TeV, Hbb mass window", //43
     "Hbb LT tag",
     "WW #DeltaR < 2",
     "Wl#nu #DeltaR < #pi/2",
     "Hbb loose b-tag",
+    "Hbb med b-tag",
     "Hbb tight b-tag", //43
   };
   
