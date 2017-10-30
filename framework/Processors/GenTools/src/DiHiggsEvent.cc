@@ -1,8 +1,202 @@
-
 #include "Processors/GenTools/interface/DiHiggsEvent.h"
 #include "DataFormats/interface/GenParticle.h"
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
+
 namespace TAna {
+
+enum decayidentifier {Z = 1, HADRON, LEPTON, ELECTRON, MUON, TAU_H, TAU_EL, TAU_MUON};
+
+// Function to search and classify the decay channel of a Tau lepton
+int DiHiggsEvent::tau_search(const GenParticle* dau) {
+    // get final state of the tau
+    auto p = ParticleInfo::getFinal(dau);
+
+    int n = p->numberOfDaughters();
+    for (int i = 0; i<n; i++) {
+        int pp = p->daughter(i)->absPdgId();
+        if (pp == ParticleInfo::p_eminus || pp == ParticleInfo::p_nu_e) {return TAU_EL;}
+        if (pp == ParticleInfo::p_muminus || pp == ParticleInfo::p_nu_mu) {return TAU_MUON;}
+    }
+    return TAU_H;
+}
+
+// Function that determines if a pair of GenParticles were birthed by a W boson -> 
+bool DiHiggsEvent::isWpair(const GenParticle* f1, const GenParticle* f2) {
+    int f1id = f1->pdgId();
+    int f2id = f2->pdgId();
+    // if first particle is a lepton and the second is a neutrino of the same flavor, then they are products of a W
+    if (ParticleInfo::isLepton(f1id)) {
+        if (ParticleInfo::isANeutrino(f2id) && (std::abs(f2id) == std::abs(f1id) + 1) && (f1id < 0 != f2id < 0)) {
+            return true;
+        }
+        else {return false;}
+    }
+    // if the first is a neutrino and the second is a charged lepton of the same flavour, they come from a W
+    else if (ParticleInfo::isANeutrino(f1id)) {
+        if (ParticleInfo::isLepton(f2id) && (std::abs(f2id) == std::abs(f1id) - 1) && (f1id < 0 != f2id < 0)) {
+            return true;
+        }
+        else {return false;}
+    }
+    // if both particles comprise a quark-antiquark pair, then they come from a W 
+    // (IMPORTANT: products of a Z will never enter this function in the code)
+    else if (ParticleInfo::isQuark(f1id)) {
+        if ((ParticleInfo::isQuark(f2id)) && (f1id<0 != f2id<0)) {
+            return true;
+        }
+        else {return false;}
+    }
+    else {
+        std::cout << "Function isWpair has failed" << std::endl;
+        return false;
+    }
+}
+
+// Function that returns 1 if a pair of particles comes from a Z (particle-antiparticle pair), 2 if from a W, and 0 otherwise
+int DiHiggsEvent::isPair(const GenParticle* f1, const GenParticle* f2) {
+    // Z
+    if (f1->pdgId() == (-1)*f2->pdgId()) {return 1;}
+    // W
+    else if (isWpair(f1,f2)) {return 2;}
+    // otherwise return 0
+    else {return 0;}
+}
+
+// Function that intakes a pair of candidate W daughters (and so far does nothing if it fails) and classifies the W decay channel
+int DiHiggsEvent::classify_W_pair(const GenParticle* p1, const GenParticle* p2) {
+    int p1id = p1->absPdgId();
+
+    if (ParticleInfo::isQuark(p1id)) {return HADRON;}
+    else if ((p1id == ParticleInfo::p_eminus) || (p1id == ParticleInfo::p_nu_e)) {return ELECTRON;}
+    else if ((p1id == ParticleInfo::p_muminus) || (p1id == ParticleInfo::p_nu_mu)) {return MUON;}
+
+    else if (p1id == ParticleInfo::p_tauminus) {
+        int tau_daughter = tau_search(p1);
+        return tau_daughter;
+    }
+    else if (p1id == ParticleInfo::p_nu_tau) {
+        int tau_daughter = tau_search(p2);
+        return tau_daughter;
+    }
+    else {return 0;}
+}
+
+// Function that takes two GenParticles and organizes such that if they are leptonic, d1 is the Lepton, d2 is the Neutrino
+std::tuple<const GenParticle*, const GenParticle*> DiHiggsEvent::assign_gp(const GenParticle* p1, const GenParticle* p2) {
+    const GenParticle* d1;
+    const GenParticle* d2;
+    if (ParticleInfo::isLepton(p2->absPdgId()) && ParticleInfo::isANeutrino(p1->absPdgId())) {
+        d1 = p2;
+        d2 = p1;
+    } else {
+        d1 = p1;
+        d2 = p2;
+    }
+    return std::make_tuple(d1,d2);
+}
+
+// Function that fills the data variables of the WDecay structure 
+DiHiggsEvent::WDecay DiHiggsEvent::assign_W(const GenParticle* w) {
+    WDecay w_obj;
+    auto w_final = ParticleInfo::getFinal(w);
+
+    w_obj.id = w_final;
+    if (w_final->numberOfDaughters() == 2) {
+        auto dtup = assign_gp(w_final->daughter(0), w_final->daughter(1));
+        w_obj.d1 = std::get<0>(dtup);
+        w_obj.d2 = std::get<1>(dtup);
+
+        w_obj.decaytype = classify_W_pair(w_obj.d1, w_obj.d2);
+    }
+    return w_obj;
+}
+
+// Function that takes two identifiers for how the Higgs daughters decay, and then classifies the total decay channel of X -> HH
+DiHiggsEvent::DECAYTYPE DiHiggsEvent::classify_decaytype(const std::vector<int>& items) {
+    if (items.size() != 2) {
+        type = BAD;
+    }
+    else if (items.size() == 2) {
+        // if items is holding two Z's, then fill the event as a ZZ decay into the histogram
+        if ((items[0] == Z) && (items[1] == Z)) {
+            type = bbZZ;
+        }
+        // if items is holding two Hadrons, then fill the event as an HH decay
+        if ((items[0] == HADRON) && (items[1] == HADRON)) {
+            type = HAD;
+        }
+
+        int electron_num = 0;
+        int muon_num = 0;
+        int tauH_num = 0;
+        int tauE_num = 0;
+        int tauMU_num = 0;
+        int hadron_num = 0;
+
+        // for each value in items:
+        for (int k = 0 ; k < 2 ; k++) {
+            if (items[k] == HADRON) {hadron_num++;}
+            else if (items[k] == ELECTRON) {electron_num++;}
+            else if (items[k] == MUON) {muon_num++;}
+            else if (items[k] == TAU_H) {tauH_num++;}
+            else if (items[k] == TAU_EL) {tauE_num++;}
+            else if (items[k] == TAU_MUON) {tauMU_num++;}
+        }
+        // if there are two kinds of Leptons stored in items, then fill the event as a LL decay
+        if (electron_num + muon_num + tauH_num + tauE_num + tauMU_num == 2) {type = DILEP;}
+        // if there is one Lepton type and one Hadron in items:
+        if ((electron_num + muon_num + tauH_num + tauE_num + tauMU_num == 1) && (hadron_num == 1)) {
+            if (electron_num == 1) {type = E;}
+            else if (muon_num == 1) {type = MU;}
+            else if (tauH_num == 1) {type = TAU_HAD;}
+            else if (tauE_num == 1) {type = TAU_E;}
+            else if (tauMU_num == 1) {type = TAU_MU;}
+            else {type = BAD;}
+        }
+    }
+    return type;
+}
+
+// Function to classify the decay mode when the Higgs has 4 daughters in the Event. Returns a vector of ints (enums), items
+std::vector<int> DiHiggsEvent::search_4_daughters(const GenParticle* gp) {
+
+    std::vector<int> items;
+
+    auto mkW = [&] (const GenParticle* d11, const GenParticle* d12, const GenParticle* d21, const GenParticle* d22) {
+        items.push_back(classify_W_pair(d11,d12));
+        auto op12 = assign_gp(d11,d12);
+        w1_d1 = std::get<0>(op12);
+        w1_d2 = std::get<1>(op12);
+
+        items.push_back(classify_W_pair(d21,d22));
+        auto op34 = assign_gp(d21,d22);
+        w2_d1 = std::get<0>(op34);
+        w2_d2 = std::get<1>(op34);
+    };
+
+    auto d1 = gp->daughter(0);
+    auto d2 = gp->daughter(1);
+    auto d3 = gp->daughter(2);
+    auto d4 = gp->daughter(3);
+
+    int pair12 = isPair(d1,d2);
+    int pair13 = isPair(d1,d3);
+    int pair14 = isPair(d1,d4);
+    int pair23 = isPair(d2,d3);
+    int pair24 = isPair(d2,d4);
+    int pair34 = isPair(d3,d4);
+
+    // The vector bosons are not explicitly defined in these decays, so they will not be filled
+
+    if(pair12==1 && pair34==1) {items.push_back(Z);items.push_back(Z);}
+    else if(pair12==2 && pair34==2) mkW(d1,d2,d3,d4);
+    else if(pair13==1 && pair24==1) {items.push_back(Z);items.push_back(Z);}
+    else if(pair13==2 && pair24==2) mkW(d1,d3,d2,d4);
+    else if(pair14==1 && pair23==1) {items.push_back(Z);items.push_back(Z);}
+    else if(pair14==2 && pair23==2) mkW(d1,d4,d2,d3);
+    
+    return items;
+}
 
 void DiHiggsEvent::reset() {
     hbb =0;
@@ -23,135 +217,121 @@ void DiHiggsEvent::reset() {
 void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
     reset();
 
-    for(const auto& p : genparts){
+  // For each event, iterate down the list of genparticles to classify the decay channel
+    for(const auto& p : genparts) {
         const auto* gp = &p;
-        if(std::abs(gp->pdgId()) != ParticleInfo::p_h0) continue;
-        if(!ParticleInfo::isLastInChain(gp)) continue;
-        auto dau1 = ParticleInfo::getFinal(gp->daughterRef(0));
-        auto dau2 = ParticleInfo::getFinal(gp->daughterRef(1));
-        int dPDGID = std::abs(dau1->pdgId());
-        if(dPDGID == ParticleInfo::p_b){
+        // if not a Higgs in final state, continue
+        if (gp->absPdgId() != ParticleInfo::p_h0) {continue;}
+        if (!ParticleInfo::isLastInChain(gp)) {continue;}
+        // if this Higgs decays to b-bbar, set the appropriate GenParticles and then continue to the next iteration
+        if ((gp->numberOfDaughters() == 2) && (gp->daughter(0)->absPdgId() == ParticleInfo::p_b) && (gp->daughter(1)->absPdgId() == ParticleInfo::p_b)) {
             hbb = gp;
-            if(dau1->pt() > dau2->pt()){
-                b1 = &(*dau1);
-                b2 = &(*dau2);
-            } else {
-                b1 = &(*dau2);
-                b2 = &(*dau1);
-            }
-        } else  {
-            hww = gp;
-            for(unsigned int iD = 0; iD <gp->numberOfDaughters(); ++iD ){
-                auto dau = ParticleInfo::getFinal(gp->daughterRef(iD));
-                if(dau->absPdgId() == ParticleInfo::p_Z0 ){
-                    type = bbZZ;
-                }
-            }
-            if(type == bbZZ) continue;
-
-
-            struct WDecay {
-                const GenParticle * dau1 = 0; //sorted that in lep is l
-                const GenParticle * dau2=0; //sorted that in lep is n
-                int type = 3;//0 lep //1 tau //2 had //3 bad
-            };
-
-            std::vector<WDecay> wDecays;
-
-            auto getDaughters = [&](const GenParticle* mom) -> WDecay{ //0 lep //1 tau //2 had //3 bad
-                WDecay wDecay;
-                std::vector<const GenParticle*> quarks;
-                std::vector<const GenParticle*> leps;
-                for(unsigned int iD = 0; iD <mom->numberOfDaughters(); ++iD ){
-                    auto dau = ParticleInfo::getFinal(mom->daughterRef(iD));
-                    if(ParticleInfo::isLeptonOrNeutrino(dau->pdgId())){
-                        leps.push_back(&*dau);
-                    }
-                    if(ParticleInfo::isQuark(dau->pdgId())) quarks.push_back(&*dau);
-                }
-
-                if(leps.size() == 2){
-                    if(ParticleInfo::isANeutrino(leps[0]->pdgId()) && ParticleInfo::isLepton(leps[1]->pdgId()) ){
-                        wDecay.dau1 = leps[1];
-                        wDecay.dau2 = leps[0];
-                        if(TMath::Abs(leps[1]->pdgId()) == ParticleInfo::p_tauminus){wDecay.type = 1;}
-                        else wDecay.type = 0;
-                    }
-                    else if(ParticleInfo::isANeutrino(leps[1]->pdgId()) && ParticleInfo::isLepton(leps[0]->pdgId()) ){
-                        wDecay.dau1 = leps[0];
-                        wDecay.dau2  = leps[1];
-                        if(TMath::Abs(leps[0]->pdgId()) == ParticleInfo::p_tauminus) {wDecay.type = 1;}
-                        else wDecay.type = 0;
-                    } else {
-                        wDecay.dau1 = leps[0];
-                        wDecay.dau2 = leps[1];
-                        wDecay.type = 3;
-                    }
-                } else if(quarks.size() == 2){
-                    wDecay.dau1 = quarks[1];
-                    wDecay.dau2 = quarks[0];
-                    wDecay.type = 2;
-                } else {
-                    wDecay.type = 3;
-                }
-                return wDecay;
-            };
-
-
-            for(unsigned int iD = 0; iD <gp->numberOfDaughters(); ++iD ){
-                auto dau = ParticleInfo::getFinal(gp->daughterRef(iD));
-                if(dau->absPdgId() == ParticleInfo::p_Wplus ){
-                    wDecays.push_back(getDaughters(&(*dau)  ));
-                }
-            }
-
-            //now for virtual
-            auto virtW = getDaughters(gp);
-            if(virtW.type != 3) wDecays.push_back(virtW);
-
-            if(wDecays.size() != 2){ type = BAD;}
-            else if(wDecays[0].type == 3 || wDecays[1].type == 3){
-                type  = BAD;
-                w1_d1 = wDecays[0].dau1;
-                w1_d2 = wDecays[0].dau2;
-                w2_d1 = wDecays[1].dau1;
-                w2_d2 = wDecays[1].dau2;
-            } else if(wDecays[0].type == 2 && wDecays[1].type == 2){
-                type  = HAD;
-                w1_d1 = wDecays[0].dau1;
-                w1_d2 = wDecays[0].dau2;
-                w2_d1 = wDecays[1].dau1;
-                w2_d2 = wDecays[1].dau2;
-            } else if(wDecays[0].type != 2 && wDecays[1].type != 2){
-                type = DILEP;
-                w1_d1 = wDecays[0].dau1;
-                w1_d2 = wDecays[0].dau2;
-                w2_d1 = wDecays[1].dau1;
-                w2_d2 = wDecays[1].dau2;
-            } else {
-                if(wDecays[0].type == 1 || wDecays[1].type == 1) type = TAU_E;
-                else type = MU;
-                if(wDecays[0].type == 2){
-                    w1_d1 = wDecays[1].dau1;
-                    w1_d2 = wDecays[1].dau2;
-                    w2_d1 = wDecays[0].dau1;
-                    w2_d2 = wDecays[0].dau2;
-                } else {
-                    w1_d1 = wDecays[0].dau1;
-                    w1_d2 = wDecays[0].dau2;
-                    w2_d1 = wDecays[1].dau1;
-                    w2_d2 = wDecays[1].dau2;
-                }
+            if(hbb->daughter(0)->pt() > hbb->daughter(1)->pt()) {
+                b1 = hbb->daughter(0);
+                b2 = hbb->daughter(1);
+            } else { 
+                b1 = hbb->daughter(1);
+                b2 = hbb->daughter(0);
             }
         }
+        else {
+            hww = gp;
+    // Here is where I will organize the daughters of the Hww appropriately
+            std::vector<int> zbosons;
+            std::vector<const GenParticle*> fermions;
+            std::vector<WDecay> wDecays;
 
-    }
+            // iterate over the daughters of this Higgs
+            for (int k = 0; k < hww->numberOfDaughters(); k++) {
+                if (hww->daughter(k)->absPdgId() == ParticleInfo::p_Z0) {
+                    zbosons.push_back(Z);
+                } else if (hww->daughter(k)->absPdgId() == ParticleInfo::p_Wplus) {
+                    wDecays.push_back(assign_W(hww->daughter(k)));
+                } else {
+                    fermions.push_back(hww->daughter(k));
+                }
+            }
 
-    if(hww== 0 || hbb == 0) type = BAD;
+    // Now analyze the combinations of sizes of each of these vectors as different cases
+            std::vector<int> fermIDs;
+            // if items is of size 2 already, then it must have two Z bosons and we can immediately write down the class variable type
+            if (zbosons.size() == 2) {type = bbZZ;}
+
+            // if there is one Z and two fermions, check to ensure the two fermions can form a Z. Otherwise, it is a BAD decay
+            else if ((zbosons.size() == 1) && (fermions.size() == 2)) {
+                if (isPair(fermions[0], fermions[1]) == 1) {
+                    type = bbZZ;
+                } else {type = BAD;}
+            }
+            // if fermions is of size 4, the protocol will be same as search_4_daughters
+            else if (fermions.size() == 4) {
+                fermIDs = search_4_daughters(hww); // assignment of GenParticle class variables executed within this function
+                type = classify_decaytype(fermIDs);
+            }
+            // if there is one W and two fermions
+            else if (wDecays.size() == 1 && fermions.size() == 2){
+                if (ParticleInfo::isLepton(fermions[0]->absPdgId()) || ParticleInfo::isANeutrino(fermions[0]->absPdgId())) {
+                    auto fs = assign_gp(fermions[0], fermions[1]);
+                    w1_d1 = std::get<0>(fs);
+                    w1_d2 = std::get<1>(fs);
+
+                    w2 = wDecays[0].id;
+                    w2_d1 = wDecays[0].d1;
+                    w2_d2 = wDecays[0].d2;
+
+                    std::vector<int> dtypes;
+                    dtypes.push_back(wDecays[0].decaytype);
+                    dtypes.push_back(classify_W_pair(fermions[0], fermions[1]));
+
+                    if (dtypes[0] == 0) {ParticleInfo::printGenInfo(genparts,-1);}
+                    type = classify_decaytype(dtypes);
+
+                } else {
+                    auto fs = assign_gp(fermions[0], fermions[1]);
+                    w2_d1 = std::get<0>(fs);
+                    w2_d2 = std::get<1>(fs);
+
+                    w1 = wDecays[0].id;
+                    w1_d1 = wDecays[0].d1;
+                    w1_d2 = wDecays[0].d2;
+
+                    std::vector<int> dtypes;
+                    dtypes.push_back(wDecays[0].decaytype);
+                    dtypes.push_back(classify_W_pair(fermions[0], fermions[1]));
+                    type = classify_decaytype(dtypes);
+                }
+            }
+            // if there are two W objects
+            else if (wDecays.size() == 2) {
+                std::vector<int> dtypes;
+                dtypes.push_back(wDecays[0].decaytype);
+                dtypes.push_back(wDecays[1].decaytype);
+                type = classify_decaytype(dtypes);
+
+                // we need to classify the leptonic W as w1, and we need to classify the daughters now
+                if (ParticleInfo::isLepton(wDecays[1].d1->absPdgId()) || ParticleInfo::isANeutrino(wDecays[1].d1->absPdgId())) {
+                    w1 = wDecays[1].id;
+                    w1_d1 = wDecays[1].d1;
+                    w1_d2 = wDecays[1].d2;
+
+                    w2 = wDecays[0].id;
+                    w2_d1 = wDecays[0].d1;
+                    w2_d2 = wDecays[0].d2;
+                } else {
+                    w1 = wDecays[0].id;
+                    w1_d1 = wDecays[0].d1;
+                    w1_d2 = wDecays[0].d2;
+
+                    w2 = wDecays[1].id;
+                    w2_d1 = wDecays[1].d1;
+                    w2_d2 = wDecays[1].d2;
+                }
+            } else {type = BAD;}
+
+            if (hbb && hww) {break;}
+        }
+    } 
 }
 
-
 }
-
-
 
