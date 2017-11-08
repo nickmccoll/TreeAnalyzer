@@ -21,17 +21,69 @@
 #include "Processors/Variables/interface/BTagging.h"
 #include "Processors/Variables/interface/HiggsSolver.h"
 #include "Processors/EventSelection/interface/EventSelection.h"
+#include "Processors/Variables/interface/LeptonSelection.h"
+
 #include "TPRegexp.h"
 using namespace TAna;
 
 class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){}
+    Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
+
+        leptonNoISOProc  .reset(new LeptonProcessor ()); DefaultLeptonSelections::setDefaultLeptonProcessor(*leptonNoISOProc);
+        leptonNoISOProc->lepSelParams.mu_maxISO  = -1;
+        leptonNoISOProc->lepSelParams.el_maxISO  = -1;
+        leptonNoISOProc->lepSelParams_dataABCDEF.mu_maxISO  = -1;
+        leptonNoISOProc->lepSelParams_dataABCDEF.el_maxISO  = -1;
+    }
+
+
+
+    void doLeptonEff() {
+        if(diHiggsEvt.type < DiHiggsEvent::MU) return;
+
+        const float flMass = float(signal_mass)/1000.;
+        auto slLepNoISO_mu = leptonNoISOProc->getMuons(*reader_event,*reader_muon);
+        auto slLepNoISO_e  = leptonNoISOProc->getElectrons(*reader_electron);
+        auto slLep_mu = leptonProc->getMuons(*reader_event,*reader_muon);
+        auto slLep_e  = leptonProc->getElectrons(*reader_electron);
+
+        plotter.getOrMake1DPre("signal_incl", "mass" ,";#it{m}(X) [TeV]; arbitrary units",40,0.550,4.550)->Fill(flMass,weight);
+        if(ht_chs >= 500)
+            plotter.getOrMake1DPre("signal_ht", "mass" ,";#it{m}(X) [TeV]; arbitrary units",40,0.550,4.550)->Fill(flMass,weight);
+
+
+        if(diHiggsEvt.w1_d1->absPdgId() == ParticleInfo::p_eminus){
+            plotter.getOrMake1DPre("signal_e_incl", "mass" ,";#it{m}(X) [TeV]; arbitrary units",40,0.550,4.550)->Fill(flMass,weight);
+            if(slLepNoISO_e.size() && slLepNoISO_e.front()->pt() >= 30  )
+                plotter.getOrMake1DPre("signal_e_id", "mass" ,";#it{m}(X) [TeV]; arbitrary units",40,0.550,4.550)->Fill(flMass,weight);
+            if(slLep_e.size() && slLep_e.front()->pt() >= 30 )
+                plotter.getOrMake1DPre("signal_e_iso", "mass" ,";#it{m}(X) [TeV]; arbitrary units",40,0.550,4.550)->Fill(flMass,weight);
+
+
+            if(slLepNoISO_e.size() && slLepNoISO_e.front()->pt() >= 20  )
+                plotter.getOrMake1DPre("signal_e_id2", "mass" ,";#it{m}(X) [TeV]; arbitrary units",40,0.550,4.550)->Fill(flMass,weight);
+            if(slLep_e.size() && slLep_e.front()->pt() >= 20 )
+                plotter.getOrMake1DPre("signal_e_iso2", "mass" ,";#it{m}(X) [TeV]; arbitrary units",40,0.550,4.550)->Fill(flMass,weight);
+
+
+        } else if(diHiggsEvt.w1_d1->absPdgId() == ParticleInfo::p_muminus){
+            plotter.getOrMake1DPre("signal_mu_incl", "mass" ,";#it{m}(X) [TeV]; arbitrary units",40,0.550,4.550)->Fill(flMass,weight);
+
+            if(slLepNoISO_mu.size() && slLepNoISO_mu.front()->pt() >= 26)
+                plotter.getOrMake1DPre("signal_mu_id", "mass" ,";#it{m}(X) [TeV]; arbitrary units",40,0.550,4.550)->Fill(flMass,weight);
+            if(slLep_mu.size() && slLep_mu.front()->pt() >= 26 )
+                plotter.getOrMake1DPre("signal_mu_iso", "mass" ,";#it{m}(X) [TeV]; arbitrary units",40,0.550,4.550)->Fill(flMass,weight);
+        }
+    };
 
 
     bool runEvent() override {
         const bool passBase = DefaultSearchRegionAnalyzer::runEvent();
+
+        doLeptonEff();
+
 
         float wjjSDMASS = 0;
         float passWjjAB = nMedBTags_HbbV == 0;
@@ -53,47 +105,49 @@ public:
         };
 
         auto makeStats=[&](const TString& prefix){
-            auto * tots = plotter.getOrMake1DPre(prefix,"evtCounts","N. of events",50,-0.5,49.5);
+            auto * tots = plotter.getOrMake1DPre(prefix,"evtCounts","N. of events",60,-0.5,59.5);
             tots->Fill(0.0,weight);
-            if(!passTriggerPreselection) return;
+            if(ht_chs < 500) return;
             tots->Fill(1.0,weight);
-            if(!passEventFilters) return;
+            if(!passTriggerPreselection) return;
             tots->Fill(2.0,weight);
-            if(selectedLeptons.size() != 1) return;
+            if(!passEventFilters) return;
             tots->Fill(3.0,weight);
-            if(wjjCand == 0) return;
+            if(selectedLeptons.size() != 1) return;
             tots->Fill(4.0,weight);
-            if(wjjSDMASS < 10) return;
+            if(wjjCand == 0) return;
             tots->Fill(5.0,weight);
-            if(wjjCand->tau2otau1() >= 0.55) return;
+            if(wjjSDMASS < 10) return;
             tots->Fill(6.0,weight);
-            if(!passWjjAB) return;
+            if(wjjCand->tau2otau1() >= 0.55) return;
             tots->Fill(7.0,weight);
-            if(hbbCand == 0) return;
+            if(!passWjjAB) return;
             tots->Fill(8.0,weight);
+            if(hbbCand == 0) return;
+            tots->Fill(9.0,weight);
 
-            mkStatSect(tots,9);
+            mkStatSect(tots,10);
 
             if(hBBTM){
             tots->Fill(15.0,weight);
-            mkStatSect(tots,16);
+            mkStatSect(tots,17);
             }
 
             if(hh.mass() >= 900 && hh.mass() < 1100){
-                tots->Fill(22.0,weight);
-                mkStatSect(tots,23);
+                tots->Fill(23.0,weight);
+                mkStatSect(tots,24);
                 if(hBBTM){
-                tots->Fill(29.0,weight);
-                mkStatSect(tots,30);
+                tots->Fill(30.0,weight);
+                mkStatSect(tots,31);
                 }
              }
 
             if(hh.mass() >= 1400 && hh.mass() < 1800){
-                tots->Fill(36.0,weight);
-                mkStatSect(tots,37);
+                tots->Fill(37.0,weight);
+                mkStatSect(tots,38);
                 if(hBBTM){
-                tots->Fill(43.0,weight);
-                mkStatSect(tots,44);
+                tots->Fill(44.0,weight);
+                mkStatSect(tots,45);
                 }
              }
 
@@ -107,8 +161,8 @@ public:
 
         if(isSignal() && diHiggsEvt.type >= DiHiggsEvent::MU){
             makeStats(smpName+"_genemu_emu");
-            if( diHiggsEvt.type == DiHiggsEvent::MU)if(selectedLepton && selectedLepton->isMuon()) makeStats(smpName+"_genmu_mu");
-            if( diHiggsEvt.type == DiHiggsEvent::E)if(selectedLepton && !selectedLepton->isMuon()) makeStats(smpName+"_gene_e");
+            if( diHiggsEvt.type == DiHiggsEvent::MU ) makeStats(smpName+"_genmu_mu");
+            if( diHiggsEvt.type == DiHiggsEvent::E ) makeStats(smpName+"_gene_e");
         }
 
         if(!passBase) return false;
@@ -190,6 +244,9 @@ public:
 
     void write(TString fileName){ plotter.write(fileName);}
     HistGetter plotter;
+
+    std::unique_ptr<LeptonProcessor>     leptonNoISOProc ;
+
 
 
 

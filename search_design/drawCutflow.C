@@ -143,8 +143,8 @@ hadd -f test_all.root test_m*.root
     
     // TString bkgNames = ";t#bar{t} / W+jets / Z+jets / t / VV / t#bar{t}X / QCD";
 
-    TFile * f = new TFile("test_all.root","read");
-    // TFile * f = new TFile("getCutflow.root","read");
+    // TFile * f = new TFile("test_all.root","read");
+    TFile * f = new TFile("getCutflow.root","read");
     
     auto effPlots = [&](TString name, const TString& pre, std::vector<unsigned int>& cuts, std::vector<TString>& cutNames){
         std::vector<TH1*> hists;

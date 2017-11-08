@@ -47,7 +47,7 @@
     "(lepton > 30 GeV) or (#it{H}_{T} > 400 GeV, lepton > 20 GeV)"
   };
 
-  auto distPlots = [&](TString name, const std::vector<TString>& vars, const std::vector<TString>& pres){
+  auto distPlots = [&](TString name, const std::vector<TString>& vars, const std::vector<TString>& pres, bool addLumi=false){
     for(auto v : vars)     for(auto p : pres){
       Plotter * plots = new Plotter;
       for(unsigned int iM = 0; iM < sigMasses.size(); ++iM){
@@ -55,14 +55,24 @@
         TH1 * h = 0;
         f->GetObject(TString::Format("%s_%s",p.Data(),v.Data()),h);
         if(!h){
-          cout <<   TString::Format("%s_%s",p.Data(),v.Data()) <<" "<< TString::Format("#it{m}(X) %u GeV",sigMasses[iM])<<endl;
+          cout <<   TString::Format("%s_%s",p.Data(),v.Data()) <<" "<< TString::Format("#it{m}(X) %.1f TeV",float(sigMasses[iM])/1000.)<<endl;
         }
-        plots->addHistLine(h,TString::Format("#it{m}(X) %u GeV",sigMasses[iM]));
+        plots->addHistLine(h,TString::Format("#it{m}(X) %.1f TeV",float(sigMasses[iM])/1000.));
     }
     plots->normalize();
     // plots->rebin(2);
-    plots->draw(false,TString::Format("%s_%s_%s",name.Data(),p.Data(),v.Data()));
-    plots->yAxis()->SetTitleOffset(1.5);
+    if(addLumi){
+    plots->setCMSLumi(33, "36 fb^{-1} (13 TeV)", "Simulation preliminary" );
+    plots->setYTitle("Events / 10 GeV");
+    plots->setLegendPos(0.6,0.58,.95,.78);
+    }
+    plots->setYTitle("arbitrary units");
+    TCanvas * c = plots->draw(true,TString::Format("%s_%s_%s.pdf",name.Data(),p.Data(),v.Data()));
+    plots->yAxis()->SetTitleOffset(1.63);
+    c->Print(TString::Format("%s_%s_%s.pdf",name.Data(),p.Data(),v.Data()));
+    
+    
+    
   }
 };
 
@@ -102,8 +112,8 @@ std::vector<unsigned int> cuts = {0,1,2,3,4,5};
 // std::vector<unsigned int> cuts = {0,4,11,12};
 
 
-// distPlots("plots",vars,pres);
-effPlots("muRatio","mu",cuts);
-effPlots("elRatio","el",cuts);
+distPlots("plots",vars,pres,true);
+// effPlots("muRatio","mu",cuts);
+// effPlots("elRatio","el",cuts);
 
 }

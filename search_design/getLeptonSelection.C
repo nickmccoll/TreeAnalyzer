@@ -413,8 +413,8 @@ public:
 
     bool runEvent() override {
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
-        if(ht_wlep < 400) return false;
-        const bool passTight = ht_wlep >= 1500;
+        if(ht_chs < 400) return false;
+        const bool passTight = ht_chs >= 1500;
         TString prefix = reader_event->process == FillerConstants::SIGNAL ? TString::Format("m%i",signal_mass) : FillerConstants::MCProcessNames[reader_event->process];
 
 
