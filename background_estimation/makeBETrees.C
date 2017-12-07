@@ -1,0 +1,230 @@
+
+#if !defined(__CINT__) || defined(__MAKECINT__)
+
+#include "TreeAnalyzer/interface/BaseTreeCopier.h"
+#include "TreeAnalyzer/interface/DefaultSearchRegionAnalyzer.h"
+#include "TreeReaders/interface/EventReader.h"
+
+#include "TreeReaders/interface/GenParticleReader.h"
+#include "TreeReaders/interface/ElectronReader.h"
+#include "TreeReaders/interface/MuonReader.h"
+#include "TreeReaders/interface/JetReader.h"
+#include "TreeReaders/interface/FatJetReader.h"
+
+#include "TreeReaders/interface/FillerConstants.h"
+#include "AnalysisSupport/Utilities/interface/HistGetter.h"
+#include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
+#include "AnalysisSupport/Utilities/interface/PhysicsUtilities.h"
+#include "Processors/Corrections/interface/EventWeights.h"
+#include "Processors/GenTools/interface/DiHiggsEvent.h"
+#include "Processors/Variables/interface/JetKinematics.h"
+#include "Processors/Variables/interface/FatJetSelection.h"
+#include "Processors/Variables/interface/BTagging.h"
+#include "Processors/Variables/interface/HiggsSolver.h"
+#include "Processors/EventSelection/interface/EventSelection.h"
+#include "Processors/Variables/interface/LeptonSelection.h"
+#include "Processors/Corrections/interface/TriggerScaleFactors.h"
+#include "Processors/Corrections/interface/BTagScaleFactors.h"
+#include "Processors/Corrections/interface/LeptonScaleFactors.h"
+
+#include "TPRegexp.h"
+using namespace TAna;
+
+class Analyzer : public DefaultSearchRegionAnalyzer {
+public:
+
+    Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
+    }
+
+    virtual BaseEventAnalyzer * setupEventAnalyzer() override {return new CopierEventAnalyzer();}
+
+    virtual void bookOutputVariables() override {
+
+        if(isRealData()){
+            i_dataset             =  outTree->add<size16>  ("","dataset"  ,"s",0);
+            i_dataRun             =  outTree->add<size16>  ("","dataRun"  ,"s",0);
+        } else {
+            i_process     =outTree->add<size16> ("","process","s",0);
+            i_dhType      =outTree->add<size8>  ("","dhType" ,"b",0);
+            i_xsec        =outTree->add<float>  ("","xsec"   ,"F",0);
+            i_trig_N      =outTree->add<float>  ("","trig_N" ,"F",0);
+            i_pu_N        =outTree->add<float>  ("","pu_N"   ,"F",0);
+            i_lep_N       =outTree->add<float>  ("","lep_N"  ,"F",0);
+            i_btag_N      =outTree->add<float>  ("","btag_N" ,"F",0);
+        }
+
+        i_isMuon      =outTree->add<size8>  ("","isMuon"    ,"b",0);
+        i_hbbMass     =outTree->add<float>  ("","hbbMass"   ,"F",0);
+        i_hbbCSVCat   =outTree->add<size8>  ("","hbbCSVCat" ,"b",0);
+        i_hhMass      =outTree->add<float>  ("","hhMass"    ,"F",0);
+        i_wlnuDR      =outTree->add<float>  ("","wlnuDR"    ,"F",0);
+        i_wwDM        =outTree->add<float>  ("","wwDM"      ,"F",0);
+        i_wjjCSVCat   =outTree->add<size8>  ("","wjjCSVCat" ,"b",0);
+        i_wjjTau2o1   =outTree->add<float>  ("","wjjTau2o1" ,"F",0);
+        i_wjjMass     =outTree->add<float>  ("","wjjMass"   ,"F",0);
+        i_nAK4Btags   =outTree->add<size8>  ("","nAK4Btags" ,"b",0);
+
+        if(!isRealData()){
+            i_hbbGenPT    =outTree->add<float>  ("","hbbGenPT"   ,"F",0);
+            i_hbbGenMass  =outTree->add<float>  ("","hbbGenMass" ,"F",0);
+            i_hbbWQuark   =outTree->add<size8>  ("","hbbWQuark"  ,"b",0);
+//            i_hhHT        =outTree->add<float>  ("","hhHT"       ,"F",0);
+//            i_wjjlepGenPT =outTree->add<float>  ("","wjjlepGenPT","F",0);
+//            i_genMET      =outTree->add<float>  ("","genMET"     ,"F",0);
+            i_genhhMass   =outTree->add<float>  ("","genhhMass"  ,"F",0);
+            i_genhhMass2   =outTree->add<float>  ("","genhhMass2"  ,"F",0);
+
+        }
+
+    }
+
+
+
+    bool runEvent() override {
+        if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
+        if(!passTriggerPreselection) return false;
+        if(!passEventFilters) return false;
+        if(selectedLeptons.size() != 1) return false;
+        if(!hbbCand) return false;
+        if(!wjjCand) return false;
+
+
+        if(isRealData()){
+            outTree->fill(i_dataset     ,reader_event->dataset);
+            outTree->fill(i_dataRun     ,reader_event->dataRun);
+        } else {
+            outTree->fill(i_process     ,reader_event->process);
+            outTree->fill(i_dhType      ,size8(diHiggsEvt.type));
+            outTree->fill(i_xsec        ,float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi())));
+            outTree->fill(i_trig_N      ,float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_chs, (selectedLepton && selectedLepton->isMuon())) : 1.0 ));
+            outTree->fill(i_pu_N        ,float(puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL)));
+            outTree->fill(i_lep_N       ,float(leptonSFProc->getSF()));
+            outTree->fill(i_btag_N      ,float(sjbtagSFProc->getSF({hbbCand})*ak4btagSFProc->getSF(jets_HbbV)));
+        }
+
+
+
+        outTree->fill(i_isMuon      ,size8(selectedLepton->isMuon()));
+        outTree->fill(i_hbbMass     ,float(hbbMass));
+        outTree->fill(i_hbbCSVCat   ,size8(hbbCSVCat));
+        outTree->fill(i_hhMass      ,float(hh.mass()));
+        outTree->fill(i_wlnuDR      ,float(wlnuDR));
+        outTree->fill(i_wwDM        ,float(wwDM));
+        outTree->fill(i_wjjCSVCat   ,size8(wjjCSVCat));
+        outTree->fill(i_wjjTau2o1   ,float(wjjCand->tau2otau1()));
+        outTree->fill(i_wjjMass     ,float(wjjCand->sdMom().mass()));
+        outTree->fill(i_nAK4Btags   ,size8(std::min(nMedBTags_HbbV,250)));
+
+
+        if(!isRealData()){
+            double nearestDR = 999.;
+            int hbbGenIDX = PhysicsUtilities::findNearestDR(*hbbCand,reader_fatjet->genJets,nearestDR,0.8);
+
+            outTree->fill(i_hbbGenPT    ,float(hbbGenIDX < 0 ? 0.0 : reader_fatjet->genJets[hbbGenIDX].pt()));
+            outTree->fill(i_hbbGenMass  ,float(hbbGenIDX < 0 ? 0.0 : reader_fatjet->genJets[hbbGenIDX].mass()));
+
+            bool q_in = false;
+            const float matchR = 0.8*0.8;
+            for(const auto& d : smDecayEvt.bosonDecays  ){
+                if(d.type != BosonDecay::Z_HAD && d.type != BosonDecay::W_HAD ) continue;
+                if((PhysicsUtilities::deltaR2(*d.dau1,*hbbCand) < matchR) || (PhysicsUtilities::deltaR2(*d.dau2,*hbbCand) < matchR)) q_in = true;
+            }
+
+            for(const auto& d : smDecayEvt.topDecays  ){
+                if(d.type != TopDecay::HAD ) continue;
+                if((PhysicsUtilities::deltaR2(*d.b,*hbbCand) < matchR) || (PhysicsUtilities::deltaR2(*d.W_decay.dau1,*hbbCand) < matchR)
+                        || (PhysicsUtilities::deltaR2(*d.W_decay.dau2,*hbbCand) < matchR)) q_in = true;
+            }
+
+//            MomentumF genVisWW;
+//            MomentumF genMET;
+//            const float matchGJR2 = 1.2*1.2;
+//            for(const auto& j : reader_jet_chs->genJets){
+//                if(j.pt() < 20) continue;
+//                if(j.absEta() > 5.0) continue;
+//                genMET.p4() -= j.p4();
+//                if(PhysicsUtilities::deltaR2(j,*selectedLepton) < matchGJR2)  genVisWW.p4() += j.p4();
+//            }
+//
+//            const MomentumF genNeutrino    = HiggsSolver::getInvisible(genMET,genVisWW );
+//            const MomentumF genhWW   = genNeutrino.p4() + genVisWW.p4();
+//            MomentumF genHH = genhWW.p4();
+//            if(hbbGenIDX >= 0 ) genHH.p4() += reader_fatjet->genJets[hbbGenIDX].p4();
+
+            MomentumF genMET = reader_event->met.p4() + hbbCand->p4();
+            if(hbbGenIDX >= 0) genMET.p4() -=  reader_fatjet->genJets[hbbGenIDX].p4();
+
+            const MomentumF genNeutrino    = HiggsSolver::getInvisible(genMET,(selectedLepton->p4() + wjjCand->p4()) );
+            const MomentumF genhWW   = genNeutrino.p4() + selectedLepton->p4() + wjjCand->p4();
+            MomentumF genHH = genhWW.p4();
+            if(hbbGenIDX >= 0 ) genHH.p4() += reader_fatjet->genJets[hbbGenIDX].p4();
+            MomentumF genHH2 = hWW.p4();
+            if(hbbGenIDX >= 0 ) genHH2.p4() += reader_fatjet->genJets[hbbGenIDX].p4();
+
+
+
+
+            outTree->fill(i_hbbWQuark   ,size8(q_in));
+//            outTree->fill(i_hhHT        ,float( genhWW.pt()  + (hbbGenIDX >= 0 ? reader_fatjet->genJets[hbbGenIDX].pt() : 0.0)  ));
+//            outTree->fill(i_wjjlepGenPT ,float(genVisWW.pt()));
+//            outTree->fill(i_genMET      ,float(genMET.pt()));
+            outTree->fill(i_genhhMass   ,float(genHH.mass()));
+            outTree->fill(i_genhhMass2   ,float(genHH2.mass()));
+        }
+
+
+
+
+        return true;
+    }
+
+
+    //Event information and weights
+    size i_process    = 0;
+    size i_dhType     = 0;
+    size i_dataset    = 0;
+    size i_dataRun    = 0;
+    size i_xsec       = 0;
+    size i_trig_N = 0;
+    size i_pu_N   = 0;
+    size i_lep_N  = 0;
+    size i_btag_N = 0;
+
+    //SR variables
+    size i_isMuon    = 0;
+    size i_hbbMass   = 0;
+    size i_hbbCSVCat = 0;
+    size i_hhMass    = 0;
+    size i_wlnuDR    = 0;
+    size i_wwDM      = 0;
+    size i_wjjCSVCat = 0;
+    size i_wjjTau2o1 = 0;
+    size i_wjjMass   = 0;
+    size i_nAK4Btags = 0;
+
+    //BE extra variables
+    size i_hbbGenPT    =0;
+    size i_hbbGenMass  =0;
+    size i_hbbWQuark   =0;
+//    size i_hhHT        =0;
+//    size i_wjjlepGenPT =0;
+//    size i_genMET      =0;
+    size i_genhhMass   =0;
+    size i_genhhMass2   =0;
+
+
+};
+
+#endif
+
+void makeBETrees(std::string fileName, int treeInt, std::string outFileName){
+    Analyzer a(fileName,"treeMaker/Events",treeInt);
+    a.initializeTreeCopy(outFileName,BaseTreeAnalyzer::COPY_NONE);
+    a.analyze();
+}
+void makeBETrees(std::string fileName, int treeInt, std::string outFileName, float xSec, float numEvent){
+    Analyzer a(fileName,"treeMaker/Events",treeInt);
+    a.setSampleInfo(xSec,numEvent);
+    a.initializeTreeCopy(outFileName,BaseTreeAnalyzer::COPY_NONE);
+    a.analyze();
+}
