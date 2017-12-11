@@ -4,7 +4,7 @@
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 
-#include "/Users/brentstone01/HistoPlotting/include/Plotter.h"
+//#include "/Users/brentstone01/HistoPlotting/include/Plotter.h"
 #include "Processors/GenTools/interface/DiHiggsEvent.h"
 #include "DataFormats/interface/GenParticle.h"
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
@@ -37,6 +37,7 @@ public:
 // Function that runs the analysis on each event and will called iteratively for each event
     bool runEvent() override {
     	DiHiggsEvent event;
+	//std::cout << reader_event->run << " : " << reader_event->lumi << " : " << reader_event->event << std::endl;
         event.setDecayInfo(reader_genParticles->genParticles);
 
         plotter.getOrMake1D("h_decaymode","Distribution of Decay Modes",9,-0.5,8.5)->Fill(event.type);
@@ -65,6 +66,11 @@ void Run_DiHiggs(std::string fileName, int treeInt, std::string outFileName, flo
     Analyzer a(fileName,"treeMaker/Events",treeInt);
     a.setSampleInfo(xSec,numEvent);
     a.analyze();
+
+    auto *h_decaymode = a.plotter.getOrMake1D("h_decaymode","Distribution of Decay Modes",9,-0.5,8.5);
+    for (int iX = 1; iX <= h_decaymode->GetNbinsX(); ++iX) {
+        std::cout << h_decaymode->GetBinContent(iX) << std::endl;
+    }
     a.write(outFileName);
 }
 
