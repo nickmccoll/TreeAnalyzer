@@ -21,19 +21,19 @@ int DiHiggsEvent::tau_search(const GenParticle* dau) {
 }
 
 // Function that determines if a pair of GenParticles were birthed by a W boson -> 
-bool DiHiggsEvent::isWpair(const GenParticle* f1, const GenParticle* f2) {
+bool DiHiggsEvent::isWpair(const GenParticle* f1, const GenParticle* f2, const GenParticleCollection& g_parts) {
     int f1id = f1->pdgId();
     int f2id = f2->pdgId();
     // if first particle is a lepton and the second is a neutrino of the same flavor, then they are products of a W
     if (ParticleInfo::isLepton(f1id)) {
-        if (ParticleInfo::isANeutrino(f2id) && (std::abs(f2id) == std::abs(f1id) + 1) && (f1id < 0 != f2id < 0)) {
+        if (ParticleInfo::isANeutrino(f2id) && (std::abs(f2id) == std::abs(f1id) + 1) && ((f1id < 0) != (f2id < 0))) {
             return true;
         }
         else {return false;}
     }
     // if the first is a neutrino and the second is a charged lepton of the same flavour, they come from a W
     else if (ParticleInfo::isANeutrino(f1id)) {
-        if (ParticleInfo::isLepton(f2id) && (std::abs(f2id) == std::abs(f1id) - 1) && (f1id < 0 != f2id < 0)) {
+        if (ParticleInfo::isLepton(f2id) && (std::abs(f2id) == std::abs(f1id) - 1) && ((f1id < 0) != (f2id < 0))) {
             return true;
         }
         else {return false;}
@@ -41,23 +41,24 @@ bool DiHiggsEvent::isWpair(const GenParticle* f1, const GenParticle* f2) {
     // if both particles comprise a quark-antiquark pair, then they come from a W 
     // (IMPORTANT: products of a Z will never enter this function in the code)
     else if (ParticleInfo::isQuark(f1id)) {
-        if ((ParticleInfo::isQuark(f2id)) && (f1id<0 != f2id<0)) {
+        if ((ParticleInfo::isQuark(f2id)) && ((f1id<0) != (f2id<0))) {
             return true;
         }
         else {return false;}
     }
     else {
         std::cout << "Function isWpair has failed" << std::endl;
+	ParticleInfo::printGenInfo(g_parts,-1);
         return false;
     }
 }
 
 // Function that returns 1 if a pair of particles comes from a Z (particle-antiparticle pair), 2 if from a W, and 0 otherwise
-int DiHiggsEvent::isPair(const GenParticle* f1, const GenParticle* f2) {
+int DiHiggsEvent::isPair(const GenParticle* f1, const GenParticle* f2, const GenParticleCollection& g_parts) {
     // Z
     if (f1->pdgId() == (-1)*f2->pdgId()) {return 1;}
     // W
-    else if (isWpair(f1,f2)) {return 2;}
+    else if (isWpair(f1,f2,g_parts)) {return 2;}
     // otherwise return 0
     else {return 0;}
 }
@@ -96,18 +97,22 @@ std::tuple<const GenParticle*, const GenParticle*> DiHiggsEvent::assign_gp(const
 }
 
 // Function that fills the data variables of the WDecay structure 
-DiHiggsEvent::WDecay DiHiggsEvent::assign_W(const GenParticle* w) {
+DiHiggsEvent::WDecay DiHiggsEvent::assign_W(const GenParticle* w, const GenParticleCollection& gen_parts) {
     WDecay w_obj;
     auto w_final = ParticleInfo::getFinal(w);
 
     w_obj.id = w_final;
-    if (w_final->numberOfDaughters() == 2) {
-        auto dtup = assign_gp(w_final->daughter(0), w_final->daughter(1));
-        w_obj.d1 = std::get<0>(dtup);
-        w_obj.d2 = std::get<1>(dtup);
-
-        w_obj.decaytype = classify_W_pair(w_obj.d1, w_obj.d2);
+    for (int j=0; j<w_final->numberOfDaughters()-1; j++) {
+	for (int k=0; k<w_final->numberOfDaughters(); k++) {
+	    if (isWpair(w_final->daughter(j), w_final->daughter(k), gen_parts)) {
+	       auto dtup = assign_gp(w_final->daughter(0), w_final->daughter(1));
+	       w_obj.d1 = std::get<0>(dtup);
+	       w_obj.d2 = std::get<1>(dtup);
+	       break;
+	    }
+	}
     }
+    w_obj.decaytype = classify_W_pair(w_obj.d1, w_obj.d2);
     return w_obj;
 }
 
@@ -158,7 +163,7 @@ DiHiggsEvent::DECAYTYPE DiHiggsEvent::classify_decaytype(const std::vector<int>&
 }
 
 // Function to classify the decay mode when the Higgs has 4 daughters in the Event. Returns a vector of ints (enums), items
-std::vector<int> DiHiggsEvent::search_4_daughters(const GenParticle* gp) {
+std::vector<int> DiHiggsEvent::search_4_daughters(const GenParticle* gp, const GenParticleCollection& g_parts) {
 
     std::vector<int> items;
 
@@ -179,12 +184,12 @@ std::vector<int> DiHiggsEvent::search_4_daughters(const GenParticle* gp) {
     auto d3 = gp->daughter(2);
     auto d4 = gp->daughter(3);
 
-    int pair12 = isPair(d1,d2);
-    int pair13 = isPair(d1,d3);
-    int pair14 = isPair(d1,d4);
-    int pair23 = isPair(d2,d3);
-    int pair24 = isPair(d2,d4);
-    int pair34 = isPair(d3,d4);
+    int pair12 = isPair(d1,d2,g_parts);
+    int pair13 = isPair(d1,d3,g_parts);
+    int pair14 = isPair(d1,d4,g_parts);
+    int pair23 = isPair(d2,d3,g_parts);
+    int pair24 = isPair(d2,d4,g_parts);
+    int pair34 = isPair(d3,d4,g_parts);
 
     // The vector bosons are not explicitly defined in these decays, so they will not be filled
 
@@ -238,40 +243,54 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
             hww = gp;
     // Here is where I will organize the daughters of the Hww appropriately
             std::vector<int> zbosons;
-            std::vector<const GenParticle*> fermions;
+            std::vector<const GenParticle*> quarleps;
             std::vector<WDecay> wDecays;
 
             // iterate over the daughters of this Higgs
             for (int k = 0; k < hww->numberOfDaughters(); k++) {
-                if (hww->daughter(k)->absPdgId() == ParticleInfo::p_Z0) {
+		auto dau = hww->daughter(k);
+                if (dau->absPdgId() == ParticleInfo::p_Z0) {
                     zbosons.push_back(Z);
-                } else if (hww->daughter(k)->absPdgId() == ParticleInfo::p_Wplus) {
-                    wDecays.push_back(assign_W(hww->daughter(k)));
-                } else {
-                    fermions.push_back(hww->daughter(k));
-                }
+                } else if (dau->absPdgId() == ParticleInfo::p_Wplus) {
+                    wDecays.push_back(assign_W(dau, genparts));
+                } else if (ParticleInfo::isQuark(dau->pdgId()) || ParticleInfo::isLeptonOrNeutrino(dau->pdgId())){
+                    quarleps.push_back(dau);
+                } else {continue;}
             }
 
     // Now analyze the combinations of sizes of each of these vectors as different cases
             std::vector<int> fermIDs;
-            // if items is of size 2 already, then it must have two Z bosons and we can immediately write down the class variable type
+            // if zbosons is of size 2 already, then it must have two Z bosons and we can immediately write down the class variable type
             if (zbosons.size() == 2) {type = bbZZ;}
 
-            // if there is one Z and two fermions, check to ensure the two fermions can form a Z. Otherwise, it is a BAD decay
-            else if ((zbosons.size() == 1) && (fermions.size() == 2)) {
-                if (isPair(fermions[0], fermions[1]) == 1) {
+            // if there is one Z and two quarleps, check to ensure the two quarleps can form a Z. Otherwise, it is a BAD decay
+            else if ((zbosons.size() == 1) && (quarleps.size() == 2)) {
+                if (isPair(quarleps[0], quarleps[1],genparts) == 1) {
                     type = bbZZ;
                 } else {type = BAD;}
             }
-            // if fermions is of size 4, the protocol will be same as search_4_daughters
-            else if (fermions.size() == 4) {
-                fermIDs = search_4_daughters(hww); // assignment of GenParticle class variables executed within this function
+            // if quarleps is of size 4, and if the W and Z vectors are empty, the protocol will be same as search_4_daughters
+            else if ((quarleps.size() == 4) && (zbosons.size() + wDecays.size() == 0)) {
+                fermIDs = search_4_daughters(hww,genparts); // assignment of GenParticle class variables executed within this function
                 type = classify_decaytype(fermIDs);
             }
-            // if there is one W and two fermions
-            else if (wDecays.size() == 1 && fermions.size() == 2){
-                if (ParticleInfo::isLepton(fermions[0]->absPdgId()) || ParticleInfo::isANeutrino(fermions[0]->absPdgId())) {
-                    auto fs = assign_gp(fermions[0], fermions[1]);
+	    // if there is one W and more than 2 quarleps, then need to identify a combination that is a valid W pair
+	    else if (wDecays.size() == 1 && quarleps.size() > 2) {
+                std::vector<std::pair <const GenParticle*, const GenParticle*>> pair_cands;
+		for (unsigned int j=0; j<(quarleps.size()-1); j++) {
+		    for (unsigned int k=0; k<quarleps.size(); k++) {
+			if (isWpair(quarleps[j], quarleps[k], genparts)) {
+			   pair_cands.push_back(std::make_pair(quarleps[j], quarleps[k]));
+			}
+		    }
+		}
+		std::vector<const GenParticle*> valid_pair;
+		valid_pair.push_back(pair_cands[0].first);
+		valid_pair.push_back(pair_cands[0].second);
+		if (valid_pair.size() != 2) {std::cout << "Error when one W and > 2 quarleps of the Higgs daughters" << std::endl; ParticleInfo::printGenInfo(genparts,-1);}
+		else {
+		  if (ParticleInfo::isLepton(valid_pair[0]->absPdgId()) || ParticleInfo::isANeutrino(valid_pair[0]->absPdgId())) {
+                    auto fs = assign_gp(valid_pair[0], valid_pair[1]);
                     w1_d1 = std::get<0>(fs);
                     w1_d2 = std::get<1>(fs);
 
@@ -281,13 +300,13 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
 
                     std::vector<int> dtypes;
                     dtypes.push_back(wDecays[0].decaytype);
-                    dtypes.push_back(classify_W_pair(fermions[0], fermions[1]));
+                    dtypes.push_back(classify_W_pair(valid_pair[0], valid_pair[1]));
 
-                    if (dtypes[0] == 0) {ParticleInfo::printGenInfo(genparts,-1);}
+                    if (dtypes[0] == 0) {std::cout<<"Decaytype unfilled"<<std::endl; ParticleInfo::printGenInfo(genparts,-1);}
                     type = classify_decaytype(dtypes);
 
-                } else {
-                    auto fs = assign_gp(fermions[0], fermions[1]);
+                  } else {
+                    auto fs = assign_gp(valid_pair[0], valid_pair[1]);
                     w2_d1 = std::get<0>(fs);
                     w2_d2 = std::get<1>(fs);
 
@@ -297,7 +316,41 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
 
                     std::vector<int> dtypes;
                     dtypes.push_back(wDecays[0].decaytype);
-                    dtypes.push_back(classify_W_pair(fermions[0], fermions[1]));
+                    dtypes.push_back(classify_W_pair(valid_pair[0], valid_pair[1]));
+                    type = classify_decaytype(dtypes);
+                  } 
+		}
+	    }
+            // if there is one W and two quarleps
+            else if (wDecays.size() == 1 && quarleps.size() == 2){
+                if (ParticleInfo::isLepton(quarleps[0]->absPdgId()) || ParticleInfo::isANeutrino(quarleps[0]->absPdgId())) {
+                    auto fs = assign_gp(quarleps[0], quarleps[1]);
+                    w1_d1 = std::get<0>(fs);
+                    w1_d2 = std::get<1>(fs);
+
+                    w2 = wDecays[0].id;
+                    w2_d1 = wDecays[0].d1;
+                    w2_d2 = wDecays[0].d2;
+
+                    std::vector<int> dtypes;
+                    dtypes.push_back(wDecays[0].decaytype);
+                    dtypes.push_back(classify_W_pair(quarleps[0], quarleps[1]));
+
+                    if (dtypes[0] == 0) {std::cout<<"Decaytype unfilled"<<std::endl; ParticleInfo::printGenInfo(genparts,-1);}
+                    type = classify_decaytype(dtypes);
+
+                } else {
+                    auto fs = assign_gp(quarleps[0], quarleps[1]);
+                    w2_d1 = std::get<0>(fs);
+                    w2_d2 = std::get<1>(fs);
+
+                    w1 = wDecays[0].id;
+                    w1_d1 = wDecays[0].d1;
+                    w1_d2 = wDecays[0].d2;
+
+                    std::vector<int> dtypes;
+                    dtypes.push_back(wDecays[0].decaytype);
+                    dtypes.push_back(classify_W_pair(quarleps[0], quarleps[1]));
                     type = classify_decaytype(dtypes);
                 }
             }

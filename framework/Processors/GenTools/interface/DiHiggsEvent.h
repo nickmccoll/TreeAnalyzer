@@ -30,8 +30,8 @@ public:
 
 private:
     int tau_search(const GenParticle* dau);
-    bool isWpair(const GenParticle* f1, const GenParticle* f2);
-    int isPair(const GenParticle* f1, const GenParticle* f2);
+    bool isWpair(const GenParticle* f1, const GenParticle* f2,const GenParticleCollection& g_parts);
+    int isPair(const GenParticle* f1, const GenParticle* f2,const GenParticleCollection& g_parts);
     int classify_W_pair(const GenParticle* p1, const GenParticle* p2);
     std::tuple<const GenParticle*, const GenParticle*> assign_gp(const GenParticle* p1, const GenParticle* p2);
     struct WDecay {
@@ -41,9 +41,9 @@ private:
         int decaytype = 0; // 0 is BAD, others defined above in enum decayidentifier
     };
 
-    WDecay assign_W(const GenParticle* w);
+    WDecay assign_W(const GenParticle* w, const GenParticleCollection& g_parts);
     DECAYTYPE classify_decaytype(const std::vector<int>& items);
-    std::vector<int> search_4_daughters(const GenParticle* gp);
+    std::vector<int> search_4_daughters(const GenParticle* gp, const GenParticleCollection& g_parts);
 };
 
 
