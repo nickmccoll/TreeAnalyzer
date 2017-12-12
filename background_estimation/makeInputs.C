@@ -6,6 +6,7 @@
 #include "make1DTemplateWithScaledKernels.C"
 #include "make1DTemplateWithAdaKern.C"
 #include "make2DTemplateWithAdaKern.C"
+#include "mergeHistosToPDF2D.C"
 #include "makePlots.C"
 #include "CutConstants.h"
 #include <thread>
@@ -88,6 +89,20 @@ void makeBackgroundShapesMJJScaledKernel(const std::string& name, const std::str
 
 }
 
+void mergeBackgroundShapes(const std::string& name, const std::string& filename){
+    for(unsigned int iP = 0; iP < purs.size() && iP < 1; ++iP){
+        for(unsigned int iL = 0; iL < leps.size() && iL < 1; ++iL){
+            std::string inFileX=filename+"_"+name+"_template.root";
+            std::string inFileY=filename+"_"+name+"_COND2D_template.root";
+            std::string rootFile=filename+"_"+name+"_2D.root";
+            std::string args = TString::Format("-v -n histo -inX %s -inY %s -sX Scale:ScaleX,Res:ResX,PT:PTX,OPT:OPTX -sY PT:PTY,OPT:OPTY -xb 90,30,210 -yb 168,800,5000",
+                    inFileX.c_str(),inFileY.c_str()).Data();
+            mergeHistosToPDF2D(rootFile, args);
+        }
+    }
+
+}
+
 void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& addCut=""){
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
     TString resCut = TString::Format("%s&&%s",bV.c_str(),hbbBC.c_str());
@@ -95,15 +110,15 @@ void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string
         resCut +="&&";
         resCut += addCut;
     }
-//        make2DDetectorParam(inputFile,std::string("x_")+resFile,TString::Format("-v -n xHisto -x hbbMass/hbbGenMass -xb 500,0,5 -s %s  -w %s -y hbbGenPT -ylb -yb 200,250,300,350,400,450,500,600,700,800,900,1000,1500,2000,5000",resCut.Data(),nomW.c_str()).Data());
-//        make2DDetectorParam(inputFile,std::string("y_")+resFile,TString::Format("-v -n yHisto -x hhMass/genhhMass -xb 500,0,5 -s %s -w  %s -y hbbGenPT -ylb -yb 200,250,300,350,400,450,500,600,700,800,900,1000,1500,2000,5000",resCut.Data(),nomW.c_str()).Data());
-//        gSystem->Exec(TString::Format("hadd -f %s *_%s",resFile.c_str(),resFile.c_str()));
-//        gSystem->Exec(TString::Format("rm *_%s",resFile.c_str()));
+        make2DDetectorParam(inputFile,std::string("x_")+resFile,TString::Format("-v -n xHisto -x hbbMass/hbbGenMass -xb 500,0,5 -s %s  -w %s -y hbbGenPT -ylb -yb 200,250,300,350,400,450,500,600,700,800,900,1000,1500,2000,5000",resCut.Data(),nomW.c_str()).Data());
+        make2DDetectorParam(inputFile,std::string("y_")+resFile,TString::Format("-v -n yHisto -x hhMass/genhhMass -xb 500,0,5 -s %s -w  %s -y hbbGenPT -ylb -yb 200,250,300,350,400,450,500,600,700,800,900,1000,1500,2000,5000",resCut.Data(),nomW.c_str()).Data());
+        gSystem->Exec(TString::Format("hadd -f %s *_%s",resFile.c_str(),resFile.c_str()));
+        gSystem->Exec(TString::Format("rm *_%s",resFile.c_str()));
 
     std::string tempFile=filename+"_"+name+"_template.root";
 
 //    TString baseSel = TString::Format("%s&&%s&&%s",bV.c_str(),wjjBC.c_str(),exA.c_str());
-    TString baseSel = TString::Format("%s&&%s",bV.c_str(),wjjBC.c_str());
+    TString baseSel = TString::Format("%s&&%s&&(hhMass>800&&hhMass<5000)",bV.c_str(),wjjBC.c_str());
     if(addCut.size()){
         baseSel +="&&";
         baseSel += addCut;
@@ -111,14 +126,30 @@ void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string
     for(unsigned int iP = 0; iP < purs.size() && iP < 1; ++iP){
         for(unsigned int iL = 0; iL < leps.size() && iL < 1; ++iL){
             TString sel =TString::Format("%s&&%s&&%s",baseSel.Data(),pursS[iP].c_str(),lepsS[iL].c_str());
-//            std::string args = TString::Format("-v -n mjj_ -x hbbMass -g hbbGenMass -xb 125,0,250 -s %s -w %s -khs 1.0 -kss -ks 1.5 -kr 1.5 -hs 1.5 -hr 1.5 -vsf %s -vsh scalexHisto -vsv hbbGenPT ",sel.Data(), nomW.c_str(), resFile.c_str()).Data();
-//            make1DTemplateWithAdaKern(inputFile,tempFile, args);
-
-            std::string args = TString::Format("-v -n mvvcond_ -vx hhMass -vy hbbMass -xb 200,0,5000 -yb 125,0,250 -ycb 50,60,80,100,120,140,160,180,200,220,250 -s %s -w %s -khxs 0.50 -khys 0.75 -kss -hs 1.5 -hr 1.5  ",sel.Data(), nomW.c_str()).Data();
-            make2DTemplateWithAdaKern(inputFile,tempFile, args);
+            std::string args = TString::Format("-v -n histo -x hbbMass -g hbbGenMass -xb 125,0,250 -s %s -w %s -khs 1.0 -kss -ks 1.5 -kr 1.5 -hs 0.00714 -hr 45 -vsf %s -vsh scalexHisto -vsv hbbGenPT ",sel.Data(), nomW.c_str(), resFile.c_str()).Data();
+            make1DTemplateWithAdaKern(inputFile,tempFile, args);
         }
     }
 
+}
+
+void makeBackgroundShapesMVVConditional(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& addCut=""){
+    TString baseSel = TString::Format("%s&&%s",bV.c_str(),wjjBC.c_str());
+    if(addCut.size()){
+        baseSel +="&&";
+        baseSel += addCut;
+    }
+    for(unsigned int iP = 0; iP < purs.size() && iP < 1; ++iP){
+        for(unsigned int iL = 0; iL < leps.size() && iL < 1; ++iL){
+            std::string tempFile=filename+"_"+name+"_COND2D_template.root";
+            TString sel =TString::Format("%s&&%s&&%s",baseSel.Data(),pursS[iP].c_str(),lepsS[iL].c_str());
+            float eMin = (name.find("T") != std::string::npos) ? 1500 : 2000;
+            float eMax = (name.find("T") != std::string::npos) ? 2500 : 4500;
+            std::string args = TString::Format("-v -n histo -vx hhMass -vy hbbMass -xb 200,0,5000 -yb 125,0,250 -ycb 50,60,80,100,120,140,160,180,200,220,250 -s %s -w %s -khxs 0.75 -khys 0.75 -kss -khc 1.0 -hs 0.0003 -hr 1200 -emin %.0f -emax %.0f  ",
+                    sel.Data(), nomW.c_str(), eMin, eMax ).Data();
+            make2DTemplateWithAdaKern(inputFile,tempFile, args);
+        }
+    }
 }
 
 
@@ -169,8 +200,15 @@ void go(std::string treeDir) {
 //            makeBackgroundShapesMJJScaledKernel("nonResW","hhLNuJJ_0p66_m",treeDir + "/betrees_bkg.root",TString::Format("%s&&(process==3||process==4||process==6)",nresS.c_str()).Data());
 //            makeBackgroundShapesMJJScaledKernel("nonResT","hhLNuJJ_0p66_m",treeDir + "/betrees_bkg.root",TString::Format("%s&&(process==2||process==5||process==7)",nresS.c_str()).Data());
 
-        makeBackgroundShapesMJJAdaKernel("nonResT","hhLNuJJ_ada_0p5_0p75",treeDir + "/betrees_bkg.root",TString::Format("%s&&(process==2||process==5||process==7)",nresS.c_str()).Data());
-        makeBackgroundShapesMJJAdaKernel("nonResW","hhLNuJJ_ada_0p5_0p75",treeDir + "/betrees_bkg.root",TString::Format("%s&&(process==3||process==4||process==6)",nresS.c_str()).Data());
+//        makeBackgroundShapesMJJAdaKernel("nonResT","hhLNuJJ",treeDir + "/betrees_bkg.root",TString::Format("%s&&(process==2||process==5||process==7)",nresS.c_str()).Data());
+//        makeBackgroundShapesMJJAdaKernel("nonResW","hhLNuJJ",treeDir + "/betrees_bkg.root",TString::Format("%s&&(process==3||process==4||process==6)",nresS.c_str()).Data());
+
+//    makeBackgroundShapesMVVConditional("nonResT","hhLNuJJ",treeDir + "/betrees_bkg.root",TString::Format("%s&&(process==2||process==5||process==7)",nresS.c_str()).Data());
+//    makeBackgroundShapesMVVConditional("nonResW","hhLNuJJ",treeDir + "/betrees_bkg.root",TString::Format("%s&&(process==3||process==4||process==6)",nresS.c_str()).Data());
+
+
+    mergeBackgroundShapes("nonResT","hhLNuJJ");
+    mergeBackgroundShapes("nonResW","hhLNuJJ");
 
 
 //    makeBackgroundShapesMJJScaledKernel("nonRes","hhLNuJJ",treeDir + "/betrees_bkg.root",TString::Format("%s&&%s",aQCD.c_str(),nresS.c_str()).Data());
