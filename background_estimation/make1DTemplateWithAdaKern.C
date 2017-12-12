@@ -108,55 +108,41 @@ public:
 
         auto mkKernel = [](const std::string name,  const std::vector<double> * xvals, const std::vector<double> * weights,
                 double hSF, int nBinsX, double xMin, double xMax, double trimFactor, bool doSigmaScaling, std::vector<TH1*>& outHists){
-            std::cout <<"Starting: "<< name<<std::endl;
 
             KDEProducer pdfProd(xvals,weights,hSF,nBinsX,xMin,xMax,trimFactor,doSigmaScaling);
-            std::string nName = "_pdf0";
-            if(nBinsX <= 0) nName = "_pdf"; //in case the non-adaptive is the main pdf
 
-            TH1 * hPDF = pdfProd.getPDF(name+nName,";pdf",nBinsX,xMin,xMax);
-            TH1 * hPDFD = pdfProd.convToHist(hPDF);
-            hPDFD->SetName( (std::string(hPDF->GetName())+ "D").c_str());
+            TH1 * hPDF = pdfProd.getPDF(name+"_debug_KDE0","",nBinsX,xMin,xMax);
 
-            TH1 * dataH = new TH1F((name+"_data").c_str(),";data",nBinsX,xMin,xMax);
+            TH1 * dataH = new TH1F((name+"_data").c_str(),"",nBinsX,xMin,xMax);
             for(unsigned int iP = 0; iP < xvals->size(); ++iP){
                 dataH->Fill((*xvals)[iP],(*weights)[iP]);
             }
 
             outHists.push_back(hPDF);
-            outHists.push_back(hPDFD);
             outHists.push_back(dataH);
 
-            if(nBinsX > 0){
-                TH1 * haPDF = pdfProd.getAPDF(name+"_pdf",";pdf",nBinsX,xMin,xMax);
-                TH1 * haPDFD = pdfProd.convToHist(haPDF);
-                haPDFD->SetName( (std::string(haPDF->GetName())+ "D").c_str());
-                TH1 * hpPDF = pdfProd.getPilotPDF();
-                hpPDF->SetName( (std::string(haPDF->GetName())+ "P").c_str());
-                TH1 * hpPDFD = pdfProd.convToHist(hpPDF);
-                hpPDFD->SetName( (std::string(haPDF->GetName())+ "PD").c_str());
-                TH1 * hbPDF = pdfProd.getABandwidths(name+"_bandwidths",";bandwidths",nBinsX,xMin,xMax);
-                TH1 * hs    = pdfProd.getLocalVariance(name+"_sigmas",";sigmas",nBinsX,xMin,xMax);
+            TH1 * haPDF = pdfProd.getAPDF(name,";pdf",nBinsX,xMin,xMax);
+            TH1 * hpPDF = pdfProd.getPilotPDF();
+            hpPDF->SetName( (std::string(haPDF->GetName())+ "_debug_pilotKDE").c_str());
+            TH1 * hbPDF = pdfProd.getABandwidths(name+"_debug_bandwidths","",nBinsX,xMin,xMax);
+            TH1 * hs    = pdfProd.getLocalVariance(name+"_debug_var","",nBinsX,xMin,xMax);
 
 
 
-                outHists.push_back(haPDF);
-                outHists.push_back(haPDFD);
-                outHists.push_back(hpPDF);
-                outHists.push_back(hpPDFD);
-                outHists.push_back(hbPDF);
-                outHists.push_back(hs);
-            }
+            outHists.push_back(haPDF);
+            outHists.push_back(hpPDF);
+            outHists.push_back(hbPDF);
+            outHists.push_back(hs);
         };
 
 
         std::vector<std::thread> threads;
         std::vector<TH1*> outHs;
-        if (kt->find('n') != std::string::npos) mkKernel("nom"  ,nominalX.get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
-        if (kt->find('S') != std::string::npos) mkKernel("upS"  ,upSX    .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
-        if (kt->find('s') != std::string::npos) mkKernel("downS",downSX  .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
-        if (kt->find('R') != std::string::npos) mkKernel("upR"  ,upRX    .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
-        if (kt->find('r') != std::string::npos) mkKernel("downR",downRX  .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
+        if (kt->find('n') != std::string::npos) mkKernel(*name             ,nominalX.get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
+        if (kt->find('S') != std::string::npos) mkKernel(*name+"_ScaleUp"  ,upSX    .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
+        if (kt->find('s') != std::string::npos) mkKernel(*name+"_ScaleDown",downSX  .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
+        if (kt->find('R') != std::string::npos) mkKernel(*name+"_ResUp"    ,upRX    .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
+        if (kt->find('r') != std::string::npos) mkKernel(*name+"_ResDown"  ,downRX  .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
         for(auto& t : threads) t.join();
 
         auto mkTrnformed = [&] (const TH1 * inH, std::string name, std::function<double(double)> f ) -> TH1* {
@@ -170,12 +156,12 @@ public:
 
         if (kt->find('n') != std::string::npos){
             const TH1 * nomH = 0;
-            for(const auto * h : outHs) if(!std::strcmp(h->GetName(), "nom_pdf")) nomH = h;
+            for(const auto * h : outHs) if(!std::strcmp(h->GetName(), name->c_str())) nomH = h;
 
-            outHs.push_back(mkTrnformed(nomH,"downPT_pdf", [&](double x){return  1./(1. + *hs*x/vAxis->GetXmax());})  );
-            outHs.push_back(mkTrnformed(nomH,"upPT_pdf", [&](double x){return  (1. + *hs*x/vAxis->GetXmax());})  );
-            outHs.push_back(mkTrnformed(nomH,"downOPT_pdf", [&](double x){return  1./(1. + *hr*vAxis->GetXmin()/x);})  );
-            outHs.push_back(mkTrnformed(nomH,"upOPT_pdf", [&](double x){return  (1. + *hr*vAxis->GetXmin()/x);})  );
+            outHs.push_back(mkTrnformed(nomH,*name+"_PTDown" , [&](double x){return  1./(1. + *hs*x);})  );
+            outHs.push_back(mkTrnformed(nomH,*name+"_PTUp"   , [&](double x){return  (1. + *hs*x);})  );
+            outHs.push_back(mkTrnformed(nomH,*name+"_OPTDown", [&](double x){return  1./(1. + *hr/x);})  );
+            outHs.push_back(mkTrnformed(nomH,*name+"_OPTUp"  , [&](double x){return  (1. + *hr/x);})  );
         }
 
         for(auto* h : outHs) h->Write();

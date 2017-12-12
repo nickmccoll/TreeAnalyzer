@@ -34,6 +34,9 @@ public:
         khc      = p.addFloat ("khc","KDE adaptive bandwidth cutoff",false,5);
         kss      = p.addBool ("kss","KDE sigma scaling");
 
+        emin     = p.addFloat ("emin","Exponential fit min");
+        emax     = p.addFloat ("emax","Exponential fit max");
+
         hs       = p.addFloat("hs","Histogram scaling: x proportional scale",true);
         hr       = p.addFloat("hr","Histogram scaling: 1/x proportional scale",true);
 
@@ -78,63 +81,146 @@ public:
         return true;
     }
 
-    void process(std::string outFileName) {
-//
+    //output the coarse KDE used for later steps
+    const TH2* makeKDE(std::string name,bool doCoarse){
         const int   nBsX   = xAxis->GetNbins();
         const float minX   = xAxis->GetXmin();
         const float maxX   = xAxis->GetXmax();
         const int   nBsY   = yAxis->GetNbins();
         const float minY   = yAxis->GetXmin();
         const float maxY   = yAxis->GetXmax();
-        std::vector<TH1*> outHists;
+        const int   nBsYc  = !doCoarse ? nBsY : ycAxis->GetNbins();
+        const float minYc  = !doCoarse ? minY : ycAxis->GetXmin();
+        const float maxYc  = !doCoarse ? maxY : ycAxis->GetXmax();
 
         KDEProducer2D pdfProd(nominalX.get(),nominalY.get(),weight.get(),
                 *khxs,nBsX,minX,maxX,
                 *khys,nBsY,minY,maxY,
                 *khc,*kss);
-        auto nomName = *name + "_nom";
-        TH2 * hPDF = pdfProd.getPDF(nomName+"_pdf0",";pdf",nBsX,minX,maxX,nBsY,minY,maxY);
-        TH2 * hPDFD = pdfProd.convToHist(hPDF);
-        hPDFD->SetName( (std::string(hPDF->GetName())+ "D").c_str());
 
-        TH2 * dataH = new TH2F((nomName+"_data").c_str(),";data",nBsX,minX,maxX,nBsY,minY,maxY);
+
+        plotter.add2D(pdfProd.getPDF(name+"_debug_KDE0","",nBsX,minX,maxX,nBsY,minY,maxY));
+
+        TH2 * data = new TH2F((name+"_fine_data").c_str(),";data",nBsX,minX,maxX,nBsY,minY,maxY);
         for(unsigned int iP = 0; iP < nominalX->size(); ++iP){
-            dataH->Fill((*nominalX)[iP],(*nominalY)[iP],(*weight)[iP]);
+            data->Fill((*nominalX)[iP],(*nominalY)[iP],(*weight)[iP]);
         }
 
+        plotter.add2D(data);
+        plotter.add2D(pdfProd.getAPDF(name+"_debug_fineKDE","",nBsX,minX,maxX,nBsY,minY,maxY));
 
-        outHists.push_back(hPDF);
-        outHists.push_back(hPDFD);
-        outHists.push_back(dataH);
+        auto * pilot = pdfProd.getPilotPDF();
+        pilot->SetName((name + "_debug_pilotKDE").c_str());
+        plotter.add2D(pilot);
 
-        TH2 * haPDF = pdfProd.getAPDF(nomName+"_pdf",";pdf",nBsX,minX,maxX,nBsY,minY,maxY);
-        TH2 * haPDFD = pdfProd.convToHist(haPDF);
-        haPDFD->SetName( (std::string(haPDF->GetName())+ "D").c_str());
-        TH2 * hpPDF = pdfProd.getPilotPDF();
-        hpPDF->SetName( (std::string(haPDF->GetName())+ "P").c_str());
-        TH2 * hpPDFD = pdfProd.convToHist(hpPDF);
-        hpPDFD->SetName( (std::string(haPDF->GetName())+ "PD").c_str());
-        TH2 * hbx = pdfProd.getABandwidthsX(nomName+"_bandwidthsX",";bandwidths",nBsX,minX,maxX,nBsY,minY,maxY);
-        TH2 * hby = pdfProd.getABandwidthsY(nomName+"_bandwidthsY",";bandwidths",nBsX,minX,maxX,nBsY,minY,maxY);
-        TH2 * hsx    = pdfProd.getLocalVarX(nomName+"_varX",";sigmas",nBsX,minX,maxX,nBsY,minY,maxY);
-        TH2 * hsy    = pdfProd.getLocalVarY(nomName+"_varY",";sigmas",nBsX,minX,maxX,nBsY,minY,maxY);
+        plotter.add2D(pdfProd.getABandwidthsX(name+"_debug_bandwidthsX","",nBsX,minX,maxX,nBsY,minY,maxY));
+        plotter.add2D(pdfProd.getABandwidthsY(name+"_debug_bandwidthsY","",nBsX,minX,maxX,nBsY,minY,maxY));
+        plotter.add2D(pdfProd.getLocalVarX(name   +"_debug_varX","",nBsX,minX,maxX,nBsY,minY,maxY)              ) ;
+        plotter.add2D(pdfProd.getLocalVarY(name   +"_debug_varY","",nBsX,minX,maxX,nBsY,minY,maxY)              ) ;
 
-        outHists.push_back(haPDF);
-        outHists.push_back(haPDFD);
-        outHists.push_back(hpPDF);
-        outHists.push_back(hpPDFD);
-        outHists.push_back(hbx);
-        outHists.push_back(hby);
-        outHists.push_back(hsx);
-        outHists.push_back(hsy);
+        TH2 * kde = pdfProd.getAPDF(name+"_KDE","",nBsX,minX,maxX,nBsYc,minYc,maxYc);
+        kde->Scale(data->Integral()/kde->Integral());
 
-        TFile * f = new TFile(outFileName.c_str(),"recreate");
-        f->cd();
-        for(auto* h : outHists){
-            h->Write();
+        plotter.add2D(kde);
+        return kde;
+    }
+
+    const TH2 * smoothTail(const std::string& name, const TH2* iHist){
+        TH2 * oHist = (TH2*)iHist->Clone(name.c_str());
+         oHist->Scale(1.0/oHist->Integral());
+        TF1 expo("expo","expo",*emin,*emax);
+
+        for(int iY = 1; iY <= oHist->GetNbinsY(); ++iY){
+            auto * proj = oHist->ProjectionX("q",iY,iY);
+            proj->Fit(&expo,"","",*emin,*emax);
+            for(int iX =1; iX <= oHist->GetNbinsX(); ++iX ){
+                const double x = oHist->GetXaxis()->GetBinCenter(iX);
+                if(x > *emin+300){
+                    double fv = expo.Eval(x);
+                    if(x < *emin +700){
+                        const double kFr = ((*emin +700) - x)/400;
+                        fv = (1-kFr)*fv + kFr* oHist->GetBinContent(iX,iY);
+                    }
+                    oHist->SetBinContent(iX,iY,fv);
+                }
+
+            }
         }
-        f->Close();
+        plotter.add2D(oHist);
+        return oHist;
 
+    }
+    const TH2 * conditional(const std::string& name, const TH2* iHist){
+        TH2 * oHist = (TH2*)iHist->Clone(name.c_str());
+        for(int iY = 1; iY <= oHist->GetNbinsY(); ++iY){
+            auto * proj = oHist->ProjectionX("q",iY,iY);
+            double xIntegral = oHist->Integral(1,oHist->GetNbinsX(),iY,iY);
+            if(!xIntegral) { throw std::invalid_argument("Analyzer::Analyzer() -> Making a conditional slice with no events!!!!!");}
+            for(int iX =1; iX <= oHist->GetNbinsX(); ++iX ){
+                oHist->SetBinContent(iX,iY,oHist->GetBinContent(iX,iY)/xIntegral);
+            }
+        }
+        plotter.add2D(oHist);
+        return oHist;
+
+    }
+
+    const TH2 * expandHisto(const std::string& name, const TH2* iHist){
+        const int   nBsX   = xAxis->GetNbins();
+        const float minX   = xAxis->GetXmin();
+        const float maxX   = xAxis->GetXmax();
+        const int   nBsY   = yAxis->GetNbins();
+        const float minY   = yAxis->GetXmin();
+        const float maxY   = yAxis->GetXmax();
+        TH2 * oHist = new TH2F(name.c_str(),iHist->GetTitle(),nBsX,minX,maxX,nBsY,minY,maxY);
+        for(int iX =1; iX <= oHist->GetNbinsX(); ++iX ){
+            auto * proj = iHist->ProjectionY("q",iX,iX);
+            TGraph * graph = new TGraph(proj);
+            for(int iY = 1; iY <= oHist->GetNbinsY(); ++iY){
+                const double y = oHist->GetYaxis()->GetBinCenter(iY);
+                oHist->SetBinContent(iX,iY,graph->Eval(y,0,"S"));
+            }
+        }
+        plotter.add2D(oHist);
+        return oHist;
+    }
+
+    const TH2 * transform ( std::string name,const TH1 * iHist, std::function<double(double)> f ) {
+      TH2 * oHist = (TH2*)iHist->Clone(name.c_str());
+      for(int iX =1; iX <= oHist->GetNbinsX(); ++iX ){
+          const double x = oHist->GetXaxis()->GetBinCenter(iX);
+          for(int iY = 1; iY <= oHist->GetNbinsY(); ++iY){
+              oHist->SetBinContent(iX,iY,oHist->GetBinContent(iX,iY)*f(x));
+          }
+      }
+      plotter.add2D(oHist);
+       return oHist;
+    };
+
+    void process(std::string outFileName) {
+//
+//        auto * kde = makeKDE(*name,true);
+//        kde = smoothTail(*name+ "_coarse_smooth", kde);
+//        kde = conditional(*name + "_coarse_conditional", kde);
+//        kde = expandHisto(*name + "_expanded",kde);
+//        kde = conditional(*name,kde);
+
+        auto * kde = makeKDE(*name,false);
+        kde = smoothTail(*name+ "_smooth", kde);
+        kde = conditional(*name,kde);
+
+        auto * upScale = transform(*name+"_PTUp_debug_beforeCond",kde,[&](double x){return  (1. + *hs*x);});
+        conditional(*name+"_PTUp",upScale);
+        auto * downScale = transform(*name+"_PTDown_debug_beforeCond",kde,[&](double x){return  1./(1. + *hs*x);});
+        conditional(*name+"_PTDown",downScale);
+
+        auto * upRes = transform(*name+"_OPTUp_debug_beforeCond",kde,[&](double x){return  (1. + *hr/x);});
+        conditional(*name+"_OPTUp",upRes);
+        auto * downRes = transform(*name+"_OPTDown_debug_beforeCond",kde,[&](double x){return 1./(1. + *hr/x);});
+        conditional(*name+"_OPTDown",downRes);
+
+
+        plotter.write(outFileName);
     }
 
     std::unique_ptr<TAxis> xAxis;
@@ -151,11 +237,15 @@ public:
     std::shared_ptr<bool>         kss;
     std::shared_ptr<double>       hs;
     std::shared_ptr<double>       hr;
+    std::shared_ptr<double>       emin;
+    std::shared_ptr<double>       emax;
 
 
     std::unique_ptr<std::vector<double>> nominalX  ;
     std::unique_ptr<std::vector<double>> nominalY  ;
     std::unique_ptr<std::vector<double>> weight    ;
+
+    HistGetter plotter;
 
 
 
