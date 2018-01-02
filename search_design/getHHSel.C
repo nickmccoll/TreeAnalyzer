@@ -49,7 +49,7 @@ public:
         reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);  load(reader_fatjet  );
         reader_jet     =std::make_shared<JetReader>     ("ak4PuppiNoLepJet",isRealData(),false);  load(reader_jet     );
 
-        setBranchAddress("skim" ,"ht"         ,   &ht                  ,true);
+        setBranchAddress("skim" ,"ht"         ,   &superHT                  ,true);
         setBranchAddress("skim" ,"selLep_pt"  ,   &selLep_pt           ,true);
         setBranchAddress("skim" ,"selLep_eta" ,   &selLep_eta          ,true);
         setBranchAddress("skim" ,"selLep_phi" ,   &selLep_phi          ,true);
@@ -213,7 +213,7 @@ public:
     std::shared_ptr<MuonReader       > reader_muon     ;
     std::shared_ptr<FatJetReader     > reader_fatjet   ;
     std::shared_ptr<JetReader        > reader_jet      ;
-    float   ht         =0;
+    float   superHT         =0;
     float   selLep_pt  =0;
     float   selLep_eta =0;
     float   selLep_phi =0;

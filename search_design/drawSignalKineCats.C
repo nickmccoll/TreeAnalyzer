@@ -56,6 +56,7 @@
         f->GetObject(TString::Format("%s_%s",p.Data(),v.Data()),h);
         if(!h){
           cout <<   TString::Format("%s_%s",p.Data(),v.Data()) <<" "<< TString::Format("#it{m}(X) %.1f TeV",float(sigMasses[iM])/1000.)<<endl;
+          continue;
         }
         plots->addHistLine(h,TString::Format("#it{m}(X) %.1f TeV",float(sigMasses[iM])/1000.));
     }
@@ -104,7 +105,7 @@
             // p->draw(false);
 };
 
-std::vector<TString> vars = {"genLepWDR","genlep_pt","ht"};
+std::vector<TString> vars = {"genLepWDR","genlep_pt","ht","genW_pt"};
 std::vector<TString> pres = {"all_incl"};
 
 std::vector<unsigned int> cuts = {0,1,2,3,4,5};

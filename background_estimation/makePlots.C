@@ -21,6 +21,12 @@ struct PlotVar{
     PlotVar(std::string varName, std::string varTitle, std::string varSel , const std::vector<double>& bins ) :
         varName(varName),varTitle(varTitle),varSel(varSel), bins(bins){}
 
+    PlotVar(std::string varName, std::string varTitle, std::string varSel,  int nBins, double min, double max,
+            std::string varYName, std::string varYTitle, std::string varYSel,  int nBinsY, double minY, double maxY
+            ) :
+         varName(varName),varTitle(varTitle),varSel(varSel),nBins(nBins),min(min), max(max),
+         varYName(varYName),varYTitle(varYTitle),varYSel(varYSel),nBinsY(nBinsY),minY(minY), maxY(maxY){}
+
     std::string varName = "";
     std::string varTitle = "";
     std::string varSel  = "";
