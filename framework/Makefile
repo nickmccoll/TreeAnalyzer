@@ -39,7 +39,7 @@ $(TARGET): $(OBJ) $(HCOMBI)/../obj/TreeAnalyzerDict.o
 	@echo "Linking the target $@"
 	@echo "============="
 ifeq ($(PLATFORM),macosx)
-		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) -lGenVector -l RooFit -lRooFitCore -l RooStats -l Minuit -l Foam -lHistFactory
+		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) -lGenVector -lRooFitCore 
 else
 		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) $(ROOTLIBS)
 endif
