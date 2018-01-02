@@ -30,8 +30,9 @@ public:
         auto s   = p.addString("s","selection",false,"1.0");
         auto w   = p.addString("w","weight",false,"1.0");
         khxs     = p.addFloat("khxs","KDE h-x scale factor",false,1.);
+        khxc     = p.addFloat ("khxc","KDE adaptive x-bandwidth cutoff",false,5);
         khys     = p.addFloat("khys","KDE h-y scale factor",false,1.);
-        khc      = p.addFloat ("khc","KDE adaptive bandwidth cutoff",false,5);
+        khyc     = p.addFloat ("khyc","KDE adaptive y-bandwidth cutoff",false,5);
         kss      = p.addBool ("kss","KDE sigma scaling");
 
         emin     = p.addFloat ("emin","Exponential fit min");
@@ -94,9 +95,9 @@ public:
         const float maxYc  = !doCoarse ? maxY : ycAxis->GetXmax();
 
         KDEProducer2D pdfProd(nominalX.get(),nominalY.get(),weight.get(),
-                *khxs,nBsX,minX,maxX,
-                *khys,nBsY,minY,maxY,
-                *khc,*kss);
+                *khxs,nBsX,minX,maxX,*khxc,
+                *khys,nBsY,minY,maxY,*khyc,
+                *kss);
 
 
         plotter.add2D(pdfProd.getPDF(name+"_debug_KDE0","",nBsX,minX,maxX,nBsY,minY,maxY));
@@ -232,8 +233,9 @@ public:
 
     std::shared_ptr<std::string> name;
     std::shared_ptr<double>       khxs;
+    std::shared_ptr<double>       khxc;
     std::shared_ptr<double>       khys;
-    std::shared_ptr<double>       khc;
+    std::shared_ptr<double>       khyc;
     std::shared_ptr<bool>         kss;
     std::shared_ptr<double>       hs;
     std::shared_ptr<double>       hr;
