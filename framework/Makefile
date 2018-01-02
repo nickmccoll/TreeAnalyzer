@@ -52,7 +52,7 @@ $(HCOMBI)/../obj/TreeAnalyzerDict.cc: $(wildcard $(HCOMBI)/../interface/*.h) $(H
 	@echo "Generating dictionary $@..."
 	rootcling  -v -l -f $@ -c -I../.. $^ 
 $(HCOMBI)/../obj/TreeAnalyzerDict.o: $(HCOMBI)/../obj/TreeAnalyzerDict.cc
-	$(CXX)  $(CXXFLAGS) -c $<  -o $@	
+	$(CXX)  $(CXXFLAGS) -Wno-unused-parameter -Wno-ignored-qualifiers -Wno-mismatched-tags -c $<  -o $@	
 #-----
 
 $(STARGET): $(OBJ)
@@ -173,7 +173,7 @@ $(HCOMBI)/../obj/%.o : $(HCOMBI)/%.cc
 	@mkdir -p $(dir $@)
 	@echo "============="
 	@echo "Compiling $<"
-	$(CXX) $(CXXFLAGS) -c $<  -o $@
+	$(CXX) $(CXXFLAGS) -Wno-unused-parameter -Wno-ignored-qualifiers -Wno-mismatched-tags -c $<  -o $@
 $(HCOMBI)/../.dep/%.d: $(HCOMBI)/%.cc
 	@mkdir -p $(dir $@)
 	@echo "============="
