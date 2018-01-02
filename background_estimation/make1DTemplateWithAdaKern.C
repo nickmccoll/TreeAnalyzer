@@ -136,14 +136,12 @@ public:
         };
 
 
-        std::vector<std::thread> threads;
         std::vector<TH1*> outHs;
         if (kt->find('n') != std::string::npos) mkKernel(*name             ,nominalX.get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
         if (kt->find('S') != std::string::npos) mkKernel(*name+"_ScaleUp"  ,upSX    .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
         if (kt->find('s') != std::string::npos) mkKernel(*name+"_ScaleDown",downSX  .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
         if (kt->find('R') != std::string::npos) mkKernel(*name+"_ResUp"    ,upRX    .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
         if (kt->find('r') != std::string::npos) mkKernel(*name+"_ResDown"  ,downRX  .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
-        for(auto& t : threads) t.join();
 
         auto mkTrnformed = [&] (const TH1 * inH, std::string name, std::function<double(double)> f ) -> TH1* {
           TH1 * outH = (TH1*)inH->Clone(name.c_str());
