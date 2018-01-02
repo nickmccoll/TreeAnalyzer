@@ -6,6 +6,9 @@ namespace CutConstants{
 std::string nomW = "xsec*trig_N*pu_N*lep_N*btag_N";
 std::string resS  = "hbbWQuark!=0";
 std::string nresS = "hbbWQuark==0";
+std::string nresWS = "(process==3||process==4||process==6)";
+std::string nresWQS = "(process==3||process==4||process==6||process==8)";
+std::string nresTS = "(process==2||process==5||process==7)";
 std::string hbbBC = "hbbCSVCat>=4&&hbbMass>30";
 std::string wjjBC = "wjjTau2o1<0.55&&wjjMass>10";
 std::string exA   = "wlnuDR<3.2&&wwDM<2";
