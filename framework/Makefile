@@ -41,7 +41,7 @@ $(TARGET): $(OBJ) $(HCOMBI)/../obj/TreeAnalyzerDict.o
 ifeq ($(PLATFORM),macosx)
 		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) -lGenVector -lRooFitCore 
 else
-		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) $(ROOTLIBS)
+		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) $(ROOTLIBS) -lRooFitCore 
 endif
 	@echo -- Link finished --
 

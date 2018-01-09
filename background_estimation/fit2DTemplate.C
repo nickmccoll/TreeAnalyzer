@@ -90,113 +90,13 @@ public:
                 }
 
                 plotter.add1D(fitHist);
-//        interpretPDF.fitTo(fitDataHist);
-//        auto * xAxis = pdfHistos.front()->GetXaxis();
-//        auto * yAxis = pdfHistos.front()->GetYaxis();
-//        plotter.add1D(interpretPDF.createHistogram(nT->c_str(),
-//                plottingVars[0],RooFit::Binning(RooBinning (xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax())),
-//                RooFit::YVar(plottingVars[1],RooFit::Binning(RooBinning (yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax()))))) ;
 
-
-
-//        plottingVars.emplace_back("x","x",1);
-//        plottingVars.emplace_back("y","y",1);
-////        RooArgSet varset;
-//        RooArgList varlist;
-//        for(auto& v : plottingVars){
-////            varset.add(v);
-//            varlist.add(v);
-//                        varset.add(self.w.var(var))
-//                        varlist.add(self.w.var(var))
-//        }
-//
-//        pdfHistos.emplace_back(TObjectHelper::getObject<TH2F>(fT,*nT));
-//        dataHists.emplace_back("nominalHist","nominalHist",varlist,&*pdfHistos.back());
-//        pdfs.emplace_back("nominalPDF","nominalPDF",varlist,dataHists.back());
-//
-//        RooArgList coeffList;
-//        RooArgList pdfList;
-//        std::cout << pdfList.add(pdfs[pdfList.getSize()]) <<std::endl;
-//        const std::vector<std::string> systVar = {"Up" , "Down"};
-//        for(const auto& syst : systList){
-//            systVars.emplace_back(syst.c_str(),syst.c_str(),1);
-//            coeffList.add(systVars.back());
-//            for(const auto& var : systVar){
-//                pdfHistos.emplace_back(TObjectHelper::getObject<TH2F>(fT,*nT+"_"+syst+var));
-//                dataHists.emplace_back((syst+var+"Hist").c_str(),(syst+var+"Hist").c_str(),varlist,&*pdfHistos.back());
-//                pdfs.emplace_back((syst+var+"PDF").c_str(),(syst+var+"PDF").c_str(),varlist,dataHists.back());
-////                std::cout << pdfList.add(pdfs[pdfList.getSize()]) <<std::endl;
-//                for(unsigned int iP = 0; iP < pdfList.getSize(); ++iP){
-//                    pdfList.at(iP)->Print();
-//
-//                }
-//            }
-//        }
-//
-//        for(unsigned int iP = 0; iP < pdfList.getSize(); ++iP){
-//            std::cout <<"sP"<< std::endl;
-//            pdfHistos.at(iP)->Print();
-//            dataHists.at(iP).Print();
-//            pdfs.at(iP).Print();
-//            pdfList.at(iP)->Print();
-//            std::cout << "eP"<<std::endl;
-//        }
-//        for(unsigned int iP = 0; iP < coeffList.getSize(); ++iP){
-//            std::cout << "sC"<<std::endl;
-//            coeffList.at(iP)->Print();
-//            std::cout << "eC"<<std::endl;
-//        }
-//
-//        FastVerticalInterpHistPdf2D interpretPDF("interpPDF","interpPDF",plottingVars[0],plottingVars[1],false,pdfList,coeffList);
-//
-//        auto inH =TObjectHelper::getObject<TH2F>(fH,*nH);
-//        RooDataHist fitDataHist((*nH+"DH").c_str(),(*nH+"DH").c_str(),varlist,&*inH);
-//        interpretPDF.fitTo(fitDataHist);
-//        auto * xAxis = pdfHistos.front()->GetXaxis();
-//        auto * yAxis = pdfHistos.front()->GetYaxis();
-//        plotter.add1D(interpretPDF.createHistogram(nT->c_str(),
-//                plottingVars[0],RooFit::Binning(RooBinning (xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax())),
-//                RooFit::YVar(plottingVars[1],RooFit::Binning(RooBinning (yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax()))))) ;
-//
-//
-//
 
         plotter.write(outFileName);
         fT->Close();
         fH->Close();
 }
 
-
-
-//        for systval in systematics:
-//            splitted=systval.split(':')
-//            systName=splitted[1]
-//            syst=splitted[0]
-//            self.w.factory(systName+"[-1,1]")
-//            coeffList.add(self.w.var(systName))
-//
-//            for variation in ["Up","Down"]:
-//                histo=FR.Get(histoname+"_"+syst+variation)
-//                print 'loaded',histoname+"_"+syst+variation
-//                histName="_".join([name+"_"+syst+variation+"HIST",tag])
-//                roohist = ROOT.RooDataHist(histName,histName,varlist,histo)
-//
-//                pdfName="_".join([name+"_"+syst+variation,self.tag])
-//                pdf=ROOT.RooHistPdf(pdfName,pdfName,varset,roohist,order)
-//
-//                getattr(self.w,'import')(roohist,ROOT.RooFit.Rename(histName))
-//                getattr(self.w,'import')(pdf,ROOT.RooFit.Rename(pdfName))
-//                pdfList.add(self.w.pdf(pdfName))
-//
-//        pdfName="_".join([name,self.tag])
-//        if len(systematics)>0:
-//            if len(observables)==1:
-//                total=ROOT.FastVerticalInterpHistPdf(pdfName,pdfName,self.w.var(observables[0]),pdfList, coeffList)
-//            elif len(observables)==2:
-//                total=ROOT.FastVerticalInterpHistPdf2D(pdfName,pdfName,self.w.var(observables[0]),self.w.var(observables[1]),conditional,pdfList, coeffList)
-//            getattr(self.w,'import')(total,ROOT.RooFit.Rename(pdfName))
-//
-//
     std::vector<std::unique_ptr<TH2F> > pdfHistos;
     std::vector<RooRealVar> plottingVars;
     std::vector<RooRealVar> systVars;
