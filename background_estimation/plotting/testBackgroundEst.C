@@ -1,3 +1,4 @@
+//CORRRECT VERSION...do not use other!!!!
 {
   int n = 100000;
   float sigma = 0.1;
@@ -305,19 +306,27 @@
   
   /// Test 1D kernels
   {
-    TFile *f = new TFile("hhLNuJJ_nonResT_template.root","read");
+    TFile *f = new TFile("HHlnujj_resT_incl_template.root","read");
     std::vector<TH1*> hs;
     std::vector<TString> hNs;
     TH1* h = 0; 
-    f->GetObject("histo_data",h);hs.push_back(h);hNs.push_back("mc");
-    f->GetObject("histo",h);     hs.push_back(h);hNs.push_back("KDE");
+    f->GetObject("histo_data",h);hs.push_back(h);hNs.push_back("MC");
+    // f->GetObject("histo_OPTUp",h);     hs.push_back(h);hNs.push_back("Up scale template");
+    f->GetObject("histo",h);     hs.push_back(h);hNs.push_back("KDE w/ expo. tail smoothing");
+    f->GetObject("histo_KDE",h);     hs.push_back(h);hNs.push_back("KDE");
     // f->GetObject("histo_PTUp",h);     hs.push_back(h);hNs.push_back("KDESU");
     // f->GetObject("histo_PTDown",h);     hs.push_back(h);hNs.push_back("KDESD");
     // f->GetObject("histo_OPTUp",h);     hs.push_back(h);hNs.push_back("KDERU");
     // f->GetObject("histo_OPTDown",h);     hs.push_back(h);hNs.push_back("KDERD");
 
     
-    for(unsigned int iH = 1; iH < hs.size(); ++iH) hs[iH]->Scale(hs[0]->Integral(16,125)/hs[iH]->Integral(16,125));              
+    //For Hbb
+    // for(unsigned int iH = 1; iH < hs.size(); ++iH) hs[iH]->Scale(hs[0]->Integral(16,125)/hs[iH]->Integral(16,125));
+    //For HH
+    for(unsigned int iH = 1; iH < hs.size(); ++iH){
+      std::cout << hs[0]->Integral(33,201) <<" "<< hs[iH]->Integral(33,201) <<std::endl;
+      hs[iH]->Scale(hs[0]->Integral(33,201)/hs[iH]->Integral(33,201));              
+    } 
   
     Plotter * p = new Plotter();
     
@@ -328,7 +337,7 @@
     p->setMinMax(.0001,hs[0]->Integral());
     p->setUnderflow(false);
     p->setOverflow(false);
-    // p->rebin(5);
+    p->rebin(5);
     // auto * c = p->drawSplitRatio(1);    
         auto * c = p->draw();    
     c->SetLogy();
@@ -466,6 +475,144 @@
     c->GetPad(1)->Update();
   }
 
+}
+
+  //Test TW fits
+  {
+    std::vector<TString> types = {"resT"};
+    std::vector<TString> typeNs = {"m_{t} bkg. model"};
+    TString sel = "mu_M_full";
+    // std::vector<double> bins = {30,50,100,150,210};
+    // bool binInY = false;
+    std::vector<double> bins = {800,900,1000,1500,2000,3000,4000,5000};
+      bool binInY = true;
+  std::vector<TH2*> hs;
+  std::vector<TString> hNs;
+  std::vector<TH2*> dhs;  
+  
+  
+  TH2 * dh = 0;  
+  for(unsigned int iT = 0; iT < types.size(); ++iT){
+    TFile * fY = new TFile(TString::Format("HHlnujj_%s_distributions.root",types[iT].Data()),"read");
+    TH2 * h = 0; 
+    fY->GetObject(TString::Format("%s_%s_hbbMass_hhMass",types[iT].Data(),sel.Data()),h);
+    if(h==0) continue;
+    if(dh==0)dh= (TH2*)h->Clone();
+    else dh->Add(h);
+    dhs.push_back(h);
+  }    
+  hs.push_back(dh);
+  hNs.push_back("MC");  
+  
+  for(unsigned int iT = 0; iT < types.size(); ++iT){
+    TFile * fY = new TFile(TString::Format("HHlnujj_%s_debug_2DTemplate.root",types[iT].Data()),"read");
+    TH2 * h = 0; 
+    fY->GetObject(TString::Format("%s_%s",types[iT].Data(),sel.Data()),h);
+    if(h==0) continue;
+    h->Scale(dhs[iT]->Integral()/h->Integral());
+    hs.push_back(h);
+    hNs.push_back(typeNs[iT]);  
+  }    
+    
+  const TAxis * ax = hs[0]->GetXaxis();
+  if(binInY) ax = hs[0]->GetYaxis();
+
+  for(unsigned int iB = 0; iB + 1 < bins.size(); ++iB){
+    int binL = ax->FindFixBin(bins[iB]);
+    int binH = ax->FindFixBin(bins[iB+1]) -1;
+    Plotter * p = new Plotter();
+    
+    for(unsigned int iH = 0; iH < hs.size(); ++iH){
+      TH1 * h1D = 0;
+      if(binInY){
+        h1D = hs[iH]->ProjectionX(TString::Format("%s_proj_%u",hNs[iH].Data(),iB),binL,binH);
+      } else {
+        h1D = hs[iH]->ProjectionY(TString::Format("%s_proj_%u",hNs[iH].Data(),iB),binL,binH);
+      }
+      // if(iH == 0) p->addHist(h1D,TString::Format("%s %.0f-%.0f",hNs[iH].Data(),bins[iB],bins[iB+1]));
+      // else  p->addHistLine(h1D,TString::Format("%s %.0f-%.0f",hNs[iH].Data(),bins[iB],bins[iB+1]));
+      if(iH == 0) p->addHist(h1D,TString::Format("%s",hNs[iH].Data()));
+      // else  p->addHistLine(h1D,TString::Format("%s",hNs[iH].Data()));
+        else {
+          for(unsigned int iX = 1; iX <= h1D->GetNbinsX(); ++iX)h1D->SetBinError(iX,0);
+          p->addStackHist(h1D,TString::Format("%s",hNs[iH].Data()));
+        } 
+      
+    }    
+    // p->setMinMax(.0001,hs[0]->Integral());
+    p->setUnderflow(false);
+    p->setOverflow(false);
+    p->rebin(5);
+    p->setXTitle("Hbb soft-drop mass [GeV]");
+    p->setYTitle("N. events");
+    auto * c = p->draw(false,TString::Format("%.0f-%.0f",bins[iB],bins[iB+1]));
+    // c->SetLogy();
+    // c->Update();
+    
+    // p->setBotMinMax(0,2);   
+    // auto * c = p->drawSplitRatio(-1,"stack",false,false,TString::Format("%.0f-%.0f",bins[iB],bins[iB+1]));
+    // c->GetPad(1)->SetLogy();
+    // c->GetPad(1)->Update();
+  }
+
+}
+
+  //Test 1D fits
+  {
+    TString type = "resT";
+
+    // std::vector<TString> sels = {"emu_LMT_ltmb","emu_LMT_none","emu_I_full","emu_LMT_full","e_L_ltmb","e_M_ltmb","e_T_ltmb","e_L_full","e_M_full","e_T_full","mu_L_ltmb","mu_M_ltmb","mu_T_ltmb","mu_L_full","mu_M_full","mu_T_full"};
+    
+    
+    std::vector<TString> sels = {"mu_L_full","mu_M_full","mu_T_full"};
+    
+        // std::vector<TString> sels = {"emu_LMT_lb","emu_L_full","emu_M_full","emu_T_full","e_L_full","e_M_full","e_T_full","mu_L_full","mu_M_full","mu_T_full"};
+                // std::vector<TString> sels = {"emu_M_full","emu_M_lb","emu_M_ltmb","emu_T_ltmb","emu_T_full","e_M_full","mu_M_full"};
+            // std::vector<TString> sels = {"emu_LMT_lb","e_L_lb","e_M_lb","e_T_lb","mu_L_lb","mu_M_lb","mu_T_lb"};
+                // std::vector<TString> sels = {"emu_LMT_full","emu_LMT_lWW","emu_LMT_lb","emu_LMT_lm","emu_LMT_lt","emu_LMT_ltmb","emu_LMT_none"};
+    
+
+    TFile * fd = new TFile(TString::Format("HHlnujj_%s_distributions.root",type.Data()),"read");
+    TFile * fo = new TFile(TString::Format("HHlnujj_%s_template.root",type.Data()),"read");
+    TH1 * hof = 0;
+    fo->GetObject("histo",hof);
+    
+    for(const auto& s : sels){      
+      TH1 * hd = 0;
+      fd->GetObject(TString::Format("%s_%s_hhMass",type.Data(),s.Data()),hd);
+      if(hd==0) continue;
+      std::vector<TH1*> hs;
+      std::vector<TString> hNs;
+      hs.push_back((TH1*)hof->Clone());
+      hNs.push_back("Baseline KDE before MC fit");
+      
+      TFile * ff = new TFile(TString::Format("HHlnujj_%s_%s_fitTemplate.root",type.Data(),s.Data()),"read");
+      TH1* h = 0; 
+      ff->GetObject("histo",h);hs.push_back(h);hNs.push_back("Nominal SR PDF");
+      
+      for(unsigned int iH = 0; iH < hs.size(); ++iH) hs[iH]->Scale(hd->Integral()/hs[iH]->Integral()); 
+            
+      Plotter * p = new Plotter();
+      p->addHist(hd,"SR MC");
+      for(unsigned int iH = 0; iH < hs.size(); ++iH){
+        TH1 * h1D = hs[iH];      
+        for(unsigned int iX = 1; iX <= h1D->GetNbinsX(); ++iX)h1D->SetBinError(iX,0);
+        p->addHist(h1D,TString::Format("%s",hNs[iH].Data()),-1,1,4,20,1,false,true,false,"E");
+      }
+      p->setMinMax(.0001,hs[0]->Integral());
+      p->setUnderflow(false);
+      p->setOverflow(false);
+      p->rebin(8);
+      p->setXTitle("HH mass [GeV]");
+      p->setYTitle("N. of events");
+      p->setBotMinMax(0,2);    
+      // auto * c = p->drawSplitRatio(0,"stack",false,false,s);
+      // c->GetPad(1)->SetLogy();
+      // c->GetPad(1)->Update();
+      auto * c = p->draw(false,s);
+      c->SetLogy();
+      c->Update();  
+    }
 }
 
   //Compare distributions;
@@ -626,5 +773,30 @@
   }
 }
    
+}
+
+
+//Plot bkg categories
+{
+// std::vector<TString> bkgs = {"nonResH0","nonResHM","resW","resT"};
+// std::vector<TString> bkgNs = {"lost t/W (0 q) bkg.","lost t/W (#geq1 q) bkg.","m_{W} bkg.","m_{t} bkg."};
+
+std::vector<TString> bkgs = {"nonResAQ","nonResH","resW","resT"};
+std::vector<TString> bkgNs = {"q/g bkg.","lost t/W bkg.","m_{W} bkg.","m_{t} bkg."};
+std::vector<TString> sels = {"emu_L_ltmb","emu_M_ltmb"};
+TFile * f = new TFile("HHlnujj_distributions.root");
+for(auto& s: sels){
+Plotter * p = new Plotter;
+for(unsigned int iB = 0; iB < bkgs.size(); ++iB){
+TH1 * h= 0;
+f->GetObject(bkgs[iB]+"_"+s+"_hbbMass",h);
+if(h==0) continue;
+p->addStackHist(h,bkgNs[iB]);
+
+}
+p->rebin(2);
+p->draw(false,s);
+}
+
 }
   
