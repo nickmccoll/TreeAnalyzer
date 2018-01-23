@@ -6,6 +6,7 @@
 *C_ACLiC_mainC
 *C_ACliC_dict.o*
 *ACLiC_dict.cxx
+framework/Utilities/HiggsCombineImport/obj/TreeAnalyzerDict.cc
 
 # Prerequisites
 *.d
