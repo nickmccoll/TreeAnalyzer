@@ -55,19 +55,26 @@ public:
 
         i_isMuon      =outTree->add<size8>  ("","isMuon"    ,"b",0);
         i_hbbMass     =outTree->add<float>  ("","hbbMass"   ,"F",0);
+        i_hbbPT       =outTree->add<float>  ("","hbbPT"     ,"F",0);
         i_hbbCSVCat   =outTree->add<size8>  ("","hbbCSVCat" ,"b",0);
+        i_hbbTau2o1   =outTree->add<float>  ("","hbbTau2o1" ,"F",0);
+
         i_hhMass      =outTree->add<float>  ("","hhMass"    ,"F",0);
         i_wlnuDR      =outTree->add<float>  ("","wlnuDR"    ,"F",0);
         i_wwDM        =outTree->add<float>  ("","wwDM"      ,"F",0);
+        i_hwwPT       =outTree->add<float>  ("","hwwPT"   ,"F",0);
         i_wjjCSVCat   =outTree->add<size8>  ("","wjjCSVCat" ,"b",0);
         i_wjjTau2o1   =outTree->add<float>  ("","wjjTau2o1" ,"F",0);
         i_wjjMass     =outTree->add<float>  ("","wjjMass"   ,"F",0);
+        i_wjjPT       =outTree->add<float>  ("","wjjPT"     ,"F",0);
+        i_wlnuPT      =outTree->add<float>  ("","wlnuPT"    ,"F",0);
         i_nAK4Btags   =outTree->add<size8>  ("","nAK4Btags" ,"b",0);
 
         if(!isRealData()){
             i_hbbGenPT    =outTree->add<float>  ("","hbbGenPT"   ,"F",0);
             i_hbbGenMass  =outTree->add<float>  ("","hbbGenMass" ,"F",0);
             i_hbbWQuark   =outTree->add<size8>  ("","hbbWQuark"  ,"b",0);
+            i_hbbWEQuark  =outTree->add<size8>  ("","hbbWEQuark"  ,"b",0);
 //            i_hhHT        =outTree->add<float>  ("","hhHT"       ,"F",0);
 //            i_wjjlepGenPT =outTree->add<float>  ("","wjjlepGenPT","F",0);
 //            i_genMET      =outTree->add<float>  ("","genMET"     ,"F",0);
@@ -106,13 +113,19 @@ public:
 
         outTree->fill(i_isMuon      ,size8(selectedLepton->isMuon()));
         outTree->fill(i_hbbMass     ,float(hbbMass));
+        outTree->fill(i_hbbPT       ,float(hbbCand->pt()));
         outTree->fill(i_hbbCSVCat   ,size8(hbbCSVCat));
+        outTree->fill(i_hbbTau2o1   ,float(hbbCand->tau2otau1()));
+
         outTree->fill(i_hhMass      ,float(hh.mass()));
         outTree->fill(i_wlnuDR      ,float(wlnuDR));
         outTree->fill(i_wwDM        ,float(wwDM));
+        outTree->fill(i_hwwPT       ,float(hWW.pt()));
         outTree->fill(i_wjjCSVCat   ,size8(wjjCSVCat));
         outTree->fill(i_wjjTau2o1   ,float(wjjCand->tau2otau1()));
         outTree->fill(i_wjjMass     ,float(wjjCand->sdMom().mass()));
+        outTree->fill(i_wjjPT       ,float(wjjCand->pt()));
+        outTree->fill(i_wlnuPT      ,float(wlnu.pt()));
         outTree->fill(i_nAK4Btags   ,size8(std::min(nMedBTags_HbbV,250)));
 
 
@@ -123,17 +136,55 @@ public:
             outTree->fill(i_hbbGenPT    ,float(hbbGenIDX < 0 ? 0.0 : reader_fatjet->genJets[hbbGenIDX].pt()));
             outTree->fill(i_hbbGenMass  ,float(hbbGenIDX < 0 ? 0.0 : reader_fatjet->genJets[hbbGenIDX].mass()));
 
-            bool q_in = false;
             const float matchR = 0.8*0.8;
-            for(const auto& d : smDecayEvt.bosonDecays  ){
-                if(d.type != BosonDecay::Z_HAD && d.type != BosonDecay::W_HAD ) continue;
-                if((PhysicsUtilities::deltaR2(*d.dau1,*hbbCand) < matchR) || (PhysicsUtilities::deltaR2(*d.dau2,*hbbCand) < matchR)) q_in = true;
-            }
+
+            int topDecayType = 0; //NONE b wj wjb wjj wjjb
+            int maxNTopQuarks = 0;
+            int totNTopQuarks = 0;
+
 
             for(const auto& d : smDecayEvt.topDecays  ){
-                if(d.type != TopDecay::HAD ) continue;
-                if((PhysicsUtilities::deltaR2(*d.b,*hbbCand) < matchR) || (PhysicsUtilities::deltaR2(*d.W_decay.dau1,*hbbCand) < matchR)
-                        || (PhysicsUtilities::deltaR2(*d.W_decay.dau2,*hbbCand) < matchR)) q_in = true;
+                if(d.type != TopDecay::HAD){
+                    if(d.type != TopDecay::BAD){
+                        if(PhysicsUtilities::deltaR2(*d.b,*hbbCand) < matchR) totNTopQuarks++;
+                    }
+                    continue;
+                }
+                bool passB = (PhysicsUtilities::deltaR2(*d.b,*hbbCand) < matchR);
+                int nW =  (PhysicsUtilities::deltaR2(*d.W_decay.dau1,*hbbCand) < matchR) + (PhysicsUtilities::deltaR2(*d.W_decay.dau2,*hbbCand) < matchR);
+                int nT = nW + passB;
+                totNTopQuarks += nT;
+                if(nT <= maxNTopQuarks) continue;
+                maxNTopQuarks = nT;
+                if(nT == 1){
+                    if(passB) topDecayType = 1;
+                    else topDecayType = 2;
+                } else if(nT == 2){
+                    if(passB) topDecayType = 3;
+                    else topDecayType = 4;
+                } else if(nT == 3) topDecayType = 5;
+            }
+
+            int maxNWQuarks = 0;
+            int totNWQuarks = 0;
+            int WDecayType  = 0;//NONE b wj wjb wjj wjjb
+            for(const auto& d : smDecayEvt.bosonDecays  ){
+                if(d.type != BosonDecay::Z_HAD && d.type != BosonDecay::W_HAD ) continue;
+                int nW = (PhysicsUtilities::deltaR2(*d.dau1,*hbbCand) < matchR) +  (PhysicsUtilities::deltaR2(*d.dau2,*hbbCand) < matchR);
+                totNWQuarks += nW;
+                if(nW <= maxNWQuarks) continue;
+                maxNWQuarks = nW;
+                if(nW == 1) WDecayType = 2;
+                else if(nW == 2) WDecayType = 4;
+            }
+            size8 decayType = 0;
+            size8 nExtraQuarks = 0;
+            if(maxNTopQuarks >= maxNWQuarks){
+                decayType = topDecayType;
+                nExtraQuarks = (totNTopQuarks - maxNTopQuarks) + totNWQuarks;
+            } else {
+                decayType = WDecayType;
+                nExtraQuarks = (totNWQuarks - maxNWQuarks) + totNTopQuarks;
             }
 
 //            MomentumF genVisWW;
@@ -161,10 +212,8 @@ public:
             MomentumF genHH2 = hWW.p4();
             if(hbbGenIDX >= 0 ) genHH2.p4() += reader_fatjet->genJets[hbbGenIDX].p4();
 
-
-
-
-            outTree->fill(i_hbbWQuark   ,size8(q_in));
+            outTree->fill(i_hbbWQuark   ,decayType);
+            outTree->fill(i_hbbWEQuark   ,nExtraQuarks);
 //            outTree->fill(i_hhHT        ,float( genhWW.pt()  + (hbbGenIDX >= 0 ? reader_fatjet->genJets[hbbGenIDX].pt() : 0.0)  ));
 //            outTree->fill(i_wjjlepGenPT ,float(genVisWW.pt()));
 //            outTree->fill(i_genMET      ,float(genMET.pt()));
@@ -193,19 +242,26 @@ public:
     //SR variables
     size i_isMuon    = 0;
     size i_hbbMass   = 0;
+    size i_hbbPT     = 0;
     size i_hbbCSVCat = 0;
+    size i_hbbTau2o1 = 0;
+
     size i_hhMass    = 0;
     size i_wlnuDR    = 0;
     size i_wwDM      = 0;
+    size i_hwwPT     = 0;
     size i_wjjCSVCat = 0;
     size i_wjjTau2o1 = 0;
     size i_wjjMass   = 0;
+    size i_wjjPT     = 0;
+    size i_wlnuPT    = 0;
     size i_nAK4Btags = 0;
 
     //BE extra variables
     size i_hbbGenPT    =0;
     size i_hbbGenMass  =0;
     size i_hbbWQuark   =0;
+    size i_hbbWEQuark   =0;
 //    size i_hhHT        =0;
 //    size i_wjjlepGenPT =0;
 //    size i_genMET      =0;
