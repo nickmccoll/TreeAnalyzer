@@ -17,7 +17,7 @@ class make1DTemplateWithAdaKernAnalyzer : public BaseTreeAnalyzer {
 public:
 
     make1DTemplateWithAdaKernAnalyzer(std::string fileName, std::string treeName,std::string arguments ) : BaseTreeAnalyzer(fileName,treeName,2)
-    {
+{
 
 
         ParParser p;
@@ -37,6 +37,10 @@ public:
 
         hs       = p.addFloat("hs","Histogram scaling: x proportional scale",true);
         hr       = p.addFloat("hr","Histogram scaling: 1/x proportional scale",true);
+
+        doS      = p.addBool("doS","Apply exponential smoothing");
+        emin     = p.addFloat ("emin","Exponential fit min");
+        emax     = p.addFloat ("emax","Exponential fit max");
 
         auto asf       = p.addString("vsf","Average scale file",true);
         auto ash       = p.addString("vsh","Average scale hist",true);
@@ -73,7 +77,7 @@ public:
         upRX     ->reserve(nEntries);
         downRX   ->reserve(nEntries);
         weight   ->reserve(nEntries);
-    }
+}
 
 
     void loadVariables() override{};
@@ -101,70 +105,98 @@ public:
         return true;
     }
 
-    void process(std::string outFileName) {
-        TFile * f = new TFile(outFileName.c_str(),"recreate");
-        f->cd();
+    const TH1* makeKDE(std::string name, const std::vector<double>& xvals){
+        const int   nBsX   = vAxis->GetNbins();
+        const float minX   = vAxis->GetXmin();
+        const float maxX   = vAxis->GetXmax();
 
+        KDEProducer pdfProd(&xvals,&*weight,*khs,nBsX,minX,maxX,*khc,*kss);
 
-        auto mkKernel = [](const std::string name,  const std::vector<double> * xvals, const std::vector<double> * weights,
-                double hSF, int nBinsX, double xMin, double xMax, double trimFactor, bool doSigmaScaling, std::vector<TH1*>& outHists){
+        plotter.add1D(pdfProd.getPDF(name+"_debug_KDE0","",nBsX,minX,maxX));
 
-            KDEProducer pdfProd(xvals,weights,hSF,nBinsX,xMin,xMax,trimFactor,doSigmaScaling);
+        TH1 * dataH = new TH1F((name+"_data").c_str(),"",nBsX,minX,maxX);
+        for(unsigned int iP = 0; iP < xvals.size(); ++iP){
+            dataH->Fill((xvals)[iP],(*weight)[iP]);
+        }
+        plotter.add1D(dataH);
 
-            TH1 * hPDF = pdfProd.getPDF(name+"_debug_KDE0","",nBinsX,xMin,xMax);
+        auto * pilot = pdfProd.getPilotPDF();
+        pilot->SetName((name + "_debug_pilotKDE").c_str());
+        plotter.add1D(pilot);
 
-            TH1 * dataH = new TH1F((name+"_data").c_str(),"",nBinsX,xMin,xMax);
-            for(unsigned int iP = 0; iP < xvals->size(); ++iP){
-                dataH->Fill((*xvals)[iP],(*weights)[iP]);
+        plotter.add1D(pdfProd.getABandwidths(name+"_debug_bandwidths","",nBsX,minX,maxX));
+        plotter.add1D(pdfProd.getLocalVariance(name   +"_debug_var","",nBsX,minX,maxX)              ) ;
+
+        TH1 * kde = pdfProd.getAPDF(name+"_KDE","",nBsX,minX,maxX);
+        kde->Scale(dataH->Integral()/kde->Integral());
+
+        plotter.add1D(kde);
+        return kde;
+    }
+
+    const TH1 * cloneAndWrite(const std::string& name, const TH1* iHist){
+        TH1 * oHist = (TH2*)iHist->Clone(name.c_str());
+        oHist->Scale(1.0/oHist->Integral());
+        plotter.add1D(oHist);
+        return oHist;
+    }
+
+    const TH1 * smoothTail(const std::string& name, const TH1* iHist){
+        TH1 * oHistD = (TH1*)iHist->Clone((name +"_debugFitKDE") .c_str());
+        TH1 * oHist = (TH1*)iHist->Clone((name) .c_str());
+        TF1 expo("expo","expo",*emin,*emax);
+        oHistD->Fit(&expo,"","",*emin,*emax);
+        for(int iX =1; iX <= oHist->GetNbinsX(); ++iX ){
+            const double x = oHist->GetXaxis()->GetBinCenter(iX);
+            if(x > *emin+300){
+                double fv = expo.Eval(x);
+                if(x < *emin +700){
+                    const double kFr = ((*emin +700) - x)/400;
+                    fv = (1-kFr)*fv + kFr* oHist->GetBinContent(iX);
+                }
+                oHist->SetBinContent(iX,fv);
             }
 
-            outHists.push_back(hPDF);
-            outHists.push_back(dataH);
-
-            TH1 * haPDF = pdfProd.getAPDF(name,";pdf",nBinsX,xMin,xMax);
-            TH1 * hpPDF = pdfProd.getPilotPDF();
-            hpPDF->SetName( (std::string(haPDF->GetName())+ "_debug_pilotKDE").c_str());
-            TH1 * hbPDF = pdfProd.getABandwidths(name+"_debug_bandwidths","",nBinsX,xMin,xMax);
-            TH1 * hs    = pdfProd.getLocalVariance(name+"_debug_var","",nBinsX,xMin,xMax);
+        }
+        oHist->Scale(1.0/oHist->Integral());
+        plotter.add1D(oHist);
+        return oHist;
+    }
 
 
+    const TH1* transform ( std::string name,const TH1 * iHist, std::function<double(double)> f) {
+        TH1 * outH = (TH1*)iHist->Clone(name.c_str());
+        for(int iB = 1; iB <= outH->GetNbinsX(); ++iB){
+            outH->SetBinContent(iB,outH->GetBinContent(iB)*f(outH->GetBinCenter(iB)) );
+        }
+        outH->Scale(1.0/outH->Integral());
+        plotter.add1D(outH);
+        return outH;
+    };
 
-            outHists.push_back(haPDF);
-            outHists.push_back(hpPDF);
-            outHists.push_back(hbPDF);
-            outHists.push_back(hs);
-        };
 
+    void process(std::string outFileName) {
 
-        std::vector<TH1*> outHs;
-        if (kt->find('n') != std::string::npos) mkKernel(*name             ,nominalX.get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
-        if (kt->find('S') != std::string::npos) mkKernel(*name+"_ScaleUp"  ,upSX    .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
-        if (kt->find('s') != std::string::npos) mkKernel(*name+"_ScaleDown",downSX  .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
-        if (kt->find('R') != std::string::npos) mkKernel(*name+"_ResUp"    ,upRX    .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
-        if (kt->find('r') != std::string::npos) mkKernel(*name+"_ResDown"  ,downRX  .get(),weight.get(),*khs,vAxis->GetNbins(),vAxis->GetXmin(),vAxis->GetXmax(),*khc,*kss,std::ref(outHs));
-
-        auto mkTrnformed = [&] (const TH1 * inH, std::string name, std::function<double(double)> f ) -> TH1* {
-          TH1 * outH = (TH1*)inH->Clone(name.c_str());
-          for(int iB = 1; iB <= inH->GetNbinsX(); ++iB){
-              outH->SetBinContent(iB,inH->GetBinContent(iB)*f(inH->GetBinCenter(iB)) );
-              outH->SetBinError(iB,0);
-          }
-           return outH;
-        };
-
-        if (kt->find('n') != std::string::npos){
-            const TH1 * nomH = 0;
-            for(const auto * h : outHs) if(!std::strcmp(h->GetName(), name->c_str())) nomH = h;
-
-            outHs.push_back(mkTrnformed(nomH,*name+"_PTDown" , [&](double x){return  1./(1. + *hs*x);})  );
-            outHs.push_back(mkTrnformed(nomH,*name+"_PTUp"   , [&](double x){return  (1. + *hs*x);})  );
-            outHs.push_back(mkTrnformed(nomH,*name+"_OPTDown", [&](double x){return  1./(1. + *hr/x);})  );
-            outHs.push_back(mkTrnformed(nomH,*name+"_OPTUp"  , [&](double x){return  (1. + *hr/x);})  );
+        if (kt->find('n') != std::string::npos) {
+            auto kde = makeKDE(*name,*nominalX);
+            kde = *doS ? smoothTail(*name,kde) : cloneAndWrite(*name,kde);
+            transform(*name+"_PTDown" ,kde, [&](double x){return  1./(1. + *hs*x);})  ;
+            transform(*name+"_PTUp"   ,kde, [&](double x){return  (1. + *hs*x);})  ;
+            transform(*name+"_OPTDown",kde, [&](double x){return  1./(1. + *hr/x);})  ;
+            transform(*name+"_OPTUp"  ,kde, [&](double x){return  (1. + *hr/x);})  ;
         }
 
-        for(auto* h : outHs) h->Write();
-        f->Close();
+        auto justDoNominal = [&](std::string name, const std::vector<double>& xvals ){
+            auto kde = makeKDE(name,xvals);
+            *doS ? smoothTail(name,kde) : cloneAndWrite(name,kde);
+        };
 
+        if (kt->find('S') != std::string::npos) justDoNominal(*name+"_ScaleUp"  ,*upSX  );
+        if (kt->find('s') != std::string::npos) justDoNominal(*name+"_ScaleDown",*downSX);
+        if (kt->find('R') != std::string::npos) justDoNominal(*name+"_ResUp"    ,*upRX  );
+        if (kt->find('r') != std::string::npos) justDoNominal(*name+"_ResDown"  ,*downRX);
+
+        plotter.write(outFileName);
     }
 
     std::unique_ptr<TAxis> vAxis;
@@ -183,6 +215,9 @@ public:
     std::shared_ptr<bool>         kss;
     std::shared_ptr<double>       hs;
     std::shared_ptr<double>       hr;
+    std::shared_ptr<bool>         doS;
+    std::shared_ptr<double>       emin;
+    std::shared_ptr<double>       emax;
 
 
     std::unique_ptr<std::vector<double>> nominalX  ;
@@ -191,6 +226,8 @@ public:
     std::unique_ptr<std::vector<double>> upRX      ;
     std::unique_ptr<std::vector<double>> downRX    ;
     std::unique_ptr<std::vector<double>> weight    ;
+
+    HistGetter plotter;
 
 
 
