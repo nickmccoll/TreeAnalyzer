@@ -4,6 +4,8 @@
 #extra
 *.pcm
 *C_ACLiC_mainC
+*C_ACliC_dict.o*
+*ACLiC_dict.cxx
 
 # Prerequisites
 *.d
