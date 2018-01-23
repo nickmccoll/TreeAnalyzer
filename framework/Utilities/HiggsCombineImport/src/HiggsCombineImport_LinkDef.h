@@ -14,5 +14,12 @@
 #pragma link C++ class FastVerticalInterpHistPdf2D2   ;
 #pragma link C++ class FastVerticalInterpHistPdfBase  ;
 #pragma link C++ class FastVerticalInterpHistPdf2Base ;
+#pragma link C++ class RooDoubleCB                    ;
+#pragma link C++ class RooLevelledExp                 ;
+#pragma link C++ class RooCB                          ;
+#pragma link C++ class RooFermi                       ;
+#pragma link C++ class RooRelBW                       ;
+#pragma link C++ class Triangle                       ;
+
 
 #endif
