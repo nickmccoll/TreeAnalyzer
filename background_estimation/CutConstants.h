@@ -1,24 +1,94 @@
 #ifndef ANALYSISTREEMAKER_BACKGROUNDESTIMATION_CUTCONSTANTS_H
 #define ANALYSISTREEMAKER_BACKGROUNDESTIMATION_CUTCONSTANTS_H
-
+#include<vector>
+#include<utility>
 #include <string>
+#include "AnalysisSupport/Utilities/interface/Types.h"
 namespace CutConstants{
-std::string nomW = "xsec*trig_N*pu_N*lep_N*btag_N";
-std::string resS  = "hbbWQuark!=0";
-std::string nresS = "hbbWQuark==0";
-std::string nresWS = "(process==3||process==4||process==6)";
-std::string nresWQS = "(process==3||process==4||process==6||process==8)";
-std::string nresTS = "(process==2||process==5||process==7)";
-std::string hbbBC = "hbbCSVCat>=4&&hbbMass>30";
-std::string wjjBC = "wjjTau2o1<0.55&&wjjMass>10";
-std::string exA   = "wlnuDR<3.2&&wwDM<2";
-std::string bV    = "nAK4Btags==0";
-std::string aQCD  = "process!=8";
 
-std::vector<std::string > leps  = {"emu","e","mu"};
-std::vector<std::string > lepsS = {"isMuon>=0","isMuon==0","isMuon==1"};
-std::vector<std::string > purs  = {"LMT","L","M","T"};
-std::vector<std::string > pursS = {"hbbCSVCat>=4", "hbbCSVCat==4","hbbCSVCat==5","hbbCSVCat==6"};
+class CutStr : public std::string{
+public:
+    CutStr(std::string name,std::string cut) : std::string(name), cut(cut){}
+    std::string cut;
+};
+
+
+std::string hhFilename = "HHlnujj";
+
+CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
+
+CutStr bkgTS("bkgTS" , "(process==2||process==5||process==7)");
+CutStr bkgWS("bkgWS" , "(process==3||process==4||process==6||process==8)");
+CutStr aQCD ("aQCD"  , "process!=8");
+
+CutStr wjjBC("wjjBC" , "wjjTau2o1<0.55&&wjjMass>10");
+CutStr exA  ("exA"   , "wlnuDR<3.2&&wwDM<2");
+CutStr bV   ("bV"    , "nAK4Btags==0");
+
+
+CutStr hbbMCS("hbbMass","hbbMass");
+CutStr hhMCS ("hhMass" ,"hhMass");
+
+unsigned int nHbbMassBins   =90;
+double minHbbMass = 30  ;
+double maxHbbMass = 210 ;
+unsigned int nHHMassBins   =168;
+double minHHMass  = 800 ;
+double maxHHMass  = 5000;
+
+unsigned int nInclHHMassBins   =280;
+double minInclHHMass  = 0   ;
+double maxInclHHMass  = 7000;
+
+unsigned int nInclHbbMassBins   =125;
+double minInclHbbMass  = 0   ;
+double maxInclHbbMass  = 250;
+
+
+CutStr hhRange  ("hhRange" , hhMCS.cut+">"+ASTypes::flt2Str(minHHMass)+"&&"+hhMCS.cut+"<"+ASTypes::flt2Str(maxHHMass));
+CutStr hhInclRange  ("hhInclRange" , hhMCS.cut+">"+ASTypes::flt2Str(minInclHHMass)+"&&"+hhMCS.cut+"<"+ASTypes::flt2Str(maxInclHHMass));
+CutStr hbbRange ("hbbRange", hbbMCS.cut+">"+ASTypes::flt2Str(minHbbMass)+"&&"+hbbMCS.cut+"<"+ASTypes::flt2Str(maxHbbMass));
+CutStr hbbInclRange  ("hbbInclRange" , hbbMCS.cut+">"+ASTypes::flt2Str(minInclHbbMass)+"&&"+hbbMCS.cut+"<"+ASTypes::flt2Str(maxInclHbbMass));
+
+CutStr hhBinning ("hhBinning" ,ASTypes::int2Str(nHHMassBins)+","+ASTypes::flt2Str(minHHMass)+","+ASTypes::flt2Str(maxHHMass));
+CutStr hbbBinning ("hbbBinning" ,ASTypes::int2Str(nHbbMassBins)+","+ASTypes::flt2Str(minHbbMass)+","+ASTypes::flt2Str(maxHbbMass));
+
+CutStr hhInclBinning ("hhInclBinning" ,ASTypes::int2Str(nInclHHMassBins)+","+ASTypes::flt2Str(minInclHHMass)+","+ASTypes::flt2Str(maxInclHHMass));
+CutStr hbbInclBinning ("hbbInclBinning" ,ASTypes::int2Str(nInclHbbMassBins)+","+ASTypes::flt2Str(minInclHbbMass)+","+ASTypes::flt2Str(maxInclHbbMass));
+
+enum BKGModels  {BKG_NONRES, BKG_NONRESH, BKG_RESW, BKG_REST};
+std::vector<CutStr > bkgSels = {
+        CutStr("nonRes" ,bkgWS.cut+"&&hbbWQuark==0"),
+        CutStr("nonResH",std::string("((")+bkgWS.cut+"&&hbbWQuark!=0&&hbbWQuark<=3)||("+bkgTS.cut+"&&hbbWQuark<=3))"),
+        CutStr("resW"   ,"hbbWQuark==4"),
+        CutStr("resT"   ,"hbbWQuark==5")
+};
+
+enum LEPCuts  {LEP_EMU, LEP_E, LEP_MU};
+std::vector<CutStr> lepSels = {
+        CutStr("emu","isMuon>=0"),
+        CutStr("e"  ,"isMuon==0"),
+        CutStr("mu" ,"isMuon==1")
+};
+enum PURCuts  {PUR_I, PUR_LMT, PUR_L, PUR_M,PUT_T};
+std::vector<CutStr > purSels = {
+        CutStr("I"  ,"1.0"),
+        CutStr("LMT","hbbCSVCat>=4"),
+        CutStr("L"  ,"hbbCSVCat==4"),
+        CutStr("M"  ,"hbbCSVCat==5"),
+        CutStr("T"  ,"hbbCSVCat==6")
+};
+//enum HADCuts  {HAD_FULL, HAD_LWW, HAD_LB,HAD_LTMB,HAD_NONE};
+enum HADCuts  {HAD_FULL, HAD_LWW, HAD_LB,HAD_LTMB,HAD_NONE};
+std::vector<CutStr > hadSels = {
+        CutStr("full",exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut),
+        CutStr("lWW" ,wjjBC.cut+"&&"+bV.cut),
+        CutStr("lb"  ,exA.cut+"&&"+wjjBC.cut),
+        CutStr("ltmb",exA.cut),
+        CutStr("none","1.0")
+};
+
+std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,1750,2000,2500,3000,3500,4000};
 
 }
 
