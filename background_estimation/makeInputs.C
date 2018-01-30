@@ -1,4 +1,4 @@
-    
+
 #if !defined(__CINT__) || defined(__MAKECINT__)
 #include <string>
 #include <TSystem.h>
@@ -92,6 +92,31 @@ std::unique_ptr<TH1> projY(const TH2* inH, const std::string& newName, double mi
 std::unique_ptr<TH1> projX(const TH2* inH, const std::string& newName) {return proj(inH,newName,0,0,true,true);}
 std::unique_ptr<TH1> projY(const TH2* inH, const std::string& newName) {return proj(inH,newName,0,0,false,true);}
 
+double getMean(const TH1* h, double minX = -1, double maxX = -1){
+    double mean = 0;
+    double meanT = 0;
+    for(int iX=0; iX <= h->GetNbinsX();++iX){
+        if(h->GetBinLowEdge(iX) < minX) continue;
+        if(h->GetBinLowEdge(iX) >= maxX ) continue;
+        mean += h->GetBinCenter(iX) * h->GetBinContent(iX);
+        meanT +=h->GetBinContent(iX);
+    }
+    if(meanT) mean /= meanT;
+    return mean;
+}
+
+double getNT(double pt){
+    double L=5;
+    double R=2;
+    double P = 1250;
+    double D = 250;
+    double S = -1;
+    if(pt <= P-D) return L;
+    if(pt >= P+D) return R;
+    return 0.5*(L+R + (L-R)*std::sin(S*TMath::PiOver2()*(pt-P)/D ));
+}
+
+
 void makeDetectorParam(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0"){
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
     std::string xArgs = std::string("-v -n xHisto -x ")+ hbbMCS.cut +"/hbbGenMass "+ " -xb 500,0,5 "+" -s "+cut +" -w "+nomW.cut+ " -y hbbGenPT -ylb -yb 200,250,300,350,400,450,500,600,700,800,900,1000,1500,2000,5000";
@@ -103,9 +128,9 @@ void makeDetectorParam(const std::string& name, const std::string& filename,  co
 }
 
 void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0",float khxs = 1,float khxc = 5){
-    std::string tempFile=filename+"_"+name+"_template.root";
+    std::string tempFile=filename+"_"+name+"_incl_template.root";
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
-    std::string args = std::string("-v -n histo ")+" -x "+hbbMCS.cut+" -g hbbGenMass -xb "+hbbInclRange.cut+ " -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
+    std::string args = std::string("-v -n histo ")+" -x "+hbbMCS.cut+" -g hbbGenMass -xb "+hbbInclBinning.cut+ " -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
     args += " -kss -ks 1.5 -kr 1.5 -hs 0.00714 -hr 45 ";
     args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT ";
     make1DTemplateWithAdaKern(inputFile,tempFile, args);
@@ -114,8 +139,8 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
     std::string tempFile=filename+"_"+name+"_incl_template.root";
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
 
-    float eMin = (name.find("T") != std::string::npos) ?  2000:1500;
-    float eMax = (name.find("T") != std::string::npos) ?  4500:2500;
+    float eMin = (name.find("mt") != std::string::npos) ?  2000:1500;
+    float eMax = (name.find("mt") != std::string::npos) ?  4500:2500;
 
     std::string args = std::string("-v -n histo ")+" -x "+hhMCS.cut+" -g hbbGenMass -xb "+hhInclBinning.cut+" -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
     args += " -kss -ks 1.5 -kr 1.5 -hs 0.0003 -hr 1200 ";
@@ -125,10 +150,10 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
 }
 
 void makeBackgroundShapesMVVConditional(const std::string name, const std::string filename,  const std::string inputFile, const std::string cut="1.0", float khxs = 1,float khxc = 5,float khys = 1,float khyc = 5) {
-    std::string tempFile=filename+"_"+name+"_COND2D_template.root";
-    float eMin = (name.find("T") != std::string::npos) ? 1500 : 2000;
-    float eMax = (name.find("T") != std::string::npos) ? 2500 : 4500;
-    std::string args = std::string("-v -n histo ") + " -vx "+ hhMCS.cut+ " -vy "+hbbMCS.cut+ " -xb "+hhInclBinning+" -yb "+hbbInclBinning+ " -ycb 50,60,80,100,120,140,160,180,200,220,250 "+ "-s "+ cut +" -w "+nomW.cut;
+    std::string tempFile=filename+"_"+name+"_incl_COND2D_template.root";
+        float eMin = (name.find("lost") != std::string::npos) ? 1500 : 2000;
+        float eMax = (name.find("lost") != std::string::npos) ? 2500 : 4500;
+    std::string args = std::string("-v -n histo ") + " -vx "+ hhMCS.cut+ " -vy "+hbbMCS.cut+ " -xb "+hhInclBinning.cut+" -yb "+hbbInclBinning.cut+ " -ycb 50,60,80,100,120,140,160,180,200,220,250 "+ "-s "+ cut +" -w "+nomW.cut;
     args+=std::string(" -khxs ")+ flt2Str(khxs) +" -khxc "+ flt2Str(khxc) +" -khys "+ flt2Str(khys) +" -khyc "+ flt2Str(khyc) + " -hss ";
     args+=std::string(" -hs 0.0003 -hr 1200 ") + " -emin "+ flt2Str(eMin)+ " -emax "+ flt2Str(eMax);
     make2DTemplateWithAdaKern(inputFile,tempFile, args);
@@ -136,10 +161,10 @@ void makeBackgroundShapesMVVConditional(const std::string name, const std::strin
 
 
 void mergeBackgroundShapes(const std::string& name, const std::string& filename){
-    std::string inFileX=filename+"_"+name+"_template.root";
-    std::string inFileY=filename+"_"+name+"_COND2D_template.root";
-    std::string rootFile=filename+"_"+name+"_2D.root";
-    std::string args = std::string("-v -n histo ") + " -nX "+  inFileX + " -inY "+ inFileY + " -sX Scale:ScaleX,Res:ResX,PT:PTX,OPT:OPTX -sY PT:PTY,OPT:OPTY "+ " -xb "+hbbBinning.cut+" -yb "+hhBinning.cut;
+    std::string inFileX=filename+"_"+name+"_incl_template.root";
+    std::string inFileY=filename+"_"+name+"_incl_COND2D_template.root";
+    std::string rootFile=filename+"_"+name+"_2D_template.root";
+    std::string args = std::string("-v -n histo ") + " -inX "+  inFileX + " -inY "+ inFileY + " -sX Scale:ScaleX,Res:ResX,PT:PTX,OPT:OPTX -sY PT:PTY,OPT:OPTY "+ " -xb "+hbbBinning.cut+" -yb "+hhBinning.cut;
     mergeHistosToPDF2D(rootFile, args);
 }
 
@@ -153,11 +178,11 @@ void cutMVVTemplate(const std::string& name, const std::string& filename){
 void makeFittingDistributions(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0", bool doIncl = true){
     std::vector<PlotVar> vars;
     if(doIncl){
-        vars.emplace_back(hbbMCS,";Hbb soft-drop mass [GeV]",hbbMCS.cut,nInclHbbMassBins,minInclHbbMass,maxInclHbbMass,hhMCS,";HH mass [GeV]",hhMCS.cut,nInclHHMassBins,minInclHHMass,maxInclHHMass );
+        vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nInclHbbMassBins,minInclHbbMass,maxInclHbbMass,hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nInclHHMassBins,minInclHHMass,maxInclHHMass );
     } else {
-        vars.emplace_back(hbbMCS,";Hbb soft-drop mass [GeV]",hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass,hhMCS,";HH mass [GeV]",hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
-        vars.emplace_back(hbbMCS,";Hbb soft-drop mass [GeV]",hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass);
-        vars.emplace_back(hhMCS ,";HH mass [GeV]"           ,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
+        vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass,hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
+        vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass);
+        vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
     }
     std::vector<PlotSamp> samps = { {name,"1.0"}};
     std::vector<PlotSel> sels;
@@ -171,14 +196,14 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
 }
 
 void fitBackgroundShapesMVVConditional(std::string name, const std::string& filename, const std::string& fittedName =""){
-    std::string tempFile=filename+"_"+name+"_2D.root";
+    std::string tempFile=filename+"_"+name+"_2D_template.root";
     //Different name in case we want to fit on a different selection with some template
     if(fittedName.size())name = fittedName;
     std::string distFileName=filename+"_"+name+"_distributions.root";
 
     for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
         std::string hName = name+"_"+l+"_"+p+"_"+h+"_"+hbbMCS+"_"+hhMCS;
-        std::string outName = filename + "_"+name+"_"+l+"_"+p+"_"+h+"_1DExpl.root";
+        std::string outName = filename + "_"+name+"_"+l+"_"+p+"_"+h+"_2D_template.root";
         std::string args = std::string("-v ") + "-fT "+ tempFile+" -nT histo -s PTX,OPTX,PTY,OPTY " + " -fH " + distFileName + " -nH "+ hName;
         fit2DTemplate(outName,args);
     }
@@ -191,159 +216,103 @@ void fitBackgroundShapesMVV(std::string name, const std::string& filename, const
 
     for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
         std::string hName = name+"_"+l+"_"+p+"_"+h+"_"+hhMCS;
-        std::string outName = filename + "_"+name+"_"+l+"_"+p+"_"+h+"_fitTemplate.root";
+        std::string outName = filename + "_"+name+"_"+l+"_"+p+"_"+h+"_template.root";
         std::string args = std::string("-v ") + "-fT "+ tempFile+" -nT histo -s PT,OPT " + " -fH " + distFileName + " -nH "+ hName;
         fit1DTemplate(outName,args);
     }
 }
 
 
-void makeResTopMJJShapes(const std::string& name, const std::string& filename){
+template<typename Func>
+void makeResMJJShapes(const std::string& name, const std::string& filename,const std::string& jsonArgs, Func doFit) {
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
-
     for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-//        if(l.find("emu") == std::string::npos ) continue;
-//        if(p.find("LMT") == std::string::npos ) continue;
-//        if(h.find("ltmb") == std::string::npos ) continue;
+        //        if(l.find("emu") == std::string::npos ) continue;
+        //        if(p.find("L") == std::string::npos ) continue;
+        //        if(h.find("none") == std::string::npos ) continue;
         std::string hName = name+"_"+l+"_"+p+"_"+h;
         auto hbb_hh_H = TObjectHelper::getObject<TH2>(iF,hName+"_"+hbbMCS+"_"+hhMCS,false,false);
         if(hbb_hh_H==0) continue;
         auto hhH  = projY(&*hbb_hh_H,hName+"_"+hhMCS);
-
         FunctionParameterPlotter plotter;
         std::vector<std::unique_ptr<FunctionFitter>> fitters;
         for(unsigned int iP = 0; iP < resPTBins.size() -1; ++iP){
-            std::string ptName = flt2Str(resPTBins[iP]) +"to"+flt2Str(resPTBins[iP+1]);
+            std::string ptName  = flt2Str(resPTBins[iP]) +"to"+flt2Str(resPTBins[iP+1]);
             auto hbbH = projX(&*hbb_hh_H,hName+"_"+ptName +"_"+hbbMCS,resPTBins[iP],resPTBins[iP+1]);
-
-            double mean = 0;
-            double meanT = 0;
-            for(int iX=0; iX <= hhH->GetNbinsX();++iX){
-                if(hhH->GetBinLowEdge(iX) < resPTBins[iP]) continue;
-                if(hhH->GetBinLowEdge(iX) >= resPTBins[iP+1] ) continue;
-                mean += hhH->GetBinCenter(iX) * hhH->GetBinContent(iX);
-                meanT +=hhH->GetBinContent(iX);
-            }
-            if(meanT) mean /= meanT;
-
-            fitters.emplace_back(new CBFunctionFitter(&*hbbH,"T"));
-
-            fitters.back()->setVar("meanT"     ,180,120,195);
-            fitters.back()->setVar("sigmaT"     ,15.8,14,20);
-            //             fitters.back()->setConst("sigmaT",1);
-            fitters.back()->setVar("alphaT"     ,1 ,0.1,2);
-//            fitters.back()->setConst("alphaT",1);
-            //                                      fitters.back()->setVar("alphaT"     ,0.9,0.8,1.2);
-            fitters.back()->setVar("alpha2T"  ,1.5,0.5,3);
-            //             fitters.back()->setConst("alpha2T"  ,1);
-
-            double nT = 5;
-            auto getNT=[](double pt)->double{
-                double L=5;
-                double R=2;
-                double P = 1250;
-                double D = 250;
-                double S = -1;
-                if(pt <= P-D) return L;
-                if(pt >= P+D) return R;
-                return 0.5*(L+R + (L-R)*std::sin(S*TMath::PiOver2()*(pt-P)/D ));
-            };
-
-            fitters.back()->setVar("nT"   ,  getNT(mean)  ,1,6);
-            fitters.back()->setVar("nT"   ,  5  ,1,6);
-            fitters.back()->setVar("n2T"  ,5,3,6);
-            fitters.back()->setConst("n2T"  ,1);
-            fitters.back()->setConst("nT"  ,1);
-
-            fitters.back()->w->var("M")->setRange("fit",70,230);
-            fitters.back()->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::Minos(0)});
-            fitters.back()->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::Minos(1)});
-            plotter.addFit(&*fitters.back(),mean,ptName);
+            double mean = getMean(&*hhH,resPTBins[iP],resPTBins[iP+1] );
+            doFit(&*hbbH,fitters);
+            plotter.addFit(&*fitters[iP],mean,ptName);
         }
         plotter.write(filename+"_"+hName+"_fit.root");
-        std::string args = std::string("-i ")+ filename+"_"+hName+"_fit.root ";
-//        args += " -g meanT:laur3,sigmaT:laur2,alphaT:pol0,alpha2T:laur3,nT:FIXp5p2p1250p250p-1,n2T:pol0 ";
-        args += " -g meanT:laur3,sigmaT:laur2,alphaT:laur3,alpha2T:laur3,nT:pol0,n2T:pol0 ";
-        args += " -minX 500 -maxX 3500 ";
-        MakeJSON(filename+"_"+hName+"_fit.json",args);
+        std::string argsP1 = std::string("-i ")+ filename+"_"+hName+"_fit.root ";
+        MakeJSON(filename+"_"+hName+"_fit.json",argsP1+" "+jsonArgs);
     }
+
+}
+
+void makeResTopMJJShapes(const std::string& name, const std::string& filename){
+    auto setupFitter =[](const TH1* hbbH, std::vector<std::unique_ptr<FunctionFitter>>& fitters ){
+        fitters.emplace_back(new CBFunctionFitter(hbbH,"T"));
+        auto fitter = &* fitters.back();
+        fitter->setVar("meanT"     ,180,120,195);
+        fitter->setVar("sigmaT"     ,15.8,14,20);
+        //             fitter->setConst("sigmaT",1);
+        fitter->setVar("alphaT"     ,1 ,0.1,2);
+        //            fitter->setConst("alphaT",1);
+        fitter->setVar("alpha2T"  ,1.5,0.5,3);
+        //             fitter->setConst("alpha2T"  ,1);
+        fitter->setVar("nT"   ,  5  ,1,6);
+        fitter->setVar("n2T"  ,5,3,6);
+        fitter->setConst("n2T"  ,1);
+        fitter->setConst("nT"  ,1);
+        fitter->w->var("M")->setRange("fit",70,230);
+        fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::Minos(0)});
+        fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::Minos(1)});
+    };
+    //        std::strin args = " -g meanT:laur3,sigmaT:laur2,alphaT:pol0,alpha2T:laur3,nT:FIXp5p2p1250p250p-1,n2T:pol0 ";
+    std::string args = " -g meanT:laur3,sigmaT:laur2,alphaT:laur3,alpha2T:laur3,nT:pol0,n2T:pol0 ";
+    args += " -minX 500 -maxX 3500 ";
+    makeResMJJShapes(name,filename,args, setupFitter);
 }
 
 void makeResWMJJShapes(const std::string& name, const std::string& filename){
-    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
-
-    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-        if(l.find("emu") == std::string::npos ) continue;
-        if(p.find("LMT") == std::string::npos ) continue;
-        if(h.find("ltmb") == std::string::npos ) continue;
-
-        std::string hName = name+"_"+l+"_"+p+"_"+h;
-        auto hbb_hh_H = TObjectHelper::getObject<TH2>(iF,hName+"_"+hbbMCS+"_"+hhMCS,false,false);
-        if(hbb_hh_H==0) continue;
-        auto hhH  = projY(&*hbb_hh_H,hName+"_"+hhMCS);
-
-        FunctionParameterPlotter plotter;
-        std::vector<std::unique_ptr<FunctionFitter>> fitters;
-
-        for(unsigned int iP = 0; iP < resPTBins.size() -1; ++iP){
-            std::string ptName = flt2Str(resPTBins[iP]) +"to"+flt2Str(resPTBins[iP+1]);
-            auto hbbH = projX(&*hbb_hh_H,hName+"_"+ptName +"_"+hbbMCS,resPTBins[iP],resPTBins[iP+1]);
-            double mean = 0;
-            double meanT = 0;
-            for(int iX=0; iX <= hhH->GetNbinsX();++iX){
-                if(hhH->GetBinLowEdge(iX) < resPTBins[iP]) continue;
-                if(hhH->GetBinLowEdge(iX) >= resPTBins[iP+1] ) continue;
-                mean += hhH->GetBinCenter(iX) * hhH->GetBinContent(iX);
-                meanT +=hhH->GetBinContent(iX);
-            }
-            if(meanT) mean /= meanT;
-            else continue;
-
-            fitters.emplace_back(new CBFunctionFitter(&*hbbH,"W"));
-
-             fitters.back()->setVar("meanW"     ,90,80,100);
-             fitters.back()->setVar("sigmaW"     ,8,5,15);
-//             fitters.back()->setConst("sigmaW",1);
-             fitters.back()->setVar("alphaW"     ,1.18,0.1,10);
-             fitters.back()->setConst("alphaW",1);
-             fitters.back()->setVar("alpha2W"  ,0.9,0.1,5);
-//             fitters.back()->setConst("alpha2W"  ,1);
-
-             fitters.back()->setVar("nW"  ,5,1,5);
-             fitters.back()->setVar("n2W"  , 1,1,3);
-             fitters.back()->setConst("nW"  ,1);
-             fitters.back()->setConst("n2W"  ,1);
-
-             fitters.back()->w->var("M")->setRange("fit",30,160);
-             fitters.back()->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::Minos(0)});
-             fitters.back()->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::Minos(1)});
-             plotter.addFit(&*fitters.back(),mean,ptName);
-        }
-        plotter.write(filename+"_"+hName+"_fit.root");
-        std::string args = std::string("-i ")+ filename+"_"+hName+"_fit.root ";
-        args += " -g meanW:laur2,sigmaW:laur2,alphaW:pol0,alpha2W:laur2,nW:pol0,n2W:pol0 ";
-        args += " -minX 500 -maxX 3500 ";
-        MakeJSON(filename+"_"+hName+"_fit.json",args);    }
+    auto setupFitter =[](const TH1* hbbH, std::vector<std::unique_ptr<FunctionFitter>>& fitters ){
+        fitters.emplace_back(new CBFunctionFitter(hbbH,"W"));
+        auto fitter = &* fitters.back();
+        fitter->setVar("meanW"     ,90,80,100);
+        fitter->setVar("sigmaW"     ,8,5,15);
+        //             fitter->setConst("sigmaW",1);
+        fitter->setVar("alphaW"     ,1.18,0.1,10);
+        //        fitter->setConst("alphaW",1);
+        fitter->setVar("alpha2W"  ,0.9,0.1,5);
+        //             fitter->setConst("alpha2W"  ,1);
+        fitter->setVar("nW"  ,5,1,6);
+        fitter->setVar("n2W"  , 1,1,6);
+        fitter->setConst("nW"  ,1);
+        fitter->setConst("n2W"  ,1);
+        fitter->w->var("M")->setRange("fit",30,160);
+        fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::Minos(0)});
+        fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::Minos(1)});
+    };
+    std::string args = " -g meanW:laur2,sigmaW:laur2,alphaW:pol0,alpha2W:laur2,nW:pol0,n2W:pol0 ";
+    args += " -minX 500 -maxX 3000 ";
+    makeResMJJShapes(name,filename,args,setupFitter);
 }
 
-
 void convertFuncFitTo2DTemplate(const std::string& name, const std::string& filename,const std::string& funcParamPostfix){
-//    std::string jsonFile = filename+"_"+name+"_"+lepSels[LEP_EMU]+"_"+purSels[PUR_LMT]+"_"+hadSels[HAD_LTMB] +"_fit.json";
-    TFile *oF = new TFile((filename + "_"+name+"_debug_2DTemplate.root").c_str(),"recreate");
-//    CBFunctionFitter xFit(0,funcParamPostfix);
-//    xFit.loadJSON(jsonFile,"MH",nHbbMassBins*10,minHbbMass,maxHbbMass);
-
+    TFile *oF = new TFile((filename + "_"+name+"_2D_template_debug.root").c_str(),"recreate");
     for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-            std::string jsonFile = filename+"_"+name+"_"+lepSels[LEP_EMU]+"_"+p+"_"+hadSels[HAD_NONE] +"_fit.json";
-                CBFunctionFitter xFit(0,funcParamPostfix);
-                xFit.loadJSON(jsonFile,"MH",nHbbMassBins*10,minHbbMass,maxHbbMass);
+        std::string jsonFile = filename+"_"+name+"_"+lepSels[LEP_EMU]+"_"+ (p==purSels[PUR_T] && name.find("w") != std::string::npos ? purSels[PUR_M] : p )
+                                +"_"+hadSels[HAD_NONE] +"_fit.json";
+        CBFunctionFitter xFit(0,funcParamPostfix);
+        xFit.loadJSON(jsonFile,"MH",nHbbMassBins*10,minHbbMass,maxHbbMass);
 
-        auto * iF =  TObjectHelper::getFile(filename + "_"+name+"_"+l+"_"+p+"_"+h+"_fitTemplate.root");
+        auto * iF =  TObjectHelper::getFile(filename + "_"+name+"_"+l+"_"+p+"_"+h+"_template.root");
         if(iF==0) continue;
         auto hh_H = TObjectHelper::getObject<TH1>(iF,"histo",false,false);
         if(hh_H==0) continue;
         oF->cd();
-        TH2 * h_2D = new TH2F((name+"_"+l+"_"+p+"_"+h).c_str(),"",nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
+        TH2 * h_2D = new TH2F((name+"_"+l+"_"+p+"_"+h).c_str(),(std::string(";")+hbbMCS.title+";"+hhMCS.title).c_str(),nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
         for(int iY = 1; iY <= hh_H->GetNbinsX(); ++iY){
             double yNorm = hh_H->GetBinContent(iY);
             double hhV = hh_H->GetBinCenter(iY);
@@ -360,124 +329,103 @@ void convertFuncFitTo2DTemplate(const std::string& name, const std::string& file
     oF->Close();
 }
 
+void compile2DTemplatesForDebug(const std::string& name, const std::string& filename){
+    TFile *oF = new TFile((filename + "_"+name+"_2D_template_debug.root").c_str(),"recreate");
+    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
+        auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_"+l+"_" +p +"_"+h+"_2D_template.root");
+        if(iF==0) continue;
+        auto hh_H = TObjectHelper::getObject<TH2>(iF,"histo__x_y",false,false);
+        if(hh_H==0) continue;
+        oF->cd();
+        hh_H->SetXTitle(hbbMCS.title.c_str());
+        hh_H->SetYTitle(hhMCS.title.c_str());
+        hh_H->Write((name+"_"+l+"_"+p+"_"+h).c_str());
+        iF->Close();
+    }
+    oF->Close();
+}
+
 void go(std::string treeDir) {
     std::string filename = hhFilename;
     std::string treeArea = treeDir + "/betrees_bkg.root";
     //do nonResW
     {
-        //        std::string name = bkgSels[BKG_NONRES];
-        //        std::string genSel = bkgSels[BKG_NONRES].cut + "&&"+ aQCD.cut;
-        //        std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&" hadSels[HAD_LTMB].cut;
-        //        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
-        //        makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,baseSel+hbbRange.cut);
-        //        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,2,0.75,2);
-        //        mergeBackgroundShapes(name,filename);
-        //        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut);
-        //        fitBackgroundShapesMVVConditional(name,filename);
-
-        ////        TestQCD
-        //        makeFittingDistributions(name+"_addQCD",filename,treeArea,bkgSels[BKG_NONRES].cut + "&&"+ hhRange.cut+"&&"+hbbRange.cut);
-        //        fitBackgroundShapesMVVConditional(name,filename,name+"_addQCD");
-        //
-        ////        Test optimizations
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_1_khxc_2_khys_1_khyc_2"   ,filename,treeArea,baseSel,1,2,1,2);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_1_khxc_1p5_khys_1_khyc_1p5"   ,filename,treeArea,baseSel,1,1.5,1,1.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_1_khxc_1_khys_1_khyc_1p5"   ,filename,treeArea,baseSel,1,1,1,1.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_2_khys_1_khyc_2" ,filename,treeArea,baseSel,0.75,2,1,2);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_2_khys_0p75_khyc_2"   ,filename,treeArea,baseSel,0.75,2,0.75,2);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_1_khys_0p75_khyc_1"   ,filename,treeArea,baseSel,0.75,1,0.75,1);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_1_khys_1_khyc_1"   ,filename,treeArea,baseSel,0.75,1,1,1);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_1_khys_0p75_khyc_2"   ,filename,treeArea,baseSel,0.75,1,0.75,2);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_1_khxc_0p5_khys_1_khyc_2" ,filename,treeArea,baseSel,1,0.5,1,2);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_1_khxc_2_khys_0p75_khyc_2",filename,treeArea,baseSel,1,2,0.75,2);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_1_khxc_2_khys_0p5_khyc_2" ,filename,treeArea,baseSel,1,2,0.5,2);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_2_khys_1_khyc_2",filename,treeArea,baseSel,0.75,2,1,2);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p5_khxc_2_khys_0p5_khyc_2" ,filename,treeArea,baseSel,0.5,2,0.5,2);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p25_khxc_2_khys_0p25_khyc_2" ,filename,treeArea,baseSel,0.25,2,0.25,2);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p5_khxc_1_khys_0p5_khyc_1" ,filename,treeArea,baseSel,0.5,1,0.5,1);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p25_khxc_2_khys_0p5_khyc_2" ,filename,treeArea,baseSel,0.25,2,0.5,2);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p5_khxc_2_khys_0p25_khyc_2" ,filename,treeArea,baseSel,0.5,2,0.25,2);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_2_khys_0p75_khyc_2" ,filename,treeArea,baseSel,0.75,2,0.75,2);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_1_khys_0p75_khyc_1" ,filename,treeArea,baseSel,0.75,1,0.75,1);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_0p75_khys_0p75_khyc_0p75" ,filename,treeArea,baseSel,0.75,0.75,0.75,0.75);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_0p5_khys_0p75_khyc_0p5" ,filename,treeArea,baseSel,0.75,0.5,0.75,0.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p5_khxc_0p5_khys_0p5_khyc_0p5" ,filename,treeArea,baseSel,0.5,0.5,0.5,0.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p5_khxc_0p5_khys_0p25_khyc_0p5" ,filename,treeArea,baseSel,0.5,0.5,0.25,0.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p25_khxc_0p5_khys_0p25_khyc_0p5" ,filename,treeArea,baseSel,0.25,0.5,0.25,0.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p25_khxc_0p5_khys_0p5_khyc_0p5" ,filename,treeArea,baseSel,0.25,0.5,0.5,0.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_1_khxc_0p5_khys_0p5_khyc_0p5" ,filename,treeArea,baseSel,1,0.5,0.5,0.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_0p5_khys_0p5_khyc_0p5" ,filename,treeArea,baseSel,0.75,0.5,0.5,0.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_1_khxc_0p5_khys_0p25_khyc_0p5" ,filename,treeArea,baseSel,1,0.5,0.25,0.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_0p5_khys_0p25_khyc_0p5" ,filename,treeArea,baseSel,0.75,0.5,0.25,0.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_0p75_khys_0p25_khyc_0p5" ,filename,treeArea,baseSel,0.75,0.75,0.25,0.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_1_khys_0p25_khyc_0p5" ,filename,treeArea,baseSel,0.75,1,0.25,0.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_0p75_khxc_1p5_khys_0p25_khyc_0p5" ,filename,treeArea,baseSel,0.75,1.5,0.25,0.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_1_khxc_1p5_khys_0p25_khyc_0p5" ,filename,treeArea,baseSel,1,1.5,0.25,0.5);
-        //        makeBackgroundShapesMVVConditional(name+"_khxs_1_khxc_2_khys_0p25_khyc_0p5" ,filename,treeArea,baseSel,1,2,0.25,0.5);
-    }
-    //    //do nonResT
-    {
-        //        std::string name = "nonResT";
-        //        std::string baseSel = nresS + "&&"+ nresTS +"&&" +exA;
-        //        std::string selMJJ = baseSel + "&&(hhMass>800&&hhMass<5000)" ;
-        //        makeDetectorParam(name,filename,baseSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+purSels[0].cut);
-        //        makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,baseSel);
-        //        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,2,0.75,2);
-        //        mergeBackgroundShapes(name,filename);
-        //        makeFittingDistributions(name,filename,treeArea,nresS + "&&"+ nresTS);
-        //        fitBackgroundShapesMVVConditional(name,filename);
-    }
-
-    //    //do resT
-    {
-        std::string name = bkgSels[BKG_REST];
-        std::string genSel = bkgSels[BKG_REST].cut;
-        std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&" +hadSels[HAD_LB].cut;
+        std::string name = bkgSels[BKG_QG];
+        std::string genSel = bkgSels[BKG_QG].cut + "&&"+ aQCD.cut;
+        std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+ hadSels[HAD_LTMB].cut;
+//                makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
         //MVV
-        //        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
-//        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,baseSel+"&&"+hbbRange.cut);
-//        cutMVVTemplate(name,filename);
-//        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
-//        fitBackgroundShapesMVV(name,filename);
+
+//                        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,3,0.5,1);//x = hh
+        //                makeBackgroundShapesMVVConditional(name+"_xs_0p75_xc_2_ys_0p75_yc_2,filename,treeArea,baseSel,0.75,2,0.75,2);//old
+//                makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hhInclRange.cut,true);
 
         //MJJ
-//        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
-//        makeResTopMJJShapes(name,filename);
-
-//        convertFuncFitTo2DTemplate(name,filename,"T");
-
-    }
-    //    //do resW
-    {
-        std::string name = bkgSels[BKG_RESW];
-        std::string genSel = bkgSels[BKG_RESW].cut;
-        std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&" +hadSels[HAD_LB].cut;
-
-        //MVV
-//        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
-//        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,baseSel+"&&"+hbbRange.cut);
-//        cutMVVTemplate(name,filename);
+//        makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,baseSel+"&&"+hhRange.cut);
+        mergeBackgroundShapes(name,filename);
 //        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
-//        fitBackgroundShapesMVV(name,filename);
+        fitBackgroundShapesMVVConditional(name,filename);
+
+        compile2DTemplatesForDebug(name,filename);makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
+    }
+    //    //do lost t/w
+    if(false){
+        std::string name = bkgSels[BKG_LOSTTW];
+        std::string genSel = bkgSels[BKG_LOSTTW].cut;
+        std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&" +hadSels[HAD_LTMB].cut;
+        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
+        //MVV
+        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,8,0.5,2);//x = hh
+        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hhInclRange.cut,true);
+        //MJJ
+        makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,baseSel+"&&"+hhRange.cut);
+        mergeBackgroundShapes(name,filename);
+        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
+        fitBackgroundShapesMVVConditional(name,filename);
+
+        compile2DTemplatesForDebug(name,filename);
+    }
+
+    //    //do mt
+    if(false){
+        std::string name = bkgSels[BKG_MT];
+        std::string genSel = bkgSels[BKG_MT].cut;
+        std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&" +hadSels[HAD_LB].cut;
+        //MVV
+        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
+        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,baseSel+"&&"+hbbRange.cut);
+        cutMVVTemplate(name,filename);
+        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
+        fitBackgroundShapesMVV(name,filename);
 
         //MJJ
-//        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
-//        makeResTopMJJShapes(name,filename);
+        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
+        makeResTopMJJShapes(name,filename);
+        convertFuncFitTo2DTemplate(name,filename,"T");
+    }
+    //    //do mW
+    if(false){
+        std::string name = bkgSels[BKG_MW];
+        std::string genSel = bkgSels[BKG_MW].cut;
+        std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&" +hadSels[HAD_LB].cut;
+        //MVV
+        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
+        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,baseSel+"&&"+hbbRange.cut);
+        cutMVVTemplate(name,filename);
+        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
+        fitBackgroundShapesMVV(name,filename);
 
-//        convertFuncFitTo2DTemplate(name,filename,"W");
+        //MJJ
+        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
+        makeResWMJJShapes(name,filename);
+        convertFuncFitTo2DTemplate(name,filename,"W");
     }
 
+    //Signal
+    if(false){
+        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
 
-//    makeFittingDistributions(bkgSels[BKG_RESW],filename,treeArea,bkgSels[BKG_RESW].cut+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
-//    makeFittingDistributions(bkgSels[BKG_REST],filename,treeArea,bkgSels[BKG_REST].cut+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
-//    makeFittingDistributions(bkgSels[BKG_NONRESH] +"0",filename,treeArea,bkgSels[BKG_NONRESH].cut+"&&hbbWQuark==0"+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
-//    makeFittingDistributions(bkgSels[BKG_NONRESH] +"M",filename,treeArea,bkgSels[BKG_NONRESH].cut+"&&hbbWQuark<=3"+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
-
-//    makeFittingDistributions(bkgSels[BKG_NONRESH],filename,treeArea,bkgSels[BKG_NONRESH].cut+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
-//    makeFittingDistributions(bkgSels[BKG_NONRES],filename,treeArea,bkgSels[BKG_NONRES].cut+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
-    makeFittingDistributions(bkgSels[BKG_NONRES]+"AQ",filename,treeArea,bkgSels[BKG_NONRES].cut + "&&"+ aQCD.cut+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
-
-
+    }
 
 }
 #endif

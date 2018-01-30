@@ -9,7 +9,9 @@ namespace CutConstants{
 class CutStr : public std::string{
 public:
     CutStr(std::string name,std::string cut) : std::string(name), cut(cut){}
+    CutStr(std::string name,std::string cut, std::string title) : std::string(name), cut(cut), title(title){}
     std::string cut;
+    std::string title;
 };
 
 
@@ -26,8 +28,8 @@ CutStr exA  ("exA"   , "wlnuDR<3.2&&wwDM<2");
 CutStr bV   ("bV"    , "nAK4Btags==0");
 
 
-CutStr hbbMCS("hbbMass","hbbMass");
-CutStr hhMCS ("hhMass" ,"hhMass");
+CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{H#rightarrowbb} [GeV]");
+CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
 
 unsigned int nHbbMassBins   =90;
 double minHbbMass = 30  ;
@@ -56,12 +58,12 @@ CutStr hbbBinning ("hbbBinning" ,ASTypes::int2Str(nHbbMassBins)+","+ASTypes::flt
 CutStr hhInclBinning ("hhInclBinning" ,ASTypes::int2Str(nInclHHMassBins)+","+ASTypes::flt2Str(minInclHHMass)+","+ASTypes::flt2Str(maxInclHHMass));
 CutStr hbbInclBinning ("hbbInclBinning" ,ASTypes::int2Str(nInclHbbMassBins)+","+ASTypes::flt2Str(minInclHbbMass)+","+ASTypes::flt2Str(maxInclHbbMass));
 
-enum BKGModels  {BKG_NONRES, BKG_NONRESH, BKG_RESW, BKG_REST};
+enum BKGModels  {BKG_QG, BKG_LOSTTW, BKG_MW, BKG_MT};
 std::vector<CutStr > bkgSels = {
-        CutStr("nonRes" ,bkgWS.cut+"&&hbbWQuark==0"),
-        CutStr("nonResH",std::string("((")+bkgWS.cut+"&&hbbWQuark!=0&&hbbWQuark<=3)||("+bkgTS.cut+"&&hbbWQuark<=3))"),
-        CutStr("resW"   ,"hbbWQuark==4"),
-        CutStr("resT"   ,"hbbWQuark==5")
+        CutStr("qg"    ,"hbbWQuark==0","q/g bkg."),
+        CutStr("losttw","hbbWQuark>0&&hbbWQuark<=3","lost t/W bkg."),
+        CutStr("mw"     ,"hbbWQuark==4","m_{W} bkg."),
+        CutStr("mt"     ,"hbbWQuark==5","m_{t} bkg.")
 };
 
 enum LEPCuts  {LEP_EMU, LEP_E, LEP_MU};
@@ -70,7 +72,7 @@ std::vector<CutStr> lepSels = {
         CutStr("e"  ,"isMuon==0"),
         CutStr("mu" ,"isMuon==1")
 };
-enum PURCuts  {PUR_I, PUR_LMT, PUR_L, PUR_M,PUT_T};
+enum PURCuts  {PUR_I, PUR_LMT, PUR_L, PUR_M,PUR_T};
 std::vector<CutStr > purSels = {
         CutStr("I"  ,"1.0"),
         CutStr("LMT","hbbCSVCat>=4"),
