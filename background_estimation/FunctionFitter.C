@@ -96,7 +96,13 @@ public:
         w->var(vars[0].c_str())->setVal((plot_min+plot_max)/2.);
 
     }
+    double evalFitFromJSON(std::string paramName, double varV){
+        for(unsigned int iP = 0; iP < params.size(); ++iP){
+            if(params[iP] == paramName) return varDep[iP]->Eval(varV);
+        }
+        throw std::invalid_argument("FunctionFitter::evalFitFromJSON() -> Bad name");
 
+    }
     TH1* getHistFromJSON(std::string histName,const double varV){
         for(unsigned int iP = 0; iP < params.size(); ++iP){
             setVar(params[iP],varDep[iP]->Eval(varV));

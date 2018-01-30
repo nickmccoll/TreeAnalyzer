@@ -100,7 +100,7 @@ public:
                 *kss);
 
 
-        plotter.add2D(pdfProd.getPDF(name+"_debug_KDE0","",nBsX,minX,maxX,nBsY,minY,maxY));
+//        plotter.add2D(pdfProd.getPDF(name+"_debug_KDE0","",nBsX,minX,maxX,nBsY,minY,maxY));
 
         TH2 * data = new TH2F((name+"_fine_data").c_str(),";data",nBsX,minX,maxX,nBsY,minY,maxY);
         for(unsigned int iP = 0; iP < nominalX->size(); ++iP){
@@ -108,16 +108,16 @@ public:
         }
 
         plotter.add2D(data);
-        plotter.add2D(pdfProd.getAPDF(name+"_debug_fineKDE","",nBsX,minX,maxX,nBsY,minY,maxY));
+//        plotter.add2D(pdfProd.getAPDF(name+"_debug_fineKDE","",nBsX,minX,maxX,nBsY,minY,maxY));
 
-        auto * pilot = pdfProd.getPilotPDF();
-        pilot->SetName((name + "_debug_pilotKDE").c_str());
-        plotter.add2D(pilot);
+//        auto * pilot = pdfProd.getPilotPDF();
+//        pilot->SetName((name + "_debug_pilotKDE").c_str());
+//        plotter.add2D(pilot);
 
         plotter.add2D(pdfProd.getABandwidthsX(name+"_debug_bandwidthsX","",nBsX,minX,maxX,nBsY,minY,maxY));
         plotter.add2D(pdfProd.getABandwidthsY(name+"_debug_bandwidthsY","",nBsX,minX,maxX,nBsY,minY,maxY));
-        plotter.add2D(pdfProd.getLocalVarX(name   +"_debug_varX","",nBsX,minX,maxX,nBsY,minY,maxY)              ) ;
-        plotter.add2D(pdfProd.getLocalVarY(name   +"_debug_varY","",nBsX,minX,maxX,nBsY,minY,maxY)              ) ;
+//        plotter.add2D(pdfProd.getLocalVarX(name   +"_debug_varX","",nBsX,minX,maxX,nBsY,minY,maxY)              ) ;
+//        plotter.add2D(pdfProd.getLocalVarY(name   +"_debug_varY","",nBsX,minX,maxX,nBsY,minY,maxY)              ) ;
 
         TH2 * kde = pdfProd.getAPDF(name+"_KDE","",nBsX,minX,maxX,nBsYc,minYc,maxYc);
         kde->Scale(data->Integral()/kde->Integral());
@@ -129,10 +129,10 @@ public:
     const TH2 * smoothTail(const std::string& name, const TH2* iHist){
         TH2 * oHist = (TH2*)iHist->Clone(name.c_str());
          oHist->Scale(1.0/oHist->Integral());
-        TF1 expo("expo","expo",*emin,*emax);
 
         for(int iY = 1; iY <= oHist->GetNbinsY(); ++iY){
             auto * proj = oHist->ProjectionX("q",iY,iY);
+            TF1 expo("expo","expo",*emin,*emax);
             proj->Fit(&expo,"","",*emin,*emax);
             for(int iX =1; iX <= oHist->GetNbinsX(); ++iX ){
                 const double x = oHist->GetXaxis()->GetBinCenter(iX);

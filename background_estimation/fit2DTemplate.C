@@ -20,8 +20,6 @@ public:
 
     fit2DTemplateAnalyzer(std::string outFileName,std::string arguments )
 {
-
-
         ParParser p;
         auto fTN = p.addString("fT","template file name",true);
         auto nT  = p.addString("nT","template histogram base name",true);

@@ -83,7 +83,7 @@ public:
         getParamList(*gs,params);
 
         auto iF =  TObjectHelper::getFile(*iFn);
-        TFile * oRF = new TFile((std::string("debug_") + outFileName + ".root").c_str(),"recreate" );
+        TFile * oRF = new TFile((outFileName + ".root").c_str(),"recreate" );
         oRF->cd();
 
         std::vector<std::pair<std::string,std::string>> fStrs;
