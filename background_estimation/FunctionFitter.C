@@ -12,6 +12,9 @@
 #include "RooWorkspace.h"
 #include "RooPlot.h"
 #include "RooAddPdf.h"
+#include "RooProdPdf.h"
+#include "RooGaussian.h"
+#include "RooExponential.h"
 #include "TCanvas.h"
 
 class FunctionFitter {
@@ -46,71 +49,9 @@ public:
     void setConst(std::string var, double val) {
         w->var(var.c_str())->setConstant(val);
     }
-
-    void loadJSON(const std::string& jsonFN,const std::string& var, const int nBinsX, const double minX, const double maxX){
-        std::ifstream file (jsonFN);
-        if (!file.is_open())  throw std::invalid_argument("FunctionFitter::loadJSON() -> Bad file");
-        varDep.resize(params.size());
-        std::stringstream strStream;
-        strStream << file.rdbuf();
-        std::string str = strStream.str();
-        str.erase(std::remove(str.begin(), str.end(), '}'), str.end());
-        str.erase(std::remove(str.begin(), str.end(), '{'), str.end());
-        std::vector<std::string> paramFits(std::sregex_token_iterator(str.begin(), str.end(), std::regex("\", \""), -1), std::sregex_token_iterator());
-        if(paramFits.size() != params.size()) throw std::invalid_argument("FunctionFitter::loadJSON() -> not the correct number of parameters");
-        for(const auto& s :paramFits){
-            std::vector<std::string> ps(std::sregex_token_iterator(s.begin(), s.end(), std::regex("\": \""), -1), std::sregex_token_iterator());
-            if(ps.size() != 2) {
-                for(auto& p :ps) std::cout << p <<" ";
-                std::cout <<std::endl;
-                throw std::invalid_argument("FunctionFitter::loadJSON() -> Bad parsing");
-            }
-            ps[0].erase(std::remove(ps[0].begin(), ps[0].end(), '"'), ps[0].end());
-            ps[1].erase(std::remove(ps[1].begin(), ps[1].end(), '"'), ps[1].end());
-            int pInd=-1;
-            for(unsigned int iP = 0; iP<params.size();iP++){
-                if(params[iP] != ps[0]) continue;
-                pInd =iP; break;
-            }
-            if(pInd < 0) {
-                for(auto& p :ps) std::cout << p <<" ";
-                std::cout <<std::endl;
-                throw std::invalid_argument("FunctionFitter::loadJSON() -> Bad parameter");
-            }
-            std:size_t index = 0;
-            while (true) {
-                 index = ps[1].find(var, index);
-                 if (index == std::string::npos) break;
-                 ps[1].replace(index, 2, "x");
-                 index += 1;
-            }
-            varDep[pInd].reset(new TF1(ps[0].c_str(),ps[1].c_str(),1,13000));
-        }
-
-        plot_bins = nBinsX;
-        plot_min  = minX;
-        plot_max  = maxX;
-        w->var(vars[0].c_str())->setMin(plot_min);
-        w->var(vars[0].c_str())->setMax(plot_max);
-        w->var(vars[0].c_str())->setBins(plot_bins);
-        w->var(vars[0].c_str())->setVal((plot_min+plot_max)/2.);
-
+    double getVal(std::string var) {
+        return w->var(var.c_str())->getVal();
     }
-    double evalFitFromJSON(std::string paramName, double varV){
-        for(unsigned int iP = 0; iP < params.size(); ++iP){
-            if(params[iP] == paramName) return varDep[iP]->Eval(varV);
-        }
-        throw std::invalid_argument("FunctionFitter::evalFitFromJSON() -> Bad name");
-
-    }
-    TH1* getHistFromJSON(std::string histName,const double varV){
-        for(unsigned int iP = 0; iP < params.size(); ++iP){
-            setVar(params[iP],varDep[iP]->Eval(varV));
-        }
-        std::string thisModel = std::string("model")+postFix;
-        return w->pdf(thisModel.c_str())->createHistogram(histName.c_str(),*w->var(vars[0].c_str()),RooFit::Binning(RooBinning (plot_bins,plot_min,plot_max))) ;
-    }
-
 
     void fit(const std::vector<RooCmdArg>& options){
         std::string thisModel = std::string("model")+postFix;
@@ -120,6 +61,7 @@ public:
         else if(options.size()==2) w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1]);
         else if(options.size()==3) w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2]);
         else if(options.size()==4) w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2],options[3]);
+        else if(options.size()==5) w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2],options[3],options[4]);
     }
 
     TCanvas* projection(const std::string& name, double& chi2){
@@ -127,6 +69,7 @@ public:
         std::string data  = std::string("data");
         auto frame = w->var(vars[0].c_str())->frame();
         w->data(data.c_str())->plotOn(frame);
+        w->pdf(model.c_str())->fixAddCoefRange("fit");
         w->pdf(model.c_str())->plotOn(frame, RooFit::NormRange("fit"));
         TCanvas* can = new TCanvas(name.c_str());
         can->cd();
@@ -136,6 +79,37 @@ public:
         frame->SetTitle("");
         chi2 = frame->chiSquare();
         return can;
+    }
+    TCanvas* projection2D(const std::string& name, double& chi2){
+        std::string model = std::string("model")+postFix;
+        auto * pdf = w->pdf(model.c_str())->createHistogram(model.c_str(), *w->var(vars[0].c_str()),RooFit::YVar(*w->var(vars[1].c_str()))   );
+        TCanvas* can = new TCanvas(name.c_str());
+        can->cd();
+        pdf->Draw("COLZ");
+        pdf->GetYaxis()->SetTitle(vars[1].c_str());
+        pdf->GetXaxis()->SetTitle(vars[0].c_str());
+        pdf->SetTitle("");
+        return can;
+    }
+    TH1* data2D(const std::string& name){
+        std::string data  = std::string("data");
+        auto * hist = w->data(data.c_str())->createHistogram(name.c_str(), *w->var(vars[0].c_str()),RooFit::YVar(*w->var(vars[1].c_str()))   );
+        hist->GetYaxis()->SetTitle(vars[1].c_str());
+        hist->GetXaxis()->SetTitle(vars[0].c_str());
+        return hist;
+    }
+    TH1* pdf2D(const std::string& name){
+        std::string model = std::string("model")+postFix;
+        auto * hist = w->pdf(model.c_str())->createHistogram(name.c_str(), *w->var(vars[0].c_str()),RooFit::YVar(*w->var(vars[1].c_str()))   );
+        hist->GetYaxis()->SetTitle(vars[1].c_str());
+        hist->GetXaxis()->SetTitle(vars[0].c_str());
+        return hist;
+    }
+    TH1* pdf1D(const std::string& name){
+        std::string model = std::string("model")+postFix;
+        auto * hist = w->pdf(model.c_str())->createHistogram(name.c_str(), *w->var(vars[0].c_str()));
+        hist->GetXaxis()->SetTitle(vars[0].c_str());
+        return hist;
     }
 
 
@@ -162,51 +136,89 @@ protected:
         w->import(dataHist);
     }
 
-};
 
-class DoubleCBFunctionFitter : public FunctionFitter{
-public:
-    DoubleCBFunctionFitter(const TH1* iH, const std::string postFix = "", const std::vector<std::string>&  plotVars = {"M"}) :
-    FunctionFitter(iH,postFix,plotVars){
+    void addCB(const std::string& postFix, const std::string& modelName, const std::string& varName, bool doExpo){
+        auto pn =[&] (const std::string& v) ->std::string {return v+postFix;};
+        auto pv =[&] (const std::string& v) ->RooRealVar* {return w->var((v+postFix).c_str());};
+
         std::string model = std::string("model")+postFix;
-        addParam("meanW"  ,"[90,80,110]");
-        addParam("sigmaW" ,"[8,5,20]");
-        addParam("alphaW" ,"[1,0.1,10]");
-        addParam("alphaW2","[1,0.1,10]");
+        addParam(pn("mean"  ),"[90,0,300]");
+        addParam(pn("sigma" ),"[8,0,100]");
+        addParam(pn("alpha" ),"[1,0.001,100]");
+        addParam(pn("alpha2"),"[1,0.001,100]");
 
-        addParam("meanTop"  ,"[180,140,200]");
-        addParam("sigmaTop" ,"[15,5,30]");
-        addParam("alphaTop" ,"[1,0.1,10]");
-        addParam("alphaTop2","[1,0.1,10]");
+        addParam(pn("n")  ,"[5,1,100]");
+        addParam(pn("n2"),"[5,1,100]");
 
-        addParam("n","[5]");
-        addParam("fW","[0.5,0,1]");
+        std::string cbName = doExpo ? modelName +"P" : modelName;
+        RooDoubleCB modelP(cbName .c_str(),cbName.c_str(),*w->var(varName.c_str())  ,
+                *pv("mean") ,*pv("sigma"),*pv("alpha"),*pv("n") ,*pv("alpha2"),*pv("n2"));
+        w->import(modelP);
 
-        RooDoubleCB modelW((model+"W").c_str(),(model+"W").c_str(),*w->var(vars[0].c_str()),*w->var("meanW"),*w->var("sigmaW"),*w->var("alphaW"),*w->var("n"),*w->var("alphaW2"),*w->var("n"));
-        RooDoubleCB modelTop((model+"Top").c_str(),(model+"Top").c_str(),*w->var(vars[0].c_str()),*w->var("meanTop"),*w->var("sigmaTop"),*w->var("alphaTop"),*w->var("n"),*w->var("alphaTop2"),*w->var("n"));
-        w->import(modelW);
-        w->import(modelTop);
-        w->factory((std::string("SUM::")+model+"(fW*" + model+"W"+","+model+"Top)").c_str());
+        if(doExpo){
+            addParam(pn("slope"),"[-1,-10,0]");
+            std::string expName =  modelName +"E";
+            RooExponential modelE(expName.c_str(),expName.c_str(),*w->var(varName.c_str()),*pv("slope"));
+            w->import(modelE);
+            addParam(pn("fE"),"[0.1,0,1]");
+            RooAddPdf modelC(modelName.c_str(),modelName.c_str(),*w->pdf(expName.c_str()),*w->pdf(cbName.c_str()),*pv("fE"));
+            w->import(modelC);
+        }
+    }
+
+};
+class CBFunctionFitter : public FunctionFitter{
+public:
+    CBFunctionFitter(const TH1* iH, bool doExpo, const std::string postFix, const std::vector<std::string>&  plotVars = {"M"}) :
+    FunctionFitter(iH,postFix,plotVars){
+        addCB(postFix,std::string("model")+postFix,vars[0],doExpo);
     }
 };
 
-class CBFunctionFitter : public FunctionFitter{
+
+class CBFunctionFitter2D : public FunctionFitter{
 public:
-    CBFunctionFitter(const TH1* iH, const std::string postFix = "", const std::vector<std::string>&  plotVars = {"M"}) :
+    CBFunctionFitter2D(const TH2* iH,bool doExpoX, const std::string postFix, const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
     FunctionFitter(iH,postFix,plotVars){
         std::string model = std::string("model")+postFix;
-        addParam(std::string("mean"  )+postFix,"[90,0,300]");
-        addParam(std::string("sigma" )+postFix,"[8,0,100]");
-        addParam(std::string("alpha" )+postFix,"[1,0.001,100]");
-        addParam(std::string("alpha2")+postFix,"[1,0.001,100]");
+        addCB(postFix+plotVars[0],std::string("model")+postFix+plotVars[0],vars[0],doExpoX);
 
-        addParam(std::string("n")+postFix ,"[5,1,100]");
-        addParam(std::string("n2")+postFix,"[5,1,100]");
-        RooDoubleCB modelW(model.c_str(),model.c_str(),*w->var(vars[0].c_str())  ,  *w->var((std::string("mean")  +postFix).c_str()) ,*w->var((std::string("sigma") +postFix).c_str()) ,
-                                                                                *w->var((std::string("alpha") +postFix).c_str()) ,*w->var((std::string("n")     +postFix).c_str()) ,
-                                                                                *w->var((std::string("alpha2")+postFix).c_str()) ,*w->var((std::string("n2")    +postFix).c_str())
-        );
-        w->import(modelW);
+        auto pn0 =[&] (std::string v) ->std::string{return v+postFix+plotVars[0];};
+        auto pn1 =[&] (std::string v) ->std::string{return v+postFix+plotVars[1];};
+        auto pn0V =[&] (std::string v) ->RooRealVar*{return w->var((v+postFix+plotVars[0]).c_str());};
+        auto pn1V =[&] (std::string v) ->RooRealVar*{return w->var((v+postFix+plotVars[1]).c_str());};
+        auto pn1F =[&] (std::string v) ->RooAbsReal*{return w->function((v+postFix+plotVars[1]).c_str());};
+        auto pn1P =[&] (std::string v) ->RooAbsPdf*{return w->pdf((v+postFix+plotVars[1]).c_str());};
+        auto pn0P =[&] (std::string v) ->RooAbsPdf*{return w->pdf((v+postFix+plotVars[0]).c_str());};
+
+        addParam(pn1("mean"  ),"[90,0,5000]");
+        addParam(pn1("sigma" ),"[8,0,1000]");
+        addParam(pn1("alpha" ),"[1,0.001,100]");
+        addParam(pn1("alpha2"),"[1,0.001,100]");
+        addParam(pn1("n")        ,"[5,1,100]");
+        addParam(pn1("n2")       ,"[5,1,100]");
+        addParam(pn1("maxS")     ,"[2.5,0,5]");
+        addParam(pn1("mean_p1"  ),"[0,-5000,5000]");
+        addParam(pn1("sigma_p1" ),"[0,-1000,1000]");
+
+        RooFormulaVar xSig  (pn1("xSig"  ).c_str(),"(@0-@1)/@2",RooArgList(*w->var((plotVars[0]).c_str()),*pn0V("mean"),*pn0V("sigma")));
+        w->import(xSig  );
+        RooFormulaVar xSigC  (pn1("xSigC"  ).c_str(),"max(-1*@0,min(@1,@0))",RooArgList(*pn1V("maxS"  ),*pn1F("xSig"  )));
+        w->import(xSigC  );
+        RooFormulaVar mean  (pn1("meanF"  ).c_str(),"@0*(1+@1*@2)"     ,RooArgList(*pn1V("mean"  ),*pn1V("mean_p1"  ),*pn1F("xSigC"  )));
+        RooFormulaVar sigma (pn1("sigmaF" ).c_str(),"@0*(1+@1*abs(@2))",RooArgList(*pn1V("sigma" ),*pn1V("sigma_p1" ),*pn1F("xSigC"  )));
+        w->import(mean  );
+        w->import(sigma );
+        std::cout <<"IMPORT!2"<<std::endl;
+        RooDoubleCB modelMVV(pn1("model").c_str(),pn1("model").c_str(),*w->var(plotVars[1].c_str())  ,
+                *pn1F("meanF"),*pn1F("sigmaF") ,*pn1V("alpha"),*pn1V("n"),*pn1V("alpha2"),*pn1V("n2"));
+        std::cout <<"IMPORT!3"<<std::endl;
+        w->import(modelMVV);
+        std::cout <<"IMPORT!4"<<std::endl;
+        RooProdPdf condProd((std::string("model")+postFix).c_str(), (pn0("model")+"*"+pn1("model")).c_str(),*pn0P("model"),RooFit::Conditional(*pn1P("model"), *w->var(plotVars[1].c_str())) );
+        std::cout <<"IMPORT!5"<<std::endl;
+        w->import(condProd);
+        std::cout <<"IMPORT!6"<<std::endl;
     }
 };
 
@@ -241,6 +253,7 @@ class FunctionParameterPlotter{
 public:
     std::vector<std::unique_ptr<TCanvas>> cans;
     std::vector<std::unique_ptr<TGraphErrors>> graphs;
+    std::vector<std::unique_ptr<TH1>> hists;
     int curPt = 0;
 
     FunctionParameterPlotter(){}
@@ -269,12 +282,30 @@ void addFit(FunctionFitter* fitter, double pt, std::string name){
     graphs.back()->SetPointError(curPt,0.0,0.0);
     curPt++;
 }
+void addFit2D(FunctionFitter* fitter, double pt, std::string name){
+    if(!curPt){
+        for(const auto& p: fitter->params){
+            graphs.emplace_back(new TGraphErrors);
+            graphs.back()->SetTitle(p.c_str());
+            graphs.back()->SetName(p.c_str());
+        }
+    }
+    hists.emplace_back(fitter->data2D(std::string("data_")+name));
+    hists.emplace_back(fitter->pdf2D(std::string("pdf_")+name));
+
+    for(unsigned int iV = 0; iV< fitter->params.size(); ++iV ){
+        graphs[iV]->SetPoint(curPt,pt,fitter->w->var(fitter->params[iV].c_str())->getVal());
+        graphs[iV]->SetPointError(curPt,0.0,fitter->w->var(fitter->params[iV].c_str())->getError());
+    }
+    curPt++;
+}
 
     void write(const std::string& outFileName){
         TFile * oF = new TFile(outFileName.c_str(),"recreate");
         oF->cd();
         for(auto& c : cans) c->Write();
         for(auto& c : graphs) c->Write();
+        for(auto& c : hists) c->Write();
         oF->Close();
     }
 };

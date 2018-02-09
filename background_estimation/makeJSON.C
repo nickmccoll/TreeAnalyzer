@@ -10,9 +10,112 @@
 #include "TGraphErrors.h"
 #include "TF1.h"
 
-class MakeJSONAnalyzer {
+
+class CJSON {
+public:
+    CJSON() {} //For filling by hand
+    CJSON(const std::string& inFName){ //For reading in a file
+        std::ifstream file (inFName);
+        if (!file.is_open())  throw std::invalid_argument("CJSON::CJSON() -> Bad file");
+        std::stringstream strStream;
+        strStream << file.rdbuf();
+        std::string str = strStream.str();
+        str.erase(std::remove(str.begin(), str.end(), '}'), str.end());
+        str.erase(std::remove(str.begin(), str.end(), '{'), str.end());
+        std::vector<std::string> paramFits(std::sregex_token_iterator(str.begin(), str.end(), std::regex("\", \""), -1), std::sregex_token_iterator());
+        for(const auto& s :paramFits){
+            std::vector<std::string> ps(std::sregex_token_iterator(s.begin(), s.end(), std::regex("\": \""), -1), std::sregex_token_iterator());
+            if(ps.size() != 2) {
+                for(auto& p :ps) std::cout << p <<" ";
+                std::cout <<std::endl;
+                throw std::invalid_argument("CJSON::CJSON() -> Bad parsing");
+            }
+            ps[0].erase(std::remove(ps[0].begin(), ps[0].end(), '"'), ps[0].end());
+            ps[1].erase(std::remove(ps[1].begin(), ps[1].end(), '"'), ps[1].end());
+            addEntry(ps[0],ps[1]);
+        }
+    }
+
+    void replaceEntries(const CJSON& other) {
+        for(unsigned int iP = 0; iP < other.getNP(); ++iP){
+            const auto& oP = other.getP(iP);
+            replaceEntry(oP.first,oP.second);
+        }
+    }
+
+    void replaceEntry(const std::string& name, const std::string& value) {
+        for(auto& p : parameters){
+            if(p.first != name) continue;
+            p.second = value;
+        }
+    }
+    void addEntry(const std::string& name, const std::string& value) { parameters.emplace_back(name,value);}
+    void write(const std::string& outFile){
+        std::ofstream outJSON(outFile.c_str(),std::ios::out|std::ios::trunc);
+        dumpJSON(outJSON);
+        outJSON.close();
+    }
+    unsigned int getNP() const {return parameters.size();}
+
+    void fillFunctions(const std::string& xVarName, const std::string& yVarName = ""){
+        for(unsigned int i = 0; i< parameters.size(); ++i)
+            functions.emplace_back(parameters[i].first,getFunction(i,xVarName,yVarName));
+    }
+
+    const std::pair<std::string,std::string>& getP(unsigned int idx) const {return parameters[idx];}
+
+    std::string getP(const std::string& name) const {
+        for(auto& p : parameters){
+            if(p.first != name) continue;
+            return p.second;
+        }
+        return "";
+    }
+
+    float evalFunc(const std::string& name, double xVal) const {
+        for(auto& p : functions){
+            if(p.first != name) continue;
+            return p.second->Eval(xVal);
+        }
+        return 0;
+    }
+
+private:
+    void dumpJSON(std::ofstream& f ){
+        f<<"{";
+        for(unsigned int iP = 0; iP < parameters.size(); ++iP){
+            const auto& p = parameters[iP];
+            std::string ostr = std::string("\"") + p.first +"\": \""+ p.second+"\"";
+            if(iP + 1 < parameters.size()) ostr +=", ";
+            f<< ostr;
+        }
+        f<<"}";
+    }
+    TF1* getFunction(unsigned int idx, const std::string& xVarName, const std::string& yVarName = ""){
+        std::string pstr = parameters[idx].second;
+        auto replace = [&](const std::string& vn, const std::string tf1n){
+            std:size_t index = 0;
+            while (true) {
+                 index = pstr.find(vn, index);
+                 if (index == std::string::npos) break;
+                 pstr.replace(index, vn.size(), tf1n);
+                 index += 1;
+            }
+        };
+        replace(xVarName,"x");
+        if(yVarName.size()) replace(yVarName,"y");
+        return new TF1(parameters[idx].first.c_str(),pstr.c_str(),1,13000);
+    }
+
+    std::vector<std::pair<std::string,std::string>> parameters;
+    std::vector<std::pair<std::string,std::unique_ptr<TF1>> >functions;
+};
+
+CJSON makeJSON(const std::string& outFileName,std::string& arguments){
     typedef std::vector<std::pair<std::string,std::string> > ParamNames;
-    void getParamList(const std::string& inList, ParamNames& outNames){
+    typedef std::vector<std::pair<std::string,std::string> > SystNames;
+
+    auto getParamList =[&](const std::string& inList, ParamNames& outNames){
         outNames.clear();
         std::vector<std::string> systList(std::sregex_token_iterator(inList.begin(), inList.end(), std::regex(","), -1), std::sregex_token_iterator());
         for(const auto& s :systList){
@@ -23,9 +126,9 @@ class MakeJSONAnalyzer {
             }
             outNames.emplace_back(names[0],names[1]);
         }
-    }
+    };
 
-    std::string returnFString(const TF1* func, const std::string& var) const {
+    auto returnFString =[](const TF1* func, const std::string& var) ->std::string {
         const std::string name = func->GetName();
 
         auto getPower = [&](unsigned int nP) ->std::string{
@@ -52,82 +155,65 @@ class MakeJSONAnalyzer {
             return fstring;
         }
         return "";
-    }
-    void dumpJSON(const std::vector<std::pair<std::string,std::string>>& ps,std::ofstream& f ){
-        f<<"{";
-        for(unsigned int iP = 0; iP < ps.size(); ++iP){
-            const auto& p = ps[iP];
-            std::string ostr = std::string("\"") + p.first +"\": \""+ p.second+"\"";
-            if(iP + 1 < ps.size()) ostr +=", ";
-            f<< ostr;
-        }
-        f<<"}";
-    }
-
-public:
-    typedef std::vector<std::pair<std::string,std::string> > SystNames;
-
-    MakeJSONAnalyzer(const std::string& outFileName,std::string arguments )
-{
+    };
 
 
-        ParParser p;
-        auto iFn   = p.addString("i","input file name",true);
-        auto gs    = p.addString("g" ,"Comma separated graphs and functions to fit  like MEAN:pol3,SIGMA:pol2",true);
-        auto v     = p.addString("var","x var name ",false,"MH");
-        auto minX  = p.addFloat("minX","minimum x",true);
-        auto maxX  = p.addFloat("maxX","maximum x",true);
-        p.parse(arguments);
 
-        ParamNames params;
-        getParamList(*gs,params);
+    ParParser p;
+    auto iFn   = p.addString("i","input file name",true);
+    auto gs    = p.addString("g" ,"Comma separated graphs and functions to fit  like MEAN:pol3,SIGMA:pol2",true);
+    auto v     = p.addString("var","x var name ",false,"MH");
+    auto minX  = p.addFloat("minX","minimum x",true);
+    auto maxX  = p.addFloat("maxX","maximum x",true);
+    p.parse(arguments);
 
-        auto iF =  TObjectHelper::getFile(*iFn);
-        TFile * oRF = new TFile((outFileName + ".root").c_str(),"recreate" );
-        oRF->cd();
+    ParamNames params;
+    getParamList(*gs,params);
 
-        std::vector<std::pair<std::string,std::string>> fStrs;
+    auto iF =  TObjectHelper::getFile(*iFn);
+    TFile * oRF = new TFile((outFileName + ".root").c_str(),"recreate" );
+    oRF->cd();
+    CJSON outJSON;
 
-        for(const auto& p : params){
-            auto g = TObjectHelper::getObjectNoOwn<TGraphErrors>(iF,p.first);
-            TF1 * func = 0;
-            if(p.second.find("pol") != std::string::npos) func=new TF1(p.second.c_str(),p.second.c_str(),0,13000);
-            else  if(p.second.find("llog") != std::string::npos){
-                func=new  TF1("llog","[0]+[1]*log(x)",1,13000);
-                func->SetParameters(1,1);
-            } else if(p.second.find("laur") != std::string::npos){
-                std::vector<std::string> laurPs(std::sregex_token_iterator(p.second.begin(), p.second.end(), std::regex("laur"), -1), std::sregex_token_iterator());
-                int order = std::stoi(laurPs[1]);
-                std::string fstr = "0";
-                for(int iO = 0; iO < order; ++iO){
-                    fstr=fstr+"+["+std::to_string(iO)+"]"+"/x^"+std::to_string(iO);
-                }
-                func=new TF1(p.second.c_str(),fstr.c_str(),1,13000);
-                for(int iO = 0; iO < order; ++iO){ func->SetParameter(iO,0);}
-            } else if(p.second.find("FIX")!= std::string::npos){
-                std::vector<std::string> laurPs(std::sregex_token_iterator(p.second.begin(), p.second.end(), std::regex("p"), -1), std::sregex_token_iterator());
-                std::string fstring = "x <= ([2]-[3]) ? [0] : (x >= ([2]+[3]) ? [1] : ( 0.5*([0]+[1] + ([0]-[1])*sin([4]*1.57*(x-[2])/[3]))))";
-                func=new TF1(p.second.c_str(),fstring.c_str(),1,13000);
-                for(unsigned int iP = 1; iP < laurPs.size(); ++iP){
-                    func->FixParameter(iP-1,std::stof(laurPs[iP]));
-                }
+    for(const auto& p : params){
+        auto g = TObjectHelper::getObjectNoOwn<TGraphErrors>(iF,p.first);
+        TF1 * func = 0;
+        if(p.second.find("pol") != std::string::npos) func=new TF1(p.second.c_str(),p.second.c_str(),0,13000);
+        else  if(p.second.find("llog") != std::string::npos){
+            func=new  TF1("llog","[0]+[1]*log(x)",1,13000);
+            func->SetParameters(1,1);
+        } else if(p.second.find("laur") != std::string::npos){
+            std::vector<std::string> laurPs(std::sregex_token_iterator(p.second.begin(), p.second.end(), std::regex("laur"), -1), std::sregex_token_iterator());
+            int order = std::stoi(laurPs[1]);
+            std::string fstr = "0";
+            for(int iO = 0; iO < order; ++iO){
+                fstr=fstr+"+["+std::to_string(iO)+"]"+"/x^"+std::to_string(iO);
             }
-            if(func==0) throw std::invalid_argument("MakeJSON::MakeJSON() -> Bad parsing");
-            g->Fit(func,"","",*minX,*maxX);
-            fStrs.emplace_back(p.first, returnFString(&*func,*v));
-            g->Write(p.first.c_str());
-            func->Write((p.first+"_func").c_str());
+            func=new TF1(p.second.c_str(),fstr.c_str(),1,13000);
+            for(int iO = 0; iO < order; ++iO){ func->SetParameter(iO,0);}
+        } else if(p.second.find("FIX")!= std::string::npos){
+            std::vector<std::string> laurPs(std::sregex_token_iterator(p.second.begin(), p.second.end(), std::regex("p"), -1), std::sregex_token_iterator());
+            std::string fstring = "x <= ([2]-[3]) ? [0] : (x >= ([2]+[3]) ? [1] : ( 0.5*([0]+[1] + ([0]-[1])*sin([4]*1.57*(x-[2])/[3]))))";
+            func=new TF1(p.second.c_str(),fstring.c_str(),1,13000);
+            for(unsigned int iP = 1; iP < laurPs.size(); ++iP){
+                func->FixParameter(iP-1,std::stof(laurPs[iP]));
+            }
         }
-        oRF->Close();
-
-        std::ofstream outJSON(outFileName.c_str(),std::ios::out|std::ios::trunc);
-        dumpJSON(fStrs,outJSON);
-        outJSON.close();
+        if(func==0) throw std::invalid_argument("MakeJSON::MakeJSON() -> Bad parsing");
+        g->Fit(func,"","",*minX,*maxX);
+        g->Write(p.first.c_str());
+        func->Write((p.first+"_func").c_str());
+        outJSON.addEntry(p.first,returnFString(&*func,*v));
+    }
+    oRF->Close();
+    return outJSON;
 }
-};
-
 #endif
 
 void MakeJSON(std::string outFileName,std::string arguments){
-    MakeJSONAnalyzer a(outFileName, arguments);
+    auto json = makeJSON(outFileName, arguments);
+    json.write(outFileName);
+}
+CJSON getJSON(std::string outFileName,std::string arguments){
+    return makeJSON(outFileName, arguments);
 }
