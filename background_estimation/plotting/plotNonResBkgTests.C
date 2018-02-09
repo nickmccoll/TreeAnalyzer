@@ -75,7 +75,7 @@ void test2DCondTemplate(std::string name, std::string filename){
 
     addHistos("",true,true,true);
     std::vector<std::string> extras = {"xs_0p75_xc_3_ys_0p5_yc_1","xs_0p75_xc_3_ys_0p5_yc_1_2"};
-      for(const auto& s : extras ) addHistos(s,true,false);
+//      for(const auto& s : extras ) addHistos(s,true,false);
 
     std::vector<double> hBBBinning = {30,40,50,60,80,100,120,140,170,210};
     std::vector<double> hhBinning  = {700,800,900,1000,1500,2000,3000,4000,5000};
@@ -132,6 +132,9 @@ void test2DFits(std::string name, std::string filename){
     std::vector<double> hBBBinning = {30,50,100,150,210};
     std::vector<double> hhBinning  = {800,900,1000,1500,2000,3000,4000,5000};
 
+//    std::vector<double> hBBBinning = {30,210};
+//    std::vector<double> hhBinning  = {800,5000};
+
     std::vector<std::string> sels = {"emu_LMT_ltmb","e_L_full","e_M_full","e_T_full","mu_L_full","mu_M_full","mu_T_full"};
     for(const auto& s : sels){
         TH2* dH = 0;
@@ -143,10 +146,10 @@ void test2DFits(std::string name, std::string filename){
         fTempFit->GetObject((name+"_"+s).c_str(),hF);
         if(hF == 0) continue;
 
-//        make2DTests(name + " Fit HbbF "+s,dH,{hF,hOT},{"Fitted template","Original template"},hBBBinning,false);
-        make2DTests(name + " Fit HbbC "+s,dH,{hF,hOT},{"Fitted template","Original template"},hBBBinning,false,10);
-//        make2DTests(name + " Fit HHF "+s ,dH,{hF,hOT},{"Fitted template","Original template"},hhBinning,true);
-//        make2DTests(name + " Fit HHC "+s ,dH,{hF,hOT},{"Fitted template","Original template"},hhBinning,true,5);
+//        make2DTests(name + " Fit HbbF "+s,dH,{hF,hOT},{"Search region template","Original template"},hBBBinning,false);
+        make2DTests(name + " Fit HbbC "+s,dH,{hF,hOT},{"Search region template","Baseline template"},hBBBinning,false,10);
+//        make2DTests(name + " Fit HHF "+s ,dH,{hF,hOT},{"Search region template","Original template"},hhBinning,true);
+//        make2DTests(name + " Fit HHC "+s ,dH,{hF,hOT},{"Search region template","Baseline template"},hhBinning,true,5);
     }
 
 
@@ -212,10 +215,10 @@ void plotNonResBkgTests(){
 //    test2DCondTemplate(bkgSels[BKG_LOSTTW],filename);
 //    testMJJKern(bkgSels[BKG_LOSTTW],filename);
 //    test2DTemplate(bkgSels[BKG_LOSTTW],filename);
-//    test2DFits(bkgSels[BKG_LOSTTW],filename);
+    test2DFits(bkgSels[BKG_LOSTTW],filename);
 
 //        test2DCondTemplate(bkgSels[BKG_QG],filename);
 //        testMJJKern(bkgSels[BKG_QG],filename);
 //        test2DTemplate(bkgSels[BKG_QG],filename);
-        test2DFits(bkgSels[BKG_QG],filename);
+//        test2DFits(bkgSels[BKG_QG],filename);
 }

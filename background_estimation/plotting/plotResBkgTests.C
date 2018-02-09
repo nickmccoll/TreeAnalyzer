@@ -14,8 +14,8 @@ using namespace ASTypes;
     std::vector<std::string> hNs;
     TH1* h = 0;
     f->GetObject("histo_data",h);hs.push_back(h);hNs.push_back("MC");
-    f->GetObject("histo",h);     hs.push_back(h);hNs.push_back("KDE w/ expo. tail smoothing");
-    f->GetObject("histo_KDE",h);     hs.push_back(h);hNs.push_back("KDE");
+    f->GetObject("histo",h);     hs.push_back(h);hNs.push_back("KDE");
+//    f->GetObject("histo_KDE",h);     hs.push_back(h);hNs.push_back("KDE w/o expo. tail smoothing");
 
     int binL = hs[0]->FindFixBin(minHHMass);
     int binH = hs[0]->FindFixBin(maxHHMass);
@@ -106,13 +106,16 @@ using namespace ASTypes;
 
   void test2DFits(std::vector<CutStr> types, std::string filename) {
 //      std::vector<std::string> sels = {"emu_LMT_ltmb","e_L_full","e_M_full","e_T_full","mu_L_full","mu_M_full","mu_T_full"};
-      std::vector<std::string> sels = {"emu_L_full","emu_M_full","emu_T_full"};
+      std::vector<std::string> sels = {"emu_LMT_ltmb","emu_LMT_full","emu_L_full","emu_M_full","emu_T_full"};
 //      std::vector<std::string> sels = {"emu_LMT_ltmb"};
       // std::vector<double> bins = {30,50,100,150,210};
       // bool binInY = false;
 //      std::vector<double> bins = {800,900,1000,1500,2000,3000,4000,5000};
-      std::vector<double> bins = {800,1000,2000,5000};
+//      std::vector<double> bins = {800,1000,2000,5000};
+            std::vector<double> bins = {800,5000};
         bool binInY = true;
+
+
 
 
     for(const auto& s :sels){
@@ -147,7 +150,7 @@ using namespace ASTypes;
           };
           Plotter * p = new Plotter();
           auto dh1 = proj(dh,"MC");
-          p->addHist(dh1,"MC");
+//          p->addHist(dh1,"MC");
           for(unsigned int iH = 0; iH < hs.size(); ++iH){
               TH1 * h = proj(hs[iH],hNs[iH]);
               for(unsigned int iX = 1; iX <= h->GetNbinsX(); ++iX)h->SetBinError(iX,0);
@@ -155,7 +158,7 @@ using namespace ASTypes;
           }
           p->setUnderflow(false);
           p->setOverflow(false);
-          p->rebin(5);
+          p->rebin(2);
 //           p->setMinMax(.0001,dh1->Integral());
           p->setXTitle( (binInY ? hbbMCS : hhMCS) .title.c_str());
           p->setYTitle("N. of events");
@@ -178,6 +181,6 @@ void plotResBkgTests(){
     testHHKern(bkgSels[BKG_MT],filename);
 //    testHHPDFFits(bkgSels[BKG_MT],filename);
 //    testHHKern(bkgSels[BKG_MW],filename);
-    test2DFits({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },filename);
+//    test2DFits({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },filename);
 //    test2DFits({bkgSels[BKG_LOSTTW] },filename);
 }
