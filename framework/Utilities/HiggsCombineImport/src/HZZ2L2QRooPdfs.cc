@@ -5,7 +5,7 @@
 //#include "HiggsAnalysis/CombinedLimit/interface/RooDoubleCB.h"
 //#include "HiggsAnalysis/CombinedLimit/interface/RooFermi.h"
 //#include "HiggsAnalysis/CombinedLimit/interface/RooRelBW.h"
-#include "HiggsAnalysis/CombinedLimit/interface/HZZ2L2QRooPdfs.h"
+#include "Utilities/HiggsCombineImport/interface/HZZ2L2QRooPdfs.h"
 #include "RooRealVar.h"
 #include "RooRealConstant.h"
 
