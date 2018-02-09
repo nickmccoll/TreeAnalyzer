@@ -171,10 +171,13 @@
   
   //Compare distributions;
   {
-    TString type = "losttw";
+    TString type = "radHH";
     // std::vector<TString> sels = {"emu_LMT","emu_LMT_lWW","emu_LMT_lb","emu_LMT_ltb","emu_LMT_ltmb" };
     // std::vector<TString> sels = {"emu_L_full","emu_L_ltmb","emu_L_none","emu_M_ltmb","emu_M_full" };
-    std::vector<TString> sels = {"emu_LMT_ltmb","emu_LMT_full","emu_LMT_none" };
+    // std::vector<TString> sels = {"emu_LMT_ltmb","emu_LMT_full","emu_LMT_none" };
+        // std::vector<TString> sels = {"emu_LMT_none","emu_L_none","emu_M_none","emu_T_none" };
+        // std::vector<TString> sels = {"m1000_emu_L_none","m1000_emu_M_none","m1000_emu_T_none","m2500_emu_L_none","m2500_emu_M_none","m2500_emu_T_none" };
+        std::vector<TString> sels = {"m4500_emu_T_none","m4500_emu_T_ltmb","m4500_emu_T_full" };
 
   // std::vector<double> bins = {30,210};
   // bool binInY = false;
@@ -184,10 +187,10 @@
       // bool binInY = true;
   // std::vector<double> bins = {800,900,1000,1250,1500,2000,3000,4000,5000};
   //   bool binInY = true;
-    std::vector<double> bins = {800,900,1000,1200,1400,1600,2000};
-      bool binInY = true;
-    // std::vector<double> bins = {800,5000};
+    // std::vector<double> bins = {800,900,1000,1200,1400,1600,2000};
       // bool binInY = true;
+    std::vector<double> bins = {800,5000};
+      bool binInY = true;
   std::vector<TH2*> hs;
   std::vector<TString> hNs;
   TFile *fY = new TFile(TString::Format("HHlnujj_%s_distributions.root",type.Data()),"read");
@@ -195,7 +198,7 @@
     TH2* h = 0; 
     fY->GetObject(TString::Format("%s_%s_hbbMass_hhMass",type.Data(),sels[iS].Data()),h);hs.push_back(h);hNs.push_back(sels[iS]);    
   }    
-  for(unsigned int iH = 0; iH < hs.size(); ++iH) hs[iH]->Scale(1.0/hs[iH]->Integral());
+  // for(unsigned int iH = 0; iH < hs.size(); ++iH) hs[iH]->Scale(1.0/hs[iH]->Integral());
   
   const TAxis * ax = hs[0]->GetXaxis();
   if(binInY) ax = hs[0]->GetYaxis();
@@ -221,7 +224,7 @@
     p->setUnderflow(false);
     p->setOverflow(false);
     // p->rebin( binInY ? 4 : 24);
-        p->rebin( 5);
+        p->rebin( 2);
     // auto * c = p->draw(false,TString::Format("%.0f-%.0f",bins[iB],bins[iB+1]));
     // c->SetLogy();
     // c->Update();
@@ -341,9 +344,9 @@
 // std::vector<TString> bkgs = {"nonResH0","nonResHM","resW","resT"};
 // std::vector<TString> bkgNs = {"lost t/W (0 q) bkg.","lost t/W (#geq1 q) bkg.","m_{W} bkg.","m_{t} bkg."};
 
-std::vector<TString> bkgs = {"nonResAQ","nonResH","resW","resT"};
+std::vector<TString> bkgs = {"qg","losttw","mw","mt"};
 std::vector<TString> bkgNs = {"q/g bkg.","lost t/W bkg.","m_{W} bkg.","m_{t} bkg."};
-std::vector<TString> sels = {"emu_L_ltmb","emu_M_ltmb"};
+std::vector<TString> sels = {"emu_LMT_ltmb","emu_M_ltmb"};
 TFile * f = new TFile("HHlnujj_distributions.root");
 for(auto& s: sels){
 Plotter * p = new Plotter;
