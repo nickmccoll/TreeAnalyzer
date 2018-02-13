@@ -31,15 +31,32 @@ public:
     Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
         turnOffCorr(CORR_SDMASS);
         fromWCorr.reset(new SoftDropMassScaleFactorsFromW (dataDirectory));
-        DefaultFatJetSelections::setTTBarCRFatJetProcessor(ttbarCR);
     }
 
     void makePlots(const TString& prefix, const float hbbMass, const float weight){
         plotter.getOrMake1DPre(prefix,"njets",";number of jets",20,-0.5,19.5)->Fill(jets.size(),weight );
-        plotter.getOrMake1DPre(prefix,"njetswlep",";number of jets (with leptons)",20,-0.5,19.5)->Fill(jets_wlep.size(),weight );
-        plotter.getOrMake1DPre(prefix,"ht_wlep",";#it{H}_{T} (with leptons) [GeV]",500,500,3000)->Fill(ht_wlep,weight );
-        plotter.getOrMake1DPre(prefix,"ht_wlep_plusmet",";#it{H}_{T} (with leptons) + #slash{#it{E}}_{T} [GeV]",500,500,3000)->Fill(ht_wlep + reader_event->met.pt() ,weight );
-        plotter.getOrMake1DPre(prefix,"hbbMass",";H(bb) mass [GeV]",40,0,200)->Fill(hbbMass,weight );
+        plotter.getOrMake1DPre(prefix,"njetswlep",";number of jets (with leptons)",20,-0.5,19.5)->Fill(jets_chs.size(),weight );
+        plotter.getOrMake1DPre(prefix,"ht_wlep",";#it{H}_{T} (with leptons) [GeV]",500,500,3000)->Fill(ht_chs,weight );
+        plotter.getOrMake1DPre(prefix,"ht_wlep_plusmet",";#it{H}_{T} (with leptons) + #slash{#it{E}}_{T} [GeV]",500,500,3000)->Fill(ht_chs + reader_event->met.pt() ,weight );
+        plotter.getOrMake1DPre(prefix,"hbbMass",";#it{m}_{H#rightarrowbb} [GeV]",210,0,210)->Fill(hbbMass,weight );
+        plotter.getOrMake1DPre(prefix,"hhMass",";#it{m}_{HH} [GeV]",168,800,5000)->Fill(hh.mass(),weight );
+
+        if(hh.mass() < 900){
+            plotter.getOrMake1DPre(prefix + "_hh800to900","hbbMass",";#it{m}_{H#rightarrowbb} [GeV]",210,0,210)->Fill(hbbMass,weight );
+        }else if(hh.mass() < 1000){
+            plotter.getOrMake1DPre(prefix + "_hh900to1000","hbbMass",";#it{m}_{H#rightarrowbb} [GeV]",210,0,210)->Fill(hbbMass,weight );
+        }
+
+        if(hh.mass() < 1000){
+            plotter.getOrMake1DPre(prefix + "_hh800to1000","hbbMass",";#it{m}_{H#rightarrowbb} [GeV]",210,0,210)->Fill(hbbMass,weight );
+        } else if (hh.mass() < 1200){
+            plotter.getOrMake1DPre(prefix + "_hh1000to1200","hbbMass",";#it{m}_{H#rightarrowbb} [GeV]",210,0,210)->Fill(hbbMass,weight );
+        } else if (hh.mass() < 1500){
+            plotter.getOrMake1DPre(prefix + "_hh1200to1500","hbbMass",";#it{m}_{H#rightarrowbb} [GeV]",210,0,210)->Fill(hbbMass,weight );
+        } else if (hh.mass() < 2000){
+            plotter.getOrMake1DPre(prefix + "_hh1500to2000","hbbMass",";#it{m}_{H#rightarrowbb} [GeV]",210,0,210)->Fill(hbbMass,weight );
+        } else
+            plotter.getOrMake1DPre(prefix + "_hhgt2000","hbbMass",";#it{m}_{H#rightarrowbb} [GeV]",210,0,210)->Fill(hbbMass,weight );
 
 //        auto btagSJs = PhysicsUtilities::selObjsMom(wjjCand->subJets(),
 //                fjProc->param.sj_minBTagPT, fjProc->param.sj_maxBTagETA < 0 ? 999.0 : fjProc->param.sj_maxBTagETA);
@@ -58,15 +75,15 @@ public:
     void SRPlots(TString prefix, float hbbMass, bool tight) {
 
             auto plt = [&](const TString& pre){
-                plotter.getOrMake1DPre(pre, "hbb_mass" ,";H(bb) mass [GeV]; arbitrary units",40,0,200)->Fill(hbbMass,weight);
+                plotter.getOrMake1DPre(pre, "hbb_mass" ,";H(bb) mass [GeV]; arbitrary units",200,0,200)->Fill(hbbMass,weight);
                 if(hh.mass() >= 700 && hh.mass() < 900)
-                    plotter.getOrMake1DPre(pre, "hh700to900_hbb_mass" ,";H(bb) mass [GeV]; arbitrary units",40,0,200)->Fill(hbbMass,weight);
+                    plotter.getOrMake1DPre(pre, "hh700to900_hbb_mass" ,";H(bb) mass [GeV]; arbitrary units",200,0,200)->Fill(hbbMass,weight);
                 if(hh.mass() >= 900 && hh.mass() < 1100)
-                    plotter.getOrMake1DPre(pre, "hh900to1100_hbb_mass" ,";H(bb) mass [GeV]; arbitrary units",40,0,200)->Fill(hbbMass,weight);
+                    plotter.getOrMake1DPre(pre, "hh900to1100_hbb_mass" ,";H(bb) mass [GeV]; arbitrary units",200,0,200)->Fill(hbbMass,weight);
                 if(hh.mass() >= 1400 && hh.mass() < 1800)
-                    plotter.getOrMake1DPre(pre, "hh1400to1800_hbb_mass" ,";H(bb) mass [GeV]; arbitrary units",40,0,200)->Fill(hbbMass,weight);
+                    plotter.getOrMake1DPre(pre, "hh1400to1800_hbb_mass" ,";H(bb) mass [GeV]; arbitrary units",200,0,200)->Fill(hbbMass,weight);
                 if(hh.mass() >= 2500 && hh.mass() < 3500)
-                    plotter.getOrMake1DPre(pre, "hh2500to3500_hbb_mass" ,";H(bb) mass [GeV]; arbitrary units",40,0,200)->Fill(hbbMass,weight);
+                    plotter.getOrMake1DPre(pre, "hh2500to3500_hbb_mass" ,";H(bb) mass [GeV]; arbitrary units",200,0,200)->Fill(hbbMass,weight);
             };
 
             if(!tight){ plt(prefix + "_hbbL");}
@@ -84,7 +101,11 @@ public:
 
         //select for ttbar control region
         if(selectedLeptons.size() != 1) return false;
-        if(!wjjCand || !hbbCand) return false;
+        if(!hbbCand) return false;
+        if(!wjjCand) return false;
+        if(nMedBTags_HbbV != 1) return false;
+        if(hh.mass() < 800) return false;
+        if(hbbCSVCat > BTagging::CSVSJ_MF) return false;
 
         float wCorrMass = fromWCorr->getCorrSDMass(hbbCand);
         float corrMass = hbbFJSFProc->getCorrSDMass(hbbCand);
@@ -109,33 +130,34 @@ public:
 
         };
 
-        if(fjProc->passWjjSel(ttbarCR)){
-            doSet(smpName+"_1l");
-            if(selectedLepton->isMuon()) doSet(smpName+"_1m");
-            if(!selectedLepton->isMuon()) doSet(smpName+"_1e");
+        std::string purStr = hbbCSVCat >= BTagging::CSVSJ_MF ? "L" : "AL";
+
+            doSet(smpName+"_1l_" + purStr);
+            if(selectedLepton->isMuon()) doSet(smpName+"_1m_" + purStr);
+            if(!selectedLepton->isMuon()) doSet(smpName+"_1e_" + purStr);
 
             if(!isRealData() && reader_event->process != FillerConstants::SIGNAL){
-            doSet("bkg_1l");
-            if(selectedLepton->isMuon()) doSet("bkg_1m");
-            if(!selectedLepton->isMuon()) doSet("bkg_1e");
+            doSet(std::string("bkg_1l_") + purStr);
+            if(selectedLepton->isMuon()) doSet(std::string("bkg_1m_") + purStr);
+            if(!selectedLepton->isMuon()) doSet(std::string("bkg_1e_") + purStr);
             }
-        }
 
 
-        if(!isRealData() && passWjjSel && passHbbSel ){
-            if(reader_event->process == FillerConstants::ZJETS) smpName = "other";
-            bool tightHBB = passHbbTSel;
 
-            auto doSRPlots = [&](const TString& prefix ){
-                SRPlots(prefix + "_raw"  ,hbbMass,tightHBB);
-                SRPlots(prefix + "_wCorr",wCorrMass,tightHBB);
-                SRPlots(prefix + "_corr" ,corrMass,tightHBB);
-            };
-
-            doSRPlots(smpName+"_1l");
-            if(selectedLepton->isMuon()) doSRPlots(smpName+"_1m");
-            if(!selectedLepton->isMuon()) doSRPlots(smpName+"_1e");
-        }
+//        if(!isRealData() && passWjjSel && passHbbSel ){
+//            if(reader_event->process == FillerConstants::ZJETS) smpName = "other";
+//            bool tightHBB = passHbbTSel;
+//
+//            auto doSRPlots = [&](const TString& prefix ){
+//                SRPlots(prefix + "_raw"  ,hbbMass,tightHBB);
+//                SRPlots(prefix + "_wCorr",wCorrMass,tightHBB);
+//                SRPlots(prefix + "_corr" ,corrMass,tightHBB);
+//            };
+//
+//            doSRPlots(smpName+"_1l");
+//            if(selectedLepton->isMuon()) doSRPlots(smpName+"_1m");
+//            if(!selectedLepton->isMuon()) doSRPlots(smpName+"_1e");
+//        }
 
         return true;
 
@@ -147,7 +169,6 @@ public:
 
     HistGetter plotter;
     std::unique_ptr<SoftDropMassScaleFactorsFromW>    fromWCorr ;
-    FatJetParameters ttbarCR;
 
 };
 

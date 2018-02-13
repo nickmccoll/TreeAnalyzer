@@ -2,7 +2,7 @@
   TFile * f = new TFile("plots_allM.root","read");
   TString prefix = "goodHBB";
   std::vector<TString> vars = {"rawMass","corrMass"};
-  std::vector<TString> varNs = {"raw mass","H(bb) corr. mass"};
+  std::vector<TString> varNs = {"#it{m}_{H#rightarrowbb}","C_{SD}*#it{m}_{H#rightarrowbb}"};
   std::vector<float> masses = {1000,2000,3000,4000};
   
   Plotter * p = new Plotter();
@@ -12,7 +12,7 @@
         TH1 * h = 0;
         f->GetObject(TString::Format("m%.0f_%s_%s",masses[iM],prefix.Data(),vars[iV].Data()),h);
         if(h == 0) continue;
-        p->addHistLine(h,TString::Format("M(%.0f), %s",masses[iM],varNs[iV].Data()),StyleInfo::getLineColor(iM),iV+1);
+        p->addHistLine(h,TString::Format("#it{m}_{X} %.0f, %s",masses[iM],varNs[iV].Data()),StyleInfo::getLineColor(iM),iV+1);
         
       }
       
@@ -86,6 +86,24 @@
     int nBins = 40;
     double bins[] = {0,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110,115,120,125,130,135,140,145,150,155,160,165,170,175,180,185,190,195,200};
 
+    auto cutHistogram= [](const TH1* inH,  double nMinX, double nMaxX)->TH1*{
+        double binWX = inH->GetXaxis()->GetBinWidth(1);
+        std::string name = inH->GetName();
+        name +="_cut";
+        
+      TH1 * outH = new TH1F(name.c_str(),TString(";")+inH->GetXaxis()->GetTitle(),
+              (nMaxX-nMinX)/binWX,nMinX,nMaxX);
+
+      for(int iX =1; iX <= inH->GetNbinsX(); ++iX){
+        const int outIX =outH->GetXaxis()->FindFixBin(inH->GetXaxis()->GetBinCenter(iX));
+        if(outIX < 1 || outIX > outH->GetNbinsX() ) continue;
+        outH->SetBinContent(outIX,inH->GetBinContent(iX));
+        outH->SetBinError(outIX,inH->GetBinError(iX));
+      }
+      return outH;
+    };
+
+
 
   auto distPlots = [&](TString name, const std::vector<TString>& vars, const std::vector<TString>& pres,bool doSig = false, float rebin = 0){
     for(auto v : vars) for(auto p : pres){
@@ -96,16 +114,24 @@
 
       TH1 * hd = 0;
       f->GetObject(TString::Format("data_%s_%s",p.Data(),v.Data()),hd);
-
-      
+      // double min =120;
+      // double max =210;
+      // int lb = hd->FindFixBin(160);
+      // int hb = hd->FindFixBin(210);
+      double min =30;
+      double max =210;      
       int lb = hd->FindFixBin(80);
       int hb = hd->FindFixBin(100);
       float SF = hd->Integral(lb,hb)/ht->Integral(lb,hb);
       
+      hd = cutHistogram(hd,min,max);
+      ht = cutHistogram(ht,min,max);
+
       for(unsigned int iS = 0; bkgs[iS][0]; ++iS){
         TH1 * h = 0;
         f->GetObject(TString::Format("%s_%s_%s",bkgs[iS].Data(),p.Data(),v.Data()),h);
         if(h == 0) continue;
+        h = cutHistogram(h,min,max);
         h->SetXTitle("H(bb) corrected SD mass [GeV]"); 
         h->Scale(SF);
         plots->addStackHist(h,bkgNamess[iS]);
@@ -114,7 +140,8 @@
       TH1 *hs = 0;
       TString t = p;
       f->GetObject(TString::Format("bkg_%s_%s",t.ReplaceAll("corr","scorr").Data(),v.Data()),hs);
-      if(hs != 0 && ht != 0){        
+      if(hs != 0 && ht != 0){
+        hs = cutHistogram(hs,min,max);
         hs->Scale(SF);
         ht->Scale(SF);
         plots->addHistLine(hs,"MC +JER unc.",StyleInfo::getLineColor(4));
@@ -123,34 +150,39 @@
         TH1 *hu = (TH1*)ht->Clone();
         hu->Add(hs,-1);
         plots->addHistLine(hu,"MC -JER unc.",StyleInfo::getLineColor(3));
-        
-      } 
+
+      }
+
       TH1 * scU = 0;
       TH1 * scD = 0;
       TString t2 = p;
       TString t3 = p;
-      f->GetObject(TString::Format("bkg_%s_%s",t2.ReplaceAll("corr","sUcorr").Data(),v.Data()),scU);      
-      f->GetObject(TString::Format("bkg_%s_%s",t3.ReplaceAll("corr","sDcorr").Data(),v.Data()),scD);      
-      if(scU != 0 && scD != 0){        
+      f->GetObject(TString::Format("bkg_%s_%s",t2.ReplaceAll("corr","sUcorr").Data(),v.Data()),scU);
+      f->GetObject(TString::Format("bkg_%s_%s",t3.ReplaceAll("corr","sDcorr").Data(),v.Data()),scD);
+      if(scU != 0 && scD != 0){
+        scU = cutHistogram(scU,min,max);
+        scD = cutHistogram(scD,min,max);
         scU->Scale(SF);
         scD->Scale(SF);
         plots->addHistLine(scU,"MC +JES unc.",StyleInfo::getLineColor(2));
         plots->addHistLine(scD,"MC -JES unc.",StyleInfo::getLineColor(1));
-      } 
+      }
       
       
 
       
-      
+
       
       if(doSig)
       for(unsigned int iM = 0; iM < sigMasses.size(); ++iM){
         TH1 * h = 0;
         f->GetObject(TString::Format("m%u_%s_%s",sigMasses[iM],p.Data(),v.Data()),h);
         if(h ==0)continue;
-        h->Scale(sigNorm);        
+        h = cutHistogram(h,min,max);
+        h->Scale(sigNorm);
         plots->addHistLine(h,TString::Format("#it{m}(X) %.1f TeV",float(sigMasses[iM])/1000.));
     }
+
         
             if(hd != 0) plots->addHist(hd,"data",StyleInfo::getLineColor(0));
     
@@ -165,6 +197,7 @@
     plots->setCMSLumiExtraText("Preliminary");
     plots->setMinMax(0,1200);
     plots->setBotMinMax(0.5001,1.499);
+    plots->setLegendNColumns(2);
     // plots->setLegendPos(0.6,0.6,0.85,0.95);
     // plots->draw(false,TString::Format("%s_%s_%s",name.Data(),p.Data(),v.Data()));
     plots->drawSplitRatio(-1,"stack",false,true,TString::Format("%s_%s_%s.pdf",name.Data(),p.Data(),v.Data()));
@@ -172,10 +205,11 @@
 };
 
   // vector<TString> vars = { "njets","njetswlep","ht_wlep","ht_wlep_plusmet"};
-  vector<TString> vars = { "hbbMass"};
-    vector<TString> pres = { "1m_corr","1e_corr"};
-  // vector<TString> pres = { "1m_raw","1e_raw", "1m_corr","1e_corr"};
-  distPlots("plots",vars,pres,false,0);
+  vector<TString> vars = { "hbbMass","hh800to1000_hbbMass","hh1500to2000_hbbMass"};
+    // vector<TString> pres = { "1m_L_corr"};
+    
+  vector<TString> pres = { "1m_L_corr","1m_AL_corr"};
+  distPlots("plots",vars,pres,false,5);
 
 }
 

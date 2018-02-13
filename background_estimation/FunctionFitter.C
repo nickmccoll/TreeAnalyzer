@@ -29,6 +29,8 @@ public:
     double plot_min = -1;
     double plot_max = -1;
 
+    RooFitResult *fitResultCache=0;
+
     FunctionFitter(const TH1* iH, const std::string postFix = "T", const std::vector<std::string>&  plotVars = {"M"}):
         postFix(postFix)
     {
@@ -52,16 +54,28 @@ public:
     double getVal(std::string var) {
         return w->var(var.c_str())->getVal();
     }
+    double getError(std::string var) {
+        return w->var(var.c_str())->getError();
+    }
+    double getFVal(std::string var) {
+        return w->function(var.c_str())->getVal();
+    }
+    double getFError(std::string var) {
+        if(fitResultCache)
+            return w->function(var.c_str())->getPropagatedError(*fitResultCache);
+        else return -1;
+    }
 
     void fit(const std::vector<RooCmdArg>& options){
         std::string thisModel = std::string("model")+postFix;
         std::string thisData  = "data";
-        if(options.size()==0) w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()));
-        else if(options.size()==1) w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0]);
-        else if(options.size()==2) w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1]);
-        else if(options.size()==3) w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2]);
-        else if(options.size()==4) w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2],options[3]);
-        else if(options.size()==5) w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2],options[3],options[4]);
+        if(options.size()==0) fitResultCache =  w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()));
+        else if(options.size()==1) fitResultCache = w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0]);
+        else if(options.size()==2) fitResultCache = w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1]);
+        else if(options.size()==3) fitResultCache = w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2]);
+        else if(options.size()==4) fitResultCache = w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2],options[3]);
+        else if(options.size()==5) fitResultCache = w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2],options[3],options[4]);
+        else if(options.size()==6) fitResultCache = w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2],options[3],options[4],options[5]);
     }
 
     TCanvas* projection(const std::string& name, double& chi2){

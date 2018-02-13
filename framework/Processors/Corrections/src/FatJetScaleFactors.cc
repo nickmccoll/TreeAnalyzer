@@ -5,9 +5,9 @@
 namespace TAna {
 HbbFatJetScaleFactors::HbbFatJetScaleFactors(const std::string& dataDir, const std::string& sfFile, bool verbose ){
     TFile * file = TObjectHelper::getFile(dataDir+sfFile,"read",verbose);
-    sdMassCorr_eta_0p0_0p8.reset(new  TObjectHelper::GraphEContainer(file,"sdMassCorr_eta_0p0_0p8",true,300,2400,verbose));
-    sdMassCorr_eta_0p8_1p6.reset(new  TObjectHelper::GraphEContainer(file,"sdMassCorr_eta_0p8_1p6",true,300,2400,verbose));
-    sdMassCorr_eta_1p6_2p4.reset(new  TObjectHelper::GraphEContainer(file,"sdMassCorr_eta_1p6_2p4",true,300,2400,verbose));
+    sdMassCorr_eta_0p0_0p8.reset(new  TObjectHelper::GraphEContainer(file,"sdMassCorr_eta_0p0_0p8",true,300,2000,verbose));
+    sdMassCorr_eta_0p8_1p6.reset(new  TObjectHelper::GraphEContainer(file,"sdMassCorr_eta_0p8_1p6",true,300,2000,verbose));
+    sdMassCorr_eta_1p6_2p4.reset(new  TObjectHelper::GraphEContainer(file,"sdMassCorr_eta_1p6_2p4",true,300,2000,verbose));
     jec_eta_0p0_0p6       .reset(new  TObjectHelper::TF1Container   (file,"jec_eta_0p0_0p6"       ,true,200,2000,verbose));
     jec_eta_0p6_1p4       .reset(new  TObjectHelper::TF1Container   (file,"jec_eta_0p6_1p4"       ,true,200,2000,verbose));
     jec_eta_1p4_1p8       .reset(new  TObjectHelper::TF1Container   (file,"jec_eta_1p4_1p8"       ,true,200,1000,verbose));

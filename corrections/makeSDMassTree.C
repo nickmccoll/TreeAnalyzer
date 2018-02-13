@@ -37,7 +37,7 @@ public:
 
     virtual void bookOutputVariables() override {
         i_puWeight        =  outTree->add<float>  ("puWeight"           ,"F",0);
-        i_passEvtSel      =  outTree->add<size8>  ("passEvtSel"         ,"b",0);
+        i_csvCat          =  outTree->add<size8>  ("csvCat"         ,"b",0);
         i_bosonMass       =  outTree->add<float>  ("bosonMass"          ,"F",0);
         i_bosonPT         =  outTree->add<float>  ("bosonPT"            ,"F",0);
         i_bosonETA        =  outTree->add<float>  ("bosonETA"            ,"F",0);
@@ -45,6 +45,8 @@ public:
         i_maxSJDR          =  outTree->add<float> ("maxSJDR"             ,"F",0);
         i_maxSJETA        =  outTree->add<float>  ("maxSJETA"            ,"F",0);
         i_minSJPT         =  outTree->add<float>  ("minSJPT"             ,"F",0);
+        i_genPT           =  outTree->add<float>  ("genPT"              ,"F",0);
+        i_genETA          =  outTree->add<float>  ("genETA"             ,"F",0);
         i_jetPT           =  outTree->add<float>  ("jetPT"              ,"F",0);
         i_jetCorrPT           =  outTree->add<float>  ("jetCorrPT"              ,"F",0);
         i_jetETA          =  outTree->add<float>  ("jetETA"             ,"F",0);
@@ -71,7 +73,7 @@ public:
 
 
 
-    void fillBoson(const FatJet* fj) {
+    void fillBoson(const FatJet* fj, const GenJet* gj) {
         double maxDR2 = -1;
 
         double drQ = std::sqrt( std::max(PhysicsUtilities::deltaR2(*diHiggsEvt.b1,*fj),PhysicsUtilities::deltaR2(*diHiggsEvt.b2,*fj)));
@@ -93,7 +95,7 @@ public:
         if(fj->nSubJets() != 2) return;
 
         resetOutData();
-        outTree->fill(i_passEvtSel      , size8(FatJetSelHelpers::passHbbSelection(fj, fjProc->param,false)) );
+        outTree->fill(i_csvCat      , size8(BTagging::getCSVSJCat(fj->subJets(), fjProc->param.sj_minBTagPT, fjProc->param.sj_maxBTagETA)));
         outTree->fill(i_puWeight        , float( puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL)));
         outTree->fill(i_bosonMass       , float(diHiggsEvt.hbb->mass()));
         outTree->fill(i_bosonPT         , float(diHiggsEvt.hbb->pt()));
@@ -106,6 +108,8 @@ public:
         outTree->fill(i_jetID           , fj->jetID() );
         outTree->fill(i_maxSJETA        , float(maxQETA));
         outTree->fill(i_minSJPT         , float(minQPT));
+        outTree->fill(i_genPT           , float(gj->pt()));
+        outTree->fill(i_genETA          , float(gj->eta()));
         outTree->fill(i_jetMass         , float(fj->mass()));
         outTree->fill(i_jetRawSDMass    , float(fj->rawSdMom().mass()));
         outTree->fill(i_jetL23CorrSDMass, float(fj->sdMom().mass()));
@@ -119,17 +123,22 @@ public:
         if(!passEventFilters) return false;
         if(diHiggsEvt.type < DiHiggsEvent::MU) return false;
 
-        auto fatjetCands = PhysicsUtilities::selObjsMom(reader_fatjet->jets,50,2.4);
+        auto genjetCands = PhysicsUtilities::selObjsMom(reader_fatjet->genJets,10,2.4);
 
         double dr = 999;
-        int idx = PhysicsUtilities::findNearestDRDeref(*diHiggsEvt.hbb,fatjetCands,dr);
+        int idx = PhysicsUtilities::findNearestDRDeref(*diHiggsEvt.hbb,genjetCands,dr);
         if(idx < 0) return false;
 
-        if(PhysicsUtilities::deltaR(*diHiggsEvt.w1_d1,*fatjetCands[idx]) < 1.0 ) return false;
-        if(PhysicsUtilities::deltaR(*diHiggsEvt.w2_d1,*fatjetCands[idx]) < 1.0 ) return false;
-        if(PhysicsUtilities::deltaR(*diHiggsEvt.w2_d2,*fatjetCands[idx]) < 1.0 ) return false;
+        if(PhysicsUtilities::deltaR(*diHiggsEvt.w1_d1,*genjetCands[idx]) < 1.0 ) return false;
+        if(PhysicsUtilities::deltaR(*diHiggsEvt.w2_d1,*genjetCands[idx]) < 1.0 ) return false;
+        if(PhysicsUtilities::deltaR(*diHiggsEvt.w2_d2,*genjetCands[idx]) < 1.0 ) return false;
+        dr = 999;
+        int fjIDX = PhysicsUtilities::findNearestDR(*genjetCands[idx],reader_fatjet->jets,dr,0.8);
+        if(fjIDX < 0) return false;
+        if(reader_fatjet->jets[fjIDX].pt() < 50 ) return false;
+        if(reader_fatjet->jets[fjIDX].absEta() >= 2.4 ) return false;
 
-        fillBoson(fatjetCands[idx]);
+        fillBoson(&reader_fatjet->jets[fjIDX],genjetCands[idx]);
 
         return true;
 
@@ -137,7 +146,7 @@ public:
 
 
     size i_puWeight        = 0;
-    size i_passEvtSel      = 0;
+    size i_csvCat          = 0;
     size i_bosonMass       = 0;
     size i_bosonPT         = 0;
     size i_bosonETA        = 0;
@@ -149,6 +158,8 @@ public:
     size i_jetID           = 0;
     size i_maxSJETA        = 0;
     size i_minSJPT         = 0;
+    size i_genPT           = 0;
+    size i_genETA          = 0;
     size i_jetMass         = 0;
     size i_jetRawSDMass    = 0;
     size i_jetL23CorrSDMass= 0;

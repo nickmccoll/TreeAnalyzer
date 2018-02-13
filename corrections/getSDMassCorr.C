@@ -23,6 +23,9 @@
 #include "TGraphErrors.h"
 #include "TFitResult.h"
 
+#include "../background_estimation/FunctionFitter.C"
+#include "../background_estimation/CutConstants.h"
+
 #include "HistoPlotting/include/Plotter.h"
 #include "HistoPlotting/include/StyleInfo.h"
 
@@ -45,52 +48,6 @@ const int nRETAS = 5;
 //const double etas[] = {0,2.4};
 //const int nETAS = 1;
 
-double fnc_dscb(double*xx,double*pp)
-{
-  double x   = xx[0];
-  // gaussian core
-  double N   = pp[0];//norm
-  double mu  = pp[1];//mean
-  double sig = pp[2];//variance
-  // transition parameters
-  double a1  = pp[3];
-  double p1  = pp[4];
-  double a2  = pp[5];
-  double p2  = pp[6];
-
-  double u   = (x-mu)/sig;
-  double A1  = TMath::Power(p1/TMath::Abs(a1),p1)*TMath::Exp(-a1*a1/2);
-  double A2  = TMath::Power(p2/TMath::Abs(a2),p2)*TMath::Exp(-a2*a2/2);
-  double B1  = p1/TMath::Abs(a1) - TMath::Abs(a1);
-  double B2  = p2/TMath::Abs(a2) - TMath::Abs(a2);
-
-  double result(N);
-  if      (u<-a1) result *= A1*TMath::Power(B1-u,-p1);
-  else if (u<a2)  result *= TMath::Exp(-u*u/2);
-  else            result *= A2*TMath::Power(B2+u,-p2);
-  return result;
-}
-
-//double fnc_dscb(double*xx,double*pp)
-//{
-//  double x   = xx[0];
-//  // gaussian core
-//  double N   = pp[0];//norm
-//  double mu  = pp[1];//mean
-//  double sig = pp[2];//variance
-//  // transition parameters
-//  double a1  = pp[3];
-//  double p1  = pp[4];
-//
-//  double u   = (x-mu)/sig;
-//  double A1  = TMath::Power(p1/TMath::Abs(a1),p1)*TMath::Exp(-a1*a1/2);
-//  double B1  = p1/TMath::Abs(a1) - TMath::Abs(a1);
-//
-//  double result(N);
-//  if      (u<-a1) result *= A1*TMath::Power(B1-u,-p1);
-//  else result *= TMath::Exp(-u*u/2);
-//  return result;
-//}
 
 
 
@@ -99,31 +56,30 @@ public:
     Analyzer(std::string fileName, std::string treeName, int treeInt) : BaseTreeAnalyzer(fileName,treeName,treeInt),
     totPT(nETAS,std::vector<float>(nPTS,0)),nEntries(nETAS,std::vector<float>(nPTS,0)),
     totPTr(nRETAS,std::vector<float>(nRPTS,0)),nEntriesr(nRETAS,std::vector<float>(nRPTS,0))
-    {
+{
         mass = &jetRawSDMass;
-        fdscb = new TF1("fdscb",fnc_dscb,50,150,7);
-
-    }
+}
     void loadVariables() override {
-
-        setBranchAddress("","puWeight"        ,&puWeight        ,true);
-        setBranchAddress("","passEvtSel"      ,&passEvtSel        ,true);
-        setBranchAddress("","bosonMass"       ,&bosonMass       ,true);
-        setBranchAddress("","bosonPT"         ,&bosonPT         ,true);
-        setBranchAddress("","bosonETA"         ,&bosonETA         ,true);
-        setBranchAddress("","drToJet"         ,&drToJet         ,true);
-        setBranchAddress("","maxSJDR"         ,&maxSJDR         ,true);
-        setBranchAddress("","maxSJETA"        ,&maxSJETA        ,true);
-        setBranchAddress("","minSJPT"         ,&minSJPT         ,true);
-        setBranchAddress("","jetPT"           ,&jetPT           ,true);
-        setBranchAddress("","jetCorrPT"           ,&jetCorrPT           ,true);
-        setBranchAddress("","jetETA"          ,&jetETA          ,true);
-        setBranchAddress("","jetID"           ,&jetID           ,true);
-        setBranchAddress("","jetMass"         ,&jetMass         ,true);
-        setBranchAddress("","jetRawSDMass"    ,&jetRawSDMass    ,true);
-        setBranchAddress("","jetL23CorrSDMass",&jetL23CorrSDMass,true);
-        setBranchAddress("","jetCorrSDMass"   ,&jetCorrSDMass   ,true);
-        setBranchAddress("","jetWCorrSDMass"   ,&jetWCorrSDMass   ,true);
+        setBranchAddress("","puWeight"          ,&puWeight        ,true);
+        setBranchAddress("","csvCat"            ,&csvCat          ,true);
+        setBranchAddress("","bosonMass"         ,&bosonMass       ,true);
+        setBranchAddress("","bosonPT"           ,&bosonPT         ,true);
+        setBranchAddress("","bosonETA"          ,&bosonETA        ,true);
+        setBranchAddress("","drToJet"           ,&drToJet         ,true);
+        setBranchAddress("","maxSJDR"           ,&maxSJDR         ,true);
+        setBranchAddress("","maxSJETA"          ,&maxSJETA        ,true);
+        setBranchAddress("","minSJPT"           ,&minSJPT         ,true);
+        setBranchAddress("","genPT"             ,&genPT           ,true);
+        setBranchAddress("","genETA"            ,&genETA          ,true);
+        setBranchAddress("","jetPT"             ,&jetPT           ,true);
+        setBranchAddress("","jetCorrPT"         ,&jetCorrPT       ,true);
+        setBranchAddress("","jetETA"            ,&jetETA          ,true);
+        setBranchAddress("","jetID"             ,&jetID           ,true);
+        setBranchAddress("","jetMass"           ,&jetMass         ,true);
+        setBranchAddress("","jetRawSDMass"      ,&jetRawSDMass    ,true);
+        setBranchAddress("","jetL23CorrSDMass"  ,&jetL23CorrSDMass,true);
+        setBranchAddress("","jetCorrSDMass"     ,&jetCorrSDMass   ,true);
+        setBranchAddress("","jetWCorrSDMass"    ,&jetWCorrSDMass  ,true);
 
     }
 
@@ -188,10 +144,10 @@ public:
             };
 
             fill(ptBin,etaBin);
-//            if(rPTS[ptBin] >= 800){
-//                if(etaBin == 3) fill(ptBin,4);
-//                if(etaBin == 4) fill(ptBin,3);
-//            }
+            //            if(rPTS[ptBin] >= 800){
+            //                if(etaBin == 3) fill(ptBin,4);
+            //                if(etaBin == 4) fill(ptBin,3);
+            //            }
         }
 
 
@@ -218,9 +174,9 @@ public:
                 h->Scale(1./h->Integral(0,-1));
                 h->SetYTitle(TString::Format("pt: %.0f-%.0f, |#eta| %.1f-%.1f",minPT,maxPT,minETA,maxETA));
 
-//
-//                new TCanvas(TString::Format("pt: %.0f-%.0f, |#eta| %.1f-%.1f",minPT,maxPT,minETA,maxETA),TString::Format("pt: %.0f-%.0f, |#eta| %.1f-%.1f",minPT,maxPT,minETA,maxETA));
-//                h->Draw();
+                //
+                //                new TCanvas(TString::Format("pt: %.0f-%.0f, |#eta| %.1f-%.1f",minPT,maxPT,minETA,maxETA),TString::Format("pt: %.0f-%.0f, |#eta| %.1f-%.1f",minPT,maxPT,minETA,maxETA));
+                //                h->Draw();
 
                 graph->SetPoint(nP,totPTr[iE][iP]/nEntriesr[iE][iP],h->GetMean());
                 graph->SetPointError(nP,0,h->GetMeanError());
@@ -228,13 +184,13 @@ public:
             }
 
             p->addGraph(graph, TString::Format("%.1f#geq |#eta| <%.1f",minETA,maxETA));
-//            new TCanvas();
-//            graph->Draw("APL");
+            //            new TCanvas();
+            //            graph->Draw("APL");
 
         }
 
-        p->setXTitle("H(bb) gen particle #it{p}_{T} [GeV]");
-        p->setYTitle("<jet #it{p}_{T} / H(bb) gen particle #it{p}_{T}>");
+        p->setXTitle( "H#rightarrowbb particle #it{p}_{T} [GeV]");
+        p->setYTitle("< reco #it{p}_{T} / particle #it{p}_{T} >");
         p->setMinMax(0.86,1.025);
         p->setLegendPos(.15,.65,.6,.9);
         p->setCMSLumi(33,"13 TeV","Simulation Preliminary");
@@ -277,8 +233,8 @@ public:
             f->GetYaxis()->SetRangeUser(1.0,1.2);
             f->GetYaxis()->SetTitleOffset(1.47);
             f->GetXaxis()->SetTitleOffset(1.10);
-            f->GetYaxis()->SetTitle("H(bb) jet #it{p}_{T} correction");
-            f->GetXaxis()->SetTitle("H(bb) reco-jet #it{p}_{T} [GeV]");
+            f->GetYaxis()->SetTitle("H#rightarrowbb jet #it{p}_{T} correction");
+            f->GetXaxis()->SetTitle("H#rightarrowbb reco-jet #it{p}_{T} [GeV]");
 
             outFile->cd();
             TString title =  TString::Format("jec_eta_%.1f_%.1f",minETA,maxETA);
@@ -295,9 +251,40 @@ public:
 
     }
     void doFits(TFile * outFile){
+        auto setup1DFit = [](const TH1* hbbH, bool doExpo, std::vector<std::unique_ptr<FunctionFitter>>& fitters, double minPT, double maxPT){
+            std::string pF = "SMJJ";
+            auto vN=[&](std::string var)->std::string{return var+pF;};
+            fitters.emplace_back(new CBFunctionFitter(hbbH,doExpo,pF,{"MJJ"}));
+            auto fitter = &* fitters.back();
+            fitter->setVar(vN("mean")     ,110,50,180);
+            fitter->setVar(vN("sigma")       ,10,5,30);
+            //             fitter->setConst(vN("sigma"),1);
+            fitter->setVar(vN("alpha")     ,1 ,0.1,2);
+            //            fitter->setConst(vN("alpha"),1);
+            fitter->setVar(vN("alpha2")  ,2,0.1,4);
+            //             fitter->setConst(vN("alpha2")  ,1);
+            fitter->setVar(vN("n")   ,  5  ,1,6);
+            fitter->setVar(vN("n2")  ,5,3,20);
+            fitter->setConst(vN("n")  ,1);
+            fitter->setConst(vN("n2")  ,1);
+
+            if(doExpo){
+                fitter->setVar(vN("slope")  ,-1,-10,0);
+                fitter->setVar(vN("fE")  ,0.1,0,0.75);
+            }
+
+
+            fitter->w->var("MJJ")->setRange("fit",minPT,maxPT);
+            fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::SumCoefRange("fit"),RooFit::Minos(0),RooFit::NumCPU(8)});
+            fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::SumCoefRange("fit"),RooFit::Minos(1),RooFit::NumCPU(8)});
+        };
+
         Plotter * p = new Plotter;
         Plotter * pm = new Plotter;
         for(unsigned int iE = 0; iE <  nETAS; ++iE){
+            std::vector<std::unique_ptr<FunctionFitter>> fitters;
+            FunctionParameterPlotter funcPlotter;
+
             const float minETA = etas[iE];
             const float maxETA = etas[iE+1];
             TGraphErrors * graph = new TGraphErrors();
@@ -311,51 +298,37 @@ public:
                 if(h == 0) continue;
                 h->SetDirectory(0);
 
+                double minFitPT = 70;
+                double maxFitPT = 150;
+                if(maxPT <= 250){
+                    minFitPT = 30;
+                }
+                else if(maxPT <= 300){
+                    minFitPT = 50;
+                }
+                else if(minPT >= 200 && iE > 0){
+                    minFitPT= 50;
+                    maxFitPT= 130;
+                }
+
+                setup1DFit(h,false,fitters,minFitPT,maxFitPT);
+                funcPlotter.addFit(&*fitters.back(),totPT[iE][iP]/nEntries[iE][iP], ASTypes::flt2Str(minPT)+"to"+ASTypes::flt2Str(maxPT));
+
                 h = (TH1*)h->Clone();
                 h->Scale(1./h->Integral(0,-1));
                 h->SetYTitle(TString::Format("pt: %.0f-%.0f, |#eta| %.1f-%.1f",minPT,maxPT,minETA,maxETA));
-
-
-                fdscb->SetParameter(0,0.03); // N
-                fdscb->SetParameter(1,maxPT <= 250 ?70 : 110 ); // mean
-                fdscb->SetParameter(2,12);// sigma
-                fdscb->SetParameter(3,1.0); // a1
-                fdscb->SetParameter(4,10.0); // p1
-                fdscb->SetParameter(5,2.0); // a2
-                fdscb->SetParameter(6,5.0); // p2
-
-                fdscb->SetParLimits(2,0,60);
-                fdscb->SetParLimits(3,0.2,3.);
-                fdscb->SetParLimits(5,1,5.);
-
-//                fdscb->SetParLimits(4,5,10.);
-//                fdscb->SetParLimits(6,4,6.);
-
-//                fdscb->FixParameter(3,1.0); // a1
-                fdscb->FixParameter(6,1 ); // p2
-                fdscb->FixParameter(4,10); // p1
-
-
-
                 new TCanvas(TString::Format("pt: %.0f-%.0f, |#eta| %.1f-%.1f",minPT,maxPT,minETA,maxETA),TString::Format("pt: %.0f-%.0f, |#eta| %.1f-%.1f",minPT,maxPT,minETA,maxETA));
                 h->Draw();
-                if(maxPT <= 300){
-                    if(h->Fit(fdscb,"RQB","",50.,150.)) continue;
-                }
-                else if(minPT >= 200 && iE > 0){
-                    if(h->Fit(fdscb,"RQB","",70.,130.)) continue;
-                } else
-
-                {
-                    if(h->Fit(fdscb,"RQB","",70.,150.)) continue;
-                }
-                graphM->SetPoint(nP,totPT[iE][iP]/nEntries[iE][iP],fdscb->GetParameter(1));
-                graphM->SetPointError(nP,0,fdscb->GetParError(1));
-                graph->SetPoint(nP,totPT[iE][iP]/nEntries[iE][iP],125.0/fdscb->GetParameter(1));
-                graph->SetPointError(nP,0,(125.0/(fdscb->GetParameter(1)*fdscb->GetParameter(1)))*fdscb->GetParError(1));
-                std::cout << nP <<" "<< totPT[iE][iP]/nEntries[iE][iP] <<" "<< fdscb->GetParameter(1)<< " "<< graph->GetN()<<std::endl;
+                double fitMean = fitters.back()->getVal("meanSMJJ");
+                double fitError = fitters.back()->getError("meanSMJJ");
+                graphM->SetPoint(nP,totPT[iE][iP]/nEntries[iE][iP],fitMean);
+                graphM->SetPointError(nP,0,fitError);
+                graph->SetPoint(nP,totPT[iE][iP]/nEntries[iE][iP],125.0/fitMean);
+                graph->SetPointError(nP,0,(125.0/(fitMean*fitMean))*fitError);
+                std::cout << nP <<" "<< totPT[iE][iP]/nEntries[iE][iP] <<" "<< fitMean<<std::endl;
                 nP++;
             }
+            funcPlotter.write(std::string("debug_")+ASTypes::int2Str(iE)+"_MJJ_fit.root");
             p->addGraph(graph, TString::Format("%.1f#geq |#eta| <%.1f",minETA,maxETA),-1,1,4,20,1,true,true,false,"P E 0 Z L");
 
             outFile->cd();
@@ -369,8 +342,8 @@ public:
             graph->Draw("APL");
 
         }
-        p->setXTitle("H(bb) gen particle #it{p}_{T} [GeV]");
-        p->setYTitle("H(bb) mass correction");
+        p->setXTitle("H#rightarrowbb particle #it{p}_{T} [GeV]");
+        p->setYTitle("#it{m}_{H#rightarrowbb} correction");
         p->setMinMax(1.0,1.85);
         p->setLegendPos(.20,.6,.5,.8);
         p->setCMSLumi(33,"13 TeV","Simulation Preliminary");
@@ -381,8 +354,8 @@ public:
         can->Print("HbbMassCorrection.pdf");
 
 
-        pm->setXTitle("H(bb) gen particle #it{p}_{T} [GeV]");
-        pm->setYTitle("H(bb) jet softdrop mass");
+        pm->setXTitle("H#rightarrowbb particle #it{p}_{T} [GeV]");
+        pm->setYTitle("#it{m}_{H#rightarrowbb} fit #mu");
         pm->setMinMax(65,125);
         pm->setLegendPos(.5,.2,.85,.5);
         pm->setCMSLumi(33,"13 TeV","Simulation Preliminary");
@@ -397,34 +370,35 @@ public:
     void write(TString fileName){ plotter.write(fileName);}
 
 
-    float  puWeight         = 0;
-    size8  passEvtSel       = 0;
-    float  bosonMass        = 0;
-    float  bosonPT          = 0;
-    float  bosonETA         = 0;
-    float  drToJet          = 0;
-    float  maxSJDR          = 0;
-    float  jetPT            = 0;
-    float  jetCorrPT        = 0;
-    float  jetETA           = 0;
-    size8  jetID            = 0;
-    float  maxSJETA         = 0;
-    float  minSJPT          = 0;
-    float  jetMass          = 0;
-    float  jetRawSDMass     = 0;
-    float  jetL23CorrSDMass = 0;
-    float  jetCorrSDMass    = 0;
-    float  jetWCorrSDMass   = 0;
+    float puWeight         =0;
+    size8 csvCat           =0;
+    float bosonMass        =0;
+    float bosonPT          =0;
+    float bosonETA         =0;
+    float drToJet          =0;
+    float maxSJDR          =0;
+    float maxSJETA         =0;
+    float minSJPT          =0;
+    float genPT            =0;
+    float genETA           =0;
+    float jetPT            =0;
+    float jetCorrPT        =0;
+    float jetETA           =0;
+    size8 jetID            =0;
+    float jetMass          =0;
+    float jetRawSDMass     =0;
+    float jetL23CorrSDMass =0;
+    float jetCorrSDMass    =0;
+    float jetWCorrSDMass   =0;
 
 
     float * mass;
-    TF1* fdscb;
 
     std::vector<std::vector<float>> totPT;
     std::vector<std::vector<float>> nEntries;
 
-          std::vector<std::vector<float>> totPTr;
-        std::vector<std::vector<float>> nEntriesr;
+    std::vector<std::vector<float>> totPTr;
+    std::vector<std::vector<float>> nEntriesr;
 
     HistGetter plotter;
 
@@ -439,5 +413,5 @@ void getSDMassCorr(std::string fileName, int treeInt, std::string outFileName){
     a->analyze();
     a->doFits(fo);
     a->getResp(fo);
-//    fo->Close();
+        fo->Close();
 }

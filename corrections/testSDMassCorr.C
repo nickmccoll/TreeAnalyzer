@@ -17,6 +17,8 @@
 #include "Processors/Corrections/interface/EventWeights.h"
 #include "Processors/GenTools/interface/DiHiggsEvent.h"
 #include "Processors/Variables/interface/JetKinematics.h"
+#include "../background_estimation/FunctionFitter.C"
+
 #include "TStyle.h"
 #include "TPRegexp.h"
 #include "TCanvas.h"
@@ -73,24 +75,26 @@ public:
 }
     void loadVariables() override {
 
-        setBranchAddress("","puWeight"        ,&puWeight        ,true);
-        setBranchAddress("","passEvtSel"      ,&passEvtSel        ,true);
-        setBranchAddress("","bosonMass"       ,&bosonMass       ,true);
-        setBranchAddress("","bosonPT"         ,&bosonPT         ,true);
-        setBranchAddress("","bosonETA"         ,&bosonETA         ,true);
-        setBranchAddress("","drToJet"         ,&drToJet         ,true);
-        setBranchAddress("","maxSJDR"         ,&maxSJDR         ,true);
-        setBranchAddress("","maxSJETA"        ,&maxSJETA        ,true);
-        setBranchAddress("","minSJPT"         ,&minSJPT         ,true);
-        setBranchAddress("","jetPT"           ,&jetPT           ,true);
-        setBranchAddress("","jetCorrPT"           ,&jetCorrPT           ,true);
-        setBranchAddress("","jetETA"          ,&jetETA          ,true);
-        setBranchAddress("","jetID"           ,&jetID           ,true);
-        setBranchAddress("","jetMass"         ,&jetMass         ,true);
-        setBranchAddress("","jetRawSDMass"    ,&jetRawSDMass    ,true);
-        setBranchAddress("","jetL23CorrSDMass",&jetL23CorrSDMass,true);
-        setBranchAddress("","jetCorrSDMass"   ,&jetCorrSDMass   ,true);
-        setBranchAddress("","jetWCorrSDMass"   ,&jetWCorrSDMass   ,true);
+        setBranchAddress("","puWeight"          ,&puWeight        ,true);
+        setBranchAddress("","csvCat"            ,&csvCat          ,true);
+        setBranchAddress("","bosonMass"         ,&bosonMass       ,true);
+        setBranchAddress("","bosonPT"           ,&bosonPT         ,true);
+        setBranchAddress("","bosonETA"          ,&bosonETA        ,true);
+        setBranchAddress("","drToJet"           ,&drToJet         ,true);
+        setBranchAddress("","maxSJDR"           ,&maxSJDR         ,true);
+        setBranchAddress("","maxSJETA"          ,&maxSJETA        ,true);
+        setBranchAddress("","minSJPT"           ,&minSJPT         ,true);
+        setBranchAddress("","genPT"             ,&genPT           ,true);
+        setBranchAddress("","genETA"            ,&genETA          ,true);
+        setBranchAddress("","jetPT"             ,&jetPT           ,true);
+        setBranchAddress("","jetCorrPT"         ,&jetCorrPT       ,true);
+        setBranchAddress("","jetETA"            ,&jetETA          ,true);
+        setBranchAddress("","jetID"             ,&jetID           ,true);
+        setBranchAddress("","jetMass"           ,&jetMass         ,true);
+        setBranchAddress("","jetRawSDMass"      ,&jetRawSDMass    ,true);
+        setBranchAddress("","jetL23CorrSDMass"  ,&jetL23CorrSDMass,true);
+        setBranchAddress("","jetCorrSDMass"     ,&jetCorrSDMass   ,true);
+        setBranchAddress("","jetWCorrSDMass"    ,&jetWCorrSDMass  ,true);
 
     }
 
@@ -107,20 +111,20 @@ public:
         TString prefix = TString::Format("m%.0f",signal_mass);
 
         auto mkplots =[&](const TString& prefix){
-            plotter.getOrMake1DPre(prefix,"rawMass",";H(bb) mass [GeV]",200,0,200 )     ->Fill(jetRawSDMass,puWeight);
-            plotter.getOrMake1DPre(prefix,"L23CorrMass",";H(bb) mass [GeV]",200,0,200 ) ->Fill(jetL23CorrSDMass,puWeight);
-            plotter.getOrMake1DPre(prefix,"corrMass",";H(bb) mass [GeV]",200,0,200 )    ->Fill(jetCorrSDMass,puWeight);
-            plotter.getOrMake1DPre(prefix,"WCorrMass",";H(bb) mass [GeV]",200,0,200 )   ->Fill(jetWCorrSDMass,puWeight);
-            plotter.getOrMake1DPre(prefix,"fatjetMass",";H(bb) mass [GeV]",200,0,200 )   ->Fill(jetMass,puWeight);
-            plotter.getOrMake1DPre(prefix,"jetResp",";H(bb) jet response", 500,0,2  )    ->Fill(jetPT/bosonPT,puWeight);
-            plotter.getOrMake1DPre(prefix,"jetCorrResp",";H(bb) jet response", 500,0,2  )    ->Fill(jetCorrPT/bosonPT,puWeight);
+            plotter.getOrMake1DPre(prefix,"rawMass",";#it{m}_{H#rightarrowbb} [GeV]",200,0,200 )     ->Fill(jetRawSDMass,puWeight);
+            plotter.getOrMake1DPre(prefix,"L23CorrMass",";#it{m}_{H#rightarrowbb} [GeV]",200,0,200 ) ->Fill(jetL23CorrSDMass,puWeight);
+            plotter.getOrMake1DPre(prefix,"corrMass",";#it{m}_{H#rightarrowbb} [GeV]",200,0,200 )    ->Fill(jetCorrSDMass,puWeight);
+            plotter.getOrMake1DPre(prefix,"WCorrMass",";#it{m}_{H#rightarrowbb} [GeV]",200,0,200 )   ->Fill(jetWCorrSDMass,puWeight);
+            plotter.getOrMake1DPre(prefix,"fatjetMass",";#it{m}_{H#rightarrowbb} [GeV]",200,0,200 )   ->Fill(jetMass,puWeight);
+            plotter.getOrMake1DPre(prefix,"jetResp",";H#rightarrowbb jet response", 500,0,2  )    ->Fill(jetPT/bosonPT,puWeight);
+            plotter.getOrMake1DPre(prefix,"jetCorrResp",";H#rightarrowbb jet response", 500,0,2  )    ->Fill(jetCorrPT/bosonPT,puWeight);
 
         };
 
         mkplots(prefix+"_incl");
         if(goodhbb) mkplots(prefix+"_goodHBB");
-        if(goodhbb && passEvtSel) mkplots(prefix+"_goodHBBGoodReco");
-        if(passEvtSel) mkplots(prefix+"_goodReco");
+//        if(goodhbb && passEvtSel) mkplots(prefix+"_goodHBBGoodReco");
+//        if(passEvtSel) mkplots(prefix+"_goodReco");
         return true;
     }
 
@@ -131,24 +135,26 @@ public:
 
 
 
-    float  puWeight         = 0;
-    size8  passEvtSel       = 0;
-    float  bosonMass        = 0;
-    float  bosonPT          = 0;
-    float  bosonETA         = 0;
-    float  drToJet          = 0;
-    float  maxSJDR          = 0;
-    float  jetPT            = 0;
-    float  jetCorrPT        = 0;
-    float  jetETA           = 0;
-    size8  jetID            = 0;
-    float  maxSJETA         = 0;
-    float  minSJPT          = 0;
-    float  jetMass          = 0;
-    float  jetRawSDMass     = 0;
-    float  jetL23CorrSDMass = 0;
-    float  jetCorrSDMass    = 0;
-    float  jetWCorrSDMass   = 0;
+    float puWeight         =0;
+    size8 csvCat           =0;
+    float bosonMass        =0;
+    float bosonPT          =0;
+    float bosonETA         =0;
+    float drToJet          =0;
+    float maxSJDR          =0;
+    float maxSJETA         =0;
+    float minSJPT          =0;
+    float genPT            =0;
+    float genETA           =0;
+    float jetPT            =0;
+    float jetCorrPT        =0;
+    float jetETA           =0;
+    size8 jetID            =0;
+    float jetMass          =0;
+    float jetRawSDMass     =0;
+    float jetL23CorrSDMass =0;
+    float jetCorrSDMass    =0;
+    float jetWCorrSDMass   =0;
 
 
 
@@ -163,13 +169,42 @@ public:
 
 
 void doFit(TString filename){
-        TF1* fdscb = new TF1("fdscb",fnc_dscb,50,150,7);
-        TF1* gaus = new TF1("gaus","[0]*exp(-0.5*((x-[1])/[2])**2)",50,200);
+    auto setup1DFit = [](const TH1* hbbH, bool doExpo, std::vector<std::unique_ptr<FunctionFitter>>& fitters, double minPT, double maxPT){
+        std::string pF = "SMJJ";
+        auto vN=[&](std::string var)->std::string{return var+pF;};
+        fitters.emplace_back(new CBFunctionFitter(hbbH,doExpo,pF,{"MJJ"}));
+        auto fitter = &* fitters.back();
+        fitter->setVar(vN("mean")     ,(minPT+maxPT)/2,minPT,maxPT);
+        fitter->setVar(vN("sigma")       ,10,5,20);
+        //             fitter->setConst(vN("sigma"),1);
+        fitter->setVar(vN("alpha")     ,1 ,0.1,2);
+        //            fitter->setConst(vN("alpha"),1);
+        fitter->setVar(vN("alpha2")  ,2,0.1,4);
+        //             fitter->setConst(vN("alpha2")  ,1);
+        fitter->setVar(vN("n")   ,  5  ,1,6);
+        fitter->setVar(vN("n2")  ,5,3,20);
+        fitter->setConst(vN("n")  ,1);
+        fitter->setConst(vN("n2")  ,1);
+
+        if(doExpo){
+            fitter->setVar(vN("slope")  ,-1,-10,0);
+            fitter->setVar(vN("fE")  ,0.1,0,0.75);
+        }
+        RooFormulaVar sigOM  (vN("som"  ).c_str(),"@0/@1",RooArgList(*fitter->w->var(vN("sigma").c_str()),*fitter->w->var(vN("mean").c_str())));
+        fitter->w->import(sigOM  );
+
+        fitter->w->var("MJJ")->setRange("fit",minPT,maxPT);
+        fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::SumCoefRange("fit"),RooFit::Minos(0),RooFit::NumCPU(8)});
+//                     fitter->setConst(vN("alpha2")  ,1);
+//                     fitter->setConst(vN("alpha")  ,1);
+        fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::SumCoefRange("fit"),RooFit::Minos(1),RooFit::NumCPU(8),RooFit::Save(1)});
+    };
+
     TFile * f = new TFile(filename,"read");
 //        std::vector<TString> pres = {"incl","goodHBB"};
-    std::vector<TString> pres = {"incl","goodHBB","goodHBBGoodReco"};
+    std::vector<TString> pres = {"goodHBB"};
     std::vector<TString> vars = {"rawMass","L23CorrMass","WCorrMass","corrMass","fatjetMass"};
-    std::vector<TString> varNs = {"raw mass", "L23 corr. mass","W-jet corr. mass","H(bb) corr. mass", "AK8 fat jet mass"};
+    std::vector<TString> varNs = {"no corr.", "L2L3 corr.","W#rightarrowqq corr.","H#rightarrowbb corr.", "no grooming (L2L3 corr.)"};
     std::vector<float> masses = {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500};
 
     for(unsigned int iP = 0; iP < pres.size();++iP){
@@ -182,57 +217,51 @@ void doFit(TString filename){
             TGraphErrors * gS = new TGraphErrors();
             TGraphErrors * gMoS = new TGraphErrors();
             int nP = 0;
+            std::vector<std::unique_ptr<FunctionFitter>> fitters;
+            FunctionParameterPlotter funcPlotter;
+
+
             for(unsigned int iM = 0; iM < masses.size();++iM){
                 TH1 * h = 0;
                 f->GetObject(TString::Format("m%.0f_%s_%s",masses[iM],pres[iP].Data(),vars[iV].Data()),h);
                 if(h == 0) continue;
+                setup1DFit(h,false,fitters,50,175);
+                funcPlotter.addFit(&*fitters.back(),masses[iM], ASTypes::flt2Str(masses[iM]));
+
                 h = (TH1*)h->Clone();
                 h->Scale(1./h->Integral(0,-1));
-                gaus->SetParameter(0,0.03); // N
-                gaus->SetParameter(1,125 ); // mean
-                gaus->SetParameter(2,12);// sigma
 
-                h->Fit(gaus,"RQB0","",50.,200.);
-                const float gausM = gaus->GetParameter(1);
-                TString name = TString::Format("M(%.0f), %s, %s",masses[iM],varNs[iV].Data(), pres[iP].Data());
-
-                std::cout << name << " "<< gausM<<std::endl;
-                fdscb->SetParameter(0,0.03); // N
-                fdscb->SetParameter(1,gausM+5 ); // mean
-                fdscb->SetParameter(2,12);// sigma
-                fdscb->SetParameter(3,1.0); // a1
-                fdscb->SetParameter(4,10.0); // p1
-                fdscb->SetParameter(5,2.0); // a2
-                fdscb->SetParameter(6,5.0); // p2
-
-                fdscb->SetParLimits(2,0,60);
-                fdscb->SetParLimits(3,0.2,3.);
-                fdscb->SetParLimits(5,1,5.);
-
-                fdscb->FixParameter(6,1 ); // p2
-                fdscb->FixParameter(4,10); // p1
-
-                if(h->Fit(fdscb,"RQB","",gausM+5 - 50,gausM+5 + 50)) continue;
+                double fitMean = fitters.back()->getVal("meanSMJJ");
+                double fitError = fitters.back()->getError("meanSMJJ");
+                double fitSigma = fitters.back()->getVal("sigmaSMJJ");
+                double fitSigmaError = fitters.back()->getError("sigmaSMJJ");
 
 //                    new TCanvas(name,name);
 //                    h->Draw();
 
-                gM->SetPoint(nP,masses[iM],fdscb->GetParameter(1));
-                gM->SetPointError(nP,0,fdscb->GetParError(1));
-                gS->SetPoint(nP,masses[iM],fdscb->GetParameter(2));
-                gS->SetPointError(nP,0,fdscb->GetParError(2));
-                gMoS->SetPoint(nP,masses[iM],fdscb->GetParameter(2)/fdscb->GetParameter(1));
-                gMoS->SetPointError(nP,0,fdscb->GetParError(2)/fdscb->GetParameter(1));
+                gM->SetPoint(nP,masses[iM],fitMean);
+                gM->SetPointError(nP,0,fitError);
+                gS->SetPoint(nP,masses[iM],fitSigma);
+                gS->SetPointError(nP,0,fitSigmaError);
+
+                std::cout <<"HIIII-> " <<  fitMean <<" "<< fitError<<" "<<fitSigma<<" "<<fitSigmaError<<" "<<fitSigma/fitSigmaError<< " "<< fitSigmaError/fitMean <<" "
+                        << fitters.back()->getFVal("somSMJJ") <<" "<< fitters.back()->getFError("somSMJJ")<<std::endl;
+
+//                gMoS->SetPoint(nP,masses[iM],fitSigma/fitSigmaError);
+//                gMoS->SetPointError(nP,0,fitSigmaError/fitMean);
+                gMoS->SetPoint(nP,masses[iM],fitters.back()->getFVal("somSMJJ"));
+                gMoS->SetPointError(nP,0,fitters.back()->getFError("somSMJJ"));
                 nP++;
             }
+            funcPlotter.write(std::string("debug_")+pres[iP].Data()+"_"+ vars[iV].Data()+"_MJJ_fit.root");
 
             pM->addGraph(gM, varNs[iV],-1,1,4,20,1,true,false,false,"P L");
             pS->addGraph(gS, varNs[iV],-1,1,4,20,1,true,false,false,"P L");
             pMoS->addGraph(gMoS, varNs[iV],-1,1,4,20,1,true,false,false,"P L");
         }
 
-        pM->setXTitle("signal sample radion mass [GeV]");
-        pM->setYTitle("mass from fit [GeV]");
+        pM->setXTitle("sample #it{m}_{X} [GeV]");
+        pM->setYTitle("#it{m}_{H#rightarrowbb} fit #mu [GeV]");
         pM->setCMSLumi(33,"13 TeV","Simulation Preliminary");
         pM->setMinMax(100,150);
         pM->setLegendPos(.15,.65,.5,.9);
@@ -241,8 +270,8 @@ void doFit(TString filename){
         pM->yAxis()->SetTitleOffset(1.47);
         can->Print(TString::Format("massTrend_%s.pdf",pres[iP].Data()));
 
-        pMoS->setXTitle("signal sample radion mass [GeV]");
-        pMoS->setYTitle(" #sigma(mass) / mass (from fit)");
+        pMoS->setXTitle("sample #it{m}_{X} [GeV]");
+        pMoS->setYTitle("#it{m}_{H#rightarrowbb} fit #sigma / #mu");
         pMoS->setCMSLumi(33,"13 TeV","Simulation Preliminary");
         pMoS->setMinMax(0.087,0.12);
         pMoS->setLegendPos(.5,.49,.83,.75);
@@ -251,8 +280,8 @@ void doFit(TString filename){
         pMoS->yAxis()->SetTitleOffset(1.60);
         can2->Print(TString::Format("sigmaOMassTrend_%s.pdf",pres[iP].Data()));
 
-        pS->setXTitle("signal sample radion mass [GeV]");
-        pS->setYTitle("#sigma(mass) from fit [GeV]");
+        pS->setXTitle("sample #it{m}_{X} [GeV]");
+        pS->setYTitle("#it{m}_{H#rightarrowbb} fit #sigma [GeV]");
         pS->setCMSLumi(33,"13 TeV","Simulation Preliminary");
         pS->setMinMax(9,24);
         pS->setLegendPos(.15,.65,.5,.9);
@@ -267,9 +296,9 @@ void doFit(TString filename){
 
 void doRespTest(TString filename){
     TFile * f = new TFile(filename,"read");
-    std::vector<TString> pres = {"incl","goodHBB","goodHBBGoodReco"};
+    std::vector<TString> pres = {"incl","goodHBB"};
     std::vector<TString> vars = {"jetResp","jetCorrResp"};
-    std::vector<TString> varNs = {"L23 corr.", "L23 corr. + H(bb) resid."  };
+    std::vector<TString> varNs = {"L2L3 corr.", "L2L3 corr. + resid. particle"  };
     std::vector<float> masses = {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500};
 
     for(unsigned int iP = 0; iP < pres.size();++iP){
@@ -295,7 +324,7 @@ void doRespTest(TString filename){
             pM->addGraph(gM, varNs[iV],-1,1,4,20,1,true,false,false,"P L");
         }
 
-        pM->setXTitle("signal sample radion mass [GeV]");
+        pM->setXTitle("sample #it{m}_{X} [GeV]");
         pM->setYTitle("<jet response>");
         pM->setCMSLumi(33,"13 TeV","Simulation Preliminary");
         pM->setMinMax(0.92,1.05);
