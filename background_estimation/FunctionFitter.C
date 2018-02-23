@@ -30,6 +30,7 @@ public:
     double plot_max = -1;
 
     RooFitResult *fitResultCache=0;
+    std::vector<std::string> secondaryModelNames;
 
     FunctionFitter(const TH1* iH, const std::string postFix = "T", const std::vector<std::string>&  plotVars = {"M"}):
         postFix(postFix)
@@ -83,8 +84,9 @@ public:
         std::string data  = std::string("data");
         auto frame = w->var(vars[0].c_str())->frame();
         w->data(data.c_str())->plotOn(frame);
-        w->pdf(model.c_str())->fixAddCoefRange("fit");
+        w->pdf(model.c_str())->fixAddCoefRange("coef");
         w->pdf(model.c_str())->plotOn(frame, RooFit::NormRange("fit"));
+        if(secondaryModelNames.size()) w->pdf(model.c_str())->plotOn(frame, RooFit::NormRange("fit"), RooFit::Components(secondaryModelNames[0].c_str()), RooFit::LineStyle(kDashed));
         TCanvas* can = new TCanvas(name.c_str());
         can->cd();
         frame->Draw();
@@ -96,6 +98,7 @@ public:
     }
     TCanvas* projection2D(const std::string& name, double& chi2){
         std::string model = std::string("model")+postFix;
+        w->pdf(model.c_str())->fixAddCoefRange("coef");
         auto * pdf = w->pdf(model.c_str())->createHistogram(model.c_str(), *w->var(vars[0].c_str()),RooFit::YVar(*w->var(vars[1].c_str()))   );
         TCanvas* can = new TCanvas(name.c_str());
         can->cd();
@@ -114,6 +117,7 @@ public:
     }
     TH1* pdf2D(const std::string& name){
         std::string model = std::string("model")+postFix;
+        w->pdf(model.c_str())->fixAddCoefRange("coef");
         auto * hist = w->pdf(model.c_str())->createHistogram(name.c_str(), *w->var(vars[0].c_str()),RooFit::YVar(*w->var(vars[1].c_str()))   );
         hist->GetYaxis()->SetTitle(vars[1].c_str());
         hist->GetXaxis()->SetTitle(vars[0].c_str());
@@ -121,6 +125,7 @@ public:
     }
     TH1* pdf1D(const std::string& name){
         std::string model = std::string("model")+postFix;
+        w->pdf(model.c_str())->fixAddCoefRange("coef");
         auto * hist = w->pdf(model.c_str())->createHistogram(name.c_str(), *w->var(vars[0].c_str()));
         hist->GetXaxis()->SetTitle(vars[0].c_str());
         return hist;
@@ -151,95 +156,249 @@ protected:
     }
 
 
-    void addCB(const std::string& postFix, const std::string& modelName, const std::string& varName, bool doExpo){
-        auto pn =[&] (const std::string& v) ->std::string {return v+postFix;};
-        auto pv =[&] (const std::string& v) ->RooRealVar* {return w->var((v+postFix).c_str());};
+    //    void addCB(const std::string& postFix, const std::string& modelName, const std::string& varName, bool doExpo){
+    //        auto pn =[&] (const std::string& v) ->std::string {return v+postFix;};
+    //        auto pv =[&] (const std::string& v) ->RooRealVar* {return w->var((v+postFix).c_str());};
+    //
+    //        addParam(pn("mean"  ),"[90,0,300]");
+    //        addParam(pn("sigma" ),"[8,0,100]");
+    //        addParam(pn("alpha" ),"[1,0.001,100]");
+    //        addParam(pn("alpha2"),"[1,0.001,100]");
+    //
+    //        addParam(pn("n")  ,"[5,1,100]");
+    //        addParam(pn("n2"),"[5,1,100]");
+    //
+    //        std::string cbName = doExpo ? modelName +"P" : modelName;
+    //        RooDoubleCB modelP(cbName .c_str(),cbName.c_str(),*w->var(varName.c_str())  ,
+    //                *pv("mean") ,*pv("sigma"),*pv("alpha"),*pv("n") ,*pv("alpha2"),*pv("n2"));
+    //        w->import(modelP);
+    //
+    //        if(doExpo){
+    //            addParam(pn("slope"),"[-1,-10,0]");
+    //            std::string expName =  modelName +"E";
+    //            RooExponential modelE(expName.c_str(),expName.c_str(),*w->var(varName.c_str()),*pv("slope"));
+    //            w->import(modelE);
+    //            addParam(pn("fE"),"[0.1,0,1]");
+    //            RooAddPdf modelC(modelName.c_str(),modelName.c_str(),*w->pdf(expName.c_str()),*w->pdf(cbName.c_str()),*pv("fE"));
+    //            secondaryModelNames.push_back(expName);
+    //            w->import(modelC);
+    //        }
+    //    }
+    //
+    //};
 
-        std::string model = std::string("model")+postFix;
-        addParam(pn("mean"  ),"[90,0,300]");
-        addParam(pn("sigma" ),"[8,0,100]");
-        addParam(pn("alpha" ),"[1,0.001,100]");
-        addParam(pn("alpha2"),"[1,0.001,100]");
 
-        addParam(pn("n")  ,"[5,1,100]");
-        addParam(pn("n2"),"[5,1,100]");
+    void addCB(const std::string& modelName, const std::string& pPFix,  const std::string& varName, bool addParams = true, RooAbsReal* meanFunc =0, RooAbsReal* sigmaFunc =0){
+        auto pn =[&] (const std::string& v) ->std::string {return v+pPFix;};
+        auto pv =[&] (const std::string& v) ->RooRealVar* {return w->var((v+pPFix).c_str());};
 
-        std::string cbName = doExpo ? modelName +"P" : modelName;
-        RooDoubleCB modelP(cbName .c_str(),cbName.c_str(),*w->var(varName.c_str())  ,
-                *pv("mean") ,*pv("sigma"),*pv("alpha"),*pv("n") ,*pv("alpha2"),*pv("n2"));
-        w->import(modelP);
-
-        if(doExpo){
-            addParam(pn("slope"),"[-1,-10,0]");
-            std::string expName =  modelName +"E";
-            RooExponential modelE(expName.c_str(),expName.c_str(),*w->var(varName.c_str()),*pv("slope"));
-            w->import(modelE);
-            addParam(pn("fE"),"[0.1,0,1]");
-            RooAddPdf modelC(modelName.c_str(),modelName.c_str(),*w->pdf(expName.c_str()),*w->pdf(cbName.c_str()),*pv("fE"));
-            w->import(modelC);
+        if(addParams){
+            if(meanFunc==0) addParam(pn("mean"  ),"[90,0,5000]");
+            if(sigmaFunc==0) addParam(pn("sigma" ),"[8,0,5000]");
+            addParam(pn("alpha" ),"[1,0.001,100]");
+            addParam(pn("alpha2"),"[1,0.001,100]");
+            addParam(pn("n")  ,"[5,1,100]");
+            addParam(pn("n2"),"[5,1,100]");
         }
+
+
+
+        RooDoubleCB modelP(modelName .c_str(),modelName.c_str(),*w->var(varName.c_str())  ,
+                meanFunc  ? *meanFunc : *pv("mean"),sigmaFunc  ? *sigmaFunc : *pv("sigma"),*pv("alpha"),*pv("n") ,*pv("alpha2"),*pv("n2"));
+        w->import(modelP);
     }
+
+    void addExpo(const std::string& modelName, const std::string& pPFix,  const std::string& varName,bool addParams = true){
+        auto pn =[&] (const std::string& v) ->std::string {return v+pPFix;};
+        if(addParams){
+            addParam(pn("slope"),"[-1,-10,0]");
+        }
+        RooExponential modelE(modelName.c_str(),modelName.c_str(),*w->var(varName.c_str()), *w->var(pn("slope").c_str()));
+        w->import(modelE);
+    }
+
+    void addGaus(const std::string& modelName, const std::string& pPFix,  const std::string& varName,bool addParams = true, RooAbsReal* meanFunc =0, RooAbsReal* sigmaFunc =0){
+        auto pn =[&] (const std::string& v) ->std::string {return v+pPFix;};
+        auto pv =[&] (const std::string& v) ->RooRealVar* {return w->var((v+pPFix).c_str());};
+        if(addParams){
+            if(meanFunc==0) addParam(pn("mean"  ),"[90,0,5000]");
+            if(sigmaFunc==0) addParam(pn("sigma" ),"[8,0,1000]");;
+        }
+        RooGaussian model(modelName.c_str(),modelName.c_str(),*w->var(varName.c_str()),  meanFunc  ? *meanFunc : *pv("mean"),sigmaFunc  ? *sigmaFunc : *pv("sigma"));
+        w->import(model);
+    }
+
+
 
 };
 class CBFunctionFitter : public FunctionFitter{
 public:
     CBFunctionFitter(const TH1* iH, bool doExpo, const std::string postFix, const std::vector<std::string>&  plotVars = {"M"}) :
-    FunctionFitter(iH,postFix,plotVars){
-        addCB(postFix,std::string("model")+postFix,vars[0],doExpo);
+        FunctionFitter(iH,postFix,plotVars){
+        //        addCB(postFix,std::string("model")+postFix,vars[0],doExpo);
+        const std::string modelName = std::string("model")+postFix;
+        const std::string cbName = doExpo ?modelName +"P" : modelName;
+        addCB(cbName,postFix,vars[0]);
+        if(doExpo){
+            auto pen =[&] (const std::string& v) ->std::string {return v+postFix;};
+            addParam(pen("fE"),"[0.1,0,1]");
+            const std::string expName =  modelName +"E";
+            addExpo(expName,postFix,vars[0]);
+            RooAddPdf modelC(modelName.c_str(),modelName.c_str(),*w->pdf(expName.c_str()),*w->pdf(cbName.c_str()),*w->var(pen("fE").c_str()));
+            secondaryModelNames.push_back(expName);
+            w->import(modelC);
+        }
     }
 };
 
 
+//class CBFunctionFitter2D : public FunctionFitter{
+//public:
+//    CBFunctionFitter2D(const TH2* iH,bool doExpoX, const std::string postFix, const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
+//        FunctionFitter(iH,postFix,plotVars){
+//
+//        const std::string xPF = postFix+plotVars[0];
+//        const std::string yPF = postFix+plotVars[1];
+//        const std::string mN = std::string("model")+postFix;
+//        const std::string mNP  = mN+ (doExpoX ? "P" : "");
+//        const std::string mNE  = mN+ "E";
+//        const std::string mXNP = std::string("model") + xPF + (doExpoX ? "P" : "");
+//        const std::string mYNP = std::string("model") + yPF + (doExpoX ? "P" : "");
+//        const std::string mXNE = std::string("model") + xPF + "E" ;
+//        const std::string mYNE = std::string("model") + yPF + "E" ;
+//
+//        auto pXN =[&] (std::string v) ->std::string{return v+xPF;};
+//        auto pXV =[&] (std::string v) ->RooRealVar*{return w->var(pXN(v).c_str());};
+//        auto pYN =[&] (std::string v) ->std::string{return v+yPF;};
+//        auto pYV =[&] (std::string v) ->RooRealVar*{return w->var(pYN(v).c_str());};
+//        auto pYF =[&] (std::string v) ->RooAbsReal*{return w->function(pYN(v).c_str());};
+//
+//        addCB(mXNP,xPF,vars[0]);
+//
+//        addParam(pYN("mean"  ),"[90,0,5000]");
+//        addParam(pYN("sigma" ),"[8,0,1000]");
+//        addParam(pYN("alpha" ),"[1,0.001,100]");
+//        addParam(pYN("alpha2"),"[1,0.001,100]");
+//        addParam(pYN("n")        ,"[5,1,100]");
+//        addParam(pYN("n2")       ,"[5,1,100]");
+//        addParam(pYN("maxS")     ,"[2.5,0,5]");
+//        addParam(pYN("mean_p1"  ),"[0,-5000,5000]");
+//        addParam(pYN("sigma_p1" ),"[0,-1000,1000]");
+//        RooFormulaVar xSig  (pYN("xSig"  ).c_str(),"(@0-@1)/@2",RooArgList(*w->var((plotVars[0]).c_str()),*pXV("mean"),*pXV("sigma")));
+//        w->import(xSig  );
+//        RooFormulaVar xSigC  (pYN("xSigC"  ).c_str(),"max(-1*@0,min(@1,@0))",RooArgList(*pYV("maxS"  ),*pYF("xSig"  )));
+//        w->import(xSigC  );
+//        RooFormulaVar meanYDepX  (pYN("meanYDepX"  ).c_str(),"@0*(1+@1*@2)"     ,RooArgList(*pYV("mean"  ),*pYV("mean_p1"  ),*pYF("xSigC"  )));
+//        RooFormulaVar sigmaYDepX (pYN("sigmaYDepX" ).c_str(),"@0*(1+(@2>=0?0:@1*abs(@2)))",RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYF("xSigC"  )));
+//        w->import(meanYDepX  );
+//        w->import(sigmaYDepX );
+//
+//        addCB(mYNP,yPF,vars[1],false,pYF("meanYDepX"),pYF("sigmaYDepX"));
+//        RooProdPdf condProdP(mNP.c_str(), (mXNP+"*"+mYNP).c_str(),*w->pdf(mXNP.c_str()),RooFit::Conditional(*w->pdf(mYNP.c_str()), *w->var(plotVars[1].c_str())) );
+//        w->import(condProdP);
+//
+//        if(doExpoX){
+//            addParam(pXN("fE"),"[0.1,0,1]");
+//            addExpo(mXNE,xPF,vars[0]);
+////            RooFormulaVar meanYE  (pYN("meanE"  ).c_str(),"@0"     ,RooArgList(*pYV("mean"  )));
+////            RooFormulaVar sigmaYE (pYN("sigmaYE" ).c_str(),"@0*(1+@1*abs(@2))",RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYV("maxS"  )));
+////            w->import(meanYE  );
+////            w->import(sigmaYE  );
+//            //            addCB(mYNE,yPF,vars[1],false,pYF("meanYE"),pYF("sigmaYE"));
+//            addGaus(mYNE,std::string("E")+yPF,vars[1],true);
+////            addGaus(mYNE,yPF+"E",vars[1],true);
+//
+//            RooProdPdf condProdE(mNE.c_str(), (mXNE+"*"+mYNE).c_str(),*w->pdf(mXNE.c_str()),*w->pdf(mYNE.c_str()));
+//            w->import(condProdE);
+//
+//            RooAddPdf model(mN.c_str(),mN.c_str(),*w->pdf(mNE.c_str()),*w->pdf(mNP.c_str()),*pXV("fE"));
+//            w->import(model);
+//        }
+//    }
+//};
+
 class CBFunctionFitter2D : public FunctionFitter{
 public:
     CBFunctionFitter2D(const TH2* iH,bool doExpoX, const std::string postFix, const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
-    FunctionFitter(iH,postFix,plotVars){
-        std::string model = std::string("model")+postFix;
-        addCB(postFix+plotVars[0],std::string("model")+postFix+plotVars[0],vars[0],doExpoX);
+        FunctionFitter(iH,postFix,plotVars){
 
-        auto pn0 =[&] (std::string v) ->std::string{return v+postFix+plotVars[0];};
-        auto pn1 =[&] (std::string v) ->std::string{return v+postFix+plotVars[1];};
-        auto pn0V =[&] (std::string v) ->RooRealVar*{return w->var((v+postFix+plotVars[0]).c_str());};
-        auto pn1V =[&] (std::string v) ->RooRealVar*{return w->var((v+postFix+plotVars[1]).c_str());};
-        auto pn1F =[&] (std::string v) ->RooAbsReal*{return w->function((v+postFix+plotVars[1]).c_str());};
-        auto pn1P =[&] (std::string v) ->RooAbsPdf*{return w->pdf((v+postFix+plotVars[1]).c_str());};
-        auto pn0P =[&] (std::string v) ->RooAbsPdf*{return w->pdf((v+postFix+plotVars[0]).c_str());};
+        const std::string xPF = postFix+plotVars[0];
+        const std::string yPF = postFix+plotVars[1];
+        const std::string mN = std::string("model")+postFix;
+        const std::string mNX  = std::string("model") + xPF;
+        const std::string mNY  = std::string("model") + yPF;
+        const std::string mXNP = std::string("model") + xPF + (doExpoX ? "P" : "");
+        const std::string mXNE = std::string("model") + xPF + "E" ;
 
-        addParam(pn1("mean"  ),"[90,0,5000]");
-        addParam(pn1("sigma" ),"[8,0,1000]");
-        addParam(pn1("alpha" ),"[1,0.001,100]");
-        addParam(pn1("alpha2"),"[1,0.001,100]");
-        addParam(pn1("n")        ,"[5,1,100]");
-        addParam(pn1("n2")       ,"[5,1,100]");
-        addParam(pn1("maxS")     ,"[2.5,0,5]");
-        addParam(pn1("mean_p1"  ),"[0,-5000,5000]");
-        addParam(pn1("sigma_p1" ),"[0,-1000,1000]");
+        auto pXN =[&] (std::string v) ->std::string{return v+xPF;};
+        auto pXV =[&] (std::string v) ->RooRealVar*{return w->var(pXN(v).c_str());};
+        auto pYN =[&] (std::string v) ->std::string{return v+yPF;};
+        auto pYV =[&] (std::string v) ->RooRealVar*{return w->var(pYN(v).c_str());};
+        auto pYF =[&] (std::string v) ->RooAbsReal*{return w->function(pYN(v).c_str());};
 
-        RooFormulaVar xSig  (pn1("xSig"  ).c_str(),"(@0-@1)/@2",RooArgList(*w->var((plotVars[0]).c_str()),*pn0V("mean"),*pn0V("sigma")));
+        addCB(mXNP,xPF,vars[0]);
+        if(doExpoX){
+            addParam(pXN("fE"),"[0.1,0,1]");
+            addExpo(mXNE,xPF,vars[0]);;
+            RooAddPdf modelC(mNX.c_str(),mNX.c_str(),*w->pdf(mXNE.c_str()),*w->pdf(mXNP.c_str()),*pXV("fE"));
+            w->import(modelC);
+        }
+
+        addParam(pYN("mean"  ),"[90,0,5000]");
+        addParam(pYN("sigma" ),"[8,0,1000]");
+        addParam(pYN("alpha" ),"[1,0.001,100]");
+        addParam(pYN("alpha2"),"[1,0.001,100]");
+        addParam(pYN("n")        ,"[5,1,100]");
+        addParam(pYN("n2")       ,"[5,1,100]");
+        addParam(pYN("maxS")     ,"[2.5,0,5]");
+        addParam(pYN("mean_p1"  ),"[0,-5000,5000]");
+        addParam(pYN("sigma_p1" ),"[0,-1000,1000]");
+        RooFormulaVar xSig  (pYN("xSig"  ).c_str(),"(@0-@1)/@2",RooArgList(*w->var((plotVars[0]).c_str()),*pXV("mean"),*pXV("sigma")));
         w->import(xSig  );
-        RooFormulaVar xSigC  (pn1("xSigC"  ).c_str(),"max(-1*@0,min(@1,@0))",RooArgList(*pn1V("maxS"  ),*pn1F("xSig"  )));
+        RooFormulaVar xSigC  (pYN("xSigC"  ).c_str(),"max(-1*@0,min(@1,@0))",RooArgList(*pYV("maxS"  ),*pYF("xSig"  )));
         w->import(xSigC  );
-        RooFormulaVar mean  (pn1("meanF"  ).c_str(),"@0*(1+@1*@2)"     ,RooArgList(*pn1V("mean"  ),*pn1V("mean_p1"  ),*pn1F("xSigC"  )));
-        RooFormulaVar sigma (pn1("sigmaF" ).c_str(),"@0*(1+@1*abs(@2))",RooArgList(*pn1V("sigma" ),*pn1V("sigma_p1" ),*pn1F("xSigC"  )));
-        w->import(mean  );
-        w->import(sigma );
-        std::cout <<"IMPORT!2"<<std::endl;
-        RooDoubleCB modelMVV(pn1("model").c_str(),pn1("model").c_str(),*w->var(plotVars[1].c_str())  ,
-                *pn1F("meanF"),*pn1F("sigmaF") ,*pn1V("alpha"),*pn1V("n"),*pn1V("alpha2"),*pn1V("n2"));
-        std::cout <<"IMPORT!3"<<std::endl;
-        w->import(modelMVV);
-        std::cout <<"IMPORT!4"<<std::endl;
-        RooProdPdf condProd((std::string("model")+postFix).c_str(), (pn0("model")+"*"+pn1("model")).c_str(),*pn0P("model"),RooFit::Conditional(*pn1P("model"), *w->var(plotVars[1].c_str())) );
-        std::cout <<"IMPORT!5"<<std::endl;
-        w->import(condProd);
-        std::cout <<"IMPORT!6"<<std::endl;
+
+        RooFormulaVar meanYDepX  (pYN("meanYDepX"  ).c_str(),"@0*(1+@1*@2)"     ,RooArgList(*pYV("mean"  ),*pYV("mean_p1"  ),*pYF("xSigC"  )));
+        RooFormulaVar sigmaYDepX (pYN("sigmaYDepX" ).c_str(),"@0*(1+(@2>=0?0:@1*abs(@2)))",RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYF("xSigC"  )));
+        w->import(meanYDepX  );
+        w->import(sigmaYDepX );
+
+//        if(doExpoX){
+//            RooFormulaVar expPDFV  (pYN("expPDFV"  ).c_str(),"exp(@0*@1)",RooArgList( *w->var(plotVars[0].c_str()),*pXV("slope")));
+//            RooFormulaVar expPDFI  (pYN("expPDFI"  ).c_str(),"@0",RooArgList( *w->var(plotVars[0].c_str()),*pXV("slope")));
+//
+//
+//            RooFormulaVar expVal  (pYN("expVal"  ).c_str(),"@0.getVal(@1)",RooArgList( *w->pdf(mXNE.c_str()),*w->var(plotVars[0].c_str())));
+//            RooFormulaVar cbVal    (pYN("cbVal"  ).c_str(),"@0.getVal(@1)",RooArgList( *w->pdf(mXNP.c_str()),*w->var(plotVars[0].c_str())));
+//
+//            RooFormulaVar expFrac  (pYN("expFrac"  ).c_str(),"@0*@1/(@0*@1+(1-@0)*@2)",RooArgList(*pXV("fE"), *pYF("expVal"),*pYF("cbVal")));
+////            RooFormulaVar expFrac  (pYN("expFrac"  ).c_str(),"@0*@1.getVal()/(@0*@1.getVal()+(1-@0)*@2.getVal())",RooArgList(*pXV("fE"), *w->pdf(mXNE.c_str()),*w->pdf(mXNP.c_str())));
+//            w->import(expFrac  );
+//            RooFormulaVar maxSigma (pYN("maxSigma" ).c_str(),"@0*(1+@1*abs(@2))",RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYV("maxS"  )));
+//            w->import(maxSigma  );
+//            std::cout <<"HI! "<<std::endl;
+//            w->Print();
+//            std::cout <<  w->var(plotVars[0].c_str())->getVal()<<std::endl;
+////            RooFormulaVar wMeanYDepX  (pYN("wMeanYDepX"  ).c_str(),"@0*@1+(1-@0)*@2",RooArgList(*pYF("expFrac"  ),*pYV("mean"  ),*pYF("meanYDepX"  )));
+//            RooFormulaVar wMeanYDepX  (pYN("wMeanYDepX"  ).c_str(),"@0*@1+(1-@0)*@2",RooArgList(*pYF("expFrac"  ),*pYV("mean"  ),*pYF("meanYDepX"  )));
+//            RooFormulaVar wSigmaYDepX (pYN("wSigmaYDepX" ).c_str(),"@0*@1+(1-@0)*@2",RooArgList(*pYV("expFrac" ),*pYF("maxSigma" ),*pYF("sigmaYDepX"  )));
+//            w->import(meanYDepX  );
+//            w->import(sigmaYDepX );
+//            addCB(mNY,yPF,vars[1],false,pYF("wMeanYDepX"),pYF("wSigmaYDepX"));
+//        } else {
+//            addCB(mNY,yPF,vars[1],false,pYF("meanYDepX"),pYF("sigmaYDepX"));
+//        }
+        addCB(mNY,yPF,vars[1],false,pYF("meanYDepX"),pYF("sigmaYDepX"));
+        RooProdPdf condProdP(mN.c_str(), (mNX+"*"+mNY).c_str(),*w->pdf(mNX.c_str()),RooFit::Conditional(*w->pdf(mNY.c_str()), *w->var(plotVars[1].c_str())) );
+        w->import(condProdP);
     }
+
 };
 
 class ThreeGausExpoFunctionFitter : public FunctionFitter{
 public:
     ThreeGausExpoFunctionFitter(const TH1* iH, const std::string postFix = "", const std::vector<std::string>&  plotVars = {"M"}) :
-    FunctionFitter(iH,postFix,plotVars){
+        FunctionFitter(iH,postFix,plotVars){
         std::string model = std::string("model")+postFix;
         addParam("meanW","[90,80,110]");
         addParam("sigmaW","[8,2,15]");
@@ -272,47 +431,59 @@ public:
 
     FunctionParameterPlotter(){}
 
-void addFit(FunctionFitter* fitter, double pt, std::string name){
-    if(!curPt){
-        for(const auto& p: fitter->params){
+    void addFit(FunctionFitter* fitter, double pt, std::string name){
+        if(!curPt){
+            for(const auto& p: fitter->params){
+                graphs.emplace_back(new TGraphErrors);
+                graphs.back()->SetTitle(p.c_str());
+                graphs.back()->SetName(p.c_str());
+            }
             graphs.emplace_back(new TGraphErrors);
-            graphs.back()->SetTitle(p.c_str());
-            graphs.back()->SetName(p.c_str());
+            graphs.back()->SetTitle("chi2");
+            graphs.back()->SetName("chi2");
         }
-        graphs.emplace_back(new TGraphErrors);
-        graphs.back()->SetTitle("chi2");
-        graphs.back()->SetName("chi2");
-    }
 
 
-    double chi2 = 0;
-    cans.emplace_back(fitter->projection(std::string("can_")+name,chi2));
+        double chi2 = 0;
+        cans.emplace_back(fitter->projection(std::string("can_")+name,chi2));
 
-    for(unsigned int iV = 0; iV< fitter->params.size(); ++iV ){
-        graphs[iV]->SetPoint(curPt,pt,fitter->w->var(fitter->params[iV].c_str())->getVal());
-        graphs[iV]->SetPointError(curPt,0.0,fitter->w->var(fitter->params[iV].c_str())->getError());
-    }
-    graphs.back()->SetPoint(curPt,pt,chi2);
-    graphs.back()->SetPointError(curPt,0.0,0.0);
-    curPt++;
-}
-void addFit2D(FunctionFitter* fitter, double pt, std::string name){
-    if(!curPt){
-        for(const auto& p: fitter->params){
-            graphs.emplace_back(new TGraphErrors);
-            graphs.back()->SetTitle(p.c_str());
-            graphs.back()->SetName(p.c_str());
+        for(unsigned int iV = 0; iV< fitter->params.size(); ++iV ){
+            double val = fitter->w->var(fitter->params[iV].c_str())->getVal();
+            double error = fitter->w->var(fitter->params[iV].c_str())->getError();
+            double max = fitter->w->var(fitter->params[iV].c_str())->getMax();
+            double min = fitter->w->var(fitter->params[iV].c_str())->getMin();
+            if( std::fabs(max - val)/(max-min) <= 0.0001) error = (max-min);
+            if( std::fabs(val-min)/(max-min) <= 0.0001) error = (max-min);
+            graphs[iV]->SetPoint(curPt,pt,val);
+            graphs[iV]->SetPointError(curPt,0.0,error);
         }
+        graphs.back()->SetPoint(curPt,pt,chi2);
+        graphs.back()->SetPointError(curPt,0.0,0.0);
+        curPt++;
     }
-    hists.emplace_back(fitter->data2D(std::string("data_")+name));
-    hists.emplace_back(fitter->pdf2D(std::string("pdf_")+name));
+    void addFit2D(FunctionFitter* fitter, double pt, std::string name){
+        if(!curPt){
+            for(const auto& p: fitter->params){
+                graphs.emplace_back(new TGraphErrors);
+                graphs.back()->SetTitle(p.c_str());
+                graphs.back()->SetName(p.c_str());
+            }
+        }
+        hists.emplace_back(fitter->data2D(std::string("data_")+name));
+        hists.emplace_back(fitter->pdf2D(std::string("pdf_")+name));
 
-    for(unsigned int iV = 0; iV< fitter->params.size(); ++iV ){
-        graphs[iV]->SetPoint(curPt,pt,fitter->w->var(fitter->params[iV].c_str())->getVal());
-        graphs[iV]->SetPointError(curPt,0.0,fitter->w->var(fitter->params[iV].c_str())->getError());
+        for(unsigned int iV = 0; iV< fitter->params.size(); ++iV ){
+            double val = fitter->w->var(fitter->params[iV].c_str())->getVal();
+            double error = fitter->w->var(fitter->params[iV].c_str())->getError();
+            double max = fitter->w->var(fitter->params[iV].c_str())->getMax();
+            double min = fitter->w->var(fitter->params[iV].c_str())->getMin();
+            if( std::fabs(max - val)/(max-min) <= 0.0001) error = (max-min);
+            if( std::fabs(val-min)/(max-min) <= 0.0001) error = (max-min);
+            graphs[iV]->SetPoint(curPt,pt,val);
+            graphs[iV]->SetPointError(curPt,0.0,error);
+        }
+        curPt++;
     }
-    curPt++;
-}
 
     void write(const std::string& outFileName){
         TFile * oF = new TFile(outFileName.c_str(),"recreate");
