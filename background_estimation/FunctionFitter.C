@@ -252,70 +252,64 @@ public:
 };
 
 
-//class CBFunctionFitter2D : public FunctionFitter{
-//public:
-//    CBFunctionFitter2D(const TH2* iH,bool doExpoX, const std::string postFix, const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
-//        FunctionFitter(iH,postFix,plotVars){
-//
-//        const std::string xPF = postFix+plotVars[0];
-//        const std::string yPF = postFix+plotVars[1];
-//        const std::string mN = std::string("model")+postFix;
-//        const std::string mNP  = mN+ (doExpoX ? "P" : "");
-//        const std::string mNE  = mN+ "E";
-//        const std::string mXNP = std::string("model") + xPF + (doExpoX ? "P" : "");
-//        const std::string mYNP = std::string("model") + yPF + (doExpoX ? "P" : "");
-//        const std::string mXNE = std::string("model") + xPF + "E" ;
-//        const std::string mYNE = std::string("model") + yPF + "E" ;
-//
-//        auto pXN =[&] (std::string v) ->std::string{return v+xPF;};
-//        auto pXV =[&] (std::string v) ->RooRealVar*{return w->var(pXN(v).c_str());};
-//        auto pYN =[&] (std::string v) ->std::string{return v+yPF;};
-//        auto pYV =[&] (std::string v) ->RooRealVar*{return w->var(pYN(v).c_str());};
-//        auto pYF =[&] (std::string v) ->RooAbsReal*{return w->function(pYN(v).c_str());};
-//
-//        addCB(mXNP,xPF,vars[0]);
-//
-//        addParam(pYN("mean"  ),"[90,0,5000]");
-//        addParam(pYN("sigma" ),"[8,0,1000]");
-//        addParam(pYN("alpha" ),"[1,0.001,100]");
-//        addParam(pYN("alpha2"),"[1,0.001,100]");
-//        addParam(pYN("n")        ,"[5,1,100]");
-//        addParam(pYN("n2")       ,"[5,1,100]");
-//        addParam(pYN("maxS")     ,"[2.5,0,5]");
-//        addParam(pYN("mean_p1"  ),"[0,-5000,5000]");
-//        addParam(pYN("sigma_p1" ),"[0,-1000,1000]");
-//        RooFormulaVar xSig  (pYN("xSig"  ).c_str(),"(@0-@1)/@2",RooArgList(*w->var((plotVars[0]).c_str()),*pXV("mean"),*pXV("sigma")));
-//        w->import(xSig  );
-//        RooFormulaVar xSigC  (pYN("xSigC"  ).c_str(),"max(-1*@0,min(@1,@0))",RooArgList(*pYV("maxS"  ),*pYF("xSig"  )));
-//        w->import(xSigC  );
-//        RooFormulaVar meanYDepX  (pYN("meanYDepX"  ).c_str(),"@0*(1+@1*@2)"     ,RooArgList(*pYV("mean"  ),*pYV("mean_p1"  ),*pYF("xSigC"  )));
-//        RooFormulaVar sigmaYDepX (pYN("sigmaYDepX" ).c_str(),"@0*(1+(@2>=0?0:@1*abs(@2)))",RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYF("xSigC"  )));
-//        w->import(meanYDepX  );
-//        w->import(sigmaYDepX );
-//
-//        addCB(mYNP,yPF,vars[1],false,pYF("meanYDepX"),pYF("sigmaYDepX"));
-//        RooProdPdf condProdP(mNP.c_str(), (mXNP+"*"+mYNP).c_str(),*w->pdf(mXNP.c_str()),RooFit::Conditional(*w->pdf(mYNP.c_str()), *w->var(plotVars[1].c_str())) );
-//        w->import(condProdP);
-//
-//        if(doExpoX){
-//            addParam(pXN("fE"),"[0.1,0,1]");
-//            addExpo(mXNE,xPF,vars[0]);
-////            RooFormulaVar meanYE  (pYN("meanE"  ).c_str(),"@0"     ,RooArgList(*pYV("mean"  )));
-////            RooFormulaVar sigmaYE (pYN("sigmaYE" ).c_str(),"@0*(1+@1*abs(@2))",RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYV("maxS"  )));
-////            w->import(meanYE  );
-////            w->import(sigmaYE  );
-//            //            addCB(mYNE,yPF,vars[1],false,pYF("meanYE"),pYF("sigmaYE"));
-//            addGaus(mYNE,std::string("E")+yPF,vars[1],true);
-////            addGaus(mYNE,yPF+"E",vars[1],true);
-//
-//            RooProdPdf condProdE(mNE.c_str(), (mXNE+"*"+mYNE).c_str(),*w->pdf(mXNE.c_str()),*w->pdf(mYNE.c_str()));
-//            w->import(condProdE);
-//
-//            RooAddPdf model(mN.c_str(),mN.c_str(),*w->pdf(mNE.c_str()),*w->pdf(mNP.c_str()),*pXV("fE"));
-//            w->import(model);
-//        }
-//    }
-//};
+class CBFunctionFitter2DWithSepExpo : public FunctionFitter{
+public:
+    CBFunctionFitter2DWithSepExpo(const TH2* iH,bool doExpoX, const std::string postFix, const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
+        FunctionFitter(iH,postFix,plotVars){
+
+        const std::string xPF = postFix+plotVars[0];
+        const std::string yPF = postFix+plotVars[1];
+        const std::string mN = std::string("model")+postFix;
+        const std::string mNP  = mN+ (doExpoX ? "P" : "");
+        const std::string mNE  = mN+ "E";
+        const std::string mXNP = std::string("model") + xPF + (doExpoX ? "P" : "");
+        const std::string mYNP = std::string("model") + yPF + (doExpoX ? "P" : "");
+        const std::string mXNE = std::string("model") + xPF + "E" ;
+        const std::string mYNE = std::string("model") + yPF + "E" ;
+
+        auto pXN =[&] (std::string v) ->std::string{return v+xPF;};
+        auto pXV =[&] (std::string v) ->RooRealVar*{return w->var(pXN(v).c_str());};
+        auto pYN =[&] (std::string v) ->std::string{return v+yPF;};
+        auto pYV =[&] (std::string v) ->RooRealVar*{return w->var(pYN(v).c_str());};
+        auto pYF =[&] (std::string v) ->RooAbsReal*{return w->function(pYN(v).c_str());};
+
+        addCB(mXNP,xPF,vars[0]);
+
+        addParam(pYN("mean"  ),"[90,0,5000]");
+        addParam(pYN("sigma" ),"[8,0,1000]");
+        addParam(pYN("alpha" ),"[1,0.001,100]");
+        addParam(pYN("alpha2"),"[1,0.001,100]");
+        addParam(pYN("n")        ,"[5,1,100]");
+        addParam(pYN("n2")       ,"[5,1,100]");
+        addParam(pYN("maxS")     ,"[2.5,0,5]");
+        addParam(pYN("mean_p1"  ),"[0,-5000,5000]");
+        addParam(pYN("sigma_p1" ),"[0,-1000,1000]");
+        RooFormulaVar xSig  (pYN("xSig"  ).c_str(),"(@0-@1)/@2",RooArgList(*w->var((plotVars[0]).c_str()),*pXV("mean"),*pXV("sigma")));
+        w->import(xSig  );
+        RooFormulaVar xSigC  (pYN("xSigC"  ).c_str(),"max(-1*@0,min(@1,@0))",RooArgList(*pYV("maxS"  ),*pYF("xSig"  )));
+        w->import(xSigC  );
+        RooFormulaVar meanYDepX  (pYN("meanYDepX"  ).c_str(),"@0*(1+@1*@2)"     ,RooArgList(*pYV("mean"  ),*pYV("mean_p1"  ),*pYF("xSigC"  )));
+        RooFormulaVar sigmaYDepX (pYN("sigmaYDepX" ).c_str(),"@0*(1+(@2>=0?0:@1*abs(@2)))",RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYF("xSigC"  )));
+        w->import(meanYDepX  );
+        w->import(sigmaYDepX );
+
+        addCB(mYNP,yPF,vars[1],false,pYF("meanYDepX"),pYF("sigmaYDepX"));
+        RooProdPdf condProdP(mNP.c_str(), (mXNP+"*"+mYNP).c_str(),*w->pdf(mXNP.c_str()),RooFit::Conditional(*w->pdf(mYNP.c_str()), *w->var(plotVars[1].c_str())) );
+        w->import(condProdP);
+
+        if(doExpoX){
+            addParam(pXN("fE"),"[0.1,0,1]");
+            addExpo(mXNE,xPF,vars[0]);
+            addGaus(mYNE,std::string("E")+yPF,vars[1],true);
+
+            RooProdPdf condProdE(mNE.c_str(), (mXNE+"*"+mYNE).c_str(),*w->pdf(mXNE.c_str()),*w->pdf(mYNE.c_str()));
+            w->import(condProdE);
+
+            RooAddPdf model(mN.c_str(),mN.c_str(),*w->pdf(mNE.c_str()),*w->pdf(mNP.c_str()),*pXV("fE"));
+            w->import(model);
+        }
+    }
+};
 
 class CBFunctionFitter2D : public FunctionFitter{
 public:
@@ -363,31 +357,6 @@ public:
         w->import(meanYDepX  );
         w->import(sigmaYDepX );
 
-//        if(doExpoX){
-//            RooFormulaVar expPDFV  (pYN("expPDFV"  ).c_str(),"exp(@0*@1)",RooArgList( *w->var(plotVars[0].c_str()),*pXV("slope")));
-//            RooFormulaVar expPDFI  (pYN("expPDFI"  ).c_str(),"@0",RooArgList( *w->var(plotVars[0].c_str()),*pXV("slope")));
-//
-//
-//            RooFormulaVar expVal  (pYN("expVal"  ).c_str(),"@0.getVal(@1)",RooArgList( *w->pdf(mXNE.c_str()),*w->var(plotVars[0].c_str())));
-//            RooFormulaVar cbVal    (pYN("cbVal"  ).c_str(),"@0.getVal(@1)",RooArgList( *w->pdf(mXNP.c_str()),*w->var(plotVars[0].c_str())));
-//
-//            RooFormulaVar expFrac  (pYN("expFrac"  ).c_str(),"@0*@1/(@0*@1+(1-@0)*@2)",RooArgList(*pXV("fE"), *pYF("expVal"),*pYF("cbVal")));
-////            RooFormulaVar expFrac  (pYN("expFrac"  ).c_str(),"@0*@1.getVal()/(@0*@1.getVal()+(1-@0)*@2.getVal())",RooArgList(*pXV("fE"), *w->pdf(mXNE.c_str()),*w->pdf(mXNP.c_str())));
-//            w->import(expFrac  );
-//            RooFormulaVar maxSigma (pYN("maxSigma" ).c_str(),"@0*(1+@1*abs(@2))",RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYV("maxS"  )));
-//            w->import(maxSigma  );
-//            std::cout <<"HI! "<<std::endl;
-//            w->Print();
-//            std::cout <<  w->var(plotVars[0].c_str())->getVal()<<std::endl;
-////            RooFormulaVar wMeanYDepX  (pYN("wMeanYDepX"  ).c_str(),"@0*@1+(1-@0)*@2",RooArgList(*pYF("expFrac"  ),*pYV("mean"  ),*pYF("meanYDepX"  )));
-//            RooFormulaVar wMeanYDepX  (pYN("wMeanYDepX"  ).c_str(),"@0*@1+(1-@0)*@2",RooArgList(*pYF("expFrac"  ),*pYV("mean"  ),*pYF("meanYDepX"  )));
-//            RooFormulaVar wSigmaYDepX (pYN("wSigmaYDepX" ).c_str(),"@0*@1+(1-@0)*@2",RooArgList(*pYV("expFrac" ),*pYF("maxSigma" ),*pYF("sigmaYDepX"  )));
-//            w->import(meanYDepX  );
-//            w->import(sigmaYDepX );
-//            addCB(mNY,yPF,vars[1],false,pYF("wMeanYDepX"),pYF("wSigmaYDepX"));
-//        } else {
-//            addCB(mNY,yPF,vars[1],false,pYF("meanYDepX"),pYF("sigmaYDepX"));
-//        }
         addCB(mNY,yPF,vars[1],false,pYF("meanYDepX"),pYF("sigmaYDepX"));
         RooProdPdf condProdP(mN.c_str(), (mNX+"*"+mNY).c_str(),*w->pdf(mNX.c_str()),RooFit::Conditional(*w->pdf(mNY.c_str()), *w->var(plotVars[1].c_str())) );
         w->import(condProdP);
