@@ -362,4 +362,27 @@ p->draw(false,s);
 }
 
 }
+
+{
+// std::vector<TString> bkgs = {"nonResH0","nonResHM","resW","resT"};
+// std::vector<TString> bkgNs = {"lost t/W (0 q) bkg.","lost t/W (#geq1 q) bkg.","m_{W} bkg.","m_{t} bkg."};
+
+std::vector<TString> bkgs = {"QCD","qg","losttw","mw","mt"};
+std::vector<TString> bkgNs = {"qcd","q/g bkg.","lost t/W bkg.","m_{W} bkg.","m_{t} bkg."};
+std::vector<TString> sels = {"mu_LMT_full","mu_LMT_none","mu_L_none","mu_AL_none","mu_LMT_ab","mu_L_ab","mu_AL_ab"};
+TFile * f = new TFile("HHlnujj_testCR_distributions.root");
+for(auto& s: sels){
+Plotter * p = new Plotter;
+for(unsigned int iB = 0; iB < bkgs.size(); ++iB){
+TH1 * h= 0;
+f->GetObject(bkgs[iB]+"_"+s+"_hbbMass",h);
+if(h==0) continue;
+p->addStackHist(h,bkgNs[iB]);
+
+}
+p->rebin(2);
+p->draw(false,s);
+}
+
+}
   
