@@ -119,93 +119,158 @@ void fitBackgroundShapesMVV(std::string name, const std::string& filename, const
     }
 }
 
+void makeBKG1DShapes(const std::string& name, const std::string& filename, const std::string& catName, const std::string& fitName,  bool isW, CJSON* prevJSON, TFile* iF){
+    FunctionParameterPlotter plotter;
+    std::vector<std::unique_ptr<FunctionFitter>> fitters;
+    auto setup1DFit = [&](const TH1* hbbH, double HHMass){
+        std::string pF = isW ? "W" : "T";
+        auto vN=[&](std::string var)->std::string{return var+pF;};
+        fitters.emplace_back(new CBFunctionFitter(hbbH,false,pF,{ "MJJ"}));
 
-template<typename Func>
-void makeResMJJShapes(const std::string& name, const std::string& filename,const std::string& jsonArgs, Func doFit) {
-    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
-    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-        //        if(l.find("emu") == std::string::npos ) continue;
-        //        if(p.find("L") == std::string::npos ) continue;
-        //        if(h.find("none") == std::string::npos ) continue;
-        std::string hName = name+"_"+l+"_"+p+"_"+h;
-        auto hbb_hh_H = TObjectHelper::getObject<TH2>(iF,hName+"_"+hbbMCS+"_"+hhMCS,false,false);
-        if(hbb_hh_H==0) continue;
-        auto hhH  = projY(&*hbb_hh_H,hName+"_"+hhMCS);
-        FunctionParameterPlotter plotter;
-        std::vector<std::unique_ptr<FunctionFitter>> fitters;
-        for(unsigned int iP = 0; iP < resPTBins.size() -1; ++iP){
-            std::string ptName  = flt2Str(resPTBins[iP]) +"to"+flt2Str(resPTBins[iP+1]);
-            auto hbbH = projX(&*hbb_hh_H,hName+"_"+ptName +"_"+hbbMCS,resPTBins[iP],resPTBins[iP+1]);
-            double mean = getMean(&*hhH,resPTBins[iP],resPTBins[iP+1] );
-            doFit(&*hbbH,fitters);
-            plotter.addFit(&*fitters[iP],mean,ptName);
+        auto fitter = &* fitters.back();
+        if(isW){
+            fitter->setVar(vN("mean")     ,90,80,100);
+            fitter->setVar(vN("sigma")     ,8,5,15);
+            fitter->setVar(vN("alpha")     ,1.18,0.1,10);
+            fitter->setVar(vN("alpha2")  ,0.9,0.1,5);
+            fitter->setVar(vN("n")  ,5,1,6);
+            fitter->setVar(vN("n2")  , 2,1,6);
+            fitter->setConst(vN("n")  ,1);
+            fitter->setConst(vN("n2")  ,1);
+            fitter->w->var("MJJ")->setRange("fit",30,160);
+        } else {
+            fitter->setVar(vN("mean")     ,180,120,195);
+            fitter->setVar(vN("sigma")     ,15.8,14,20);
+            fitter->setVar(vN("alpha")     ,1 ,0.1,2);
+            fitter->setVar(vN("alpha2")  ,1.5,0.5,3);
+            fitter->setVar(vN("n")  ,5,1,6);
+            fitter->setVar(vN("n2")  , 5,1,6);
+            fitter->setConst(vN("n")  ,1);
+            fitter->setConst(vN("n2")  ,1);
+            fitter->w->var("MJJ")->setRange("fit",70,230);
         }
-        plotter.write(filename+"_"+hName+"_fit.root");
-        std::string argsP1 = std::string("-i ")+ filename+"_"+hName+"_fit.root ";
-        MakeJSON(filename+"_"+hName+"_fit.json",argsP1+" "+jsonArgs);
+        if(prevJSON){
+            fitter->setVar(vN("alpha")     ,prevJSON->evalFunc(vN("alpha")  ,HHMass) ,0.1,10);
+            fitter->setConst(vN("alpha"),1);
+            fitter->setVar(vN("alpha2")  ,prevJSON->evalFunc(vN("alpha2")  ,HHMass),0.1,10);
+            fitter->setConst(vN("alpha2")  ,1);
+        }
+        fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::NumCPU(8)});
+        fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::NumCPU(8)});
+    };
+
+
+    std::string hName = name+"_"+catName;
+    auto hbb_hh_H = TObjectHelper::getObject<TH2>(iF,hName+"_"+hbbMCS+"_"+hhMCS,false,false);
+    if(hbb_hh_H==0) return;
+    auto hhH  = projY(&*hbb_hh_H,hName+"_"+hhMCS);
+
+    for(unsigned int iP = 0; iP < resPTBins.size() -1; ++iP){
+        std::string ptName  = flt2Str(resPTBins[iP]) +"to"+flt2Str(resPTBins[iP+1]);
+        auto hbbH = projX(&*hbb_hh_H,hName+"_"+ptName +"_"+hbbMCS,resPTBins[iP],resPTBins[iP+1]);
+        double mean = getMean(&*hhH,resPTBins[iP],resPTBins[iP+1] );
+        setup1DFit(&*hbbH,mean);
+        plotter.addFit(&*fitters[iP],mean,ptName);
     }
-
+    plotter.write(filename+"_"+name+"_"+catName+"_"+fitName+".root");
 }
 
-void makeResTopMJJShapes(const std::string& name, const std::string& filename){
-    auto setupFitter =[](const TH1* hbbH, std::vector<std::unique_ptr<FunctionFitter>>& fitters ){
-        fitters.emplace_back(new CBFunctionFitter(hbbH,false,"T"));
-        auto fitter = &* fitters.back();
-        fitter->setVar("meanT"     ,180,120,195);
-        fitter->setVar("sigmaT"     ,15.8,14,20);
-        //             fitter->setConst("sigmaT",1);
-        fitter->setVar("alphaT"     ,1 ,0.1,2);
-        //            fitter->setConst("alphaT",1);
-        fitter->setVar("alpha2T"  ,1.5,0.5,3);
-        //             fitter->setConst("alpha2T"  ,1);
-        fitter->setVar("nT"   ,  5  ,1,6);
-        fitter->setVar("n2T"  ,5,3,6);
-        fitter->setConst("n2T"  ,1);
-        fitter->setConst("nT"  ,1);
-        fitter->w->var("M")->setRange("fit",70,230);
-        fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::Minos(0)});
-        fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::Minos(1)});
-    };
-    //        std::strin args = " -g meanT:laur3,sigmaT:laur2,alphaT:pol0,alpha2T:laur3,nT:FIXp5p2p1250p250p-1,n2T:pol0 ";
-    std::string args = " -g meanT:laur3,sigmaT:laur2,alphaT:laur3,alpha2T:laur3,nT:pol0,n2T:pol0 ";
-    args += " -minX 500 -maxX 3500 ";
-    makeResMJJShapes(name,filename,args, setupFitter);
+
+void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename){
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
+    const std::string fitName = "fit1stIt";
+
+    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
+        if(l != lepSels[LEP_EMU] ) continue;
+        if(p == purSels[PUR_I]) continue;
+        if(h != hadSels[HAD_NONE] ) continue;
+        const std::string catName = l+"_"+p+"_"+h;
+        makeBKG1DShapes(name,filename,catName,fitName,true,0,iF);
+
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root ";
+        argsP1 += " -minX 500 -maxX 3000 ";
+        std::string jsonArgsStd = " -g meanW:laur2,sigmaW:laur2,alphaW:laur4,alpha2W:laur3,nW:pol0,n2W:pol0 ";
+        MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
+    }
 }
 
-void makeResWMJJShapes(const std::string& name, const std::string& filename){
-    auto setupFitter =[](const TH1* hbbH, std::vector<std::unique_ptr<FunctionFitter>>& fitters ){
-        fitters.emplace_back(new CBFunctionFitter(hbbH,false,"W"));
-        auto fitter = &* fitters.back();
-        fitter->setVar("meanW"     ,90,80,100);
-        fitter->setVar("sigmaW"     ,8,5,15);
-        //             fitter->setConst("sigmaW",1);
-        fitter->setVar("alphaW"     ,1.18,0.1,10);
-        //        fitter->setConst("alphaW",1);
-        fitter->setVar("alpha2W"  ,0.9,0.1,5);
-        //             fitter->setConst("alpha2W"  ,1);
-        fitter->setVar("nW"  ,5,1,6);
-        fitter->setVar("n2W"  , 1,1,6);
-        fitter->setConst("nW"  ,1);
-        fitter->setConst("n2W"  ,1);
-        fitter->w->var("M")->setRange("fit",30,160);
-        fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::Minos(0)});
-        fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::Minos(1)});
-    };
-    std::string args = " -g meanW:laur2,sigmaW:laur2,alphaW:pol0,alpha2W:laur2,nW:pol0,n2W:pol0 ";
-    args += " -minX 500 -maxX 3000 ";
-    makeResMJJShapes(name,filename,args,setupFitter);
+void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename){
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
+    const std::string fitName = "fit";
+    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
+        if(l != lepSels[LEP_EMU] ) continue;
+        if(p == purSels[PUR_I]) continue;
+        if(h != hadSels[HAD_NONE] ) continue;
+        const std::string catName = l+"_"+p+"_"+h;
+        CJSON oldJSON(     filename+"_"+name+"_"+catName+"_fit1stIt.json");
+        oldJSON.fillFunctions("MH");
+        makeBKG1DShapes(name,filename,catName,fitName,true,&oldJSON,iF);
+
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root ";
+        argsP1 += " -minX 500 -maxX 3000 ";
+        std::string jsonArgsStd = " -g meanW:laur2,sigmaW:laur2,alphaW:laur4,alpha2W:laur3,nW:pol0,n2W:pol0 ";
+
+        CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+jsonArgsStd);
+        newJSON.replaceEntry("alphaW", oldJSON.getP("alphaW") );
+        newJSON.replaceEntry("alpha2W", oldJSON.getP("alpha2W") );
+        newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
+    }
+}
+
+
+void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filename){
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
+    const std::string fitName = "fit1stIt";
+
+    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
+        if(l != lepSels[LEP_EMU] ) continue;
+        if(p == purSels[PUR_I]) continue;
+        if(h != hadSels[HAD_NONE] ) continue;
+        const std::string catName = l+"_"+p+"_"+h;
+        makeBKG1DShapes(name,filename,catName,fitName,false,0,iF);
+
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root ";
+        argsP1 += " -minX 500 -maxX 3500 ";
+        std::string jsonArgsStd = " -g meanT:laur3,sigmaT:laur2,alphaT:laur4,alpha2T:laur3,nT:pol0,n2T:pol0 ";
+        MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
+    }
+}
+
+void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filename){
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
+    const std::string fitName = "fit";
+    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
+        if(l != lepSels[LEP_EMU] ) continue;
+        if(p == purSels[PUR_I]) continue;
+        if(h != hadSels[HAD_NONE] ) continue;
+        const std::string catName = l+"_"+p+"_"+h;
+        CJSON oldJSON(     filename+"_"+name+"_"+catName+"_fit1stIt.json");
+        oldJSON.fillFunctions("MH");
+        makeBKG1DShapes(name,filename,catName,fitName,false,&oldJSON,iF);
+
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root ";
+        argsP1 += " -minX 500 -maxX 3000 ";
+        std::string jsonArgsStd= " -g meanT:laur3,sigmaT:laur2,alphaT:laur4,alpha2T:laur3,nT:pol0,n2T:pol0 ";
+
+        CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+jsonArgsStd);
+        newJSON.replaceEntry("alphaT", oldJSON.getP("alphaT") );
+        newJSON.replaceEntry("alpha2T", oldJSON.getP("alpha2T") );
+        newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
+    }
 }
 
 void convertFuncFitTo2DTemplate(const std::string& name, const std::string& filename,const std::string& funcParamPostfix){
     TFile *oF = new TFile((filename + "_"+name+"_2D_template_debug.root").c_str(),"recreate");
     for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-        std::string jsonFile = filename+"_"+name+"_"+lepSels[LEP_EMU]+"_"+ (p==purSels[PUR_T] && name.find("w") != std::string::npos ? purSels[PUR_M] : p )
-                                                        +"_"+hadSels[HAD_NONE] +"_fit.json";
-        CBFunctionFitter xFit(0,false,funcParamPostfix);
-        xFit.w->var("MH")->setMin(minHbbMass);
-        xFit.w->var("MH")->setMax(maxHbbMass);
-        xFit.w->var("MH")->setBins(nHbbMassBins*10);
-        xFit.w->var("MH")->setVal((minHbbMass+maxHbbMass)/2.);
+        std::string jsonFile = filename+"_"+name+"_"+lepSels[LEP_EMU]+"_";
+        jsonFile += name.find("w")!= std::string::npos ?purSels[PUR_LMT]:p;
+        jsonFile+=std::string("_")+hadSels[HAD_NONE] +"_fit.json";
+
+        CBFunctionFitter xFit(0,false,funcParamPostfix,{"MJJ"});
+        xFit.w->var("MJJ")->setMin(minHbbMass);
+        xFit.w->var("MJJ")->setMax(maxHbbMass);
+        xFit.w->var("MJJ")->setBins(nHbbMassBins*10);
+        xFit.w->var("MJJ")->setVal((minHbbMass+maxHbbMass)/2.);
 
         CJSON json(jsonFile);
         json.fillFunctions("MH");
@@ -310,7 +375,8 @@ void go(BKGModels modelToDo, std::string treeDir) {
 
         //MJJ
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
-        makeResWMJJShapes(name,filename);
+        makeResWMJJShapes1stIt(name,filename);
+        makeResWMJJShapes2ndIt(name,filename);
         convertFuncFitTo2DTemplate(name,filename,"W");
     }
 
@@ -327,7 +393,8 @@ void go(BKGModels modelToDo, std::string treeDir) {
         //
         //        //MJJ
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
-        makeResTopMJJShapes(name,filename);
+        makeResTopMJJShapes1stIt(name,filename);
+        makeResTopMJJShapes2ndIt(name,filename);
         convertFuncFitTo2DTemplate(name,filename,"T");
     }
 

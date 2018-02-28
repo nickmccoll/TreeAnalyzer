@@ -1,11 +1,6 @@
-#include "../CutConstants.h"
-#include <vector>
-#include "TFile.h"
+#include "plotTestHelper.h"
 #include "TH1.h"
 #include "TH2.h"
-#include "HistoPlotting/include/Plotter.h"
-using namespace CutConstants;
-using namespace ASTypes;
 
   void testHHKern(std::string name, std::string filename) {
       bool withRatio = false;
@@ -83,7 +78,7 @@ using namespace ASTypes;
         p->addHist(hd,"SR MC");
         for(unsigned int iH = 0; iH < hs.size(); ++iH){
           TH1 * h1D = hs[iH];
-          for(unsigned int iX = 1; iX <= h1D->GetNbinsX(); ++iX)h1D->SetBinError(iX,0);
+          for(int iX = 1; iX <= h1D->GetNbinsX(); ++iX)h1D->SetBinError(iX,0);
           p->addHist(h1D,hNs[iH],-1,1,4,20,1,false,true,false,"E");
         }
         p->setMinMax(.0001,hs[0]->Integral());
@@ -106,7 +101,7 @@ using namespace ASTypes;
 
   void test2DFits(std::vector<CutStr> types, std::string filename) {
 //      std::vector<std::string> sels = {"emu_LMT_ltmb","e_L_full","e_M_full","e_T_full","mu_L_full","mu_M_full","mu_T_full"};
-      std::vector<std::string> sels = {"emu_LMT_ltmb","emu_LMT_full","emu_L_full","emu_M_full","emu_T_full"};
+      std::vector<std::string> sels = {"emu_LMT_lb","emu_M_lb","emu_LMT_full","emu_L_full","emu_M_full","emu_T_full"};
 //      std::vector<std::string> sels = {"emu_LMT_ltmb"};
       // std::vector<double> bins = {30,50,100,150,210};
       // bool binInY = false;
@@ -150,10 +145,10 @@ using namespace ASTypes;
           };
           Plotter * p = new Plotter();
           auto dh1 = proj(dh,"MC");
-//          p->addHist(dh1,"MC");
+          p->addHist(dh1,"MC");
           for(unsigned int iH = 0; iH < hs.size(); ++iH){
               TH1 * h = proj(hs[iH],hNs[iH]);
-              for(unsigned int iX = 1; iX <= h->GetNbinsX(); ++iX)h->SetBinError(iX,0);
+              for(int iX = 1; iX <= h->GetNbinsX(); ++iX)h->SetBinError(iX,0);
               p->addStackHist(h,hNs[iH].c_str());
           }
           p->setUnderflow(false);
@@ -176,11 +171,30 @@ using namespace ASTypes;
 
 
 
-void plotResBkgTests(){
+  void testBKG1DFits(std::string name, std::string filename, std::string varName, std::string fitName, const std::vector<std::string>& sels){
+      std::vector<std::string> canNames;
+      for(unsigned int iM = 0; iM+1 < resPTBins.size(); ++iM){
+          canNames.push_back(std::string("can_") +flt2Str(resPTBins[iM]) + "to"+flt2Str(resPTBins[iM+1]));
+      }
+      test1DFits(name,filename,varName,fitName,sels,canNames);
+  }
+
+
+
+
+void plotResBkgTests(int step = 0){
     std::string filename = hhFilename;
-    testHHKern(bkgSels[BKG_MT],filename);
-//    testHHPDFFits(bkgSels[BKG_MT],filename);
-//    testHHKern(bkgSels[BKG_MW],filename);
-//    test2DFits({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },filename);
-//    test2DFits({bkgSels[BKG_LOSTTW] },filename);
+
+    if(step == 0)testHHKern(bkgSels[BKG_MW],filename);
+    if(step == 1)testHHPDFFits(bkgSels[BKG_MW],filename);
+    if(step == 2)testBKG1DFits(bkgSels[BKG_MW],filename,"W","fit1stIt",{"emu_LMT_none"});
+    if(step == 3)testBKG1DFits(bkgSels[BKG_MW],filename,"W","fit",{"emu_LMT_none"});
+    if(step == 4)test2DFits({bkgSels[BKG_MW] },filename);
+
+    if(step == 5)testHHKern(bkgSels[BKG_MT],filename);
+    if(step == 6)testHHPDFFits(bkgSels[BKG_MT],filename);
+    if(step == 7)testBKG1DFits(bkgSels[BKG_MT],filename,"T","fit1stIt",{"emu_L_none","emu_M_none","emu_T_none"});
+    if(step == 8)testBKG1DFits(bkgSels[BKG_MT],filename,"T","fit",{"emu_L_none","emu_M_none","emu_T_none"});
+    if(step == 9)test2DFits({bkgSels[BKG_MT] },filename);
+    if(step == 10)test2DFits({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },filename);
 }
