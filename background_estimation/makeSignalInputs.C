@@ -141,7 +141,7 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename)
     const std::string fitName = "MVV_fit";
     for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
         if(l == lepSels[LEP_EMU] ) continue;
-//        if(!(p == purSels[PUR_LMT] || p == purSels[PUR_M]) ) continue;
+        //        if(!(p == purSels[PUR_LMT] || p == purSels[PUR_M]) ) continue;
         if(!(h == hadSels[HAD_LTMB] || h == hadSels[HAD_FULL]) ) continue;
         const std::string catName = l+"_"+p+"_"+h;
         makeSignal1DShapes(name,filename,catName,fitName,false,0,iF,false);
@@ -215,10 +215,10 @@ void makeSignal2DShapes(const std::string& name, const std::string& filename, st
         fitter->setConst(pnY("n")     ,1);
         fitter->setConst(pnY("n2")    ,1);
         fitter->setConst(pnY("maxS")  ,1);
-//        if(doExpo){
-//            fitter->setVar(pnY("meanE")  ,HHMass   ,HHMass -200,HHMass+200);
-//            fitter->setVar(pnY("sigmaE") ,HHMass*0.05,HHMass*0.025,HHMass*0.2);
-//        }
+        //        if(doExpo){
+        //            fitter->setVar(pnY("meanE")  ,HHMass   ,HHMass -200,HHMass+200);
+        //            fitter->setVar(pnY("sigmaE") ,HHMass*0.05,HHMass*0.025,HHMass*0.2);
+        //        }
 
         if(mvvJSON){
             fitter->setVar(pnY("alpha") ,mvvJSON->evalFunc(pnY("alpha") ,HHMass),0.1,3);
@@ -239,7 +239,7 @@ void makeSignal2DShapes(const std::string& name, const std::string& filename, st
 
         fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::SumCoefRange("coef"),RooFit::NumCPU(8)});
         fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::SumCoefRange("coef"),RooFit::NumCPU(8)});
-//        fitter->w->writeToFile((filename +"_"+name+"_"+catName+"_"+ASTypes::flt2Str(HHMass)+"_temp.root").c_str(),true);
+        //        fitter->w->writeToFile((filename +"_"+name+"_"+catName+"_"+ASTypes::flt2Str(HHMass)+"_temp.root").c_str(),true);
         std::cout<< "---------------------------END!-------------------------------"<<std::endl;
 
     };
@@ -261,9 +261,9 @@ void makeSignal2DShapesFirstIteration(const std::string& name, const std::string
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
         if(l == lepSels[LEP_EMU] ) continue;
-                if(p !=  purSels[PUR_L] ) continue;
+        if(p !=  purSels[PUR_L] ) continue;
         //        if(p !=  purSels[PUR_LMT] ) continue;
-//        if(!(p ==  purSels[PUR_LMT] ||p ==  purSels[PUR_L]) ) continue;
+        //        if(!(p ==  purSels[PUR_LMT] ||p ==  purSels[PUR_L]) ) continue;
         if(h !=  hadSels[HAD_LTMB] ) continue;
 
         bool doExpo = p ==  purSels[PUR_L];
@@ -313,7 +313,7 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+ " -minX 550 -maxX 4550";
         std::string jsonArgsStd = " -g meanSMJJ:laur4,sigmaSMJJ:laur4,alphaSMJJ:laur4,alpha2SMJJ:laur4,nSMJJ:pol0,n2SMJJ:pol0";
         std::string jsonArgsExpo = " -g meanSMJJ:laur4,sigmaSMJJ:laur4,alphaSMJJ:laur4,alpha2SMJJ:pol1,nSMJJ:pol0,n2SMJJ:pol0,slopeSMJJ:laur4,fESMJJ:pol4";
-//        std::string jsonArgsExpo = " -g meanSMJJ:laur4,sigmaSMJJ:laur4,alphaSMJJ:laur4,alpha2SMJJ:pol1,nSMJJ:pol0,n2SMJJ:pol0,slopeSMJJ:laur4,fESMJJ:pol4,meanESMVV:pol1,sigmaESMVV:pol1";
+        //        std::string jsonArgsExpo = " -g meanSMJJ:laur4,sigmaSMJJ:laur4,alphaSMJJ:laur4,alpha2SMJJ:pol1,nSMJJ:pol0,n2SMJJ:pol0,slopeSMJJ:laur4,fESMJJ:pol4,meanESMVV:pol1,sigmaESMVV:pol1";
         std::string jsonArgsVV0 = "meanSMVV:pol1,sigmaSMVV:pol1,alphaSMVV:pol1,alpha2SMVV:laur3,nSMVV:pol0,n2SMVV:pol0";
         std::string jsonArgsVV1 = "maxSSMVV:pol0,mean_p1SMVV:pol2,sigma_p1SMVV:pol1";
         std::string jsonArgs = argsP1 + (doExpo ? jsonArgsExpo : jsonArgsStd ) + ","+jsonArgsVV0+","+jsonArgsVV1;
@@ -340,21 +340,12 @@ void go(std::string treeDir) {
     std::string signalTrees = treeDir + "/out_radion_hh_bbinc_mXXX_0.root";
     std::string name = radionSig;
 
-    //    makeSignalFittingDistributions(name,filename,signalTrees,hhRange.cut+"&&"+hbbRange.cut,false);
-    //    makeSignalMJJShapes1stIt(name,filename);
-    //    makeSignalMJJShapes2ndIt(name,filename);
-//    makeSignalMVVShapes1D(name,filename);
-//    makeSignal2DShapesFirstIteration(name,filename);
+    makeSignalFittingDistributions(name,filename,signalTrees,hhRange.cut+"&&"+hbbRange.cut,false);
+    makeSignalMJJShapes1stIt(name,filename);
+    makeSignalMJJShapes2ndIt(name,filename);
+    makeSignalMVVShapes1D(name,filename);
+    makeSignal2DShapesFirstIteration(name,filename);
     makeSignal2DShapesSecondIteration(name,filename);
-
-
-    //        makeSignalFittingDistributions(name,filename,signalTrees,hhInclRange.cut+"&&"+hbbInclRange.cut,true);
-    //            makeSignal2DShapes(name,filename);
-
-    //    makeSignalMJJShapes1stIt(name,filename);
-    //        makeSignalMJJShapes(name,filename);
-    //            makeSignal1DMVVShapes(name,filename);
-    //        makeSignal2DShapesFirstIteration(name,filename);
 
 
 
