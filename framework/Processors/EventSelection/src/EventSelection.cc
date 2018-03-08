@@ -117,7 +117,7 @@ bool passElectronTriggerSuite(const EventReader& reader_event   ) {
 bool passTriggerPreselection(const EventReader& reader_event,const float ht, const std::vector<const Lepton    *>& selectedLeptons ){
     if(!passTriggerSuite(reader_event)) return false;
 
-    const float minHT = 500;
+    const float minHT = 400;
     const float minElePT = 30;
     const float minMuPT = 26;
 
