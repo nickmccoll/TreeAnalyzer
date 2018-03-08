@@ -38,6 +38,9 @@ namespace JetKinematics {
   template<typename Momentum1, typename Momentum2>
   double transverseMass(const Momentum1& visible, const Momentum2& invisible);
 
+  template<typename Momentum1, typename Momentum2>
+  double massiveTransverseMass(const Momentum1& visible, const Momentum2& invisible);
+
 
   template<typename Jet>
   static bool passCuts(const Jet& jet,const double minPT, const double maxEta);

@@ -74,6 +74,17 @@ double JetKinematics::transverseMass(const Momentum1& visible, const Momentum2& 
   return TMath::Sqrt( 2 * visible.pt() * invisible.pt() * (1 - cosDPhi) );
 }
 
+//_____________________________________________________________________________
+template<typename Momentum1, typename Momentum2>
+double JetKinematics::massiveTransverseMass(const Momentum1& visible, const Momentum2& invisible)
+{
+  const double vM2 = visible.mass()*visible.mass();
+  const double vPpM = TMath::Sqrt(vM2+visible.pt()*visible.pt());
+  const double    cosDPhi   = TMath::Cos( PhysicsUtilities::deltaPhi(visible.phi(), invisible.phi()) );
+  const double mt2 =vM2 +2*invisible.pt()*(vPpM-visible.pt()*cosDPhi);
+  return TMath::Sqrt( mt2);
+}
+
 
 //_____________________________________________________________________________
 template<typename Jet>
