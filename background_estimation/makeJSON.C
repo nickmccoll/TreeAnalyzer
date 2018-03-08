@@ -34,6 +34,7 @@ public:
             ps[1].erase(std::remove(ps[1].begin(), ps[1].end(), '"'), ps[1].end());
             addEntry(ps[0],ps[1]);
         }
+        file.close();
     }
 
     void replaceEntries(const CJSON& other) {
@@ -162,7 +163,7 @@ CJSON makeJSON(const std::string& outFileName,std::string& arguments){
     ParParser p;
     auto iFn   = p.addString("i","input file name",true);
     auto gs    = p.addString("g" ,"Comma separated graphs and functions to fit  like MEAN:pol3,SIGMA:pol2",true);
-    auto v     = p.addString("var","x var name ",false,"MH");
+    auto v     = p.addString("var","x var name ",false,"XX");
     auto minX  = p.addFloat("minX","minimum x",true);
     auto maxX  = p.addFloat("maxX","maximum x",true);
     p.parse(arguments);

@@ -27,13 +27,11 @@ void test1DFits(std::string name, std::string filename, std::string varName, std
         };
         auto addGraph = [&](const std::string& name,std::vector<TObject*>& list){
             TGraphErrors * can= 0;
-            fo->GetObject(name.c_str(),can);
-
             if(ff){
                 ff->GetObject((name).c_str(),can);
             }
-            //            if(!can) fo->GetObject(name.c_str(),can);
-            if(can == 0) return;
+            if(!can) fo->GetObject(name.c_str(),can);
+            if(!can) return;
             can->GetYaxis()->SetTitle(name.c_str());
             list.push_back(can);
         };

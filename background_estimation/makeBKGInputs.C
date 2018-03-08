@@ -12,6 +12,7 @@
 #include "InputsHelper.h"
 #include "cutHistos1D.C"
 #include "FunctionFitter.C"
+#include "TRandom3.h"
 
 void makeDetectorParam(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0"){
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
@@ -123,9 +124,8 @@ void makeBKG1DShapes(const std::string& name, const std::string& filename, const
     FunctionParameterPlotter plotter;
     std::vector<std::unique_ptr<FunctionFitter>> fitters;
     auto setup1DFit = [&](const TH1* hbbH, double HHMass){
-        std::string pF = isW ? "W" : "T";
-        auto vN=[&](std::string var)->std::string{return var+pF;};
-        fitters.emplace_back(new CBFunctionFitter(hbbH,false,pF,{ "MJJ"}));
+        auto vN=[&](std::string var)->std::string{return var;};
+        fitters.emplace_back(new CBFunctionFitter(hbbH,false,"",{MOD_MJ}));
 
         auto fitter = &* fitters.back();
         if(isW){
@@ -137,7 +137,7 @@ void makeBKG1DShapes(const std::string& name, const std::string& filename, const
             fitter->setVar(vN("n2")  , 2,1,6);
             fitter->setConst(vN("n")  ,1);
             fitter->setConst(vN("n2")  ,1);
-            fitter->w->var("MJJ")->setRange("fit",30,160);
+            fitter->w->var(MOD_MJ.c_str())->setRange("fit",30,160);
         } else {
             fitter->setVar(vN("mean")     ,180,120,195);
             fitter->setVar(vN("sigma")     ,15.8,14,20);
@@ -147,7 +147,7 @@ void makeBKG1DShapes(const std::string& name, const std::string& filename, const
             fitter->setVar(vN("n2")  , 5,1,6);
             fitter->setConst(vN("n")  ,1);
             fitter->setConst(vN("n2")  ,1);
-            fitter->w->var("MJJ")->setRange("fit",70,230);
+            fitter->w->var(MOD_MJ.c_str())->setRange("fit",70,230);
         }
         if(prevJSON){
             fitter->setVar(vN("alpha")     ,prevJSON->evalFunc(vN("alpha")  ,HHMass) ,0.1,10);
@@ -187,9 +187,9 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
         const std::string catName = l+"_"+p+"_"+h;
         makeBKG1DShapes(name,filename,catName,fitName,true,0,iF);
 
-        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root ";
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MR+" ";
         argsP1 += " -minX 500 -maxX 3000 ";
-        std::string jsonArgsStd = " -g meanW:laur2,sigmaW:laur2,alphaW:laur4,alpha2W:laur3,nW:pol0,n2W:pol0 ";
+        std::string jsonArgsStd = " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
         MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
     }
 }
@@ -203,16 +203,16 @@ void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename
         if(h != hadSels[HAD_NONE] ) continue;
         const std::string catName = l+"_"+p+"_"+h;
         CJSON oldJSON(     filename+"_"+name+"_"+catName+"_fit1stIt.json");
-        oldJSON.fillFunctions("MH");
+        oldJSON.fillFunctions(MOD_MR);
         makeBKG1DShapes(name,filename,catName,fitName,true,&oldJSON,iF);
 
-        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root ";
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MR+" ";
         argsP1 += " -minX 500 -maxX 3000 ";
-        std::string jsonArgsStd = " -g meanW:laur2,sigmaW:laur2,alphaW:laur4,alpha2W:laur3,nW:pol0,n2W:pol0 ";
+        std::string jsonArgsStd = " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
 
         CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+jsonArgsStd);
-        newJSON.replaceEntry("alphaW", oldJSON.getP("alphaW") );
-        newJSON.replaceEntry("alpha2W", oldJSON.getP("alpha2W") );
+        newJSON.replaceEntry("alpha", oldJSON.getP("alpha") );
+        newJSON.replaceEntry("alpha2", oldJSON.getP("alpha2") );
         newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
     }
 }
@@ -229,9 +229,9 @@ void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filena
         const std::string catName = l+"_"+p+"_"+h;
         makeBKG1DShapes(name,filename,catName,fitName,false,0,iF);
 
-        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root ";
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MR+" ";
         argsP1 += " -minX 500 -maxX 3500 ";
-        std::string jsonArgsStd = " -g meanT:laur3,sigmaT:laur2,alphaT:laur4,alpha2T:laur3,nT:pol0,n2T:pol0 ";
+        std::string jsonArgsStd = " -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
         MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
     }
 }
@@ -245,35 +245,36 @@ void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filena
         if(h != hadSels[HAD_NONE] ) continue;
         const std::string catName = l+"_"+p+"_"+h;
         CJSON oldJSON(     filename+"_"+name+"_"+catName+"_fit1stIt.json");
-        oldJSON.fillFunctions("MH");
+        oldJSON.fillFunctions(MOD_MR);
         makeBKG1DShapes(name,filename,catName,fitName,false,&oldJSON,iF);
 
-        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root ";
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MR+" ";
         argsP1 += " -minX 500 -maxX 3000 ";
-        std::string jsonArgsStd= " -g meanT:laur3,sigmaT:laur2,alphaT:laur4,alpha2T:laur3,nT:pol0,n2T:pol0 ";
+        std::string jsonArgsStd= " -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
 
         CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+jsonArgsStd);
-        newJSON.replaceEntry("alphaT", oldJSON.getP("alphaT") );
-        newJSON.replaceEntry("alpha2T", oldJSON.getP("alpha2T") );
+        newJSON.replaceEntry("alpha", oldJSON.getP("alpha") );
+        newJSON.replaceEntry("alpha2", oldJSON.getP("alpha2") );
         newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
     }
 }
 
-void convertFuncFitTo2DTemplate(const std::string& name, const std::string& filename,const std::string& funcParamPostfix){
+void convertFuncFitTo2DTemplate(const std::string& name, const std::string& filename,const std::string& funcParamPostfix=""){
     TFile *oF = new TFile((filename + "_"+name+"_2D_template_debug.root").c_str(),"recreate");
     for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
+        if(p == purSels[PUR_I]) continue;
         std::string jsonFile = filename+"_"+name+"_"+lepSels[LEP_EMU]+"_";
         jsonFile += name.find("w")!= std::string::npos ?purSels[PUR_LMT]:p;
         jsonFile+=std::string("_")+hadSels[HAD_NONE] +"_fit.json";
 
-        CBFunctionFitter xFit(0,false,funcParamPostfix,{"MJJ"});
-        xFit.w->var("MJJ")->setMin(minHbbMass);
-        xFit.w->var("MJJ")->setMax(maxHbbMass);
-        xFit.w->var("MJJ")->setBins(nHbbMassBins*10);
-        xFit.w->var("MJJ")->setVal((minHbbMass+maxHbbMass)/2.);
+        CBFunctionFitter xFit(0,false,funcParamPostfix,{MOD_MJ});
+        xFit.w->var(MOD_MJ.c_str())->setMin(minHbbMass);
+        xFit.w->var(MOD_MJ.c_str())->setMax(maxHbbMass);
+        xFit.w->var(MOD_MJ.c_str())->setBins(nHbbMassBins*10);
+        xFit.w->var(MOD_MJ.c_str())->setVal((minHbbMass+maxHbbMass)/2.);
 
         CJSON json(jsonFile);
-        json.fillFunctions("MH");
+        json.fillFunctions(MOD_MR);
         auto pn = [&](const std::string& v) ->std::string{return v + funcParamPostfix;};
         auto * iF =  TObjectHelper::getFile(filename + "_"+name+"_"+l+"_"+p+"_"+h+"_template.root");
         if(iF==0) continue;
@@ -309,7 +310,7 @@ void compile2DTemplatesForDebug(const std::string& name, const std::string& file
     for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
         auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_"+l+"_" +p +"_"+h+"_2D_template.root");
         if(iF==0) continue;
-        auto hh_H = TObjectHelper::getObject<TH2>(iF,"histo__x_y",false,false);
+        auto hh_H = TObjectHelper::getObject<TH2>(iF,"histo",false,false);
         if(hh_H==0) continue;
         oF->cd();
         hh_H->SetXTitle(hbbMCS.title.c_str());
@@ -320,29 +321,70 @@ void compile2DTemplatesForDebug(const std::string& name, const std::string& file
     oF->Close();
 }
 
+void makePseudoData(const std::string& name, const std::string& filename){
+    TRandom3 * rand = new TRandom3(1234);
+    std::vector<TFile*> yieldFiles;
+    std::vector<TFile*> tempFiles;
+    for(unsigned int bkg = BKG_QG; bkg <= BKG_MT; ++bkg){
+        yieldFiles.push_back(TObjectHelper::getFile(filename+"_"+bkgSels[bkg]+"_distributions.root"));
+        tempFiles.push_back(TObjectHelper::getFile(filename+"_"+bkgSels[bkg]+"_2D_template_debug.root"));
+    }
+    TFile *oF = new TFile((filename + "_"+name+".root").c_str(),"recreate");
+    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
+        if(l == lepSels[LEP_EMU]) continue;
+        if(p == purSels[PUR_I] || p == purSels[PUR_LMT]) continue;
+        if(h != hadSels[HAD_FULL]) continue;
+
+        double totProb = 0;
+        TH2* totH = 0;
+        for(unsigned int bkg = BKG_QG; bkg <= BKG_MT; ++bkg){
+            auto y_H = TObjectHelper::getObject<TH2>(yieldFiles[bkg],bkgSels[bkg]+"_"+l+"_"+p+"_"+h+"_"+hbbMCS+"_"+hhMCS);
+            auto t_H = TObjectHelper::getObject<TH2>(tempFiles[bkg],bkgSels[bkg]+"_"+l+"_"+p+"_"+h);
+            std::cout <<bkgSels[bkg]+"_"+l+"_"+p+"_"+h +" -> "<< y_H->Integral()<<" "<<t_H->Integral();
+            if(totH) std::cout<<" "<< totH->Integral();
+            std::cout <<"\n";
+            t_H->Scale(y_H->Integral()/t_H->Integral());
+            if(totH == 0) totH = (TH2*)t_H->Clone();
+            else totH->Add(&*t_H);
+        }
+
+        for(int iX = 1; iX <= totH->GetNbinsX(); ++iX)
+            for(int iY = 1; iY <= totH->GetNbinsY(); ++iY){
+                double mean = totH->GetBinContent(iX,iY);
+                int val = rand->Poisson(mean);
+                totH->SetBinContent(iX,iY,val);
+                totH->SetBinError(iX,iY,std::sqrt(float(val)));
+            }
+        totH->Write((std::string("data_")+l+"_"+p+"_"+h+"_"+hbbMCS+"_"+hhMCS).c_str() );
+    }
+
+    oF->Close();
+    for(auto* f: yieldFiles)f->Close();
+    for(auto* f: tempFiles)f->Close();
+    delete rand;
+}
+
 void go(BKGModels modelToDo, std::string treeDir) {
     std::string filename = hhFilename;
     std::string treeArea = treeDir + "/betrees_bkg.root";
-    std::string signalTrees = treeDir + "/out_radion_hh_bbinc_mXXX_0.root";
-
     if(modelToDo == BKG_QG)
     {
         std::string name = bkgSels[BKG_QG];
         std::string genSel = bkgSels[BKG_QG].cut + "&&"+ aQCD.cut;
         std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+ hadSels[HAD_LTMB].cut;
         makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
-        //        //MVV
+//        //        //MVV
         makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,3,0.5,1);//x = hh
         //                makeBackgroundShapesMVVConditional(name+"_xs_0p75_xc_2_ys_0p75_yc_2,filename,treeArea,baseSel,0.75,2,0.75,2);//old
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hhInclRange.cut,true);
         //
-        //        //MJJ
+//        //        //MJJ
         makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,baseSel+"&&"+hhRange.cut);
         mergeBackgroundShapes(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
         fitBackgroundShapesMVVConditional(name,filename);
 
-        //        compile2DTemplatesForDebug(name,filename);
+        compile2DTemplatesForDebug(name,filename);
     }
 
     if(modelToDo == BKG_LOSTTW){
@@ -350,10 +392,10 @@ void go(BKGModels modelToDo, std::string treeDir) {
         std::string genSel = bkgSels[BKG_LOSTTW].cut;
         std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&" +hadSels[HAD_LTMB].cut;
         makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
-        //MVV
+//        //MVV
         makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,8,0.5,2);//x = hh
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hhInclRange.cut,true);
-        //MJJ
+//        //MJJ
         makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,baseSel+"&&"+hhRange.cut);
         mergeBackgroundShapes(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
@@ -377,7 +419,7 @@ void go(BKGModels modelToDo, std::string treeDir) {
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
         makeResWMJJShapes1stIt(name,filename);
         makeResWMJJShapes2ndIt(name,filename);
-        convertFuncFitTo2DTemplate(name,filename,"W");
+        convertFuncFitTo2DTemplate(name,filename);
     }
 
     if(modelToDo == BKG_MT){
@@ -395,7 +437,12 @@ void go(BKGModels modelToDo, std::string treeDir) {
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
         makeResTopMJJShapes1stIt(name,filename);
         makeResTopMJJShapes2ndIt(name,filename);
-        convertFuncFitTo2DTemplate(name,filename,"T");
+        convertFuncFitTo2DTemplate(name,filename);
+    }
+
+    //Make pseudo data
+    if(modelToDo > BKG_MT){
+        makePseudoData("pd",filename);
     }
 
 }

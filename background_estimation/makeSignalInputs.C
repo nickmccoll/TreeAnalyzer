@@ -35,13 +35,54 @@ void makeSignalFittingDistributions(const std::string& name, const std::string& 
     gSystem->Exec((std::string("hadd -f ")+ compiledFile + " " + allFiles).c_str());
     gSystem->Exec((std::string("rm ") + allFiles).c_str());
 }
+void makeSignalYields(const std::string& name, const std::string& filename, const double BR= 2*0.5824*(.2137+.002619)){
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
+    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
+        FunctionParameterPlotter plotter;
+        const std::string catName = l+"_"+p+"_"+h;
+        TGraphErrors* yieldGraph = new TGraphErrors;
+        int n = 0;
+        for(unsigned int iS = 0; iS < signalMassBins.size(); ++iS){
+            std::string hName   = name+"_m"+ASTypes::int2Str(signalMassBins[iS])+"_"+catName;
+            auto hh_H = TObjectHelper::getObject<TH1>(iF,hName+"_"+hhMCS,false,false);
+            if(hh_H ==0) {
+                std::cout << hName+"_"+hhMCS<<std::endl;
+                continue;
+            }
+            double error = 0;
+            double integral = hh_H->IntegralAndError(1,hh_H->GetNbinsX(),error);
+            yieldGraph->SetPoint(n,signalMassBins[iS],integral*BR);
+            yieldGraph->SetPointError(n,0.0,error*BR);
+            n++;
+        }
+        plotter.addFit(yieldGraph,"yield");
+        plotter.write(filename+"_"+name+"_"+catName+"_yield.root");
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_yield.root ";
+        argsP1 += " -minX 700 -maxX 4550 ";
+        argsP1 += " -g yield:laur4 ";
+        argsP1 += " -var "+MOD_MS+" ";
+        MakeJSON(filename+"_"+name+"_"+catName+"_yield.json",argsP1);
+    }
+
+    iF->Close();
+}
+
+
+std::string vnMJ(const std::string& var){return var+MOD_MJ;};
+std::string vnMR(const std::string& var){return var+MOD_MR;};
+const std::string fitMJJStd  =vnMJ("mean")+":laur4,"+vnMJ("sigma")+":laur4,"+vnMJ("alpha")+":laur4,"+vnMJ("alpha2")+":laur4,"+vnMJ("n")+":pol0,"+vnMJ("n2")+":pol0";
+const std::string fitMJJExpo =vnMJ("mean")+":laur4,"+vnMJ("sigma")+":laur4,"+vnMJ("alpha")+":laur4,"+vnMJ("alpha2")+":pol1," +vnMJ("n")+":pol0,"+vnMJ("n2")+":pol0,"+vnMJ("slope")+":laur4,"+vnMJ("fE")+":pol4";
+const std::string fitMVV     =vnMR("mean")+":pol1," +vnMR("sigma")+":pol1," +vnMR("alpha")+":pol1," +vnMR("alpha2")+":laur3,"+vnMR("n")+":pol0,"+vnMR("n2")+":pol0";
+const std::string fitMVVCond =vnMR("maxS")+":pol0,"+vnMR("mean_p1")+":pol2,"+vnMR("sigma_p1")+":pol1";
+
+
 void makeSignal1DShapes(const std::string& name, const std::string& filename, const std::string& catName, const std::string& fitName, bool fitMJJ, CJSON* prevJSON, TFile* iF, bool doExpo){
     FunctionParameterPlotter plotter;
     std::vector<std::unique_ptr<FunctionFitter>> fitters;
+    const std::string modStr = fitMJJ ? MOD_MJ : MOD_MR;
     auto setup1DFit = [&](const TH1* hbbH, double HHMass){
-        std::string pF = fitMJJ ? "SMJJ" : "SMVV";
-        auto vN=[&](std::string var)->std::string{return var+pF;};
-        fitters.emplace_back(new CBFunctionFitter(hbbH,doExpo,pF,{ fitMJJ ? "MJJ" : "MVV"}));
+        auto vN=[&](std::string var)->std::string{return fitMJJ ? vnMJ(var):vnMR(var);};
+        fitters.emplace_back(new CBFunctionFitter(hbbH,doExpo,modStr,{modStr}));
 
         auto fitter = &* fitters.back();
         if(fitMJJ){
@@ -71,11 +112,11 @@ void makeSignal1DShapes(const std::string& name, const std::string& filename, co
             fitter->setVar(vN("fE")  ,0.1,0,0.75);
         }
         if(fitMJJ){
-            fitter->w->var("MJJ")->setRange("fit",30,210);
-            fitter->w->var("MJJ")->setRange("coef",30,210);
+            fitter->w->var(modStr.c_str())->setRange("fit",30,210);
+            fitter->w->var(modStr.c_str())->setRange("coef",30,210);
         } else {
-            fitter->w->var("MVV")->setRange("fit",HHMass*.75,HHMass*1.50);
-            fitter->w->var("MVV")->setRange("coef",HHMass*.75,HHMass*1.50);
+            fitter->w->var(modStr.c_str())->setRange("fit",HHMass*.75,HHMass*1.50);
+            fitter->w->var(modStr.c_str())->setRange("coef",HHMass*.75,HHMass*1.50);
         }
 
         fitter->fit({RooFit::SumW2Error(1),RooFit::Range("fit"),RooFit::SumCoefRange("coef"),RooFit::NumCPU(8)});
@@ -96,6 +137,7 @@ void makeSignal1DShapes(const std::string& name, const std::string& filename, co
 
 }
 
+
 void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filename){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     const std::string fitName = "MJJ_fit1stIt";
@@ -107,11 +149,9 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
         const std::string catName = l+"_"+p+"_"+h;
         makeSignal1DShapes(name,filename,catName,fitName,true,0,iF,doExpo);
 
-        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root ";
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MS +" ";
         argsP1 += p == purSels[PUR_L] ? " -minX 550 -maxX 4550 " :" -minX 550 -maxX 4550 ";
-        std::string jsonArgsStd = " -g meanSMJJ:laur4,sigmaSMJJ:laur4,alphaSMJJ:laur4,alpha2SMJJ:laur4,nSMJJ:pol0,n2SMJJ:pol0 ";
-        std::string jsonArgsExpo = " -g meanSMJJ:laur4,sigmaSMJJ:laur4,alphaSMJJ:laur4,alpha2SMJJ:pol1,nSMJJ:pol0,n2SMJJ:pol0,slopeSMJJ:laur4,fESMJJ:pol4 ";
-        MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+  ( doExpo  ?  jsonArgsExpo : jsonArgsStd ));
+        MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" -g "+  ( doExpo  ?  fitMJJExpo : fitMJJStd ));
     }
 }
 void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filename){
@@ -124,15 +164,13 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
         bool doExpo = p == purSels[PUR_L];
         const std::string catName = l+"_"+p+"_"+h;
         CJSON oldJSON(     filename+"_"+name+"_"+catName+"_MJJ_fit1stIt.json");
-        oldJSON.fillFunctions("MH");
+        oldJSON.fillFunctions(MOD_MS);
         makeSignal1DShapes(name,filename,catName,fitName,true,&oldJSON,iF,doExpo);
 
-        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+ " -minX 550 -maxX 4550";
-        std::string jsonArgsStd = " -g meanSMJJ:laur4,sigmaSMJJ:laur4,alphaSMJJ:laur4,alpha2SMJJ:laur4,nSMJJ:pol0,n2SMJJ:pol0 ";
-        std::string jsonArgsExpo = " -g meanSMJJ:laur4,sigmaSMJJ:laur4,alphaSMJJ:laur4,alpha2SMJJ:pol1,nSMJJ:pol0,n2SMJJ:pol0,slopeSMJJ:laur4,fESMJJ:pol4 ";
-        CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+  ( doExpo  ?  jsonArgsExpo : jsonArgsStd ));
-        newJSON.replaceEntry(std::string("alphaS")+"MJJ", oldJSON.getP(std::string("alphaS")+"MJJ") );
-        newJSON.replaceEntry(std::string("alpha2S")+"MJJ", oldJSON.getP(std::string("alpha2S")+"MJJ") );
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+ " -minX 550 -maxX 4550 "+" -var "+MOD_MS +" ";
+        CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" -g "+  ( doExpo  ?  fitMJJExpo : fitMJJStd ));
+        newJSON.replaceEntry(vnMJ("alpha"), oldJSON.getP(vnMJ("alpha")) );
+        newJSON.replaceEntry(vnMJ("alpha2"), oldJSON.getP(vnMJ("alpha2")) );
         newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
     }
 }
@@ -146,10 +184,9 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename)
         const std::string catName = l+"_"+p+"_"+h;
         makeSignal1DShapes(name,filename,catName,fitName,false,0,iF,false);
 
-        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root ";
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MS +" ";
         argsP1 += p == purSels[PUR_L] ? " -minX 550 -maxX 4550 " :" -minX 550 -maxX 4550 ";
-        std::string jsonArgsStd = " -g meanSMVV:pol1,sigmaSMVV:pol1,alphaSMVV:pol1,alpha2SMVV:laur3,nSMVV:pol0,n2SMVV:pol0 ";
-        MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+ jsonArgsStd);
+        MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" -g "+ fitMVV);
     }
 }
 
@@ -158,16 +195,15 @@ void makeSignal2DShapes(const std::string& name, const std::string& filename, st
     std::vector<std::unique_ptr<FunctionFitter>> fitters;
 
     auto setup2DFit = [&](const TH2* hbbH, const double HHMass){
-        std::string pF = "S";
-        auto pnX =[&] (std::string v) ->std::string{return v+pF+"MJJ";};
-        auto pnY =[&] (std::string v) ->std::string{return v+pF+"MVV";};
+        auto pnX =[&] (std::string v) ->std::string{return vnMJ(v);};
+        auto pnY =[&] (std::string v) ->std::string{return vnMR(v);};
 
-        fitters.emplace_back(new CBFunctionFitter2D(hbbH,doExpo,pF,{"MJJ","MVV"}));
+        fitters.emplace_back(new CBFunctionFitter2D(hbbH,doExpo,"",{MOD_MJ,MOD_MR}));
         auto fitter = &* fitters.back();
-        fitter->w->var("MJJ")->setRange("fit",30,210);
-        fitter->w->var("MVV")->setRange("fit",HHMass*.75,HHMass*1.25);
-        fitter->w->var("MVV")->setRange("coef",minInclHHMass,maxInclHHMass);
-        fitter->w->var("MJJ")->setRange("coef",30,210);
+        fitter->w->var(MOD_MJ.c_str())->setRange("fit",30,210);
+        fitter->w->var(MOD_MR.c_str())->setRange("fit",HHMass*.75,HHMass*1.25);
+        fitter->w->var(MOD_MR.c_str())->setRange("coef",minInclHHMass,maxInclHHMass);
+        fitter->w->var(MOD_MJ.c_str())->setRange("coef",30,210);
 
         if(mjjJSON){
             fitter->  setVar(pnX("mean")  ,mjjJSON->evalFunc(pnX("mean")  ,HHMass),90,180);
@@ -261,9 +297,7 @@ void makeSignal2DShapesFirstIteration(const std::string& name, const std::string
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
         if(l == lepSels[LEP_EMU] ) continue;
-        if(p !=  purSels[PUR_L] ) continue;
-        //        if(p !=  purSels[PUR_LMT] ) continue;
-        //        if(!(p ==  purSels[PUR_LMT] ||p ==  purSels[PUR_L]) ) continue;
+        if(p !=  purSels[PUR_LMT] ) continue;
         if(h !=  hadSels[HAD_LTMB] ) continue;
 
         bool doExpo = p ==  purSels[PUR_L];
@@ -272,20 +306,16 @@ void makeSignal2DShapesFirstIteration(const std::string& name, const std::string
         std::string mjjcatName = lepSels[LEP_EMU] +"_"+p+"_"+hadSels[HAD_LTMB];
         std::string mvvcatName = l +"_"+purSels[PUR_LMT]+"_"+hadSels[HAD_LTMB];
         CJSON mjjJSON(     filename+"_"+name+"_"+mjjcatName+"_MJJ_fit.json");
-        mjjJSON.fillFunctions("MH");
+        mjjJSON.fillFunctions(MOD_MS);
         CJSON mvvJSON(     filename+"_"+name+"_"+mvvcatName+"_MVV_fit.json");
-        mvvJSON.fillFunctions("MH");
+        mvvJSON.fillFunctions(MOD_MS);
         makeSignal2DShapes(name,filename,catName,fitName,&mjjJSON,&mvvJSON,false,doExpo,iF);
-        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+ " -minX 550 -maxX 4550 -v ";
-        std::string jsonArgsStd = " -g meanSMJJ:laur4,sigmaSMJJ:laur4,alphaSMJJ:laur4,alpha2SMJJ:laur4,nSMJJ:pol0,n2SMJJ:pol0";
-        std::string jsonArgsExpo = " -g meanSMJJ:laur4,sigmaSMJJ:laur4,alphaSMJJ:laur4,alpha2SMJJ:pol1,nSMJJ:pol0,n2SMJJ:pol0,slopeSMJJ:laur4,fESMJJ:pol4,meanESMVV:pol1,sigmaESMVV:pol1";
-        std::string jsonArgsVV0 = "meanSMVV:pol1,sigmaSMVV:pol1,alphaSMVV:pol1,alpha2SMVV:laur3,nSMVV:pol0,n2SMVV:pol0";
-        std::string jsonArgsVV1 = "maxSSMVV:pol0,mean_p1SMVV:pol2,sigma_p1SMVV:pol1";
-        std::string jsonArgs = argsP1 + (doExpo ? jsonArgsExpo : jsonArgsStd ) + ","+jsonArgsVV0+","+jsonArgsVV1;
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+ " -minX 550 -maxX 4550 -var "+MOD_MS+" ";
+        std::string jsonArgs = argsP1 + " -g " +(doExpo ? fitMJJExpo : fitMJJStd ) + ","+fitMVV+","+fitMVVCond;
         CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",jsonArgs);
         newJSON.replaceEntries(mjjJSON);
-        newJSON.replaceEntry("alphaSMVV", mvvJSON.getP("alphaSMVV") );
-        newJSON.replaceEntry("alpha2SMVV", mvvJSON.getP("alpha2SMVV") );
+        newJSON.replaceEntry(vnMR("alpha"), mvvJSON.getP(vnMR("alpha")) );
+        newJSON.replaceEntry(vnMR("alpha2"), mvvJSON.getP(vnMR("alpha2")) );
         newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
     }
 }
@@ -304,29 +334,23 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
         std::string mvvCatName = l+"_"+purSels[PUR_LMT]+"_"+hadSels[HAD_LTMB];
 
         CJSON mjjJSON(     filename+"_"+name+"_"+mjjCatName+"_MJJ_fit.json");
-        mjjJSON.fillFunctions("MH");
+        mjjJSON.fillFunctions(MOD_MS);
         CJSON mvvJSON(     filename+"_"+name+"_"+mvvCatName+"_2D_fit1stIt.json");
-        mvvJSON.fillFunctions("MH");
+        mvvJSON.fillFunctions(MOD_MS);
         makeSignal2DShapes(name,filename,catName,fitName,&mjjJSON,&mvvJSON,true,doExpo,iF);
 
-
-        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+ " -minX 550 -maxX 4550";
-        std::string jsonArgsStd = " -g meanSMJJ:laur4,sigmaSMJJ:laur4,alphaSMJJ:laur4,alpha2SMJJ:laur4,nSMJJ:pol0,n2SMJJ:pol0";
-        std::string jsonArgsExpo = " -g meanSMJJ:laur4,sigmaSMJJ:laur4,alphaSMJJ:laur4,alpha2SMJJ:pol1,nSMJJ:pol0,n2SMJJ:pol0,slopeSMJJ:laur4,fESMJJ:pol4";
-        //        std::string jsonArgsExpo = " -g meanSMJJ:laur4,sigmaSMJJ:laur4,alphaSMJJ:laur4,alpha2SMJJ:pol1,nSMJJ:pol0,n2SMJJ:pol0,slopeSMJJ:laur4,fESMJJ:pol4,meanESMVV:pol1,sigmaESMVV:pol1";
-        std::string jsonArgsVV0 = "meanSMVV:pol1,sigmaSMVV:pol1,alphaSMVV:pol1,alpha2SMVV:laur3,nSMVV:pol0,n2SMVV:pol0";
-        std::string jsonArgsVV1 = "maxSSMVV:pol0,mean_p1SMVV:pol2,sigma_p1SMVV:pol1";
-        std::string jsonArgs = argsP1 + (doExpo ? jsonArgsExpo : jsonArgsStd ) + ","+jsonArgsVV0+","+jsonArgsVV1;
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+ " -minX 550 -maxX 4550 -var "+MOD_MS+" ";
+        std::string jsonArgs = argsP1 +" -g "+ (doExpo ? fitMJJExpo : fitMJJStd ) + ","+fitMVV+","+fitMVVCond;
 
 
         CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",jsonArgs);
         newJSON.replaceEntries(mjjJSON);
-        newJSON.replaceEntry("alphaSMVV", mvvJSON.getP("alphaSMVV") );
-        newJSON.replaceEntry("alpha2SMVV", mvvJSON.getP("alpha2SMVV") );
-        newJSON.replaceEntry("mean_p1SMVV", mvvJSON.getP("mean_p1SMVV") );
-        newJSON.replaceEntry("sigma_p1SMVV", mvvJSON.getP("sigma_p1SMVV") );
-        newJSON.replaceEntry("meanSMVV"   , mvvJSON.getP("meanSMVV") );
-        newJSON.replaceEntry("sigmaSMVV"  , mvvJSON.getP("sigmaSMVV") );
+        newJSON.replaceEntry(vnMR("alpha"   ), mvvJSON.getP(vnMR("alpha"   )));
+        newJSON.replaceEntry(vnMR("alpha2"  ), mvvJSON.getP(vnMR("alpha2"  )));
+        newJSON.replaceEntry(vnMR("mean_p1" ), mvvJSON.getP(vnMR("mean_p1" )));
+        newJSON.replaceEntry(vnMR("sigma_p1"), mvvJSON.getP(vnMR("sigma_p1")));
+        newJSON.replaceEntry(vnMR("mean"    ), mvvJSON.getP(vnMR("mean"    )));
+        newJSON.replaceEntry(vnMR("sigma"   ), mvvJSON.getP(vnMR("sigma"   )));
         newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
     }
 }
@@ -340,15 +364,14 @@ void go(std::string treeDir) {
     std::string signalTrees = treeDir + "/out_radion_hh_bbinc_mXXX_0.root";
     std::string name = radionSig;
 
+    makeSignalFittingDistributions(name,filename,signalTrees,hhInclRange.cut+"&&"+hbbInclRange.cut,true);
     makeSignalFittingDistributions(name,filename,signalTrees,hhRange.cut+"&&"+hbbRange.cut,false);
+    makeSignalYields(name,filename);
     makeSignalMJJShapes1stIt(name,filename);
     makeSignalMJJShapes2ndIt(name,filename);
     makeSignalMVVShapes1D(name,filename);
     makeSignal2DShapesFirstIteration(name,filename);
     makeSignal2DShapesSecondIteration(name,filename);
-
-
-
 }
 #endif
 

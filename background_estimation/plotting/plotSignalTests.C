@@ -139,23 +139,53 @@ void test2DFits(std::string name, std::string filename, std::string varName, std
 
 }
 
+void plotYields(std::string name, std::string filename,std::string fitName, const std::vector<std::string>& sels) {
+    Plotter * p = new Plotter; //stupid CINT bugfix.....
+    std::vector<TObject*> paramPads;
+
+    for(const auto& s : sels){
+        TFile * fo = new TFile((filename+"_"+name+"_"+s+"_"+fitName+".root").c_str(),"read");
+        if(fo == 0) continue;
+
+        TFile *ff = new TFile((filename+"_"+name+"_"+s+"_"+fitName+".json.root").c_str(),"read");
+
+        auto addGraph = [&](const std::string& name,std::vector<TObject*>& list){
+            TGraphErrors * can= 0;
+            if(ff){
+                ff->GetObject((name).c_str(),can);
+            }
+            if(!can) fo->GetObject(name.c_str(),can);
+            if(!can) return;
+            can->GetYaxis()->SetTitle(s.c_str());
+            list.push_back(can);
+        };
+
+        addGraph("yield", paramPads);
+    }
+    Drawing::drawAll(paramPads,"Yields");
+
+}
+
 
 void testSignal1DFits(std::string name, std::string filename, std::string varName, std::string fitName, const std::vector<std::string>& sels){
     std::vector<std::string> canNames;
     for(const auto& sB : signalMassBins){ canNames.push_back(std::string("can_m") +int2Str(sB));}
-    test1DFits(name,filename,std::string("S") + varName,fitName,sels,canNames);
+    test1DFits(name,filename, varName,fitName,sels,canNames);
 }
 
 void plotSignalTests(){
     std::string filename = hhFilename;
 
     //        testSignal1DFits(radionSig,filename,"MJJ","MJJ_fit1stIt",{"emu_LMT_ltmb","emu_L_ltmb","emu_T_ltmb"});
-//            testSignal1DFits(radionSig,filename,"MJJ","MJJ_fit",{"emu_LMT_ltmb","emu_L_ltmb","emu_T_ltmb"});
-    testSignal1DFits(radionSig,filename,"MVV","MVV_fit",{"e_LMT_ltmb","mu_LMT_ltmb"});
+            testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit",{"emu_LMT_ltmb","emu_M_ltmb","emu_T_ltmb"});
+//    testSignal1DFits(radionSig,filename,"MVV","MVV_fit",{"e_LMT_ltmb","mu_LMT_ltmb"});
+
 
 //        compFitParams(radionSig,filename,"MVV","MVV_fit", "e v mu", {"e_LMT_ltmb","mu_LMT_ltmb"} );
 //        compFitParams(radionSig,filename,"MVV","MVV_fit", "full v ltmb", {"mu_LMT_ltmb","mu_LMT_full","e_LMT_ltmb","e_LMT_full"} );
 //        compFitParams(radionSig,filename,"MVV","MVV_fit", "L v M", {"mu_L_ltmb","mu_M_ltmb","mu_T_ltmb","e_L_ltmb","e_M_ltmb","e_T_ltmb"} );
 //    test2DFits(radionSig,filename,"MVV","2D_fit1stIt");
 //    test2DFits(radionSig,filename,"MVV","2D_fit");
+
+//    plotYields(radionSig,filename,"yield",{"emu_LMT_full","emu_L_full","emu_M_full","emu_T_full","e_L_full","e_M_full","e_T_full","mu_L_full","mu_M_full","mu_T_full"});
 }
