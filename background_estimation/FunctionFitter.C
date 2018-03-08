@@ -430,6 +430,10 @@ public:
         graphs.back()->SetPointError(curPt,0.0,0.0);
         curPt++;
     }
+    void addFit(const TGraphErrors* graph, const std::string& name){
+        graphs.emplace_back((TGraphErrors*)graph->Clone(name.c_str()));
+    }
+
     void addFit2D(FunctionFitter* fitter, double pt, std::string name){
         if(!curPt){
             for(const auto& p: fitter->params){
