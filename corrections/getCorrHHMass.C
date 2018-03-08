@@ -86,6 +86,8 @@ public:
         if(!passTriggerPreselection) return false;
         if(selectedLeptons.size() != 1) return false;
         if(!passWjjSel || !passHbbSel) return false;
+        if(hbbNSJs < 2 || wjjNSJs < 2) return false;
+
 
         MomentumF sdW = wjjCand->sdMom();
         MomentumF neutrinoFromWlnu =  HiggsSolver::getInvisible(reader_event->met, *selectedLepton, 80);

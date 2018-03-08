@@ -47,6 +47,7 @@ public:
         if(!passEventFilters) return false;
         if(!passTriggerPreselection) return false;
         if(!hbbCand || !wjjCand) return false;
+        if(hbbNSJs < 2 || wjjNSJs < 2) return false;
         if(hbbCand->sdMom().mass() < 10 || wjjCand->sdMom().mass() < 10) return false;
 
         auto jets = PhysicsUtilities::selObjsMom(reader_jet->jets,20,2.4);

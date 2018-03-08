@@ -101,6 +101,8 @@ public:
     const FatJet*              hbbCand     =0;
     BTagging::CSVSJ_CAT        hbbCSVCat   = BTagging::CSVSJ_INCL;
     BTagging::CSVSJ_CAT        wjjCSVCat   = BTagging::CSVSJ_INCL;
+    int                        hbbNSJs     = 0;
+    int                        wjjNSJs     = 0;
     bool                       passWjjSel  = false;
     bool                       passHbbSel  = false;
 

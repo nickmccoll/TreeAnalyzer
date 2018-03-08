@@ -103,6 +103,7 @@ public:
         if(selectedLeptons.size() != 1) return false;
         if(!hbbCand) return false;
         if(!wjjCand) return false;
+        if(hbbNSJs < 2 || wjjNSJs < 2) return false;
         if(nMedBTags_HbbV != 1) return false;
         if(hh.mass() < 800) return false;
         if(hbbCSVCat > BTagging::CSVSJ_MF) return false;

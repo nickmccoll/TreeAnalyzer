@@ -53,6 +53,7 @@ public:
         if(!passTriggerPreselection) return false;
         if(!hbbCand || !wjjCand) return false;
         if(hbbCand->sdMom().mass() < 10 || wjjCand->sdMom().mass() < 10) return false;
+        if(hbbNSJs < 2 || wjjNSJs < 2) return false;
         if(hbbCand->nSubJets() < 2 || wjjCand->nSubJets() < 2) return false;
         std::vector<const SubJet*> subjets;
         subjets.push_back(&hbbCand->subJet(0));
