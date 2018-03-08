@@ -95,6 +95,11 @@ std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,175
 CutStr radionSig("radHH","radHH");
 std::vector<int> signalMassBins = {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500};
 
+//Constants for models when building limits
+std::string MOD_MJ("MJ");
+std::string MOD_MR("MR");
+std::string MOD_MS("MH");
+
 
 }
 
