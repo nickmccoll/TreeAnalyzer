@@ -218,7 +218,7 @@ public:
 
         std::vector<double> coefList;
         for(const auto& syst : systList){ coefList.push_back(w.var(syst.c_str())->getVal());}
-        auto * hfit = makeFitHist(*nT+"__x_y",&*h,coefList,upHists,downHists);
+        auto * hfit = makeFitHist(*nT,&*h,coefList,upHists,downHists);
 
         for(unsigned int iS = 0; iS < systList.size(); ++iS){
             std::cout << "Trying -> "<<systList[iS]<<std::endl;
@@ -226,16 +226,16 @@ public:
             const bool condOnX = !*xCy;
             const bool isCondOnSyst = condOnX && isXSyst;
             if(isCondOnSyst){
-                auto condOnTH1Up =  conditionalOn(*nT + "_"+systList[iS]+"_Up" + "_Debug_1D", hfit,&*h,&*upHists[iS],condOnX);
-                auto condOnTH1Down =  conditionalOn(*nT + "_"+systList[iS]+"_Down" + "_Debug_1D", hfit,&*h,&*downHists[iS],condOnX);
-                mergeConditionalHistos(*nT + "_"+systList[iS]+"_Up" + "__x_y",hfit,condOnTH1Up,condOnX);
-                mergeConditionalHistos(*nT + "_"+systList[iS]+"_Down" + "__x_y",hfit,condOnTH1Down,condOnX);
+                auto condOnTH1Up =  conditionalOn(*nT + "_"+systList[iS]+"Up" + "_Debug_1D", hfit,&*h,&*upHists[iS],condOnX);
+                auto condOnTH1Down =  conditionalOn(*nT + "_"+systList[iS]+"Down" + "_Debug_1D", hfit,&*h,&*downHists[iS],condOnX);
+                mergeConditionalHistos(*nT + "_"+systList[iS]+"Up",hfit,condOnTH1Up,condOnX);
+                mergeConditionalHistos(*nT + "_"+systList[iS]+"Down",hfit,condOnTH1Down,condOnX);
             } else {
                 auto condOnTH1Nom =  conditionalOn(*nT + "_"+systList[iS]+"_Nom" + "_Debug_1D", hfit,&*h,&*h,condOnX);
-                auto condTH2Up = conditional(*nT + "_"+systList[iS]+"_Up" + "__Debug_COND2D",hfit,&*h,&*upHists[iS],condOnX);
-                auto condTH2Down = conditional(*nT + "_"+systList[iS]+"_Down" + "__Debug_COND2D",hfit,&*h,&*downHists[iS],condOnX);
-                mergeConditionalHistos(*nT + "_"+systList[iS]+"_Up" + "__x_y",condTH2Up,condOnTH1Nom,condOnX);
-                mergeConditionalHistos(*nT + "_"+systList[iS]+"_Down" + "__x_y",condTH2Down,condOnTH1Nom,condOnX);
+                auto condTH2Up = conditional(*nT + "_"+systList[iS]+"Up" + "__Debug_COND2D",hfit,&*h,&*upHists[iS],condOnX);
+                auto condTH2Down = conditional(*nT + "_"+systList[iS]+"Down" + "__Debug_COND2D",hfit,&*h,&*downHists[iS],condOnX);
+                mergeConditionalHistos(*nT + "_"+systList[iS]+"Up",condTH2Up,condOnTH1Nom,condOnX);
+                mergeConditionalHistos(*nT + "_"+systList[iS]+"Down",condTH2Down,condOnTH1Nom,condOnX);
             }
         }
 

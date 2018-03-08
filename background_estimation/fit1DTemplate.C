@@ -146,8 +146,8 @@ public:
         auto * hfit = makeFitHist(*nT,&*h,coefList,upHists,downHists);
 
         for(unsigned int iS = 0; iS < systList.size(); ++iS){
-            systHist(*nT + "_"+systList[iS]+"_Up",hfit,&*h,&*upHists[iS] );
-            systHist(*nT + "_"+systList[iS]+"_Down",hfit,&*h,&*downHists[iS] );
+            systHist(*nT + "_"+systList[iS]+"Up",hfit,&*h,&*upHists[iS] );
+            systHist(*nT + "_"+systList[iS]+"Down",hfit,&*h,&*downHists[iS] );
         }
 
 
