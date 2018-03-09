@@ -52,10 +52,11 @@ public:
             i_lep_N       =outTree->add<float>  ("","lep_N"  ,"F",0);
             i_btag_N      =outTree->add<float>  ("","btag_N" ,"F",0);
         }
-
+        i_ht          =outTree->add<float>  ("","ht"        ,"F",0);
         i_isMuon      =outTree->add<size8>  ("","isMuon"    ,"b",0);
         i_hbbMass     =outTree->add<float>  ("","hbbMass"   ,"F",0);
         i_hbbPT       =outTree->add<float>  ("","hbbPT"     ,"F",0);
+        i_hbbNSJs     =outTree->add<size8>  ("","hbbNSJs"   ,"b",0);
         i_hbbCSVCat   =outTree->add<size8>  ("","hbbCSVCat" ,"b",0);
         i_hbbTau2o1   =outTree->add<float>  ("","hbbTau2o1" ,"F",0);
 
@@ -67,8 +68,10 @@ public:
         i_wjjTau2o1   =outTree->add<float>  ("","wjjTau2o1" ,"F",0);
         i_wjjMass     =outTree->add<float>  ("","wjjMass"   ,"F",0);
         i_wjjPT       =outTree->add<float>  ("","wjjPT"     ,"F",0);
+        i_wjjNSJs     =outTree->add<size8>  ("","wjjNSJs"   ,"b",0);
         i_wlnuPT      =outTree->add<float>  ("","wlnuPT"    ,"F",0);
         i_nAK4Btags   =outTree->add<size8>  ("","nAK4Btags" ,"b",0);
+        i_minBtagMT   =outTree->add<float>  ("","minBtagMT" ,"F",0);
 
         if(!isRealData()){
             i_hbbGenPT    =outTree->add<float>  ("","hbbGenPT"   ,"F",0);
@@ -109,11 +112,13 @@ public:
             outTree->fill(i_btag_N      ,float(sjbtagSFProc->getSF({hbbCand})*ak4btagSFProc->getSF(jets_HbbV)));
         }
 
+        outTree->fill(i_ht     ,float(ht_chs));
 
 
         outTree->fill(i_isMuon      ,size8(selectedLepton->isMuon()));
         outTree->fill(i_hbbMass     ,float(hbbMass));
         outTree->fill(i_hbbPT       ,float(hbbCand->pt()));
+        outTree->fill(i_hbbNSJs     ,size8(hbbNSJs));
         outTree->fill(i_hbbCSVCat   ,size8(hbbCSVCat));
         outTree->fill(i_hbbTau2o1   ,float(hbbCand->tau2otau1()));
 
@@ -125,8 +130,16 @@ public:
         outTree->fill(i_wjjTau2o1   ,float(wjjCand->tau2otau1()));
         outTree->fill(i_wjjMass     ,float(wjjCand->sdMom().mass()));
         outTree->fill(i_wjjPT       ,float(wjjCand->pt()));
+        outTree->fill(i_wjjNSJs     ,size8(wjjNSJs));
         outTree->fill(i_wlnuPT      ,float(wlnu.pt()));
         outTree->fill(i_nAK4Btags   ,size8(std::min(nMedBTags_HbbV,250)));
+        double minMT = -1;
+        for(const auto* j: jets_HbbV ){
+            if(!BTagging::isMediumCSVTagged(*j)) continue;
+            const double mt = JetKinematics::massiveTransverseMass(j->p4()+selectedLepton->p4(),reader_event->met);
+            if(minMT < 0 || mt < minMT) minMT = mt;
+        }
+        outTree->fill(i_minBtagMT  ,float(minMT));
 
 
         if(!isRealData()){
@@ -240,9 +253,11 @@ public:
     size i_btag_N = 0;
 
     //SR variables
+    size i_ht        = 0;
     size i_isMuon    = 0;
     size i_hbbMass   = 0;
     size i_hbbPT     = 0;
+    size i_hbbNSJs   =0;
     size i_hbbCSVCat = 0;
     size i_hbbTau2o1 = 0;
 
@@ -254,8 +269,10 @@ public:
     size i_wjjTau2o1 = 0;
     size i_wjjMass   = 0;
     size i_wjjPT     = 0;
+    size i_wjjNSJs   =0;
     size i_wlnuPT    = 0;
     size i_nAK4Btags = 0;
+    size i_minBtagMT = 0;
 
     //BE extra variables
     size i_hbbGenPT    =0;
