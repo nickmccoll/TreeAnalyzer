@@ -171,34 +171,36 @@
   
   //Compare distributions;
   {
-    TString type = "radHH";
-    // std::vector<TString> sels = {"emu_LMT","emu_LMT_lWW","emu_LMT_lb","emu_LMT_ltb","emu_LMT_ltmb" };
+        TString type = "losttw";
+    // TString type = "radHH";
+    std::vector<TString> sels = {"emu_LMT_full","emu_LMT_ltmb","emu_LMT_ltmb_ex" ,"emu_LMT_ltb","emu_LMT_ltb_ex" };
     // std::vector<TString> sels = {"emu_L_full","emu_L_ltmb","emu_L_none","emu_M_ltmb","emu_M_full" };
     // std::vector<TString> sels = {"emu_LMT_ltmb","emu_LMT_full","emu_LMT_none" };
         // std::vector<TString> sels = {"emu_LMT_none","emu_L_none","emu_M_none","emu_T_none" };
         // std::vector<TString> sels = {"m1000_emu_L_none","m1000_emu_M_none","m1000_emu_T_none","m2500_emu_L_none","m2500_emu_M_none","m2500_emu_T_none" };
-        std::vector<TString> sels = {"m4500_emu_T_none","m4500_emu_T_ltmb","m4500_emu_T_full" };
+        // std::vector<TString> sels = {"m4500_emu_T_none","m4500_emu_T_ltmb","m4500_emu_T_full" };
 
   // std::vector<double> bins = {30,210};
   // bool binInY = false;
     // std::vector<double> bins = {30,50,100,150,210};
     // bool binInY = false;
-    // std::vector<double> bins = {800,1000,2000,3000,5000};
-      // bool binInY = true;
+    std::vector<double> bins = {700,1000,2000,3000,4000};
+      bool binInY = true;
   // std::vector<double> bins = {800,900,1000,1250,1500,2000,3000,4000,5000};
   //   bool binInY = true;
     // std::vector<double> bins = {800,900,1000,1200,1400,1600,2000};
       // bool binInY = true;
-    std::vector<double> bins = {800,5000};
-      bool binInY = true;
+    // std::vector<double> bins = {800,5000};
+      // bool binInY = true;
   std::vector<TH2*> hs;
   std::vector<TString> hNs;
-  TFile *fY = new TFile(TString::Format("HHlnujj_%s_distributions.root",type.Data()),"read");
+  // TFile *fY = new TFile(TString::Format("HHlnujj_%s_distributions.root",type.Data()),"read");
+    TFile *fY = new TFile(TString::Format("HHlnujj_allBKG_distributions.root"),"read");
   for(unsigned int iS = 0; iS < sels.size(); ++iS){
     TH2* h = 0; 
     fY->GetObject(TString::Format("%s_%s_hbbMass_hhMass",type.Data(),sels[iS].Data()),h);hs.push_back(h);hNs.push_back(sels[iS]);    
   }    
-  // for(unsigned int iH = 0; iH < hs.size(); ++iH) hs[iH]->Scale(1.0/hs[iH]->Integral());
+  for(unsigned int iH = 0; iH < hs.size(); ++iH) hs[iH]->Scale(1.0/hs[iH]->Integral());
   
   const TAxis * ax = hs[0]->GetXaxis();
   if(binInY) ax = hs[0]->GetYaxis();
@@ -223,8 +225,8 @@
     p->setBotMinMax(0,3);
     p->setUnderflow(false);
     p->setOverflow(false);
-    // p->rebin( binInY ? 4 : 24);
-        p->rebin( 2);
+    p->rebin( binInY ? 4 : 24);
+        // p->rebin( 2);
     // auto * c = p->draw(false,TString::Format("%.0f-%.0f",bins[iB],bins[iB+1]));
     // c->SetLogy();
     // c->Update();
@@ -312,7 +314,7 @@
     // std::vector<TString> cats = {"nw","wnwb","wb"};
         // std::vector<TString> cats = {"nwqq","wqqnwqqb","wqqb"};
         // std::vector<TString> cats = {"nw","wnwb","wb"};
-        std::vector<TString> recos = {"lW_M_hh900to1100","lW_L_hh900to1100","lW_L_hh700to900","lW_M_hh700to900"};
+        std::vector<TString> recos = {"emu_LMT_ltmb","lW_L_hh900to1100","lW_L_hh700to900","lW_M_hh700to900"};
     // std::vector<TString> recos = {"L_hh700to900","M_hh700to900","T_hh700to900","L_hh900to1100","M_hh900to1100","T_hh900to1100","L_hh1400to1800","M_hh1400to1800"};
     //
     // std::vector<TString> recos = {"lW_L_hh700to900","lW_M_hh700to900","lW_T_hh700to900","lW_L_hh900to1100","lW_M_hh900to1100","lW_T_hh900to1100","lW_L_hh1400to1800","lW_M_hh1400to1800"};
@@ -363,26 +365,33 @@ p->draw(false,s);
 
 }
 
+////
+
 {
 // std::vector<TString> bkgs = {"nonResH0","nonResHM","resW","resT"};
 // std::vector<TString> bkgNs = {"lost t/W (0 q) bkg.","lost t/W (#geq1 q) bkg.","m_{W} bkg.","m_{t} bkg."};
 
-std::vector<TString> bkgs = {"QCD","qg","losttw","mw","mt"};
-std::vector<TString> bkgNs = {"qcd","q/g bkg.","lost t/W bkg.","m_{W} bkg.","m_{t} bkg."};
-std::vector<TString> sels = {"mu_LMT_full","mu_LMT_none","mu_L_none","mu_AL_none","mu_LMT_ab","mu_L_ab","mu_AL_ab"};
-TFile * f = new TFile("HHlnujj_testCR_distributions.root");
+std::vector<TString> sels = {"emu_LMT","e_LMT","mu_LMT","emu_L","emu_M","emu_T"};
+// std::vector<TString> cuts = {"full","none","none_ex","ltmb","ltmb_ex","lb","lWW"};
+std::vector<TString> cuts = {"full_ex","full","ltmb","ltmb_ex","lWW_ex"};
+// TString bkg = "allBKG";
+TString bkg = "losttw";
+TFile * f = new TFile("HHlnujj_allBKG_distributions.root");
 for(auto& s: sels){
 Plotter * p = new Plotter;
-for(unsigned int iB = 0; iB < bkgs.size(); ++iB){
+  for(unsigned int iB = 0; iB < cuts.size(); ++iB){
 TH1 * h= 0;
-f->GetObject(bkgs[iB]+"_"+s+"_hbbMass",h);
+f->GetObject(bkg +"_"+s+"_"+cuts[iB]+"_hhMass",h);
 if(h==0) continue;
-p->addStackHist(h,bkgNs[iB]);
+p->addHistLine(h,cuts[iB]);
 
 }
-p->rebin(2);
-p->draw(false,s);
+p->rebin(6);
+p->normalize();
+p->setMinMax(0,2);
+p->drawRatio(0,"stack",false,false,s);
 }
 
 }
-  
+
+    
