@@ -26,6 +26,7 @@ CutStr aQCD ("aQCD"  , "process!=8");
 CutStr wjjBC("wjjBC" , "wjjTau2o1<0.55&&wjjMass>10");
 CutStr exA  ("exA"   , "wlnuDR<3.2&&wwDM<2");
 CutStr bV   ("bV"    , "nAK4Btags==0");
+CutStr nSJs ("nSJs"  , "hbbNSJs==2&&wjjNSJs==2");
 
 
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{H#rightarrowbb} [GeV]");
@@ -34,13 +35,13 @@ CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
 unsigned int nHbbMassBins   =90;
 double minHbbMass = 30  ;
 double maxHbbMass = 210 ;
-unsigned int nHHMassBins   =168;
-double minHHMass  = 800 ;
-double maxHHMass  = 5000;
+unsigned int nHHMassBins   =132;
+double minHHMass  = 700;
+double maxHHMass  = 4000;
 
 unsigned int nInclHHMassBins   =280;
 double minInclHHMass  = 0   ;
-double maxInclHHMass  = 7000;
+double maxInclHHMass  = 5000;
 
 unsigned int nInclHbbMassBins   =125;
 double minInclHbbMass  = 0   ;
@@ -83,11 +84,11 @@ std::vector<CutStr > purSels = {
 //enum HADCuts  {HAD_FULL, HAD_LWW, HAD_LB,HAD_LTMB,HAD_NONE};
 enum HADCuts  {HAD_FULL, HAD_LWW, HAD_LB,HAD_LTMB,HAD_NONE};
 std::vector<CutStr > hadSels = {
-        CutStr("full",exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut),
-        CutStr("lWW" ,wjjBC.cut+"&&"+bV.cut),
-        CutStr("lb"  ,exA.cut+"&&"+wjjBC.cut),
-        CutStr("ltmb",exA.cut),
-        CutStr("none","1.0")
+        CutStr("full",nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut),
+        CutStr("lWW" ,nSJs.cut+"&&"+wjjBC.cut+"&&"+bV.cut),
+        CutStr("lb"  ,nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut),
+        CutStr("ltmb",nSJs.cut+"&&"+exA.cut),
+        CutStr("none",nSJs.cut)
 };
 
 std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,1750,2000,2500,3000,3500,4000};
