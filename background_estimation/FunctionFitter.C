@@ -84,7 +84,7 @@ public:
         std::string data  = std::string("data");
         auto frame = w->var(vars[0].c_str())->frame();
         w->data(data.c_str())->plotOn(frame);
-        w->pdf(model.c_str())->fixAddCoefRange("coef");
+//        w->pdf(model.c_str())->fixAddCoefRange("coef");
         w->pdf(model.c_str())->plotOn(frame, RooFit::NormRange("fit"));
         if(secondaryModelNames.size()) w->pdf(model.c_str())->plotOn(frame, RooFit::NormRange("fit"), RooFit::Components(secondaryModelNames[0].c_str()), RooFit::LineStyle(kDashed));
         TCanvas* can = new TCanvas(name.c_str());
@@ -98,7 +98,7 @@ public:
     }
     TCanvas* projection2D(const std::string& name, double& chi2){
         std::string model = std::string("model")+postFix;
-        w->pdf(model.c_str())->fixAddCoefRange("coef");
+//        w->pdf(model.c_str())->fixAddCoefRange("coef");
         auto * pdf = w->pdf(model.c_str())->createHistogram(model.c_str(), *w->var(vars[0].c_str()),RooFit::YVar(*w->var(vars[1].c_str()))   );
         TCanvas* can = new TCanvas(name.c_str());
         can->cd();
@@ -117,7 +117,7 @@ public:
     }
     TH1* pdf2D(const std::string& name){
         std::string model = std::string("model")+postFix;
-        w->pdf(model.c_str())->fixAddCoefRange("coef");
+//        w->pdf(model.c_str())->fixAddCoefRange("coef");
         auto * hist = w->pdf(model.c_str())->createHistogram(name.c_str(), *w->var(vars[0].c_str()),RooFit::YVar(*w->var(vars[1].c_str()))   );
         hist->GetYaxis()->SetTitle(vars[1].c_str());
         hist->GetXaxis()->SetTitle(vars[0].c_str());
@@ -125,7 +125,7 @@ public:
     }
     TH1* pdf1D(const std::string& name){
         std::string model = std::string("model")+postFix;
-        w->pdf(model.c_str())->fixAddCoefRange("coef");
+//        w->pdf(model.c_str())->fixAddCoefRange("coef");
         auto * hist = w->pdf(model.c_str())->createHistogram(name.c_str(), *w->var(vars[0].c_str()));
         hist->GetXaxis()->SetTitle(vars[0].c_str());
         return hist;
@@ -347,18 +347,80 @@ public:
         addParam(pYN("maxS")     ,"[2.5,0,5]");
         addParam(pYN("mean_p1"  ),"[0,-5000,5000]");
         addParam(pYN("sigma_p1" ),"[0,-1000,1000]");
+        addParam(pYN("sigma_p2" ),"[0,-1,1]");
         RooFormulaVar xSig  (pYN("xSig"  ).c_str(),"(@0-@1)/@2",RooArgList(*w->var((plotVars[0]).c_str()),*pXV("mean"),*pXV("sigma")));
         w->import(xSig  );
         RooFormulaVar xSigC  (pYN("xSigC"  ).c_str(),"max(-1*@0,min(@1,@0))",RooArgList(*pYV("maxS"  ),*pYF("xSig"  )));
+//        w->import(xSigC  );
+
+//        RooFormulaVar xSigC  (pYN("xSigC"  ).c_str(),"max(-1*@0,min(@1,@2))",RooArgList(*pXV("alpha"  ),*pYF("xSig"  ),*pXV("alpha2"  )));
         w->import(xSigC  );
+
 
         RooFormulaVar meanYDepX  (pYN("meanYDepX"  ).c_str(),"@0*(1+@1*@2)"     ,RooArgList(*pYV("mean"  ),*pYV("mean_p1"  ),*pYF("xSigC"  )));
         RooFormulaVar sigmaYDepX (pYN("sigmaYDepX" ).c_str(),"@0*(1+(@2>=0?0:@1*abs(@2)))",RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYF("xSigC"  )));
+//        RooFormulaVar sigmaYDepX (pYN("sigmaYDepX" ).c_str(),"@0*(1+@1*@2+@3*@2*@2)",RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYF("xSigC"  ),*pYV("sigma_p2" )));
+
+
         w->import(meanYDepX  );
         w->import(sigmaYDepX );
-
+//        addGaus(mNY,yPF,vars[1],false,pYF("meanYDepX"),pYF("sigmaYDepX"));
         addCB(mNY,yPF,vars[1],false,pYF("meanYDepX"),pYF("sigmaYDepX"));
         RooProdPdf condProdP(mN.c_str(), (mNX+"*"+mNY).c_str(),*w->pdf(mNX.c_str()),RooFit::Conditional(*w->pdf(mNY.c_str()), *w->var(plotVars[1].c_str())) );
+        w->import(condProdP);
+    }
+
+};
+class CBFunctionFitter2DCondMVV : public FunctionFitter{
+public:
+    CBFunctionFitter2DCondMVV(const TH2* iH,bool doExpoX, const std::string postFix, const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
+        FunctionFitter(iH,postFix,plotVars){
+
+        const std::string xPF = postFix+plotVars[0];
+        const std::string yPF = postFix+plotVars[1];
+        const std::string mN = std::string("model")+postFix;
+        const std::string mNX  = std::string("model") + xPF;
+        const std::string mNY  = std::string("model") + yPF;
+        const std::string mXNP = std::string("model") + xPF + (doExpoX ? "P" : "");
+        const std::string mXNE = std::string("model") + xPF + "E" ;
+
+        auto pXN =[&] (std::string v) ->std::string{return v+xPF;};
+        auto pXV =[&] (std::string v) ->RooRealVar*{return w->var(pXN(v).c_str());};
+        auto pYN =[&] (std::string v) ->std::string{return v+yPF;};
+        auto pYV =[&] (std::string v) ->RooRealVar*{return w->var(pYN(v).c_str());};
+        auto pXF =[&] (std::string v) ->RooAbsReal*{return w->function(pXN(v).c_str());};
+
+        addCB(mNY,yPF,vars[1]);
+
+        addParam(pXN("mean"  ),"[90,0,5000]");
+        addParam(pXN("sigma" ),"[8,0,1000]");
+        addParam(pXN("alpha" ),"[1,0.001,100]");
+        addParam(pXN("alpha2"),"[1,0.001,100]");
+        addParam(pXN("n")        ,"[5,1,100]");
+        addParam(pXN("n2")       ,"[5,1,100]");
+        addParam(pXN("maxS")     ,"[2.5,0,5]");
+        addParam(pXN("mean_p1"  ),"[0,-5000,5000]");
+//        addParam(pXN("sigma_p1"  ),"[0,-5000,5000]");
+        RooFormulaVar ySig  (pXN("ySig"  ).c_str(),"(@0-@1)/@2",RooArgList(*w->var((plotVars[1]).c_str()),*pYV("mean"),*pYV("sigma")));
+        w->import(ySig  );
+        RooFormulaVar ySigC  (pXN("ySigC"  ).c_str(),"max(-1*@0,min(@1,@0))",RooArgList(*pXV("maxS"  ),*pXF("ySig"  )));
+        w->import(ySigC  );
+
+        RooFormulaVar meanXDepY  (pXN("meanXDepY"  ).c_str(),"@0*(1+@1*@2)"     ,RooArgList(*pXV("mean"  ),*pXV("mean_p1"  ),*pXF("ySigC"  )));
+//        RooFormulaVar sigmaXDepY (pXN("sigmaXDepY" ).c_str(),"@0*(1+(@2>=0?0:@1*abs(@2)))",RooArgList(*pXV("sigma" ),*pXV("sigma_p1" ),*pXF("ySigC"  )));
+        w->import(meanXDepY  );
+//        w->import(sigmaXDepY  );
+
+
+        addCB(mNX,xPF,vars[0],false,pXF("meanXDepY"));
+
+        if(doExpoX){
+            addParam(pXN("fE"),"[0.1,0,1]");
+            addExpo(mXNE,xPF,vars[0]);;
+            RooAddPdf modelC(mNX.c_str(),mNX.c_str(),*w->pdf(mXNE.c_str()),*w->pdf(mXNP.c_str()),*pXV("fE"));
+            w->import(modelC);
+        }
+        RooProdPdf condProdP(mN.c_str(), (mNY+"*"+mNX).c_str(),*w->pdf(mNY.c_str()),RooFit::Conditional(*w->pdf(mNX.c_str()), *w->var(plotVars[0].c_str())) );
         w->import(condProdP);
     }
 

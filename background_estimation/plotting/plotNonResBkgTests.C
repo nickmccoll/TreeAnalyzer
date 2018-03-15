@@ -1,9 +1,8 @@
 #include "../CutConstants.h"
 #include <vector>
 #include "TFile.h"
-#include "TH1.h"
-#include "TH2.h"
 #include "HistoPlotting/include/Plotter.h"
+#include "plotTestHelper.h"
 using namespace CutConstants;
 using namespace ASTypes;
 
@@ -23,7 +22,7 @@ void make2DTests(std::string plotTitle, const TH2* dH, const std::vector<TH2*>& 
         p->addHist(dh1,"MC");
         for(unsigned int iH = 0; iH < hs.size(); ++iH){
             TH1 * h = proj(hs[iH],hNs[iH]);
-            if(withRatio) for(unsigned int iX = 1; iX <= h->GetNbinsX(); ++iX) h->SetBinError(iX,0);
+            if(withRatio) for(int iX = 1; iX <= h->GetNbinsX(); ++iX) h->SetBinError(iX,0);
             p->addHistLine(h,hNs[iH].c_str());
         }
 
@@ -91,10 +90,10 @@ void test2DTemplate(std::string name, std::string filename){
     std::vector<std::string> hNs;
     auto cutAndRotateHistograms =[](const TH2* inH) -> TH2F*{ //The conditional templates have the Hbb as the y-axis..which is only done here
       TH2F * outH = new TH2F(TString(inH->GetName()) + "_cut",(std::string(";") +hbbMCS.title+";"+hhMCS.title).c_str()  ,nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
-      for(unsigned int iX =1; iX <= inH->GetNbinsX(); ++iX){
+      for(int iX =1; iX <= inH->GetNbinsX(); ++iX){
         const int outIY =outH->GetYaxis()->FindFixBin(inH->GetXaxis()->GetBinCenter(iX));
         if(outIY < 1 || outIY > outH->GetNbinsY() ) continue;
-        for(unsigned int iY =1; iY <= inH->GetNbinsY(); ++iY){
+        for(int iY =1; iY <= inH->GetNbinsY(); ++iY){
           const int outIX = outH->GetXaxis()->FindFixBin(inH->GetYaxis()->GetBinCenter(iY));
           if(outIX < 1 || outIX > outH->GetNbinsX() ) continue;
           outH->SetBinContent(outIX,outIY,inH->GetBinContent(iX,iY));
@@ -209,16 +208,18 @@ void testMJJKern(std::string name, std::string filename) {
 
 
 
-void plotNonResBkgTests(){
+void plotNonResBkgTests(int step = 0){
     std::string filename = hhFilename;
 
-//    test2DCondTemplate(bkgSels[BKG_LOSTTW],filename);
-//    testMJJKern(bkgSels[BKG_LOSTTW],filename);
-//    test2DTemplate(bkgSels[BKG_LOSTTW],filename);
-    test2DFits(bkgSels[BKG_LOSTTW],filename);
+    if(step == 0)test2DCondTemplate(bkgSels[BKG_LOSTTW],filename);
+    if(step == 1)testMJJKern(bkgSels[BKG_LOSTTW],filename);
+    if(step == 2)test2DTemplate(bkgSels[BKG_LOSTTW],filename);
+    if(step == 3)test2DFits(bkgSels[BKG_LOSTTW],filename);
+    if(step == 4)test2DModel({bkgSels[BKG_LOSTTW]},filename,{"emu_L_full","emu_M_full","emu_T_full","e_LMT_full","mu_LMT_full"},{700,4000});
 
-//        test2DCondTemplate(bkgSels[BKG_QG],filename);
-//        testMJJKern(bkgSels[BKG_QG],filename);
-//        test2DTemplate(bkgSels[BKG_QG],filename);
-//        test2DFits(bkgSels[BKG_QG],filename);
+    if(step == 5)test2DCondTemplate(bkgSels[BKG_QG],filename);
+    if(step == 6)testMJJKern(bkgSels[BKG_QG],filename);
+    if(step == 7)test2DTemplate(bkgSels[BKG_QG],filename);
+    if(step == 8)test2DFits(bkgSels[BKG_QG],filename);
+    if(step == 9)test2DModel({bkgSels[BKG_QG]},filename,{"emu_L_full","emu_M_full","emu_T_full","e_LMT_full","mu_LMT_full"},{700,4000});
 }

@@ -188,7 +188,7 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
         makeBKG1DShapes(name,filename,catName,fitName,true,0,iF);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MR+" ";
-        argsP1 += " -minX 500 -maxX 3000 ";
+        argsP1 += " -minX 700 -maxX 3000 ";
         std::string jsonArgsStd = " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
         MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
     }
@@ -207,7 +207,7 @@ void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename
         makeBKG1DShapes(name,filename,catName,fitName,true,&oldJSON,iF);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MR+" ";
-        argsP1 += " -minX 500 -maxX 3000 ";
+        argsP1 += " -minX 700 -maxX 3000 ";
         std::string jsonArgsStd = " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
 
         CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+jsonArgsStd);
@@ -230,7 +230,7 @@ void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filena
         makeBKG1DShapes(name,filename,catName,fitName,false,0,iF);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MR+" ";
-        argsP1 += " -minX 500 -maxX 3500 ";
+        argsP1 += " -minX 700 -maxX 3500 ";
         std::string jsonArgsStd = " -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
         MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
     }
@@ -249,7 +249,7 @@ void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filena
         makeBKG1DShapes(name,filename,catName,fitName,false,&oldJSON,iF);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MR+" ";
-        argsP1 += " -minX 500 -maxX 3000 ";
+        argsP1 += " -minX 700 -maxX 3000 ";
         std::string jsonArgsStd= " -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
 
         CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+jsonArgsStd);
@@ -366,7 +366,7 @@ void makePseudoData(const std::string& name, const std::string& filename){
 
 void go(BKGModels modelToDo, std::string treeDir) {
     std::string filename = hhFilename;
-    std::string treeArea = treeDir + "/betrees_bkg.root";
+    std::string treeArea = treeDir + "/betrees_LMT_mc.root";
     if(modelToDo == BKG_QG)
     {
         std::string name = bkgSels[BKG_QG];
@@ -393,7 +393,8 @@ void go(BKGModels modelToDo, std::string treeDir) {
         std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&" +hadSels[HAD_LTMB].cut;
         makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
 //        //MVV
-        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,8,0.5,2);//x = hh
+//        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,8,0.5,2);//x = hh
+        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,4,0.5,2);//x = hh
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hhInclRange.cut,true);
 //        //MJJ
         makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,baseSel+"&&"+hhRange.cut);
@@ -448,6 +449,6 @@ void go(BKGModels modelToDo, std::string treeDir) {
 }
 #endif
 
-void makeBKGInputs(int bkgToDo = BKG_QG, std::string treeDir = "trees/"){
+void makeBKGInputs(int bkgToDo = BKG_QG, std::string treeDir = "../trees/"){
     go(static_cast<BKGModels>(bkgToDo),treeDir);
 }
