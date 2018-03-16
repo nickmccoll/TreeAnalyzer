@@ -1,10 +1,10 @@
 
 #if !defined(__CINT__) || defined(__MAKECINT__)
 
-#include "makeJSON.C"
-#include "makePlots.C"
-#include "InputsHelper.h"
-#include "FunctionFitter.C"
+#include "../predTools/makeJSON.C"
+#include "../predTools/makePlots.C"
+#include "../predTools/InputsHelper.h"
+#include "../predTools/FunctionFitter.C"
 
 void makeSignalFittingDistributions(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0", bool doIncl = true){
     int nameIDX =  inputFile.find("XXX", 0);

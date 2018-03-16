@@ -1,4 +1,4 @@
-#include "../CutConstants.h"
+#include "../predTools/CutConstants.h"
 #include <vector>
 #include "TFile.h"
 #include "HistoPlotting/include/Plotter.h"
@@ -74,7 +74,7 @@ void test2DCondTemplate(std::string name, std::string filename){
 
     addHistos("",true,true,true);
     std::vector<std::string> extras = {"xs_0p75_xc_3_ys_0p5_yc_1","xs_0p75_xc_3_ys_0p5_yc_1_2"};
-//      for(const auto& s : extras ) addHistos(s,true,false);
+    //      for(const auto& s : extras ) addHistos(s,true,false);
 
     std::vector<double> hBBBinning = {30,40,50,60,80,100,120,140,170,210};
     std::vector<double> hhBinning  = {700,800,900,1000,1500,2000,3000,4000,5000};
@@ -89,18 +89,18 @@ void test2DTemplate(std::string name, std::string filename){
     std::vector<TH2*> hs;
     std::vector<std::string> hNs;
     auto cutAndRotateHistograms =[](const TH2* inH) -> TH2F*{ //The conditional templates have the Hbb as the y-axis..which is only done here
-      TH2F * outH = new TH2F(TString(inH->GetName()) + "_cut",(std::string(";") +hbbMCS.title+";"+hhMCS.title).c_str()  ,nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
-      for(int iX =1; iX <= inH->GetNbinsX(); ++iX){
-        const int outIY =outH->GetYaxis()->FindFixBin(inH->GetXaxis()->GetBinCenter(iX));
-        if(outIY < 1 || outIY > outH->GetNbinsY() ) continue;
-        for(int iY =1; iY <= inH->GetNbinsY(); ++iY){
-          const int outIX = outH->GetXaxis()->FindFixBin(inH->GetYaxis()->GetBinCenter(iY));
-          if(outIX < 1 || outIX > outH->GetNbinsX() ) continue;
-          outH->SetBinContent(outIX,outIY,inH->GetBinContent(iX,iY));
-          outH->SetBinError(outIX,outIY,inH->GetBinError(iX,iY));
+        TH2F * outH = new TH2F(TString(inH->GetName()) + "_cut",(std::string(";") +hbbMCS.title+";"+hhMCS.title).c_str()  ,nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
+        for(int iX =1; iX <= inH->GetNbinsX(); ++iX){
+            const int outIY =outH->GetYaxis()->FindFixBin(inH->GetXaxis()->GetBinCenter(iX));
+            if(outIY < 1 || outIY > outH->GetNbinsY() ) continue;
+            for(int iY =1; iY <= inH->GetNbinsY(); ++iY){
+                const int outIX = outH->GetXaxis()->FindFixBin(inH->GetYaxis()->GetBinCenter(iY));
+                if(outIX < 1 || outIX > outH->GetNbinsX() ) continue;
+                outH->SetBinContent(outIX,outIY,inH->GetBinContent(iX,iY));
+                outH->SetBinError(outIX,outIY,inH->GetBinError(iX,iY));
+            }
         }
-      }
-      return outH;
+        return outH;
     };
 
     TFile *fCond = new TFile((filename + "_"+name  +"_incl_COND2D_template.root").c_str(),"read");
@@ -131,8 +131,8 @@ void test2DFits(std::string name, std::string filename){
     std::vector<double> hBBBinning = {30,50,100,150,210};
     std::vector<double> hhBinning  = {800,900,1000,1500,2000,3000,4000,5000};
 
-//    std::vector<double> hBBBinning = {30,210};
-//    std::vector<double> hhBinning  = {800,5000};
+    //    std::vector<double> hBBBinning = {30,210};
+    //    std::vector<double> hhBinning  = {800,5000};
 
     std::vector<std::string> sels = {"emu_LMT_ltmb","e_L_full","e_M_full","e_T_full","mu_L_full","mu_M_full","mu_T_full"};
     for(const auto& s : sels){
@@ -145,10 +145,10 @@ void test2DFits(std::string name, std::string filename){
         fTempFit->GetObject((name+"_"+s).c_str(),hF);
         if(hF == 0) continue;
 
-//        make2DTests(name + " Fit HbbF "+s,dH,{hF,hOT},{"Search region template","Original template"},hBBBinning,false);
+        //        make2DTests(name + " Fit HbbF "+s,dH,{hF,hOT},{"Search region template","Original template"},hBBBinning,false);
         make2DTests(name + " Fit HbbC "+s,dH,{hF,hOT},{"Search region template","Baseline template"},hBBBinning,false,10);
-//        make2DTests(name + " Fit HHF "+s ,dH,{hF,hOT},{"Search region template","Original template"},hhBinning,true);
-//        make2DTests(name + " Fit HHC "+s ,dH,{hF,hOT},{"Search region template","Baseline template"},hhBinning,true,5);
+        //        make2DTests(name + " Fit HHF "+s ,dH,{hF,hOT},{"Search region template","Original template"},hhBinning,true);
+        //        make2DTests(name + " Fit HHC "+s ,dH,{hF,hOT},{"Search region template","Baseline template"},hhBinning,true,5);
     }
 
 
