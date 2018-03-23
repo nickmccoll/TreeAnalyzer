@@ -52,7 +52,7 @@
   }
 
   void testHHPDFFits(std::string name, std::string filename) {
-      std::vector<std::string> sels = {"emu_LMT_lb","mu_L_full","mu_M_full","mu_T_full","e_L_full","e_M_full","e_T_full"};
+      std::vector<std::string> sels = {"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"};
 
       TFile * fd = new TFile((filename+"_"+name+"_distributions.root").c_str(),"read");
       TFile * fo = new TFile((filename+"_"+name+"_template.root").c_str(),"read");
@@ -117,14 +117,14 @@ void plotResBkgTests(int step = 0){
 
     if(step == 0)testHHKern(bkgSels[BKG_MW],filename);
     if(step == 1)testHHPDFFits(bkgSels[BKG_MW],filename);
-    if(step == 2)testBKG1DFits(bkgSels[BKG_MW],filename,"","fit1stIt",{"emu_LMT_none"});
-    if(step == 3)testBKG1DFits(bkgSels[BKG_MW],filename,"","fit",{"emu_LMT_none"});
-    if(step == 4)test2DModel({bkgSels[BKG_MW] },filename,{"emu_L_full","emu_M_full","emu_T_full","e_LMT_full","mu_LMT_full"},{700,4000});
+    if(step == 2)testBKG1DFits(bkgSels[BKG_MW],filename,"","fit1stIt",{"emu_LMT_I_none"});
+    if(step == 3)testBKG1DFits(bkgSels[BKG_MW],filename,"","fit",{"emu_LMT_I_none"});
+    if(step == 4)test2DModel({bkgSels[BKG_MW] },filename,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},{700,4000});
 
     if(step == 5)testHHKern(bkgSels[BKG_MT],filename);
     if(step == 6)testHHPDFFits(bkgSels[BKG_MT],filename);
     if(step == 7)testBKG1DFits(bkgSels[BKG_MT],filename,"","fit1stIt",{"emu_L_none","emu_M_none","emu_T_none"});
     if(step == 8)testBKG1DFits(bkgSels[BKG_MT],filename,"","fit",{"emu_L_none","emu_M_none","emu_T_none"});
-    if(step == 9)test2DModel({bkgSels[BKG_MT] },filename,{"emu_L_full","emu_M_full","emu_T_full","e_LMT_full","mu_LMT_full"},{700,4000});
-    if(step == 10)test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },filename,{"emu_L_full","emu_M_full","emu_T_full","e_LMT_full","mu_LMT_full"},{700,4000});
+    if(step == 9)test2DModel({bkgSels[BKG_MT] },filename,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},{700,4000});
+    if(step == 10)test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },filename,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},{700,4000});
 }

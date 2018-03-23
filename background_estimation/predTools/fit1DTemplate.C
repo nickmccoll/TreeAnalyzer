@@ -38,6 +38,7 @@ public:
         }
 
         hd->Scale(1./hd->Integral(1,hd->GetNbinsX()) );
+        bool anyNegative = false;
         for(int iX = 1; iX <= nBinsX; ++iX){
                 const double xCen = hd->GetXaxis()->GetBinCenter(iX);
                 const double oldV =  hd->GetBinContent(iX);
@@ -50,9 +51,14 @@ public:
                     const double downV = downHists[iC]->GetBinContent(iX)/downHistN[iC];
                     newV+= a*((upV-downV) + b*(upV+downV - 2*oldV));
                 }
+                if(newV < 0){
+                         newV *= -1;
+                         anyNegative = true;
+                     }
                 hd->SetBinContent(iX,newV);
                 hd->SetBinError(iX,0);
             }
+        if(anyNegative) std::cout << std::endl <<"ALERT -> Negative values!"<<std::endl;
         hd->Scale(1./hd->Integral(1,hd->GetNbinsX()) );
         plotter.add1D(hd);
         return hd;
@@ -143,6 +149,7 @@ public:
 
         std::vector<double> coefList;
         for(const auto& syst : systList){ coefList.push_back(w.var(syst.c_str())->getVal());}
+        std::cout <<"Doing "<< outFileName <<" Fit"<<std::endl;
         auto * hfit = makeFitHist(*nT,&*h,coefList,upHists,downHists);
 
         for(unsigned int iS = 0; iS < systList.size(); ++iS){

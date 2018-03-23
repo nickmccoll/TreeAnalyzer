@@ -134,7 +134,7 @@ void test2DFits(std::string name, std::string filename){
     //    std::vector<double> hBBBinning = {30,210};
     //    std::vector<double> hhBinning  = {800,5000};
 
-    std::vector<std::string> sels = {"emu_LMT_ltmb","e_L_full","e_M_full","e_T_full","mu_L_full","mu_M_full","mu_T_full"};
+    std::vector<std::string> sels = {"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"};
     for(const auto& s : sels){
         TH2* dH = 0;
         std::vector<TH2*> hs;
@@ -215,11 +215,11 @@ void plotNonResBkgTests(int step = 0){
     if(step == 1)testMJJKern(bkgSels[BKG_LOSTTW],filename);
     if(step == 2)test2DTemplate(bkgSels[BKG_LOSTTW],filename);
     if(step == 3)test2DFits(bkgSels[BKG_LOSTTW],filename);
-    if(step == 4)test2DModel({bkgSels[BKG_LOSTTW]},filename,{"emu_L_full","emu_M_full","emu_T_full","e_LMT_full","mu_LMT_full"},{700,4000});
+    if(step == 4)test2DModel({bkgSels[BKG_LOSTTW]},filename,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},{700,4000});
 
     if(step == 5)test2DCondTemplate(bkgSels[BKG_QG],filename);
     if(step == 6)testMJJKern(bkgSels[BKG_QG],filename);
     if(step == 7)test2DTemplate(bkgSels[BKG_QG],filename);
     if(step == 8)test2DFits(bkgSels[BKG_QG],filename);
-    if(step == 9)test2DModel({bkgSels[BKG_QG]},filename,{"emu_L_full","emu_M_full","emu_T_full","e_LMT_full","mu_LMT_full"},{700,4000});
+    if(step == 9)test2DModel({bkgSels[BKG_QG]},filename,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},{700,4000});
 }

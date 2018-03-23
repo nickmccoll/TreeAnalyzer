@@ -108,13 +108,11 @@ public:
 
             RooAddPdf modelC(varXPDFName.c_str(),varXPDFName.c_str(),*w->pdf(varXEPDFName.c_str()),*w->pdf(varXCBPDFName.c_str()),*w->function(vN.c_str()));
             w->import(modelC);
-            w->pdf(varXPDFName.c_str())->fixAddCoefRange("coef");
         }
 
         addCondCB(varYPDFName,pVar,variableY,varYPF,variableY,json,scale_Y,resolution_Y,variableX,varXPF);
         RooProdPdf condProdP(PDFName.c_str(), (varXPDFName+"*"+varYPDFName).c_str(),*w->pdf(varXPDFName.c_str()),RooFit::Conditional(*w->pdf(varYPDFName.c_str()), *w->var(variableY.c_str())) );
         w->import(condProdP);
-        w->pdf(PDFName.c_str())->fixAddCoefRange("coef");
     }
     void addParametricYieldWithUncertainty(const std::string& name,const unsigned int ID,const std::string& jsonFile, const double constant, const std::string& uncName,const std::string& uncFormula,const double& uncValue,  const std::string& pVar="MS"){
         CJSON json( jsonFile);

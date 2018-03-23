@@ -85,9 +85,9 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
     }
     std::vector<PlotSamp> samps = { {name,"1.0"}};
     std::vector<PlotSel> sels;
-    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-        sels.emplace_back(l +"_"+p +"_"+h,
-                l.cut +"&&"+p.cut+"&&"+h.cut);
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
+                l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
     }
     std::string outFileName=filename+"_"+name+ (doIncl ? "_inclM_distributions.root" : "_distributions.root");
     MakePlots a(inputFile,outFileName,samps,sels,vars,cut,nomW.cut);
@@ -99,9 +99,10 @@ void fitBackgroundShapesMVVConditional(std::string name, const std::string& file
     if(fittedName.size())name = fittedName;
     std::string distFileName=filename+"_"+name+"_distributions.root";
 
-    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-        std::string hName = name+"_"+l+"_"+p+"_"+h+"_"+hbbMCS+"_"+hhMCS;
-        std::string outName = filename + "_"+name+"_"+l+"_"+p+"_"+h+"_2D_template.root";
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
+        std::string hName = name+"_"+catName+"_"+hbbMCS+"_"+hhMCS;
+        std::string outName = filename + "_"+name+"_"+catName+"_2D_template.root";
         std::string args = std::string("-v ") + "-fT "+ tempFile+" -nT histo -s PTX,OPTX,PTY,OPTY " + " -fH " + distFileName + " -nH "+ hName;
         fit2DTemplate(outName,args);
     }
@@ -112,9 +113,10 @@ void fitBackgroundShapesMVV(std::string name, const std::string& filename, const
     if(fittedName.size())name = fittedName;
     std::string distFileName=filename+"_"+name+"_distributions.root";
 
-    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-        std::string hName = name+"_"+l+"_"+p+"_"+h+"_"+hhMCS;
-        std::string outName = filename + "_"+name+"_"+l+"_"+p+"_"+h+"_template.root";
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
+        std::string hName = name+"_"+catName+"_"+hhMCS;
+        std::string outName = filename + "_"+name+"_"+catName+"_template.root";
         std::string args = std::string("-v ") + "-fT "+ tempFile+" -nT histo -s PT,OPT " + " -fH " + distFileName + " -nH "+ hName;
         fit1DTemplate(outName,args);
     }
@@ -180,11 +182,12 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     const std::string fitName = "fit1stIt";
 
-    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-        if(l != lepSels[LEP_EMU] ) continue;
-        if(p == purSels[PUR_I]) continue;
-        if(h != hadSels[HAD_NONE] ) continue;
-        const std::string catName = l+"_"+p+"_"+h;
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(l != lepCats[LEP_EMU] ) continue;
+        if(b == btagCats[BTAG_I]) continue;
+        if(p != purCats[PURE_I]) continue;
+        if(h != hadCuts[HAD_NONE] ) continue;
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
         makeBKG1DShapes(name,filename,catName,fitName,true,0,iF);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MR+" ";
@@ -197,11 +200,12 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
 void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     const std::string fitName = "fit";
-    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-        if(l != lepSels[LEP_EMU] ) continue;
-        if(p == purSels[PUR_I]) continue;
-        if(h != hadSels[HAD_NONE] ) continue;
-        const std::string catName = l+"_"+p+"_"+h;
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(l != lepCats[LEP_EMU] ) continue;
+        if(b == btagCats[BTAG_I]) continue;
+        if(p != purCats[PURE_I]) continue;
+        if(h != hadCuts[HAD_NONE] ) continue;
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
         CJSON oldJSON(     filename+"_"+name+"_"+catName+"_fit1stIt.json");
         oldJSON.fillFunctions(MOD_MR);
         makeBKG1DShapes(name,filename,catName,fitName,true,&oldJSON,iF);
@@ -222,11 +226,12 @@ void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filena
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     const std::string fitName = "fit1stIt";
 
-    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-        if(l != lepSels[LEP_EMU] ) continue;
-        if(p == purSels[PUR_I]) continue;
-        if(h != hadSels[HAD_NONE] ) continue;
-        const std::string catName = l+"_"+p+"_"+h;
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(l != lepCats[LEP_EMU] ) continue;
+        if(b == btagCats[BTAG_I]) continue;
+        if(p != purCats[PURE_I]) continue;
+        if(h != hadCuts[HAD_NONE] ) continue;
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
         makeBKG1DShapes(name,filename,catName,fitName,false,0,iF);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MR+" ";
@@ -239,11 +244,12 @@ void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filena
 void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filename){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     const std::string fitName = "fit";
-    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-        if(l != lepSels[LEP_EMU] ) continue;
-        if(p == purSels[PUR_I]) continue;
-        if(h != hadSels[HAD_NONE] ) continue;
-        const std::string catName = l+"_"+p+"_"+h;
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(l != lepCats[LEP_EMU] ) continue;
+        if(b == btagCats[BTAG_I]) continue;
+        if(p != purCats[PURE_I]) continue;
+        if(h != hadCuts[HAD_NONE] ) continue;
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
         CJSON oldJSON(     filename+"_"+name+"_"+catName+"_fit1stIt.json");
         oldJSON.fillFunctions(MOD_MR);
         makeBKG1DShapes(name,filename,catName,fitName,false,&oldJSON,iF);
@@ -261,11 +267,12 @@ void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filena
 
 void convertFuncFitTo2DTemplate(const std::string& name, const std::string& filename,const std::string& funcParamPostfix=""){
     TFile *oF = new TFile((filename + "_"+name+"_2D_template_debug.root").c_str(),"recreate");
-    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-        if(p == purSels[PUR_I]) continue;
-        std::string jsonFile = filename+"_"+name+"_"+lepSels[LEP_EMU]+"_";
-        jsonFile += name.find("w")!= std::string::npos ?purSels[PUR_LMT]:p;
-        jsonFile+=std::string("_")+hadSels[HAD_NONE] +"_fit.json";
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
+        if(b == btagCats[BTAG_I]) continue;
+        std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_";
+        jsonFile += name.find("w")!= std::string::npos ?btagCats[BTAG_LMT]:b;
+        jsonFile+=std::string("_")+purCats[PURE_I]+"_"+hadCuts[HAD_NONE] +"_fit.json";
 
         CBFunctionFitter xFit(0,false,funcParamPostfix,{MOD_MJ});
         xFit.w->var(MOD_MJ.c_str())->setMin(minHbbMass);
@@ -276,12 +283,12 @@ void convertFuncFitTo2DTemplate(const std::string& name, const std::string& file
         CJSON json(jsonFile);
         json.fillFunctions(MOD_MR);
         auto pn = [&](const std::string& v) ->std::string{return v + funcParamPostfix;};
-        auto * iF =  TObjectHelper::getFile(filename + "_"+name+"_"+l+"_"+p+"_"+h+"_template.root");
+        auto * iF =  TObjectHelper::getFile(filename + "_"+name+"_"+catName+"_template.root");
         if(iF==0) continue;
         auto hh_H = TObjectHelper::getObject<TH1>(iF,"histo",false,false);
         if(hh_H==0) continue;
         oF->cd();
-        TH2 * h_2D = new TH2F((name+"_"+l+"_"+p+"_"+h).c_str(),(std::string(";")+hbbMCS.title+";"+hhMCS.title).c_str(),nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
+        TH2 * h_2D = new TH2F((name+"_"+catName).c_str(),(std::string(";")+hbbMCS.title+";"+hhMCS.title).c_str(),nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
         for(int iY = 1; iY <= hh_H->GetNbinsX(); ++iY){
             double yNorm = hh_H->GetBinContent(iY);
             double hhV = hh_H->GetBinCenter(iY);
@@ -307,15 +314,16 @@ void convertFuncFitTo2DTemplate(const std::string& name, const std::string& file
 
 void compile2DTemplatesForDebug(const std::string& name, const std::string& filename){
     TFile *oF = new TFile((filename + "_"+name+"_2D_template_debug.root").c_str(),"recreate");
-    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-        auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_"+l+"_" +p +"_"+h+"_2D_template.root");
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
+        auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_"+catName+"_2D_template.root");
         if(iF==0) continue;
         auto hh_H = TObjectHelper::getObject<TH2>(iF,"histo",false,false);
         if(hh_H==0) continue;
         oF->cd();
         hh_H->SetXTitle(hbbMCS.title.c_str());
         hh_H->SetYTitle(hhMCS.title.c_str());
-        hh_H->Write((name+"_"+l+"_"+p+"_"+h).c_str());
+        hh_H->Write((name+"_"+catName).c_str());
         iF->Close();
     }
     oF->Close();
@@ -330,17 +338,19 @@ void makePseudoData(const std::string& name, const std::string& filename){
         tempFiles.push_back(TObjectHelper::getFile(filename+"_"+bkgSels[bkg]+"_2D_template_debug.root"));
     }
     TFile *oF = new TFile((filename + "_"+name+".root").c_str(),"recreate");
-    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
-        if(l == lepSels[LEP_EMU]) continue;
-        if(p == purSels[PUR_I] || p == purSels[PUR_LMT]) continue;
-        if(h != hadSels[HAD_FULL]) continue;
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(l == lepCats[LEP_EMU]) continue;
+        if(b == btagCats[BTAG_I] || b == btagCats[BTAG_LMT]) continue;
+        if(p == purCats[PURE_I]) continue;
+        if(h != hadCuts[HAD_FULL]) continue;
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
 
         double totProb = 0;
         TH2* totH = 0;
         for(unsigned int bkg = BKG_QG; bkg <= BKG_MT; ++bkg){
-            auto y_H = TObjectHelper::getObject<TH2>(yieldFiles[bkg],bkgSels[bkg]+"_"+l+"_"+p+"_"+h+"_"+hbbMCS+"_"+hhMCS);
-            auto t_H = TObjectHelper::getObject<TH2>(tempFiles[bkg],bkgSels[bkg]+"_"+l+"_"+p+"_"+h);
-            std::cout <<bkgSels[bkg]+"_"+l+"_"+p+"_"+h +" -> "<< y_H->Integral()<<" "<<t_H->Integral();
+            auto y_H = TObjectHelper::getObject<TH2>(yieldFiles[bkg],bkgSels[bkg]+"_"+catName+"_"+hbbMCS+"_"+hhMCS);
+            auto t_H = TObjectHelper::getObject<TH2>(tempFiles[bkg],bkgSels[bkg]+"_"+catName);
+            std::cout <<bkgSels[bkg]+"_"+catName +" -> "<< y_H->Integral()<<" "<<t_H->Integral();
             if(totH) std::cout<<" "<< totH->Integral();
             std::cout <<"\n";
             t_H->Scale(y_H->Integral()/t_H->Integral());
@@ -355,7 +365,7 @@ void makePseudoData(const std::string& name, const std::string& filename){
                 totH->SetBinContent(iX,iY,val);
                 totH->SetBinError(iX,iY,std::sqrt(float(val)));
             }
-        totH->Write((std::string("data_")+l+"_"+p+"_"+h+"_"+hbbMCS+"_"+hhMCS).c_str() );
+        totH->Write((std::string("data_")+catName+"_"+hbbMCS+"_"+hhMCS).c_str() );
     }
 
     oF->Close();
@@ -371,32 +381,31 @@ void go(BKGModels modelToDo, std::string treeDir) {
     {
         std::string name = bkgSels[BKG_QG];
         std::string genSel = bkgSels[BKG_QG].cut + "&&"+ aQCD.cut;
-        std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+ hadSels[HAD_LTMB].cut;
-        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
-//        //        //MVV
+        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
+        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+////        //        //MVV
         makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,3,0.5,1);//x = hh
-        //                makeBackgroundShapesMVVConditional(name+"_xs_0p75_xc_2_ys_0p75_yc_2,filename,treeArea,baseSel,0.75,2,0.75,2);//old
+//        //                makeBackgroundShapesMVVConditional(name+"_xs_0p75_xc_2_ys_0p75_yc_2,filename,treeArea,baseSel,0.75,2,0.75,2);//old
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hhInclRange.cut,true);
-        //
-//        //        //MJJ
+//        //
+////        //        //MJJ
         makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,baseSel+"&&"+hhRange.cut);
         mergeBackgroundShapes(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
         fitBackgroundShapesMVVConditional(name,filename);
-
         compile2DTemplatesForDebug(name,filename);
     }
 
     if(modelToDo == BKG_LOSTTW){
         std::string name = bkgSels[BKG_LOSTTW];
         std::string genSel = bkgSels[BKG_LOSTTW].cut;
-        std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&" +hadSels[HAD_LTMB].cut;
-        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
-//        //MVV
-//        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,8,0.5,2);//x = hh
+        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
+        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+////        //MVV
+        //        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,8,0.5,2);//x = hh old
         makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,4,0.5,2);//x = hh
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hhInclRange.cut,true);
-//        //MJJ
+////        //MJJ
         makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,baseSel+"&&"+hhRange.cut);
         mergeBackgroundShapes(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
@@ -408,9 +417,9 @@ void go(BKGModels modelToDo, std::string treeDir) {
     if(modelToDo == BKG_MW){
         std::string name = bkgSels[BKG_MW];
         std::string genSel = bkgSels[BKG_MW].cut;
-        std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&" +hadSels[HAD_LB].cut;
+        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&" +hadCuts[HAD_LB].cut;
         //MVV
-        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
+        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,baseSel+"&&"+hbbRange.cut);
         cutMVVTemplate(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
@@ -426,9 +435,9 @@ void go(BKGModels modelToDo, std::string treeDir) {
     if(modelToDo == BKG_MT){
         std::string name = bkgSels[BKG_MT];
         std::string genSel = bkgSels[BKG_MT].cut;
-        std::string baseSel = genSel + "&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&" +hadSels[HAD_LB].cut;
+        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&" +hadCuts[HAD_LB].cut;
         //MVV
-        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepSels[LEP_EMU].cut+"&&"+purSels[PUR_LMT].cut+"&&"+hadSels[HAD_NONE].cut);
+        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,baseSel+"&&"+hbbRange.cut);
         cutMVVTemplate(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);

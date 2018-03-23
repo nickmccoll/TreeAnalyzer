@@ -23,7 +23,7 @@ CutStr bkgTS("bkgTS" , "(process==2||process==5||process==7)");
 CutStr bkgWS("bkgWS" , "(process==3||process==4||process==6||process==8)");
 CutStr aQCD ("aQCD"  , "process!=8");
 
-CutStr wjjBC("wjjBC" , "wjjTau2o1<0.55&&wjjMass>10");
+CutStr wjjBC("wjjBC" , "wjjMass>10");
 CutStr exA  ("exA"   , "wlnuDR<3.2&&wwDM<2");
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr nSJs ("nSJs"  , "hbbNSJs==2&&wjjNSJs==2");
@@ -67,28 +67,37 @@ std::vector<CutStr > bkgSels = {
         CutStr("mt"     ,"hbbWQuark==5","m_{t} bkg.")
 };
 
-enum LEPCuts  {LEP_EMU, LEP_E, LEP_MU};
-std::vector<CutStr> lepSels = {
+enum LEPCats  {LEP_EMU, LEP_E, LEP_MU};
+std::vector<CutStr> lepCats = {
         CutStr("emu","isMuon>=0"),
         CutStr("e"  ,"isMuon==0"),
         CutStr("mu" ,"isMuon==1")
 };
-enum PURCuts  {PUR_I, PUR_LMT, PUR_L, PUR_M,PUR_T};
-std::vector<CutStr > purSels = {
+
+enum BTAGCats  {BTAG_I, BTAG_LMT, BTAG_L, BTAG_M,BTAG_T};
+std::vector<CutStr > btagCats = {
         CutStr("I"  ,"1.0"),
         CutStr("LMT","hbbCSVCat>=4"),
         CutStr("L"  ,"hbbCSVCat==4"),
         CutStr("M"  ,"hbbCSVCat==5"),
         CutStr("T"  ,"hbbCSVCat==6")
 };
-//enum HADCuts  {HAD_FULL, HAD_LWW, HAD_LB,HAD_LTMB,HAD_NONE};
-enum HADCuts  {HAD_FULL, HAD_LWW, HAD_LB,HAD_LTMB,HAD_NONE};
-std::vector<CutStr > hadSels = {
-        CutStr("full",nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut),
+
+enum   PURCats {PURE_I, PURE_LP, PURE_HP};
+std::vector<CutStr > purCats = {
+        CutStr("I","1.0"),
+        CutStr("LP" ,"wjjTau2o1>=0.55"),
+        CutStr("HP"  ,"wjjTau2o1<0.55")
+};
+
+enum HADCuts  {HAD_NONE, HAD_LWW,HAD_LB,HAD_LTMB,HAD_FULL};
+std::vector<CutStr > hadCuts = {
+        CutStr("none",nSJs.cut),
         CutStr("lWW" ,nSJs.cut+"&&"+wjjBC.cut+"&&"+bV.cut),
         CutStr("lb"  ,nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut),
         CutStr("ltmb",nSJs.cut+"&&"+exA.cut),
-        CutStr("none",nSJs.cut)
+        CutStr("full",nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut)
+
 };
 
 std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,1750,2000,2500,3000,3500,4000};
