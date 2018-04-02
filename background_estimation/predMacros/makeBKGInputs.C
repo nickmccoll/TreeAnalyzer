@@ -329,7 +329,7 @@ void compile2DTemplatesForDebug(const std::string& name, const std::string& file
     oF->Close();
 }
 
-void makePseudoData(const std::string& name, const std::string& filename){
+void makePseudoData(const std::string& name, const std::string& filename, const double sf = 1){
     TRandom3 * rand = new TRandom3(1234);
     std::vector<TFile*> yieldFiles;
     std::vector<TFile*> tempFiles;
@@ -361,7 +361,7 @@ void makePseudoData(const std::string& name, const std::string& filename){
         for(int iX = 1; iX <= totH->GetNbinsX(); ++iX)
             for(int iY = 1; iY <= totH->GetNbinsY(); ++iY){
                 double mean = totH->GetBinContent(iX,iY);
-                int val = rand->Poisson(mean);
+                int val = rand->Poisson(sf*mean);
                 totH->SetBinContent(iX,iY,val);
                 totH->SetBinError(iX,iY,std::sqrt(float(val)));
             }
@@ -452,7 +452,7 @@ void go(BKGModels modelToDo, std::string treeDir) {
 
     //Make pseudo data
     if(modelToDo > BKG_MT){
-        makePseudoData("pd",filename);
+        makePseudoData("pd",filename,1);
     }
 
 }
