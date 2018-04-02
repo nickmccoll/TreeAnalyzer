@@ -114,6 +114,35 @@ public:
         RooProdPdf condProdP(PDFName.c_str(), (varXPDFName+"*"+varYPDFName).c_str(),*w->pdf(varXPDFName.c_str()),RooFit::Conditional(*w->pdf(varYPDFName.c_str()), *w->var(variableY.c_str())) );
         w->import(condProdP);
     }
+
+    void add2DSignalParametricShapeNoCond(const std::string& name,const std::string& variableX,const std::string& variableY,const std::string& jsonFile,const StrFlts& scale_X,const StrFlts& resolution_X
+            ,const StrFlts& scale_Y,const StrFlts& resolution_Y, bool exponential_X, const std::string& pVar="MH"){
+        CJSON json( jsonFile);
+        const std::string varXCBPDFName = exponential_X ? name+"_"+variableX+"_"+"CB"+"_"+tag : name+"_"+variableX+"_"+tag;
+        const std::string varXEPDFName = name+"_"+variableX+"_"+"E"+"_"+tag;
+        const std::string varXPF = name+"_"+variableX+"_"+tag;
+        const std::string varYPF = name+"_"+variableY+"_"+tag;
+        const std::string varXPDFName = name+"_"+variableX+"_"+tag;
+        const std::string varYPDFName = name+"_"+variableY+"_"+tag;
+        const std::string PDFName = name+"_"+tag;
+
+        addCB(varXCBPDFName,pVar,variableX,varXPF,variableX,json,scale_X,resolution_X);
+        if(exponential_X){
+            std::string vN = std::string("fE") +"_"+varXPF;
+            std::string expr = std::string("min(")+ pVar+"*0+"+json.getP(std::string("fE")+variableX)+",1)";
+            RooFormulaVar varF(vN.c_str(),vN.c_str(),expr.c_str(),RooArgList(*w->var(pVar.c_str())));
+            w->import(varF);
+            addExpo(varXEPDFName,pVar,variableX,varXPF,variableX,json);
+
+            RooAddPdf modelC(varXPDFName.c_str(),varXPDFName.c_str(),*w->pdf(varXEPDFName.c_str()),*w->pdf(varXCBPDFName.c_str()),*w->function(vN.c_str()));
+            w->import(modelC);
+        }
+
+        addCB(varYPDFName,pVar,variableY,varYPF,variableY,json,scale_Y,resolution_Y);
+        RooProdPdf condProdP(PDFName.c_str(), (varXPDFName+"*"+varYPDFName).c_str(),RooArgSet(*w->pdf(varXPDFName.c_str()), *w->pdf(varYPDFName.c_str())) );
+        w->import(condProdP);
+    }
+
     void addParametricYieldWithUncertainty(const std::string& name,const unsigned int ID,const std::string& jsonFile, const double constant, const std::string& uncName,const std::string& uncFormula,const double& uncValue,  const std::string& pVar="MS"){
         CJSON json( jsonFile);
         const std::string PDFName = name+"_"+tag;

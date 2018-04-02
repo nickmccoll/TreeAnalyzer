@@ -46,6 +46,8 @@ void go(const std::string& signalName, const std::string& filename) {
         if(signalName=="radHH"){
             card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, inputName(signalName,"2D_fit.json"),
                     {{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},{{"CMS_scale_j",1},{"CMS_scale_MET",1}},{{"CMS_res_j",1},{"CMS_res_MET",1}}, b == btagCats[BTAG_L],MOD_MS);
+//            card.add2DSignalParametricShapeNoCond(signalName,MOD_MJ,MOD_MR, inputName(signalName,"2D_fit.json"),
+//                    {{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},{{"CMS_scale_j",1},{"CMS_scale_MET",1}},{{"CMS_res_j",1},{"CMS_res_MET",1}}, b == btagCats[BTAG_L],MOD_MS);
             card.addParametricYieldWithUncertainty(signalName,0,inputName(signalName,"yield.json"),1,"CMS_tau21_PtDependence","log("+MOD_MS+"/600)",0.041,MOD_MS);
         } else throw std::invalid_argument("makeCard::go() -> Bad parsing");
 

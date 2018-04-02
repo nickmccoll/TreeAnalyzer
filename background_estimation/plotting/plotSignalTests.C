@@ -135,8 +135,8 @@ void test2DFits(std::string name, std::string filename, std::string fitName,bool
 
 
 
-        Drawing::drawAll(mcPads, (s + ": MC").c_str(),"COLZ");
-        Drawing::drawAll(pdfPads, (s + ": PDF").c_str(),"COLZ");
+//        Drawing::drawAll(mcPads, (s + ": MC").c_str(),"COLZ");
+//        Drawing::drawAll(pdfPads, (s + ": PDF").c_str(),"COLZ");
         Drawing::drawAll(compPads, (s + ": COMP").c_str());
         Drawing::drawAll(paramPads, (s + ": params").c_str());
 
@@ -184,7 +184,9 @@ void plotSignalTests(){
 
 //        testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit1stIt",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
 //    testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
-//    testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_I_ltmb","mu_LMT_I_ltmb"});
+//    testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_LP_full","e_LMT_HP_full","mu_LMT_LP_full","mu_LMT_HP_full"});
+//    testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit",{"e_LMT_LP_full","e_LMT_HP_full","mu_LMT_LP_full","mu_LMT_HP_full"});
+//    test2DFits(radionSig,filename,"2D_fit",false,{"mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
     test2DFits(radionSig,filename,"2D_fit",false,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"});
 
 

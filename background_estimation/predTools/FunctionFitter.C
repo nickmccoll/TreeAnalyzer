@@ -371,6 +371,42 @@ public:
     }
 
 };
+
+
+class CBFunctionFitter2DNoCond : public FunctionFitter{
+public:
+    CBFunctionFitter2DNoCond(const TH2* iH,bool doExpoX, const std::string postFix, const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
+        FunctionFitter(iH,postFix,plotVars){
+
+        const std::string xPF = postFix+plotVars[0];
+        const std::string yPF = postFix+plotVars[1];
+        const std::string mN = std::string("model")+postFix;
+        const std::string mNX  = std::string("model") + xPF;
+        const std::string mNY  = std::string("model") + yPF;
+        const std::string mXNP = std::string("model") + xPF + (doExpoX ? "P" : "");
+        const std::string mXNE = std::string("model") + xPF + "E" ;
+
+        auto pXN =[&] (std::string v) ->std::string{return v+xPF;};
+        auto pXV =[&] (std::string v) ->RooRealVar*{return w->var(pXN(v).c_str());};
+        auto pYN =[&] (std::string v) ->std::string{return v+yPF;};
+        auto pYV =[&] (std::string v) ->RooRealVar*{return w->var(pYN(v).c_str());};
+        auto pYF =[&] (std::string v) ->RooAbsReal*{return w->function(pYN(v).c_str());};
+
+        addCB(mXNP,xPF,vars[0]);
+        if(doExpoX){
+            addParam(pXN("fE"),"[0.1,0,1]");
+            addExpo(mXNE,xPF,vars[0]);;
+            RooAddPdf modelC(mNX.c_str(),mNX.c_str(),*w->pdf(mXNE.c_str()),*w->pdf(mXNP.c_str()),*pXV("fE"));
+            w->import(modelC);
+        }
+
+        addCB(mNY,yPF,vars[1]);
+        RooProdPdf condProdP(mN.c_str(), (mNX+"*"+mNY).c_str(),RooArgSet(*w->pdf(mNX.c_str()), *w->pdf(mNY.c_str())) );
+        w->import(condProdP);
+    }
+
+};
+
 class CBFunctionFitter2DCondMVV : public FunctionFitter{
 public:
     CBFunctionFitter2DCondMVV(const TH2* iH,bool doExpoX, const std::string postFix, const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :

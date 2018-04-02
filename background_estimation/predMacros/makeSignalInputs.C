@@ -80,7 +80,7 @@ const std::string fitCond    =vnMR("maxS")+":pol0,"+vnMR("mean_p1")+":pol2,"+vnM
 const std::string fitCondMVV =vnMJ("maxS")+":pol0,"+vnMJ("mean_p1")+":pol2,"+vnMJ("sigma_p1")+":pol1";
 
 
-void makeSignal1DShapes(const std::string& name, const std::string& filename, const std::string& catName, const std::string& fitName, bool fitMJJ, CJSON* prevJSON, TFile* iF, bool doExpo){
+void makeSignal1DShapes(const std::string& name, const std::string& filename, const std::string& catName, const std::string& fitName, bool fitMJJ, CJSON* prevJSON, TFile* iF, bool doExpo, bool restrictX = true){
     FunctionParameterPlotter plotter;
     std::vector<std::unique_ptr<FunctionFitter>> fitters;
     const std::string modStr = fitMJJ ? MOD_MJ : MOD_MR;
@@ -93,11 +93,11 @@ void makeSignal1DShapes(const std::string& name, const std::string& filename, co
             fitter->w->var(modStr.c_str())->setRange("fit",30,210);
             fitter->w->var(modStr.c_str())->setRange("coef",30,210);
         } else {
-//            fitter->w->var(modStr.c_str())->setRange("fit",std::max(HHMass*.75,minHHMass),std::min(HHMass*1.5,maxHHMass));
+            //            fitter->w->var(modStr.c_str())->setRange("fit",std::max(HHMass*.75,minHHMass),std::min(HHMass*1.5,maxHHMass));
             fitter->w->var(modStr.c_str())->setRange("fit",minHHMass,maxHHMass);
             fitter->w->var(modStr.c_str())->setRange("coef",minHHMass,maxHHMass);
         }
-//        fitter->w->pdf((std::string("model")+modStr).c_str())->fixAddCoefRange("coef",true);
+        //        fitter->w->pdf((std::string("model")+modStr).c_str())->fixAddCoefRange("coef",true);
 
 
         if(fitMJJ){
@@ -138,7 +138,7 @@ void makeSignal1DShapes(const std::string& name, const std::string& filename, co
         std::string ptName  = std::string("m") + ASTypes::flt2Str(signalMassBins[iS]);
         auto hbb_hh_H = TObjectHelper::getObject<TH2>(iF,hName+"_"+hbbMCS+"_"+hhMCS,false,false);
         if(hbb_hh_H ==0) continue;
-        auto hbb_H = fitMJJ ? projX(&*hbb_hh_H,hName+"_"+ptName +"_"+hbbMCS) :  projY(&*hbb_hh_H,hName+"_"+ptName +"_"+hbbMCS,115,135);
+        auto hbb_H = fitMJJ ? projX(&*hbb_hh_H,hName+"_"+ptName +"_"+hbbMCS) :  (restrictX ? projY(&*hbb_hh_H,hName+"_"+ptName +"_"+hbbMCS,115,135) : projY(&*hbb_hh_H,hName+"_"+ptName +"_"+hbbMCS)) ;
         setup1DFit(&*hbb_H,signalMassBins[iS]);
         plotter.addFit(&*fitters.back(),signalMassBins[iS],ptName);
     }
@@ -148,7 +148,7 @@ void makeSignal1DShapes(const std::string& name, const std::string& filename, co
 
 
 void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filename){
-//    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
+    //    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root"); //Changing to cond on MR
     const std::string fitName = "MJJ_fit1stIt";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
@@ -167,7 +167,7 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
 }
 void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filename){
     //    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
-        auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root"); //Changing to cond on MR
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root"); //Changing to cond on MR
     const std::string fitName = "MJJ_fit";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l != lepCats[LEP_EMU] ) continue;
@@ -188,16 +188,33 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
         newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
     }
 }
-void makeSignalMVVShapes1stIt(const std::string& name, const std::string& filename){
+
+void makeSignalMVVShapes1D(const std::string& name, const std::string& filename){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
     const std::string fitName = "MVV_fit1stIt";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
         if(b != btagCats[BTAG_LMT] ) continue;
         if(p != purCats[PURE_I] ) continue;
-        if(h != hadCuts[HAD_LTMB] ) continue;
+        if(h != hadCuts[HAD_LTMB]) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
-        makeSignal1DShapes(name,filename,catName,fitName,false,0,iF,false);
+        makeSignal1DShapes(name,filename,catName,fitName,false,0,iF,false,true);
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MS +" ";
+        argsP1 += " -minX 700 -maxX 3800 ";
+        MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" -g "+ fitMVV);
+    }
+}
+
+void makeSignalMVVShapes1stIt(const std::string& name, const std::string& filename){
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
+    const std::string fitName = "MVV_fit1stIt";
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(l == lepCats[LEP_EMU] ) continue;
+        if(b != btagCats[BTAG_LMT] ) continue;
+//        if(p != purCats[PURE_I] ) continue;
+        if(!(h == hadCuts[HAD_LTMB] || h == hadCuts[HAD_FULL])  ) continue;
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
+        makeSignal1DShapes(name,filename,catName,fitName,false,0,iF,false,false);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MS +" ";
         argsP1 += " -minX 700 -maxX 3800 ";
@@ -210,12 +227,12 @@ void makeSignalMVVShapes2ndIt(const std::string& name, const std::string& filena
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
         if(b != btagCats[BTAG_LMT] ) continue;
-        if(p != purCats[PURE_I] ) continue;
-        if(h != hadCuts[HAD_LTMB] ) continue;
+        //        if(p != purCats[PURE_I] ) continue;
+        if(!(h == hadCuts[HAD_LTMB] || h == hadCuts[HAD_FULL])  ) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
         CJSON oldJSON(     filename+"_"+name+"_"+catName+"_MVV_fit1stIt.json");
         oldJSON.fillFunctions(MOD_MS);
-        makeSignal1DShapes(name,filename,catName,fitName,false,&oldJSON,iF,false);
+        makeSignal1DShapes(name,filename,catName,fitName,false,&oldJSON,iF,false,false);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MS +" ";
         argsP1 +=  " -minX 700 -maxX 3800 ";
@@ -228,15 +245,17 @@ void makeSignalMVVShapes2ndIt(const std::string& name, const std::string& filena
     }
 }
 
-void makeSignal2DShapes(const std::string& name, const std::string& filename,const std::string& catName, std::string& fitName, CJSON* mjjJSON,CJSON* mvvJSON, bool fixMVVinTerms, bool doExpo, TFile* iF){
+void makeSignal2DShapes(const std::string& name, const std::string& filename,const std::string& catName, std::string& fitName, CJSON* mjjJSON,CJSON* mvvJSON, bool fixMVVinTerms, bool doExpo, TFile* iF, const bool cond = true){
     FunctionParameterPlotter plotter;
     std::vector<std::unique_ptr<FunctionFitter>> fitters;
 
     auto setup2DFit = [&](const TH2* hbbH, const double HHMass){
         auto pnX =[&] (std::string v) ->std::string{return vnMJ(v);};
         auto pnY =[&] (std::string v) ->std::string{return vnMR(v);};
-
-        fitters.emplace_back(new CBFunctionFitter2D(hbbH,doExpo,"",{MOD_MJ,MOD_MR}));
+        if(cond)
+            fitters.emplace_back(new CBFunctionFitter2D(hbbH,doExpo,"",{MOD_MJ,MOD_MR}));
+        else
+            fitters.emplace_back(new CBFunctionFitter2DNoCond(hbbH,doExpo,"",{MOD_MJ,MOD_MR}));
         auto fitter = &* fitters.back();
         fitter->w->var(MOD_MR.c_str())->setRange("coef",minHHMass,maxHHMass);
         fitter->w->var(MOD_MJ.c_str())->setRange("coef",30,210);
@@ -283,26 +302,30 @@ void makeSignal2DShapes(const std::string& name, const std::string& filename,con
         fitter->setVar(pnY("alpha2"),1.5,0.1,3);
         fitter->setVar(pnY("n")     ,5,1,6);
         fitter->setVar(pnY("n2")    ,5,1,6);
-        fitter->setVar(pnY("maxS")  ,2.5 ,0,5);
-        fitter->setVar(pnY("mean_p1")  ,.044,.01,.10);
-        fitter->setVar(pnY("sigma_p1") ,0,0,1);
         fitter->setConst(pnY("n")     ,1);
         fitter->setConst(pnY("n2")    ,1);
-        fitter->setConst(pnY("maxS")  ,1);
-//        fitter->setConst(pnY("sigma_p1")  ,1);
+        if(cond){
+            fitter->setVar(pnY("maxS")  ,2.5 ,0,5);
+            fitter->setVar(pnY("mean_p1")  ,.044,.01,.10);
+            fitter->setVar(pnY("sigma_p1") ,0,0,1);
+            fitter->setConst(pnY("maxS")  ,1);
+        }
+
 
         if(mvvJSON){
             fitter->setVar(pnY("alpha") ,mvvJSON->evalFunc(pnY("alpha") ,HHMass),0.1,3);
             fitter->setVar(pnY("alpha2"),mvvJSON->evalFunc(pnY("alpha2"),HHMass),0.1,3);
+            fitter->setVar(pnY("mean")  ,mvvJSON->evalFunc(pnY("mean"),HHMass),HHMass -200,HHMass+200);
+            fitter->setVar(pnY("sigma") ,mvvJSON->evalFunc(pnY("sigma"),HHMass),HHMass*0.025,HHMass*0.2);
             fitter->setConst(pnY("alpha")     ,1);
             fitter->setConst(pnY("alpha2")    ,1);
             if(fixMVVinTerms){
-                fitter->setVar(pnY("mean_p1")  ,mvvJSON->evalFunc(pnY("mean_p1") ,HHMass),.01,.10);
-                fitter->setVar(pnY("sigma_p1") ,mvvJSON->evalFunc(pnY("sigma_p1") ,HHMass),0,1);
-                fitter->setConst(pnY("mean_p1")     ,1);
-                fitter->setConst(pnY("sigma_p1")    ,1);
-                fitter->setVar(pnY("mean")  ,mvvJSON->evalFunc(pnY("mean"),HHMass),HHMass -200,HHMass+200);
-                fitter->setVar(pnY("sigma") ,mvvJSON->evalFunc(pnY("sigma"),HHMass),HHMass*0.025,HHMass*0.2);
+                if(cond){
+                    fitter->setVar(pnY("mean_p1")  ,mvvJSON->evalFunc(pnY("mean_p1") ,HHMass),.01,.10);
+                    fitter->setVar(pnY("sigma_p1") ,mvvJSON->evalFunc(pnY("sigma_p1") ,HHMass),0,1);
+                    fitter->setConst(pnY("mean_p1")     ,1);
+                    fitter->setConst(pnY("sigma_p1")    ,1);
+                }
                 fitter->setConst(pnY("mean")     ,1);
                 fitter->setConst(pnY("sigma")    ,1);
             }
@@ -372,7 +395,7 @@ void makeSignal2DShapesCondMVV(const std::string& name, const std::string& filen
         fitter->  setVar(pnX("n2")    ,5,3,6);
         fitter->setVar(pnX("maxS")  ,2.5 ,0,5);
         fitter->setVar(pnX("mean_p1")  ,.044,.01,.10);
-//        fitter->setVar(pnX("sigma_p1")  ,0,0,1);
+        //        fitter->setVar(pnX("sigma_p1")  ,0,0,1);
         if(doExpo){
             fitter->setVar(pnX("slope"),-1,-10,0);
             fitter->setVar(pnX("fE")   ,0.1,0,0.75);
@@ -509,10 +532,42 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
         newJSON.replaceEntries(mjjJSON);
         newJSON.replaceEntry(vnMR("alpha"   ), mvvJSON.getP(vnMR("alpha"   )));
         newJSON.replaceEntry(vnMR("alpha2"  ), mvvJSON.getP(vnMR("alpha2"  )));
-//        newJSON.replaceEntry(vnMR("mean_p1" ), mvvJSON.getP(vnMR("mean_p1" )));
-//        newJSON.replaceEntry(vnMR("sigma_p1"), mvvJSON.getP(vnMR("sigma_p1")));
-//        newJSON.replaceEntry(vnMR("mean"    ), mvvJSON.getP(vnMR("mean"    )));
-//        newJSON.replaceEntry(vnMR("sigma"   ), mvvJSON.getP(vnMR("sigma"   )));
+        //        newJSON.replaceEntry(vnMR("mean_p1" ), mvvJSON.getP(vnMR("mean_p1" )));
+        //        newJSON.replaceEntry(vnMR("sigma_p1"), mvvJSON.getP(vnMR("sigma_p1")));
+        //        newJSON.replaceEntry(vnMR("mean"    ), mvvJSON.getP(vnMR("mean"    )));
+        //        newJSON.replaceEntry(vnMR("sigma"   ), mvvJSON.getP(vnMR("sigma"   )));
+        newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
+    }
+}
+
+
+void combine2DShapesNoCond(const std::string& name, const std::string& filename){
+    std::string fitName = "2D_fit";
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(l == lepCats[LEP_EMU] ) continue;
+        if(b == btagCats[BTAG_I] || b == btagCats[BTAG_LMT] ) continue;
+        if(p == purCats[PURE_I]) continue;
+        if(h != hadCuts[HAD_FULL] ) continue;
+        bool doExpo = b == btagCats[BTAG_L];
+
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
+        std::string mjjCatName = lepCats[LEP_EMU]+"_"+b+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB];
+        std::string mvvCatName = l+"_"+btagCats[BTAG_LMT]+"_"+p+"_"+hadCuts[HAD_FULL];
+
+        CJSON mjjJSON(     filename+"_"+name+"_"+mjjCatName+"_MJJ_fit.json");
+        mjjJSON.fillFunctions(MOD_MS);
+        CJSON mvvJSON(     filename+"_"+name+"_"+mvvCatName+"_MVV_fit.json");
+        mvvJSON.fillFunctions(MOD_MS);
+        makeSignal2DShapes(name,filename,catName,fitName,&mjjJSON,&mvvJSON,true,doExpo,iF,false);
+
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+ " -minX 700 -maxX 3800 -var "+MOD_MS+" ";
+        std::string jsonArgs = argsP1 +" -g "+ (doExpo ? fitMJJExpo : fitMJJStd ) + ","+fitMVV;
+
+
+        CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",jsonArgs);
+        newJSON.replaceEntries(mjjJSON);
+        newJSON.replaceEntries(mvvJSON);
         newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
     }
 }
@@ -526,27 +581,35 @@ void go(int step,std::string treeDir) {
     std::string signalTrees = treeDir + "/out_radion_hh_bbinc_mXXX_0.root";
     std::string name = radionSig;
     if(step == 0){
-            makeSignalFittingDistributions(name,filename,signalTrees,hhInclRange.cut+"&&"+hbbInclRange.cut,true);
-            makeSignalFittingDistributions(name,filename,signalTrees,hhRange.cut+"&&"+hbbRange.cut,false);
-            makeSignalYields(name,filename);
+        makeSignalFittingDistributions(name,filename,signalTrees,hhInclRange.cut+"&&"+hbbInclRange.cut,true);
+        makeSignalFittingDistributions(name,filename,signalTrees,hhRange.cut+"&&"+hbbRange.cut,false);
+        makeSignalYields(name,filename);
     }
 
     if(step == 1){
         makeSignalMJJShapes1stIt(name,filename);
         makeSignalMJJShapes2ndIt(name,filename);
-        makeSignalMVVShapes1stIt(name,filename);
+        makeSignalMVVShapes1D(name,filename);
         makeSignal2DShapesSecondIteration(name,filename);
+    }
+
+    if(step == 2){
+        makeSignalMJJShapes1stIt(name,filename);
+        makeSignalMJJShapes2ndIt(name,filename);
+        makeSignalMVVShapes1stIt(name,filename);
+        makeSignalMVVShapes2ndIt(name,filename);
+        combine2DShapesNoCond(name,filename);
     }
 
 
 
 
     //old stuff
-//    makeSignal2DShapesFirstIteration(name,filename);
-//    makeSignalMVVShapes1stIt(name,filename);
-//    makeSignalMVVShapes2ndIt(name,filename);
-//    makeSignalMJJShapes1stIt(name,filename);
-//    makeSignal2DShapesCondMVVFirstIteration(name,filename);
+    //    makeSignal2DShapesFirstIteration(name,filename);
+    //    makeSignalMVVShapes1stIt(name,filename);
+    //    makeSignalMVVShapes2ndIt(name,filename);
+    //    makeSignalMJJShapes1stIt(name,filename);
+    //    makeSignal2DShapesCondMVVFirstIteration(name,filename);
 }
 #endif
 
