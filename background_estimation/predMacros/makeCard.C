@@ -17,7 +17,7 @@ void go(const std::string& signalName, const std::string& filename) {
         auto card = DataCardMaker(l,b+"_"+p +"_"+h ,"13TeV",1,category);
 
         const std::string cat = l +"_"+b+"_"+p +"_"+h;
-        cmd += std::string(" ")+ cat +"_13TeV=datacard_"+category+"_"+cat +"_13TeV.txt";
+        cmd += std::string(" ")+ category +"_"+cat +"_13TeV=datacard_"+category+"_"+cat +"_13TeV.txt";
 
         auto fullInputName =[&](const std::string& proc, const std::string& l, const std::string& b, const std::string& p, const std::string& h,  const std::string& pf) -> std::string
                 {return fPF + "_"+proc +"_"+l +"_"+b+"_"+p +"_"+h +"_"+ pf; };
