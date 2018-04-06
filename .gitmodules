@@ -1,3 +1,6 @@
 [submodule "AnalysisSupport"]
 	path = framework/AnalysisSupport
 	url = git@github.com:CSCUCLA/AnalysisSupport.git
+[submodule "framework/HiggsAnalysis/CombinedLimit"]
+	path = framework/HiggsAnalysis/CombinedLimit
+	url = git@github.com:nickmccoll/HiggsAnalysis-CombinedLimit.git
