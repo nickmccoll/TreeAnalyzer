@@ -209,6 +209,7 @@ void testMJJKern(std::string name, std::string filename) {
 
 
 void plotNonResBkgTests(int step = 0){
+//    hhFilename +="_CR";
     std::string filename = hhFilename;
 
     if(step == 0)test2DCondTemplate(bkgSels[BKG_LOSTTW],filename);

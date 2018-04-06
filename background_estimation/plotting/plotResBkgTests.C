@@ -113,6 +113,7 @@
 
 
 void plotResBkgTests(int step = 0){
+//    hhFilename +="_CR";
     std::string filename = hhFilename;
 
     if(step == 0)testHHKern(bkgSels[BKG_MW],filename);
@@ -123,8 +124,8 @@ void plotResBkgTests(int step = 0){
 
     if(step == 5)testHHKern(bkgSels[BKG_MT],filename);
     if(step == 6)testHHPDFFits(bkgSels[BKG_MT],filename);
-    if(step == 7)testBKG1DFits(bkgSels[BKG_MT],filename,"","fit1stIt",{"emu_L_none","emu_M_none","emu_T_none"});
-    if(step == 8)testBKG1DFits(bkgSels[BKG_MT],filename,"","fit",{"emu_L_none","emu_M_none","emu_T_none"});
+    if(step == 7)testBKG1DFits(bkgSels[BKG_MT],filename,"","fit1stIt",{"emu_L_I_none","emu_M_I_none","emu_T_I_none"});
+    if(step == 8)testBKG1DFits(bkgSels[BKG_MT],filename,"","fit",{"emu_L_I_none","emu_M_I_none","emu_T_I_none"});
     if(step == 9)test2DModel({bkgSels[BKG_MT] },filename,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},{700,4000});
     if(step == 10)test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },filename,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},{700,4000});
 }
