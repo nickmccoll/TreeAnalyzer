@@ -2,6 +2,7 @@
 .settings/*
 
 #extra
+*.pyc
 *.pcm
 *C_ACLiC_mainC
 *C_ACliC_dict.o*
