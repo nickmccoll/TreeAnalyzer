@@ -5,7 +5,12 @@ using namespace ASTypes;
 
 void go(const std::string& signalName, const std::string& filename) {
     const std::string inputDir = "../inputs/";
+    //Use SR
     const std::string fPF =inputDir+filename;
+    //Use CR
+//    const std::string fPF =std::string("../controlReg/")+filename +"_CR";
+    const std::string sfPF =inputDir+filename;
+
     const std::string category = "std";
     std::string cmd = "combineCards.py ";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
@@ -22,6 +27,7 @@ void go(const std::string& signalName, const std::string& filename) {
         auto fullInputName =[&](const std::string& proc, const std::string& l, const std::string& b, const std::string& p, const std::string& h,  const std::string& pf) -> std::string
                 {return fPF + "_"+proc +"_"+l +"_"+b+"_"+p +"_"+h +"_"+ pf; };
         auto inputName =[&](const std::string& proc, const std::string& pf) -> std::string {return fPF + "_"+proc +"_"+cat +"_"+ pf; };
+        auto signalInputName =[&](const std::string& proc, const std::string& pf) -> std::string {return sfPF + "_"+proc +"_"+cat +"_"+ pf; };
 
 
         auto qgSyst =[&](const std::string& n)->StrStr{return StrStr(n,std::string("CMS_"+filename+"_"+bkgSels[BKG_QG]+"_"+n+"_"+cat ));};
@@ -44,11 +50,13 @@ void go(const std::string& signalName, const std::string& filename) {
         card.addVar("CMS_res_MET",0,-.5,0.5,false);
 
         if(signalName=="radHH"){
-            card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, inputName(signalName,"2D_fit.json"),
+            //Conditional template
+            card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
                     {{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},{{"CMS_scale_j",1},{"CMS_scale_MET",1}},{{"CMS_res_j",1},{"CMS_res_MET",1}}, b == btagCats[BTAG_L],MOD_MS);
-//            card.add2DSignalParametricShapeNoCond(signalName,MOD_MJ,MOD_MR, inputName(signalName,"2D_fit.json"),
+            //Non conditional template
+//            card.add2DSignalParametricShapeNoCond(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
 //                    {{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},{{"CMS_scale_j",1},{"CMS_scale_MET",1}},{{"CMS_res_j",1},{"CMS_res_MET",1}}, b == btagCats[BTAG_L],MOD_MS);
-            card.addParametricYieldWithUncertainty(signalName,0,inputName(signalName,"yield.json"),1,"CMS_tau21_PtDependence","log("+MOD_MS+"/600)",0.041,MOD_MS);
+            card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),1,"CMS_tau21_PtDependence","log("+MOD_MS+"/600)",0.041,MOD_MS);
         } else throw std::invalid_argument("makeCard::go() -> Bad parsing");
 
         //qg bkg
@@ -71,7 +79,9 @@ void go(const std::string& signalName, const std::string& filename) {
         card.addFixedYieldFromFile(bkgSels[BKG_MT],4,fPF+"_"+bkgSels[BKG_MT]+"_distributions.root",bkgSels[BKG_MT]+"_"+cat+"_"+hhMCS);
 
         //Data
-//        card.importBinnedData(filename + "_data.root","data_"+l+"_"+p+"_"+h,{MOD_MJ,MOD_MR});
+        //Real data
+//        card.importBinnedData(fPF + "_data_distributions.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
+        //Pseudo data
         card.importBinnedData(fPF + "_pd.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
 
         //Systematics
