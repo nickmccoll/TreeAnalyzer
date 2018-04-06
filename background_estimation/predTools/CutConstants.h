@@ -26,6 +26,7 @@ CutStr aQCD ("aQCD"  , "process!=8");
 CutStr wjjBC("wjjBC" , "wjjMass>10");
 CutStr exA  ("exA"   , "wlnuDR<3.2&&wwDM<2");
 CutStr bV   ("bV"    , "nAK4Btags==0");
+CutStr abV  ("abV"    , "nAK4Btags!=0");
 CutStr nSJs ("nSJs"  , "hbbNSJs==2&&wjjNSJs==2");
 
 
