@@ -22,7 +22,7 @@ VARIABLES   = Processors/Variables/src
 EVENTSEL   = Processors/EventSelection/src
 HCOMBI   = Utilities/HiggsCombineImport/src
 
-SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(DATAFORMATS)/*.cc) $(wildcard $(CORRECTIONS)/*.cc) $(wildcard $(TREEREADING)/*.cc)  $(wildcard $(TREEANALYZER)/*.cc) $(wildcard $(GENTOOLS)/*.cc) $(wildcard $(VARIABLES)/*.cc) $(wildcard $(EVENTSEL)/*.cc) $(wildcard $(HCOMBI)/*.cc)
+SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(DATAFORMATS)/*.cc) $(wildcard $(CORRECTIONS)/*.cc) $(wildcard $(TREEREADING)/*.cc)  $(wildcard $(TREEANALYZER)/*.cc) $(wildcard $(GENTOOLS)/*.cc) $(wildcard $(VARIABLES)/*.cc) $(wildcard $(EVENTSEL)/*.cc)
 OBJ=$(join $(addsuffix ../obj/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.o))) 
 DEPENDS=$(join $(addsuffix ../.dep/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.d)))
 
@@ -34,7 +34,18 @@ all:  $(TARGET) $(STARGET)
 clean:
 	@-rm -f $(TARGET) $(STARGET) $(OBJ) $(DEPENDS) $(HCOMBI)/../obj/TreeAnalyzerDict.o $(HCOMBI)/../obj/TreeAnalyzerDict.cc
         
-$(TARGET): $(OBJ) $(HCOMBI)/../obj/TreeAnalyzerDict.o
+#$(TARGET): $(OBJ) $(HCOMBI)/../obj/TreeAnalyzerDict.o
+#	@echo "============="
+#	@echo "Linking the target $@"
+#	@echo "============="
+#ifeq ($(PLATFORM),macosx)
+#		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) -lGenVector -lRooFitCore 
+#else
+#		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) $(ROOTLIBS) -lRooFitCore 
+#endif
+#	@echo -- Link finished --
+
+$(TARGET): $(OBJ)
 	@echo "============="
 	@echo "Linking the target $@"
 	@echo "============="
@@ -48,11 +59,11 @@ endif
 
 
 # ---- setup dictionairy for HiggsCombine import
-$(HCOMBI)/../obj/TreeAnalyzerDict.cc: $(wildcard $(HCOMBI)/../interface/*.h) $(HCOMBI)/HiggsCombineImport_LinkDef.h
-	@echo "Generating dictionary $@..."
-	rootcling  -v -l -f $@ -c -I../.. $^ 
-$(HCOMBI)/../obj/TreeAnalyzerDict.o: $(HCOMBI)/../obj/TreeAnalyzerDict.cc
-	$(CXX)  $(CXXFLAGS) -Wno-unused-parameter -Wno-ignored-qualifiers -Wno-mismatched-tags -c $<  -o $@	
+#$(HCOMBI)/../obj/TreeAnalyzerDict.cc: $(wildcard $(HCOMBI)/../interface/*.h) $(HCOMBI)/HiggsCombineImport_LinkDef.h
+#	@echo "Generating dictionary $@..."
+#	rootcling  -v -l -f $@ -c -I../.. $^ 
+#$(HCOMBI)/../obj/TreeAnalyzerDict.o: $(HCOMBI)/../obj/TreeAnalyzerDict.cc
+#	$(CXX)  $(CXXFLAGS) -Wno-unused-parameter -Wno-ignored-qualifiers -Wno-mismatched-tags -c $<  -o $@	
 #-----
 
 $(STARGET): $(OBJ)
@@ -169,15 +180,15 @@ $(EVENTSEL)/../.dep/%.d: $(EVENTSEL)/%.cc
 	@echo Building dependencies file for $*.o
 	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(EVENTSEL)/../obj/$*.o^" > $@'
 	
-$(HCOMBI)/../obj/%.o : $(HCOMBI)/%.cc
-	@mkdir -p $(dir $@)
-	@echo "============="
-	@echo "Compiling $<"
-	$(CXX) $(CXXFLAGS) -Wno-unused-parameter -Wno-ignored-qualifiers -Wno-mismatched-tags -c $<  -o $@
-$(HCOMBI)/../.dep/%.d: $(HCOMBI)/%.cc
-	@mkdir -p $(dir $@)
-	@echo "============="
-	@echo Building dependencies file for $*.o
-	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(HCOMBI)/../obj/$*.o^" > $@'
+#$(HCOMBI)/../obj/%.o : $(HCOMBI)/%.cc
+#	@mkdir -p $(dir $@)
+#	@echo "============="
+#	@echo "Compiling $<"
+#	$(CXX) $(CXXFLAGS) -Wno-unused-parameter -Wno-ignored-qualifiers -Wno-mismatched-tags -c $<  -o $@
+#$(HCOMBI)/../.dep/%.d: $(HCOMBI)/%.cc
+#	@mkdir -p $(dir $@)
+#	@echo "============="
+#	@echo Building dependencies file for $*.o
+#	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(HCOMBI)/../obj/$*.o^" > $@'
 
 -include $(DEPENDS)

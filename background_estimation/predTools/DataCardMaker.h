@@ -9,8 +9,8 @@
 #include "RooDataHist.h"
 #include "RooFormulaVar.h"
 #include "RooHistPdf.h"
-#include "Utilities/HiggsCombineImport/interface/VerticalInterpHistPdf.h"
-#include "Utilities/HiggsCombineImport/interface/HZZ2L2QRooPdfs.h"
+#include "HiggsAnalysis/CombinedLimit/interface/VerticalInterpHistPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/HZZ2L2QRooPdfs.h"
 #include "RooExponential.h"
 
 #include <utility>

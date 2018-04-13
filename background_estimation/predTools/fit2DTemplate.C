@@ -3,7 +3,7 @@
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 #include "AnalysisSupport/Utilities/interface/ParParser.h"
 #include "AnalysisSupport/Utilities/interface/TObjectHelper.h"
-#include "Utilities/HiggsCombineImport/interface/VerticalInterpHistPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/VerticalInterpHistPdf.h"
 #include <string.h>
 #include <regex>
 #include "RooHistPdf.h"
