@@ -22,9 +22,11 @@ public:
         std::string str = strStream.str();
         str.erase(std::remove(str.begin(), str.end(), '}'), str.end());
         str.erase(std::remove(str.begin(), str.end(), '{'), str.end());
-        std::vector<std::string> paramFits(std::sregex_token_iterator(str.begin(), str.end(), std::regex("\", \""), -1), std::sregex_token_iterator());
+        auto regMtch = std::regex("\", \"");
+        auto regMtch2 = std::regex("\": \"");
+        std::vector<std::string> paramFits(std::sregex_token_iterator(str.begin(), str.end(),regMtch,-1), std::sregex_token_iterator());
         for(const auto& s :paramFits){
-            std::vector<std::string> ps(std::sregex_token_iterator(s.begin(), s.end(), std::regex("\": \""), -1), std::sregex_token_iterator());
+            std::vector<std::string> ps(std::sregex_token_iterator(s.begin(), s.end(), regMtch2, -1), std::sregex_token_iterator());
             if(ps.size() != 2) {
                 for(auto& p :ps) std::cout << p <<" ";
                 std::cout <<std::endl;
@@ -59,8 +61,10 @@ public:
     unsigned int getNP() const {return parameters.size();}
 
     void fillFunctions(const std::string& xVarName, const std::string& yVarName = ""){
-        for(unsigned int i = 0; i< parameters.size(); ++i)
-            functions.emplace_back(parameters[i].first,getFunction(i,xVarName,yVarName));
+        for(unsigned int i = 0; i< parameters.size(); ++i){
+            functions.emplace_back(parameters[i].first, std::unique_ptr<TF1>(getFunction(i,xVarName,yVarName)));
+        }
+
     }
 
     const std::pair<std::string,std::string>& getP(unsigned int idx) const {return parameters[idx];}
@@ -118,9 +122,11 @@ CJSON makeJSON(const std::string& outFileName,std::string& arguments){
 
     auto getParamList =[&](const std::string& inList, ParamNames& outNames){
         outNames.clear();
-        std::vector<std::string> systList(std::sregex_token_iterator(inList.begin(), inList.end(), std::regex(","), -1), std::sregex_token_iterator());
+        auto regMtch = std::regex(",");
+        auto regMtch2 = std::regex(":");
+        std::vector<std::string> systList(std::sregex_token_iterator(inList.begin(), inList.end(), regMtch, -1), std::sregex_token_iterator());
         for(const auto& s :systList){
-            std::vector<std::string> names(std::sregex_token_iterator(s.begin(), s.end(), std::regex(":"), -1), std::sregex_token_iterator());
+            std::vector<std::string> names(std::sregex_token_iterator(s.begin(), s.end(), regMtch2, -1), std::sregex_token_iterator());
             if(names.size() != 2) {
                 std::cout << inList<<std::endl;
                 throw std::invalid_argument("MakeJSON::ParamNames() -> Bad parsing");
@@ -184,7 +190,8 @@ CJSON makeJSON(const std::string& outFileName,std::string& arguments){
             func=new  TF1("llog","[0]+[1]*log(x)",1,13000);
             func->SetParameters(1,1);
         } else if(p.second.find("laur") != std::string::npos){
-            std::vector<std::string> laurPs(std::sregex_token_iterator(p.second.begin(), p.second.end(), std::regex("laur"), -1), std::sregex_token_iterator());
+            auto regMtch = std::regex("laur");
+            std::vector<std::string> laurPs(std::sregex_token_iterator(p.second.begin(), p.second.end(), regMtch, -1), std::sregex_token_iterator());
             int order = std::stoi(laurPs[1]);
             std::string fstr = "0";
             for(int iO = 0; iO < order; ++iO){
@@ -193,7 +200,8 @@ CJSON makeJSON(const std::string& outFileName,std::string& arguments){
             func=new TF1(p.second.c_str(),fstr.c_str(),1,13000);
             for(int iO = 0; iO < order; ++iO){ func->SetParameter(iO,0);}
         } else if(p.second.find("FIX")!= std::string::npos){
-            std::vector<std::string> laurPs(std::sregex_token_iterator(p.second.begin(), p.second.end(), std::regex("p"), -1), std::sregex_token_iterator());
+            auto regMtch = std::regex("p");
+            std::vector<std::string> laurPs(std::sregex_token_iterator(p.second.begin(), p.second.end(), regMtch, -1), std::sregex_token_iterator());
             std::string fstring = "x <= ([2]-[3]) ? [0] : (x >= ([2]+[3]) ? [1] : ( 0.5*([0]+[1] + ([0]-[1])*sin([4]*1.57*(x-[2])/[3]))))";
             func=new TF1(p.second.c_str(),fstring.c_str(),1,13000);
             for(unsigned int iP = 1; iP < laurPs.size(); ++iP){
