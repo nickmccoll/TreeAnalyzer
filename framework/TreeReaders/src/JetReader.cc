@@ -15,10 +15,15 @@ JetReader::~JetReader(){
     delete eta         ;
     delete phi         ;
     delete mass        ;
+    delete chef        ;
+    delete toRawFact   ;
+    delete metUnc_rawPx;
+    delete metUnc_rawPy;
     delete csv         ;
     delete id          ;
     delete hadronFlavor;
     delete partonFlavor;
+    delete JECUnc;
     delete genIDX      ;
     delete gen_pt      ;
     delete gen_eta     ;
@@ -33,6 +38,7 @@ void JetReader::setup(TreeReadingWrapper * wrapper){
         wrapper->setBranchAddressPre(branchName,"eta"         ,&eta         ,true);
         wrapper->setBranchAddressPre(branchName,"phi"         ,&phi         ,true);
         wrapper->setBranchAddressPre(branchName,"mass"        ,&mass        ,true);
+        wrapper->setBranchAddressPre(branchName,"chef"        ,&chef        ,true);
         wrapper->setBranchAddressPre(branchName,"toRawFact"   ,&toRawFact        ,true);
         wrapper->setBranchAddressPre(branchName,"metUnc_rawPx",&metUnc_rawPx        ,true);
         wrapper->setBranchAddressPre(branchName,"metUnc_rawPy",&metUnc_rawPy        ,true);
