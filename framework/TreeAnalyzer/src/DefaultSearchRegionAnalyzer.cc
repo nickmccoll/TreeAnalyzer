@@ -63,7 +63,8 @@ void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr) {FillerConstants
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::loadVariables()  {
     reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
-    reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData());  load(reader_fatjet  );
+    reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiJet",isRealData());  load(reader_fatjet  );
+    reader_fatjet_noLep=std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData());  load(reader_fatjet_noLep  );
     reader_jet_chs =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jet_chs );
     reader_jet     =std::make_shared<JetReader>     ("ak4PuppiJet",isRealData(),false);  load(reader_jet     );
     reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
