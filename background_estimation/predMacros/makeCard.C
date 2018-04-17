@@ -3,13 +3,13 @@
 using namespace CutConstants;
 using namespace ASTypes;
 
+bool runCR = true;
+bool simpleSignal = true;
+
 void go(const std::string& signalName, const std::string& filename) {
     const std::string inputDir = "../inputs/";
-    //Use SR
-    const std::string fPF =inputDir+filename;
-    //Use CR
-//    const std::string fPF =std::string("../controlReg/")+filename +"_CR";
-    const std::string sfPF =inputDir+filename;
+    const std::string fPF = runCR ? std::string("../controlReg/")+filename +"_CR" :  inputDir+filename;
+    const std::string sfPF =inputDir+ (simpleSignal ? "nonCond/" : "") +   filename;
 
     const std::string category = "std";
     std::string cmd = "combineCards.py ";
@@ -51,11 +51,14 @@ void go(const std::string& signalName, const std::string& filename) {
 
         if(signalName=="radHH"){
             //Conditional template
-            card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
-                    {{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},{{"CMS_scale_j",1},{"CMS_scale_MET",1}},{{"CMS_res_j",1},{"CMS_res_MET",1}}, b == btagCats[BTAG_L],MOD_MS);
-            //Non conditional template
-//            card.add2DSignalParametricShapeNoCond(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
-//                    {{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},{{"CMS_scale_j",1},{"CMS_scale_MET",1}},{{"CMS_res_j",1},{"CMS_res_MET",1}}, b == btagCats[BTAG_L],MOD_MS);
+            if(!simpleSignal){
+                card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
+                        {{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},{{"CMS_scale_j",1},{"CMS_scale_MET",1}},{{"CMS_res_j",1},{"CMS_res_MET",1}}, b == btagCats[BTAG_L],MOD_MS);
+            }else {
+                //Non conditional template
+                card.add2DSignalParametricShapeNoCond(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
+                        {{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},{{"CMS_scale_j",1},{"CMS_scale_MET",1}},{{"CMS_res_j",1},{"CMS_res_MET",1}}, b == btagCats[BTAG_L],MOD_MS);
+            }
             card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),1,"CMS_tau21_PtDependence","log("+MOD_MS+"/600)",0.041,MOD_MS);
         } else throw std::invalid_argument("makeCard::go() -> Bad parsing");
 
@@ -79,10 +82,12 @@ void go(const std::string& signalName, const std::string& filename) {
         card.addFixedYieldFromFile(bkgSels[BKG_MT],4,fPF+"_"+bkgSels[BKG_MT]+"_distributions.root",bkgSels[BKG_MT]+"_"+cat+"_"+hhMCS);
 
         //Data
-        //Real data
-//        card.importBinnedData(fPF + "_data_distributions.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
-        //Pseudo data
-        card.importBinnedData(fPF + "_pd.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
+        if(runCR){
+            card.importBinnedData(fPF + "_data_distributions.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
+        } else {
+            //Pseudo data
+            card.importBinnedData(fPF + "_pd.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
+        }
 
         //Systematics
         //luminosity
