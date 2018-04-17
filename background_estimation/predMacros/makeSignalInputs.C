@@ -557,9 +557,9 @@ void combine2DShapesNoCond(const std::string& name, const std::string& filename)
 
         CJSON mjjJSON(     filename+"_"+name+"_"+mjjCatName+"_MJJ_fit.json");
         mjjJSON.fillFunctions(MOD_MS);
-        CJSON mvvJSON(     filename+"_"+name+"_"+mvvCatName+"_MVV_fit.json");
+        CJSON mvvJSON(     filename+"_"+name+"_"+mvvCatName+"_MVV_fit1stIt.json");
         mvvJSON.fillFunctions(MOD_MS);
-        makeSignal2DShapes(name,filename,catName,fitName,&mjjJSON,&mvvJSON,true,doExpo,iF,false);
+        makeSignal2DShapes(name,filename,catName,fitName,&mjjJSON,&mvvJSON,false,doExpo,iF,false);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+ " -minX 700 -maxX 3800 -var "+MOD_MS+" ";
         std::string jsonArgs = argsP1 +" -g "+ (doExpo ? fitMJJExpo : fitMJJStd ) + ","+fitMVV;
@@ -597,7 +597,7 @@ void go(int step,std::string treeDir) {
         makeSignalMJJShapes1stIt(name,filename);
         makeSignalMJJShapes2ndIt(name,filename);
         makeSignalMVVShapes1stIt(name,filename);
-        makeSignalMVVShapes2ndIt(name,filename);
+//        makeSignalMVVShapes2ndIt(name,filename);
         combine2DShapesNoCond(name,filename);
     }
 
