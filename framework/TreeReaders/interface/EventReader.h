@@ -29,8 +29,8 @@ public:
 	float  met_pt             = 0;
 	float  met_phi            = 0;
 	float  met_sig            = 0;
-	float  met_unclUp         = 0;
-	float  met_unclDown       = 0;
+	float  met_uncUp_pt       = 0;
+	float  met_uncUp_phi      = 0;
 	float  met_raw_pt         = 0;
 	float  met_raw_phi        = 0;
 	float  nTruePUInts        = 0;

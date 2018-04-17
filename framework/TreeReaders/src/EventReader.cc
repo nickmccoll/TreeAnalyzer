@@ -18,8 +18,8 @@ void EventReader::setup(TreeReadingWrapper * wrapper){
     wrapper->setBranchAddressPre(branchName,"met_pt"            , &met_pt           , true );
     wrapper->setBranchAddressPre(branchName,"met_phi"           , &met_phi          , true );
     wrapper->setBranchAddressPre(branchName,"met_sig"           , &met_sig          , false);
-    wrapper->setBranchAddressPre(branchName,"met_unclUp"        , &met_unclUp       , false);
-    wrapper->setBranchAddressPre(branchName,"met_unclDown"      , &met_unclDown     , false);
+    wrapper->setBranchAddressPre(branchName,"met_uncUp_pt"      , &met_uncUp_pt       , false);
+    wrapper->setBranchAddressPre(branchName,"met_uncUp_phi"     , &met_uncUp_phi     , false);
     wrapper->setBranchAddressPre(branchName,"met_raw_pt"        , &met_raw_pt       , false);
     wrapper->setBranchAddressPre(branchName,"met_raw_phi"       , &met_raw_phi      , false);
 
