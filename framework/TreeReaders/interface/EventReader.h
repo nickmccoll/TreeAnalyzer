@@ -36,8 +36,8 @@ public:
 	float  nTruePUInts        = 0;
 	float  weight             = 0;
 	size16 process            = 0;
-	size16 dataset            = 0;
-	size16 dataRun            = 0;
+	size8  dataset            = 0;
+	size8  dataRun            = 0;
     std::vector<float>* genWeights       = new std::vector<float>;
 
 	size   metFilters         = 0;
