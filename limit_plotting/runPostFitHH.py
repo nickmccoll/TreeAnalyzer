@@ -4,7 +4,7 @@ from ROOT import gStyle,gROOT,gPad
 from CMS_lumi import *
 from tdrstyle import *
 from RooPlotter import *
-# ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
+ROOT.gSystem.Load("libHiggsAnalysisCombinedLimit")
 
 import optparse
 parser = optparse.OptionParser()
