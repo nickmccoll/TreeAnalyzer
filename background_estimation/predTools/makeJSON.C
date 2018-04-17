@@ -16,7 +16,7 @@ public:
     CJSON() {} //For filling by hand
     CJSON(const std::string& inFName){ //For reading in a file
         std::ifstream file (inFName);
-        if (!file.is_open())  throw std::invalid_argument("CJSON::CJSON() -> Bad file");
+        if (!file.is_open())  throw std::invalid_argument( (std::string("CJSON::CJSON() -> Bad file: ") + inFName).c_str());
         std::stringstream strStream;
         strStream << file.rdbuf();
         std::string str = strStream.str();
