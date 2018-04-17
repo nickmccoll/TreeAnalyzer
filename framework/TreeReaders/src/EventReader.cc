@@ -6,6 +6,7 @@
 namespace TAna{
 
 EventReader::EventReader(std::string branchName, bool isRealData) : BaseReader("EventReader",branchName),realData(isRealData) {};
+EventReader::~EventReader() { delete genWeights;}
 
 void EventReader::setup(TreeReadingWrapper * wrapper){
 
@@ -27,6 +28,8 @@ void EventReader::setup(TreeReadingWrapper * wrapper){
         wrapper->setBranchAddressPre(branchName,"nTruePUInts"       , &nTruePUInts  , false);
         wrapper->setBranchAddressPre(branchName,"weight"            , &weight       , false);
         wrapper->setBranchAddressPre(branchName,"process"           , &process      , false);
+        wrapper->setBranchAddressPre(branchName,"genWeights"        ,&genWeights    , false);
+
         normWeightLoaded = wrapper->setBranchAddressPre(branchName,"normWeight"            , &normWeight       , false);
     } else {
         wrapper->setBranchAddressPre(branchName,"dataset"           , &dataset      , false);

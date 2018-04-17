@@ -11,7 +11,7 @@ namespace TAna{
 class EventReader: public BaseReader {
 public:
     EventReader(std::string branchName, bool isRealData);
-	virtual ~EventReader() {}
+	virtual ~EventReader();
 	virtual void setup(TreeReadingWrapper * wrapper);
 	virtual void processVars();
 
@@ -38,6 +38,8 @@ public:
 	size16 process            = 0;
 	size16 dataset            = 0;
 	size16 dataRun            = 0;
+    std::vector<float>* genWeights       = new std::vector<float>;
+
 	size   metFilters         = 0;
 	size64 triggerAccepts     = 0;
 	size64 triggerPrescales   = 0;
