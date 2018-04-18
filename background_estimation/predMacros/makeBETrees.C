@@ -41,10 +41,10 @@ public:
     virtual void bookOutputVariables() override {
 
         if(isRealData()){
-            i_dataset             =  outTree->add<size16>  ("","dataset"  ,"s",0);
-            i_dataRun             =  outTree->add<size16>  ("","dataRun"  ,"s",0);
+            i_dataset             =  outTree->add<size8>  ("","dataset"  ,"s",0);
+            i_dataRun             =  outTree->add<size8>  ("","dataRun"  ,"s",0);
         } else {
-            i_process     =outTree->add<size16> ("","process","s",0);
+            i_process     =outTree->add<size8> ("","process","s",0);
             i_dhType      =outTree->add<size8>  ("","dhType" ,"b",0);
             i_xsec        =outTree->add<float>  ("","xsec"   ,"F",0);
             i_trig_N      =outTree->add<float>  ("","trig_N" ,"F",0);
