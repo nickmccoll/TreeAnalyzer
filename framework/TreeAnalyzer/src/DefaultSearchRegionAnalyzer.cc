@@ -132,7 +132,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
     if(reader_fatjet && selectedLepton){
-        fatjetCands = fjProc->loadFatJets(*reader_fatjet,selectedLepton);
+        fjProc->loadFatJets(*reader_fatjet,*reader_fatjet_noLep,selectedLepton);
         hbbCand     = fjProc->getHBBCand();
         wjjCand     = fjProc->getWjjCand();
         hbbCSVCat   = fjProc->getHbbCSVCat();
@@ -142,7 +142,6 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         passHbbSel  = fjProc->passHbbSel();
         passWjjSel  = fjProc->passWjjSel();
     } else {
-        fatjetCands.clear();
         wjjCand    =  0;
         hbbCand    =  0;
         hbbCSVCat   = BTagging::CSVSJ_INCL;

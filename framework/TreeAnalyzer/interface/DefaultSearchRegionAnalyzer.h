@@ -97,7 +97,6 @@ public:
     const Lepton *                 selectedLepton=0;
 
 
-    std::vector<const FatJet*> fatjetCands;
     const FatJet*              wjjCand     =0;
     const FatJet*              hbbCand     =0;
     BTagging::CSVSJ_CAT        hbbCSVCat   = BTagging::CSVSJ_INCL;

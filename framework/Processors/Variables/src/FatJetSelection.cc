@@ -35,16 +35,14 @@ const FatJet* FatJetSelHelpers::getHbbCand(const FatJet* wjjCand, const Momentum
     nSJs = 0;
     //assuming the jets collection is ordered by pT
     const FatJet * fj = 0;
-    if(jets.size() == 0){
-        return 0;
-    } else if(jets.size() == 1){
-        if(wjjCand == jets[0]) return 0;
-        fj = jets[0];
-    } else {
-        fj = (wjjCand == jets[0] ? jets[1] : jets[0]);
+    for(unsigned int iJ = 0; iJ < 2 && iJ < jets.size(); ++iJ){
+        if(param.hbb_minPT >= 0 && jets[iJ] ->pt() < param.hbb_minPT) break;
+        if(PhysicsUtilities::deltaR2(*wjjCand,*jets[iJ]  ) < 2.56) continue; //1.6^2
+        if(param.hbb_minLepDPhi > 0 && PhysicsUtilities::absDeltaPhi(*lepton,*jets[iJ]) < param.hbb_minLepDPhi) continue;
+        fj = jets[iJ];
+        break;
     }
-    if(param.hbb_minPT >= 0 && fj->pt() < param.hbb_minPT) return 0;
-    if(param.hbb_minLepDPhi > 0 && PhysicsUtilities::absDeltaPhi(*lepton,*fj) < param.hbb_minLepDPhi) return 0;
+    if(fj==0) return 0;
     nSJs = PhysicsUtilities::selObjsMom(fj->subJets(),
             param.sj_minPT, param.sj_maxETA < 0 ? 999.0 : param.sj_maxETA).size();
     bCat = BTagging::getCSVSJCat(fj->subJets(), param.sj_minBTagPT, param.sj_maxBTagETA);
@@ -70,11 +68,11 @@ bool FatJetSelHelpers::passWjjSelection(const FatJet* fj,const BTagging::CSVSJ_C
     return true;
 }
 //_____________________________________________________________________________
-std::vector<const FatJet *> FatJetProcessor::loadFatJets(const FatJetReader& reader_fatjet, const MomentumF* lepton) {
+void FatJetProcessor::loadFatJets(const FatJetReader& reader_fatjet,const FatJetReader& reader_fatjet_noLep, const MomentumF* lepton) {
     auto fjs = FatJetSelHelpers::selectFatJets(reader_fatjet,param);
-    wjjCand = FatJetSelHelpers::getWjjCand(lepton,fjs,param,wjjCSVCat,wjjNSJs);
+    auto fjs_noLep = FatJetSelHelpers::selectFatJets(reader_fatjet_noLep,param);
+    wjjCand = FatJetSelHelpers::getWjjCand(lepton,fjs_noLep,param,wjjCSVCat,wjjNSJs);
     hbbCand = FatJetSelHelpers::getHbbCand(wjjCand,lepton,fjs,param,hbbCSVCat,hbbNSJs);
-    return fjs;
 }
 //_____________________________________________________________________________
 const FatJet * FatJetProcessor::getHBBCand() const {return hbbCand;}

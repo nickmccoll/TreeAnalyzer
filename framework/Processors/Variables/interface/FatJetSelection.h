@@ -66,7 +66,7 @@ class FatJetProcessor {
 public:
 
     //uses built in FatJetParameters
-    std::vector<const FatJet *> loadFatJets( const FatJetReader& reader_fatjet, const MomentumF* lepton);
+    void loadFatJets( const FatJetReader& reader_fatjet,const FatJetReader& reader_fatjet_noLep, const MomentumF* lepton);
 
     const FatJet * getHBBCand() const;
     const FatJet * getWjjCand() const;
