@@ -37,7 +37,7 @@ const FatJet* FatJetSelHelpers::getHbbCand(const FatJet* wjjCand, const Momentum
     const FatJet * fj = 0;
     for(unsigned int iJ = 0; iJ < 2 && iJ < jets.size(); ++iJ){
         if(param.hbb_minPT >= 0 && jets[iJ] ->pt() < param.hbb_minPT) break;
-        if(PhysicsUtilities::deltaR2(*wjjCand,*jets[iJ]  ) < 2.56) continue; //1.6^2
+        if(wjjCand &&  PhysicsUtilities::deltaR2(*wjjCand,*jets[iJ]  ) < 2.56) continue; //1.6^2
         if(param.hbb_minLepDPhi > 0 && PhysicsUtilities::absDeltaPhi(*lepton,*jets[iJ]) < param.hbb_minLepDPhi) continue;
         fj = jets[iJ];
         break;
