@@ -3,13 +3,14 @@
 using namespace CutConstants;
 using namespace ASTypes;
 
-bool runCR = true;
-bool simpleSignal = true;
+bool runCR = false;
+bool simpleSignal = false;
 
-void go(const std::string& signalName, const std::string& filename) {
-    const std::string inputDir = "../inputs/";
-    const std::string fPF = runCR ? std::string("../controlReg/")+filename +"_CR" :  inputDir+filename;
-    const std::string sfPF =inputDir+ (simpleSignal ? "nonCond/" : "") +   filename;
+void go(const std::string& signalName, const std::string& filename, const std::string& mainDir) {
+    const std::string inputDir =  mainDir + (runCR ? "/bkgInputsCR/" : "/bkgInputs/");
+    const std::string sigInputDir =  mainDir + (simpleSignal ? "/signalInputsNoCond/" : "/signalInputs/");
+    const std::string fPF = runCR ? inputDir+filename +"_CR" :  inputDir+filename;
+    const std::string sfPF =sigInputDir +   filename;
 
     const std::string category = "std";
     std::string cmd = "combineCards.py ";
@@ -145,6 +146,6 @@ void go(const std::string& signalName, const std::string& filename) {
 }
 #endif
 
-void makeCard(std::string signalString = "radHH"){
-    go(signalString,hhFilename);
+void makeCard(std::string mainDir = "../",std::string signalString = "radHH"){
+    go(signalString,hhFilename,mainDir);
 }
