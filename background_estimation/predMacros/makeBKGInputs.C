@@ -451,8 +451,10 @@ void go(BKGModels modelToDo, std::string treeDir) {
     }
 
     //Make pseudo data
-    if(modelToDo > BKG_MT){
+    if(modelToDo == 4){//4
         makePseudoData("pd",filename,1);
+    }
+    if(modelToDo == 5){//5
     }
 
 }
