@@ -3,9 +3,7 @@
 #include "TH1.h"
 #include "TH2.h"
 
-
-
-
+std::vector<TObject*> writeables;
 
 TCanvas* make2DTests(std::string plotTitle, int mass, const TH2* dH,TH2* pH, const std::vector<double>& bins, bool binInY, double rebin = -1) {
     const int binXmin = dH->GetXaxis()->FindFixBin(30);
@@ -57,10 +55,9 @@ TCanvas* make2DTests(std::string plotTitle, int mass, const TH2* dH,TH2* pH, con
 
 
 
-void test2DFits(std::string name, std::string filename, std::string fitName,bool binInY, const std::vector<std::string>& sels) {
+void test2DFits(std::string name, std::string filename, std::string fitName,bool binInY, const std::vector<std::string>& sels, std::string outName = "") {
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<double> bins = {30,210,30,115,135,210};
-
 
     for(const auto& s : sels){
         TFile * fo =0;
@@ -89,9 +86,9 @@ void test2DFits(std::string name, std::string filename, std::string fitName,bool
                     cbins.push_back(float(sB)*1.05);
                     cbins.push_back(4000);
                     compPads.push_back(make2DTests(s+"_m"+int2Str(sB),sB,(TH2*)mcPads.back(),(TH2*)pdfPads.back(),cbins,binInY,2));
-                    } else
-                        compPads.push_back(make2DTests(s+"_m"+int2Str(sB),sB,(TH2*)mcPads.back(),(TH2*)pdfPads.back(),bins,binInY,2));
-                }
+                } else
+                    compPads.push_back(make2DTests(s+"_m"+int2Str(sB),sB,(TH2*)mcPads.back(),(TH2*)pdfPads.back(),bins,binInY,2));
+            }
         }
         gROOT->SetBatch(false);
         if(mcPads.size()==0)continue;
@@ -135,13 +132,14 @@ void test2DFits(std::string name, std::string filename, std::string fitName,bool
 
 
 
-//        Drawing::drawAll(mcPads, (s + ": MC").c_str(),"COLZ");
-//        Drawing::drawAll(pdfPads, (s + ": PDF").c_str(),"COLZ");
-        Drawing::drawAll(compPads, (s + ": COMP").c_str());
-        Drawing::drawAll(paramPads, (s + ": params").c_str());
+        //        Drawing::drawAll(mcPads, (s + ": MC").c_str(),"COLZ");
+        //        Drawing::drawAll(pdfPads, (s + ": PDF").c_str(),"COLZ");
+        TCanvas * c =Drawing::drawAll(compPads, (s + "_COMP").c_str());
+        TCanvas * c1 =Drawing::drawAll(paramPads, (s + "_params").c_str());
+        writeables.push_back(c);
+        writeables.push_back(c1);
 
     }
-
 }
 
 void plotYields(std::string name, std::string filename,std::string fitName, const std::vector<std::string>& sels) {
@@ -167,60 +165,98 @@ void plotYields(std::string name, std::string filename,std::string fitName, cons
 
         addGraph("yield", paramPads);
     }
-    Drawing::drawAll(paramPads,"Yields");
+    auto * c = Drawing::drawAll(paramPads,"Yields");
+    writeables.push_back(c);
 
 }
 
 
-void testSignal1DFits(std::string name, std::string filename, std::string varName, std::string fitName, const std::vector<std::string>& sels){
+std::vector<TObject*> testSignal1DFits(std::string name, std::string filename, std::string varName, std::string fitName, const std::vector<std::string>& sels){
     std::vector<std::string> canNames;
     for(const auto& sB : signalMassBins){ canNames.push_back(std::string("can_m") +int2Str(sB));}
-    test1DFits(name,filename, varName,fitName,sels,canNames);
+    return test1DFits(name,filename, varName,fitName,sels,canNames);
 }
 
-void plotSignalTests(){
-    std::string filename = hhFilename;
-//        plotYields(radionSig,filename,"yield",{"emu_LMT_I_full","e_L_LP_full","e_M_LP_full","e_T_LP_full","e_L_HP_full","e_M_HP_full","e_T_HP_full","mu_L_LP_full","mu_M_LP_full","mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
+class Dummy {
+public:
+    Dummy(const std::string& outName = "") : outName(outName) {};
+    ~Dummy() {
+        if(outName.size()){
+            TFile * f = new TFile(outName.c_str(),"recreate");
+            f->cd();
+            for(auto * w : writeables){
+                w->Write();
+            }
+            f->Close();
+        }
+    }
+    std::string outName;
+};
 
-//        testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit1stIt",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
-//    testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
-//    testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_LP_full","e_LMT_HP_full","mu_LMT_LP_full","mu_LMT_HP_full"});
-//    testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit",{"e_LMT_LP_full","e_LMT_HP_full","mu_LMT_LP_full","mu_LMT_HP_full"});
-//    test2DFits(radionSig,filename,"2D_fit",false,{"mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
-    test2DFits(radionSig,filename,"2D_fit",false,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"});
+
+
+void plotSignalTests(int cat = 0, bool doCond = true, std::string outName = ""){
+    std:: string inName = doCond ? "signalInputs" : "signalInputsNoCond";
+    std::string filename = inName +"/"+hhFilename;
+    if(outName.size()) outName += doCond ? std::string("/signal") : std::string("/signalNoCond");
+    switch(cat) {
+    case 0:
+        if(outName.size()) outName += "_yield.root";
+        plotYields(radionSig,filename,"yield",{"emu_LMT_I_full","e_L_LP_full","e_M_LP_full","e_T_LP_full","e_L_HP_full","e_M_HP_full","e_T_HP_full","mu_L_LP_full","mu_M_LP_full","mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
+        break;
+    case 1:
+        if(outName.size()) outName += "_MJJ_fit1stIt.root";
+        writeables = testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit1stIt",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
+        break;
+    case 2:
+        if(outName.size()) outName += "_MJJ_fit.root";
+        writeables = testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
+        break;
+    case 3:
+        if(outName.size()) outName += "_MVV_fit.root";
+        if(doCond) writeables =  testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_I_ltmb","mu_LMT_I_ltmb"});
+        else  writeables =  testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_LP_full","e_LMT_HP_full","mu_LMT_LP_full","mu_LMT_HP_full"});
+        break;
+    case 4:
+        if(outName.size()) outName += "_2D_fit.root";
+        test2DFits(radionSig,filename,"2D_fit",false,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},outName);
+        break;
+    }
+
+    Dummy d(outName);
 
 
 
     //OLD
     //        testSignal1DFits(radionSig,filename,"MJJ","MJJ_fit1stIt",{"emu_LMT_ltmb","emu_L_ltmb","emu_T_ltmb"});
-//            testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit",{"emu_LMT_ltmb","emu_M_ltmb","emu_T_ltmb"});
-//    testSignal1DFits(radionSig,filename,"MVV","MVV_fit",{"e_LMT_ltmb","mu_LMT_ltmb"});
+    //            testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit",{"emu_LMT_ltmb","emu_M_ltmb","emu_T_ltmb"});
+    //    testSignal1DFits(radionSig,filename,"MVV","MVV_fit",{"e_LMT_ltmb","mu_LMT_ltmb"});
 
-//        compFitParams(radionSig,filename,"MVV","MVV_fit", "e v mu", {"e_LMT_ltmb","mu_LMT_ltmb"} );
-//        compFitParams(radionSig,filename,"MVV","MVV_fit", "full v ltmb", {"mu_LMT_ltmb","mu_LMT_full","e_LMT_ltmb","e_LMT_full"} );
-//        compFitParams(radionSig,filename,"MVV","MVV_fit", "L v M", {"mu_L_ltmb","mu_M_ltmb","mu_T_ltmb","e_L_ltmb","e_M_ltmb","e_T_ltmb"} );
-//    test2DFits(radionSig,filename,"MVV","2D_fit1stIt");
-//    test2DFits(radionSig,filename,"MVV","2D_fit");
+    //        compFitParams(radionSig,filename,"MVV","MVV_fit", "e v mu", {"e_LMT_ltmb","mu_LMT_ltmb"} );
+    //        compFitParams(radionSig,filename,"MVV","MVV_fit", "full v ltmb", {"mu_LMT_ltmb","mu_LMT_full","e_LMT_ltmb","e_LMT_full"} );
+    //        compFitParams(radionSig,filename,"MVV","MVV_fit", "L v M", {"mu_L_ltmb","mu_M_ltmb","mu_T_ltmb","e_L_ltmb","e_M_ltmb","e_T_ltmb"} );
+    //    test2DFits(radionSig,filename,"MVV","2D_fit1stIt");
+    //    test2DFits(radionSig,filename,"MVV","2D_fit");
 
 
 
     //Moving to MJ cond on MR
-//    testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_ltmb","mu_LMT_ltmb","emu_LMT_ltmb"});
-//    testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit",{"e_LMT_ltmb","mu_LMT_ltmb","emu_LMT_ltmb"});
-//    testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit1stIt",{"emu_LMT_ltmb","emu_L_ltmb","emu_M_ltmb","emu_T_ltmb"});
-//    test2DFits(radionSig,filename,"2D_fit1stIt",true,{"emu_LMT_ltmb","e_LMT_ltmb","mu_LMT_ltmb"});
+    //    testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_ltmb","mu_LMT_ltmb","emu_LMT_ltmb"});
+    //    testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit",{"e_LMT_ltmb","mu_LMT_ltmb","emu_LMT_ltmb"});
+    //    testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit1stIt",{"emu_LMT_ltmb","emu_L_ltmb","emu_M_ltmb","emu_T_ltmb"});
+    //    test2DFits(radionSig,filename,"2D_fit1stIt",true,{"emu_LMT_ltmb","e_LMT_ltmb","mu_LMT_ltmb"});
 
 
-//        test2DFits(radionSig,filename,"2D_fit1stIt",true,{"e_LMT_ltmb","mu_LMT_ltmb"});
-//                test2DFits(radionSig,filename,"2D_fit1stIt",false,{"e_LMT_ltmb","mu_LMT_ltmb"});
+    //        test2DFits(radionSig,filename,"2D_fit1stIt",true,{"e_LMT_ltmb","mu_LMT_ltmb"});
+    //                test2DFits(radionSig,filename,"2D_fit1stIt",false,{"e_LMT_ltmb","mu_LMT_ltmb"});
 
-//            test2DFits(radionSig,filename,"2D_fit",true,{"e_L_full","mu_L_full","e_M_full","mu_M_full","e_T_full","mu_T_full"});
-//                    test2DFits(radionSig,filename,"2D_fit",false,{"e_L_full","mu_L_full","e_M_full","mu_M_full","e_T_full","mu_T_full"});
+    //            test2DFits(radionSig,filename,"2D_fit",true,{"e_L_full","mu_L_full","e_M_full","mu_M_full","e_T_full","mu_T_full"});
+    //                    test2DFits(radionSig,filename,"2D_fit",false,{"e_L_full","mu_L_full","e_M_full","mu_M_full","e_T_full","mu_T_full"});
 
-//    test2DFits(radionSig,filename,"2D_fit",false,{"e_L_full","mu_L_full"});
-//    test2DFits(radionSig,filename,"2D_fit",true,{"e_M_full","mu_M_full"});
-//
-//    testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit",{"emu_LMT_ltmb"});
-//        test2DFits(radionSig,filename,"2D_fit",false,{"e_L_full","e_M_full","e_T_full"});
+    //    test2DFits(radionSig,filename,"2D_fit",false,{"e_L_full","mu_L_full"});
+    //    test2DFits(radionSig,filename,"2D_fit",true,{"e_M_full","mu_M_full"});
+    //
+    //    testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit",{"emu_LMT_ltmb"});
+    //        test2DFits(radionSig,filename,"2D_fit",false,{"e_L_full","e_M_full","e_T_full"});
 
 }

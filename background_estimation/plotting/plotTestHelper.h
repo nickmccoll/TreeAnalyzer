@@ -12,9 +12,9 @@ using namespace CutConstants;
 using namespace ASTypes;
 
 
-void test1DFits(std::string name, std::string filename, std::string varName, std::string fitName, const std::vector<std::string>& sels, const std::vector<std::string>& canNames) {
+std::vector<TObject*> test1DFits(std::string name, std::string filename, std::string varName, std::string fitName, const std::vector<std::string>& sels, const std::vector<std::string>& canNames) {
     Plotter * p = new Plotter; //stupid CINT bugfix.....
-
+    std::vector<TObject*> writeables;
     for(const auto& s : sels){
         TFile * fo = new TFile((filename+"_"+name+"_"+s+"_"+fitName+".root").c_str(),"read");
         if(fo == 0) continue;
@@ -50,11 +50,12 @@ void test1DFits(std::string name, std::string filename, std::string varName, std
         addGraph(vN("slope" ), paramPads);
         addGraph(vN("fE"    ), paramPads);
         addGraph("chi2", paramPads);
-        Drawing::drawAll(fitPads, (s + ": fits").c_str());
-        Drawing::drawAll(paramPads, (s + ": params").c_str());
-
+        auto *c   =Drawing::drawAll(fitPads, (s + "_fits").c_str());
+        auto * c1 =Drawing::drawAll(paramPads, (s + "_params").c_str());
+        writeables.push_back(c);
+        writeables.push_back(c1);
     }
-
+    return writeables;
 }
 
 void compFitParams(const std::string& name, const std::string& filename, const std::string& varName, const std::string& fitName,
@@ -114,8 +115,8 @@ void compFitParams(const std::string& name, const std::string& filename, const s
 }
 
 
-void test2DModel(std::vector<CutStr> types, std::string filename, const std::vector<std::string>& sels,const std::vector<double>& bins, bool binInY = true, bool addData = false ) {
-
+std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filename, const std::vector<std::string>& sels,const std::vector<double>& bins, bool binInY = true, bool addData = false ) {
+    std::vector<TObject*> writeables;
     std::vector<TFile*> distFiles;
     std::vector<TFile*> tempFiles;
     for(const auto& t: types){
@@ -197,10 +198,13 @@ void test2DModel(std::vector<CutStr> types, std::string filename, const std::vec
 
          p->setBotMinMax(0,2);
          p->setYTitleBot("N/N(template)");
-         auto * c = p->drawSplitRatio(-1,"stack",false,false,(s + ": "+flt2Str(bins[iB]) +"-"+flt2Str(bins[iB+1])).c_str());
+         auto * c = p->drawSplitRatio(-1,"stack",false,false,(s + "_"+flt2Str(bins[iB]) +"_"+flt2Str(bins[iB+1])).c_str());
+         writeables.push_back(c);
+
         // c->GetPad(1)->SetLogy();
         // c->GetPad(1)->Update();
   }
   }
+  return writeables;
 }
 

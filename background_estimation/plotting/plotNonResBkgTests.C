@@ -6,6 +6,8 @@
 using namespace CutConstants;
 using namespace ASTypes;
 
+std::vector<TObject*> writeables;
+
 void make2DTests(std::string plotTitle, const TH2* dH, const std::vector<TH2*>& hs,const std::vector<std::string>& hNs, const std::vector<double>& bins, bool binInY, double rebin = -1) {
     bool withRatio = true;
     for(unsigned int iH = 0; iH < hs.size(); ++iH) hs[iH]->Scale(dH->Integral()/hs[iH]->Integral());
@@ -37,13 +39,16 @@ void make2DTests(std::string plotTitle, const TH2* dH, const std::vector<TH2*>& 
                 auto * c = p->drawSplitRatio(1,"stack",false,false,name);
                 c->GetPad(1)->SetLogy();
                 c->GetPad(1)->Update();
+                writeables.push_back(c);
+
             } else {
                 auto * c = p->draw(false,name);
                 c->SetLogy();
                 c->Update();
+                writeables.push_back(c);
             }
         };
-        setupPlotter(p,plotTitle+": "+  flt2Str(bins[iB]) +"-"+flt2Str(bins[iB+1]));
+        setupPlotter(p,plotTitle+"_"+  flt2Str(bins[iB]) +"_"+flt2Str(bins[iB+1]));
     }
 
 }
@@ -78,10 +83,10 @@ void test2DCondTemplate(std::string name, std::string filename){
 
     std::vector<double> hBBBinning = {30,40,50,60,80,100,120,140,170,210};
     std::vector<double> hhBinning  = {700,800,900,1000,1500,2000,3000,4000,5000};
-    make2DTests(name + " COND2D HbbF" ,dH,hs,hNs,hBBBinning,true);
-    make2DTests(name + " COND2D HbbC" ,dH,hs,hNs,hBBBinning,true,10);
-    make2DTests(name + " COND2D HHF"  ,dH,hs,hNs,hhBinning,false);
-    make2DTests(name + " COND2D HHC"  ,dH,hs,hNs,hhBinning,false,5);
+    make2DTests(name + "_COND2D_HbbF" ,dH,hs,hNs,hBBBinning,true,-1);
+    make2DTests(name + "_COND2D_HbbC" ,dH,hs,hNs,hBBBinning,true,10);
+    make2DTests(name + "_COND2D_HHF"  ,dH,hs,hNs,hhBinning,false,-1);
+    make2DTests(name + "_COND2D_HHC"  ,dH,hs,hNs,hhBinning,false,5 );
 }
 
 void test2DTemplate(std::string name, std::string filename){
@@ -112,10 +117,10 @@ void test2DTemplate(std::string name, std::string filename){
     fT->GetObject("histo",h);hs.push_back(h);hNs.push_back("Template");
     std::vector<double> hBBBinning = {30,40,50,60,80,100,120,140,170,210};
     std::vector<double> hhBinning  = {700,800,900,1000,1500,2000,3000,4000,5000};
-    make2DTests(name + " Temp HbbF",dH,hs,hNs,hBBBinning,false);
-    make2DTests(name + " Temp HbbC",dH,hs,hNs,hBBBinning,false,10);
-    make2DTests(name + " Temp HHF" ,dH,hs,hNs,hhBinning,true);
-    make2DTests(name + " Temp HHC" ,dH,hs,hNs,hhBinning,true,5);
+    make2DTests(name + "_Temp_HbbF",dH,hs,hNs,hBBBinning,false);
+    make2DTests(name + "_Temp_HbbC",dH,hs,hNs,hBBBinning,false,10);
+    make2DTests(name + "_Temp_HHF" ,dH,hs,hNs,hhBinning,true);
+    make2DTests(name + "_Temp_HHC" ,dH,hs,hNs,hhBinning,true,5);
 }
 
 void test2DFits(std::string name, std::string filename){
@@ -146,7 +151,7 @@ void test2DFits(std::string name, std::string filename){
         if(hF == 0) continue;
 
         //        make2DTests(name + " Fit HbbF "+s,dH,{hF,hOT},{"Search region template","Original template"},hBBBinning,false);
-        make2DTests(name + " Fit HbbC "+s,dH,{hF,hOT},{"Search region template","Baseline template"},hBBBinning,false,10);
+        make2DTests(name + "_Fit_HbbC_"+s,dH,{hF,hOT},{"Search region template","Baseline template"},hBBBinning,false,10);
         //        make2DTests(name + " Fit HHF "+s ,dH,{hF,hOT},{"Search region template","Original template"},hhBinning,true);
         //        make2DTests(name + " Fit HHC "+s ,dH,{hF,hOT},{"Search region template","Baseline template"},hhBinning,true,5);
     }
@@ -193,10 +198,14 @@ void testMJJKern(std::string name, std::string filename) {
             auto * c = p->drawSplitRatio(1,"stack",false,false,name);
             c->GetPad(1)->SetLogy();
             c->GetPad(1)->Update();
+            writeables.push_back(c);
+
         } else {
             auto * c = p->draw(false,name);
             c->SetLogy();
             c->Update();
+            writeables.push_back(c);
+
         }
     };
 
@@ -205,22 +214,59 @@ void testMJJKern(std::string name, std::string filename) {
 
 }
 
+class Dummy {
+public:
+    Dummy(const std::string& outName = "") : outName(outName) {};
+    ~Dummy() {
+        if(outName.size()){
+            TFile * f = new TFile(outName.c_str(),"recreate");
+            f->cd();
+            for(auto * w : writeables){
+                w->Write();
+            }
+            f->Close();
+        }
+    }
+    std::string outName;
+};
 
 
 
-void plotNonResBkgTests(int step = 0){
-//    hhFilename +="_CR";
-    std::string filename = hhFilename;
 
-    if(step == 0)test2DCondTemplate(bkgSels[BKG_LOSTTW],filename);
-    if(step == 1)testMJJKern(bkgSels[BKG_LOSTTW],filename);
-    if(step == 2)test2DTemplate(bkgSels[BKG_LOSTTW],filename);
-    if(step == 3)test2DFits(bkgSels[BKG_LOSTTW],filename);
-    if(step == 4)test2DModel({bkgSels[BKG_LOSTTW]},filename,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},{700,4000});
+void plotNonResBkgTests(int step = 0,bool doTW = true, bool doSR = true, std::string outName = ""){
+    //    hhFilename +="_CR";
+    std:: string inName = doSR ? "bkgInputs" : "bkgInputsCR";
+    std::string filename = inName +"/"+hhFilename;
 
-    if(step == 5)test2DCondTemplate(bkgSels[BKG_QG],filename);
-    if(step == 6)testMJJKern(bkgSels[BKG_QG],filename);
-    if(step == 7)test2DTemplate(bkgSels[BKG_QG],filename);
-    if(step == 8)test2DFits(bkgSels[BKG_QG],filename);
-    if(step == 9)test2DModel({bkgSels[BKG_QG]},filename,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},{700,4000});
+    CutStr mod = bkgSels [doTW ? BKG_LOSTTW : BKG_QG];
+    if(outName.size()){
+        outName += std::string("/") + mod +  (doSR ? "" : "CR");
+    }
+
+
+    switch(step){
+    case 0:
+        if(outName.size()) outName += "_2DCondTemp.root";
+        test2DCondTemplate(mod,filename);
+        break;
+    case 1:
+        if(outName.size()) outName += "_MJJKern.root";
+        testMJJKern(mod,filename);
+        break;
+    case 2:
+        if(outName.size()) outName += "_2DTemp.root";
+        test2DTemplate(mod,filename);
+        break;
+    case 3:
+        if(outName.size()) outName += "_2DFits.root";
+        test2DFits(mod,filename);
+        break;
+    case 4:
+        if(outName.size()) outName += "_2DComp.root";
+        writeables = test2DModel({mod},filename,
+                {"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},{700,4000});
+        break;
+    }
+
+    Dummy d(outName);
 }
