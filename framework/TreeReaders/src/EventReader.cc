@@ -37,6 +37,7 @@ void EventReader::setup(TreeReadingWrapper * wrapper){
         weight = 1;
         normWeightLoaded = false;
         normWeight = 1;
+        process = 0;
     }
 
     wrapper->setBranchAddressPre(branchName,"metFilters"         , &metFilters      , false);
