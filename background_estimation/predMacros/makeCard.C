@@ -13,7 +13,7 @@ void go(const std::string& signalName, const std::string& filename, const std::s
     std::string cmd = "combineCards.py ";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
-        if(b == btagCats[BTAG_LMT]|| b==btagCats[BTAG_I] ) continue;
+        if(b == btagCats[BTAG_LMT]) continue;
         if(p == purCats[PURE_I] ) continue;
         if(h != hadCuts[HAD_FULL] ) continue;
 

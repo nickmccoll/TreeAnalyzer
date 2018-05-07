@@ -184,7 +184,6 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
 
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l != lepCats[LEP_EMU] ) continue;
-        if(b == btagCats[BTAG_I]) continue;
         if(p != purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_NONE] ) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
@@ -202,7 +201,6 @@ void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename
     const std::string fitName = "fit";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l != lepCats[LEP_EMU] ) continue;
-        if(b == btagCats[BTAG_I]) continue;
         if(p != purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_NONE] ) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
@@ -228,7 +226,6 @@ void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filena
 
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l != lepCats[LEP_EMU] ) continue;
-        if(b == btagCats[BTAG_I]) continue;
         if(p != purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_NONE] ) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
@@ -246,7 +243,6 @@ void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filena
     const std::string fitName = "fit";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l != lepCats[LEP_EMU] ) continue;
-        if(b == btagCats[BTAG_I]) continue;
         if(p != purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_NONE] ) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
@@ -269,7 +265,6 @@ void convertFuncFitTo2DTemplate(const std::string& name, const std::string& file
     TFile *oF = new TFile((filename + "_"+name+"_2D_template_debug.root").c_str(),"recreate");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
-        if(b == btagCats[BTAG_I]) continue;
         std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_";
         jsonFile += name.find("w")!= std::string::npos ?btagCats[BTAG_LMT]:b;
         jsonFile+=std::string("_")+purCats[PURE_I]+"_"+hadCuts[HAD_NONE] +"_fit.json";
@@ -340,7 +335,6 @@ void makePseudoData(const std::string& name, const std::string& filename, const 
     TFile *oF = new TFile((filename + "_"+name+".root").c_str(),"recreate");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU]) continue;
-        if(b == btagCats[BTAG_I] || b == btagCats[BTAG_LMT]) continue;
         if(p == purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_FULL]) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
