@@ -1,5 +1,5 @@
 #!/bin/bash
-
+# ./compile.sh jobs/4_30_beTreees/ compiled/
 inputdir=$1
 outputdir=$2
 
