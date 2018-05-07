@@ -1,5 +1,5 @@
 #!/bin/bash
-# ./getAreaReady.sh /uscms/home/nmccoll/nobackup/2011-04-15-susyra2/rel_HbbWW/work/analyzer_running/compiled/ trees/ /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/skimTree.C
+# . /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/runInputs.sh . /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/
 
 startDir=$1
 macroLoc=$2
@@ -43,6 +43,8 @@ eval $RCMD
 RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(2)' &"
 eval $RCMD
 RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(3)' &"
+eval $RCMD
+RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(-1)' &"
 eval $RCMD
 cd .. 
 
