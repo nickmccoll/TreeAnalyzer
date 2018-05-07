@@ -29,7 +29,7 @@ void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
     std::string args = std::string("-v -n histo ")+" -x "+hbbMCS.cut+" -g hbbGenMass -xb "+hbbInclBinning.cut+ " -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
     args += " -kss -ks 1.5 -kr 1.5 -hs 0.00714 -hr 45 ";
-    args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT ";
+    args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
     make1DTemplateWithAdaKern(inputFile,tempFile, args);
 }
 void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0",float khxs = 1,float khxc = 5){
@@ -37,12 +37,12 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
 
     float eMin = (name.find("mt") != std::string::npos) ?  2000:1500;
-    float eMax = (name.find("mt") != std::string::npos) ?  4500:2500;
+    float eMax = (name.find("mt") != std::string::npos) ?  3500:2500;
 
     std::string args = std::string("-v -n histo ")+" -x "+hhMCS.cut+" -g hbbGenMass -xb "+hhInclBinning.cut+" -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
     args += " -kss -ks 1.5 -kr 1.5 -hs 0.0003 -hr 1200 ";
     args += std::string(" -doS -emin ") + flt2Str(eMin) + " -emax "+flt2Str(eMax) + " ";
-    args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT ";
+    args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
     make1DTemplateWithAdaKern(inputFile,tempFile, args);
 }
 
@@ -191,7 +191,7 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
         makeBKG1DShapes(name,filename,catName,fitName,true,0,iF);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MR+" ";
-        argsP1 += " -minX 700 -maxX 3000 ";
+        argsP1 += " -minX 600 -maxX 3000 ";
         std::string jsonArgsStd = " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
         MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
     }
@@ -211,7 +211,7 @@ void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename
         makeBKG1DShapes(name,filename,catName,fitName,true,&oldJSON,iF);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MR+" ";
-        argsP1 += " -minX 700 -maxX 3000 ";
+        argsP1 += " -minX 600 -maxX 3000 ";
         std::string jsonArgsStd = " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
 
         CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+jsonArgsStd);
@@ -382,13 +382,13 @@ void go(BKGModels modelToDo, std::string treeDir) {
         std::string name = bkgSels[BKG_QG];
         std::string genSel = bkgSels[BKG_QG].cut + "&&"+ aQCD.cut;
         std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
-        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
-////        //        //MVV
+        //        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+        ////        //        //MVV
         makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,3,0.5,1);//x = hh
-//        //                makeBackgroundShapesMVVConditional(name+"_xs_0p75_xc_2_ys_0p75_yc_2,filename,treeArea,baseSel,0.75,2,0.75,2);//old
+        //        //                makeBackgroundShapesMVVConditional(name+"_xs_0p75_xc_2_ys_0p75_yc_2,filename,treeArea,baseSel,0.75,2,0.75,2);//old
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hhInclRange.cut,true);
-//        //
-////        //        //MJJ
+        //        //
+        ////        //        //MJJ
         makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,baseSel+"&&"+hhRange.cut);
         mergeBackgroundShapes(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
@@ -400,12 +400,12 @@ void go(BKGModels modelToDo, std::string treeDir) {
         std::string name = bkgSels[BKG_LOSTTW];
         std::string genSel = bkgSels[BKG_LOSTTW].cut;
         std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
-        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
-////        //MVV
+        //        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+        ////        //MVV
         //        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,8,0.5,2);//x = hh old
         makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,4,0.5,2);//x = hh
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hhInclRange.cut,true);
-////        //MJJ
+        ////        //MJJ
         makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,baseSel+"&&"+hhRange.cut);
         mergeBackgroundShapes(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
@@ -419,7 +419,7 @@ void go(BKGModels modelToDo, std::string treeDir) {
         std::string genSel = bkgSels[BKG_MW].cut;
         std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&" +hadCuts[HAD_LB].cut;
         //MVV
-        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+        //        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,baseSel+"&&"+hbbRange.cut);
         cutMVVTemplate(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
@@ -437,7 +437,7 @@ void go(BKGModels modelToDo, std::string treeDir) {
         std::string genSel = bkgSels[BKG_MT].cut;
         std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&" +hadCuts[HAD_LB].cut;
         //MVV
-        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+        //        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,baseSel+"&&"+hbbRange.cut);
         cutMVVTemplate(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
@@ -451,10 +451,10 @@ void go(BKGModels modelToDo, std::string treeDir) {
     }
 
     //Make pseudo data
-    if(modelToDo == 4){//4
+    if(int(modelToDo) == 4){//4
         makePseudoData("pd",filename,1);
     }
-    if(modelToDo == 5){//5
+    if(int(modelToDo) == 5){//5
     }
 
 }
