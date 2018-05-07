@@ -34,6 +34,11 @@ class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
+        leptonProc->lepSelParams.el_maxISO = -1;
+        leptonProc->lepSelParams.mu_maxISO = -1;
+
+        leptonProc->lepSelParams_dataABCDEF.el_maxISO = -1;
+        leptonProc->lepSelParams_dataABCDEF.mu_maxISO = -1;
     }
 
     virtual BaseEventAnalyzer * setupEventAnalyzer() override {return new CopierEventAnalyzer();}
@@ -51,9 +56,15 @@ public:
             i_pu_N        =outTree->add<float>  ("","pu_N"   ,"F",0);
             i_lep_N       =outTree->add<float>  ("","lep_N"  ,"F",0);
             i_btag_N      =outTree->add<float>  ("","btag_N" ,"F",0);
+            i_toppt_N     =outTree->add<float>  ("","toppt_N","F",0);
         }
         i_ht          =outTree->add<float>  ("","ht"        ,"F",0);
+        i_met         =outTree->add<float>  ("","met"       ,"F",0);
         i_isMuon      =outTree->add<size8>  ("","isMuon"    ,"b",0);
+        i_lepPT       =outTree->add<float>  ("","lepPT"     ,"F",0);
+        i_lepETA      =outTree->add<float>  ("","lepETA"    ,"F",0);
+        i_tightE      =outTree->add<size8>  ("","tightE"    ,"b",0);
+
         i_hbbMass     =outTree->add<float>  ("","hbbMass"   ,"F",0);
         i_hbbPT       =outTree->add<float>  ("","hbbPT"     ,"F",0);
         i_hbbNSJs     =outTree->add<size8>  ("","hbbNSJs"   ,"b",0);
@@ -63,38 +74,30 @@ public:
         i_hhMass      =outTree->add<float>  ("","hhMass"    ,"F",0);
         i_wlnuDR      =outTree->add<float>  ("","wlnuDR"    ,"F",0);
         i_wwDM        =outTree->add<float>  ("","wwDM"      ,"F",0);
-        i_hwwPT       =outTree->add<float>  ("","hwwPT"   ,"F",0);
+        i_hwwPT       =outTree->add<float>  ("","hwwPT"     ,"F",0);
+        i_hwwETA      =outTree->add<float>  ("","hwwETA"    ,"F",0);
         i_wjjCSVCat   =outTree->add<size8>  ("","wjjCSVCat" ,"b",0);
         i_wjjTau2o1   =outTree->add<float>  ("","wjjTau2o1" ,"F",0);
         i_wjjMass     =outTree->add<float>  ("","wjjMass"   ,"F",0);
         i_wjjPT       =outTree->add<float>  ("","wjjPT"     ,"F",0);
         i_wjjNSJs     =outTree->add<size8>  ("","wjjNSJs"   ,"b",0);
+        i_wlnuMass    =outTree->add<float>  ("","wlnuMass"  ,"F",0);
         i_wlnuPT      =outTree->add<float>  ("","wlnuPT"    ,"F",0);
         i_nAK4Btags   =outTree->add<size8>  ("","nAK4Btags" ,"b",0);
-        i_minBtagMT   =outTree->add<float>  ("","minBtagMT" ,"F",0);
 
         if(!isRealData()){
-            i_hbbGenPT    =outTree->add<float>  ("","hbbGenPT"   ,"F",0);
-            i_hbbGenMass  =outTree->add<float>  ("","hbbGenMass" ,"F",0);
             i_hbbWQuark   =outTree->add<size8>  ("","hbbWQuark"  ,"b",0);
             i_hbbWEQuark  =outTree->add<size8>  ("","hbbWEQuark"  ,"b",0);
-//            i_hhHT        =outTree->add<float>  ("","hhHT"       ,"F",0);
-//            i_wjjlepGenPT =outTree->add<float>  ("","wjjlepGenPT","F",0);
-//            i_genMET      =outTree->add<float>  ("","genMET"     ,"F",0);
-            i_genhhMass   =outTree->add<float>  ("","genhhMass"  ,"F",0);
-            i_genhhMass2   =outTree->add<float>  ("","genhhMass2"  ,"F",0);
-
         }
 
     }
-
-
 
     bool runEvent() override {
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
         if(!passTriggerPreselection) return false;
         if(!passEventFilters) return false;
-        if(selectedLeptons.size() != 1) return false;
+//        if(selectedLeptons.size() != 1) return false;
+        if(selectedLeptons.size() == 0) return false;
         if(!hbbCand) return false;
         if(!wjjCand) return false;
 
@@ -110,12 +113,21 @@ public:
             outTree->fill(i_pu_N        ,float(puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL)));
             outTree->fill(i_lep_N       ,float(leptonSFProc->getSF()));
             outTree->fill(i_btag_N      ,float(sjbtagSFProc->getSF({hbbCand})*ak4btagSFProc->getSF(jets_HbbV)));
+            outTree->fill(i_toppt_N     ,float(topPTProc->getCorrection(mcProc,smDecayEvt)));
+        }
+
+        float ljchef = -1;
+        if(reader_jet_chs->jets.size()){
+            ljchef = reader_jet_chs->chef->at(reader_jet_chs->jets[0].index());
         }
 
         outTree->fill(i_ht     ,float(ht_chs));
-
+        outTree->fill(i_met    ,float(reader_event->met.pt()));
 
         outTree->fill(i_isMuon      ,size8(selectedLepton->isMuon()));
+        outTree->fill(i_lepPT       ,float(selectedLepton->pt()));
+        outTree->fill(i_lepETA      ,float(selectedLepton->eta()));
+        outTree->fill(i_tightE      ,size8(selectedLepton->isMuon() || ((Electron*)selectedLepton)->passTightID_noISO() ));
         outTree->fill(i_hbbMass     ,float(hbbMass));
         outTree->fill(i_hbbPT       ,float(hbbCand->pt()));
         outTree->fill(i_hbbNSJs     ,size8(hbbNSJs));
@@ -123,9 +135,11 @@ public:
         outTree->fill(i_hbbTau2o1   ,float(hbbCand->tau2otau1()));
 
         outTree->fill(i_hhMass      ,float(hh.mass()));
+        outTree->fill(i_wlnuMass    ,float(wlnu.mass()));
         outTree->fill(i_wlnuDR      ,float(wlnuDR));
         outTree->fill(i_wwDM        ,float(wwDM));
         outTree->fill(i_hwwPT       ,float(hWW.pt()));
+        outTree->fill(i_hwwETA      ,float(hWW.eta()));
         outTree->fill(i_wjjCSVCat   ,size8(wjjCSVCat));
         outTree->fill(i_wjjTau2o1   ,float(wjjCand->tau2otau1()));
         outTree->fill(i_wjjMass     ,float(wjjCand->sdMom().mass()));
@@ -133,28 +147,13 @@ public:
         outTree->fill(i_wjjNSJs     ,size8(wjjNSJs));
         outTree->fill(i_wlnuPT      ,float(wlnu.pt()));
         outTree->fill(i_nAK4Btags   ,size8(std::min(nMedBTags_HbbV,250)));
-        double minMT = -1;
-        for(const auto* j: jets_HbbV ){
-            if(!BTagging::isMediumCSVTagged(*j)) continue;
-            const double mt = JetKinematics::massiveTransverseMass(j->p4()+selectedLepton->p4(),reader_event->met);
-            if(minMT < 0 || mt < minMT) minMT = mt;
-        }
-        outTree->fill(i_minBtagMT  ,float(minMT));
-
 
         if(!isRealData()){
-            double nearestDR = 999.;
-            int hbbGenIDX = PhysicsUtilities::findNearestDR(*hbbCand,reader_fatjet->genJets,nearestDR,0.8);
-
-            outTree->fill(i_hbbGenPT    ,float(hbbGenIDX < 0 ? 0.0 : reader_fatjet->genJets[hbbGenIDX].pt()));
-            outTree->fill(i_hbbGenMass  ,float(hbbGenIDX < 0 ? 0.0 : reader_fatjet->genJets[hbbGenIDX].mass()));
-
             const float matchR = 0.8*0.8;
 
             int topDecayType = 0; //NONE b wj wjb wjj wjjb
             int maxNTopQuarks = 0;
             int totNTopQuarks = 0;
-
 
             for(const auto& d : smDecayEvt.topDecays  ){
                 if(d.type != TopDecay::HAD){
@@ -200,38 +199,8 @@ public:
                 nExtraQuarks = (totNWQuarks - maxNWQuarks) + totNTopQuarks;
             }
 
-//            MomentumF genVisWW;
-//            MomentumF genMET;
-//            const float matchGJR2 = 1.2*1.2;
-//            for(const auto& j : reader_jet_chs->genJets){
-//                if(j.pt() < 20) continue;
-//                if(j.absEta() > 5.0) continue;
-//                genMET.p4() -= j.p4();
-//                if(PhysicsUtilities::deltaR2(j,*selectedLepton) < matchGJR2)  genVisWW.p4() += j.p4();
-//            }
-//
-//            const MomentumF genNeutrino    = HiggsSolver::getInvisible(genMET,genVisWW );
-//            const MomentumF genhWW   = genNeutrino.p4() + genVisWW.p4();
-//            MomentumF genHH = genhWW.p4();
-//            if(hbbGenIDX >= 0 ) genHH.p4() += reader_fatjet->genJets[hbbGenIDX].p4();
-
-            MomentumF genMET = reader_event->met.p4() + hbbCand->p4();
-            if(hbbGenIDX >= 0) genMET.p4() -=  reader_fatjet->genJets[hbbGenIDX].p4();
-
-            const MomentumF genNeutrino    = HiggsSolver::getInvisible(genMET,(selectedLepton->p4() + wjjCand->p4()) );
-            const MomentumF genhWW   = genNeutrino.p4() + selectedLepton->p4() + wjjCand->p4();
-            MomentumF genHH = genhWW.p4();
-            if(hbbGenIDX >= 0 ) genHH.p4() += reader_fatjet->genJets[hbbGenIDX].p4();
-            MomentumF genHH2 = hWW.p4();
-            if(hbbGenIDX >= 0 ) genHH2.p4() += reader_fatjet->genJets[hbbGenIDX].p4();
-
             outTree->fill(i_hbbWQuark   ,decayType);
             outTree->fill(i_hbbWEQuark   ,nExtraQuarks);
-//            outTree->fill(i_hhHT        ,float( genhWW.pt()  + (hbbGenIDX >= 0 ? reader_fatjet->genJets[hbbGenIDX].pt() : 0.0)  ));
-//            outTree->fill(i_wjjlepGenPT ,float(genVisWW.pt()));
-//            outTree->fill(i_genMET      ,float(genMET.pt()));
-            outTree->fill(i_genhhMass   ,float(genHH.mass()));
-            outTree->fill(i_genhhMass2   ,float(genHH2.mass()));
         }
 
 
@@ -251,10 +220,15 @@ public:
     size i_pu_N   = 0;
     size i_lep_N  = 0;
     size i_btag_N = 0;
+    size i_toppt_N = 0;
 
     //SR variables
     size i_ht        = 0;
+    size i_met       = 0;
     size i_isMuon    = 0;
+    size i_lepPT     = 0;
+    size i_lepETA    = 0;
+    size i_tightE    = 0;
     size i_hbbMass   = 0;
     size i_hbbPT     = 0;
     size i_hbbNSJs   =0;
@@ -265,25 +239,19 @@ public:
     size i_wlnuDR    = 0;
     size i_wwDM      = 0;
     size i_hwwPT     = 0;
+    size i_hwwETA    = 0;
     size i_wjjCSVCat = 0;
     size i_wjjTau2o1 = 0;
     size i_wjjMass   = 0;
     size i_wjjPT     = 0;
     size i_wjjNSJs   =0;
+    size i_wlnuMass  = 0;
     size i_wlnuPT    = 0;
     size i_nAK4Btags = 0;
-    size i_minBtagMT = 0;
 
     //BE extra variables
-    size i_hbbGenPT    =0;
-    size i_hbbGenMass  =0;
     size i_hbbWQuark   =0;
     size i_hbbWEQuark   =0;
-//    size i_hhHT        =0;
-//    size i_wjjlepGenPT =0;
-//    size i_genMET      =0;
-    size i_genhhMass   =0;
-    size i_genhhMass2   =0;
 
 
 };
