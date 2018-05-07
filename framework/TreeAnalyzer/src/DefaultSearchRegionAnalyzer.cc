@@ -42,6 +42,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, s
     ak4btagSFProc.reset(new JetBTagScaleFactors (dataDirectory));
     sjbtagSFProc.reset(new SubJetBTagScaleFactors (dataDirectory));
     hbbFJSFProc .reset(new HbbFatJetScaleFactors (dataDirectory));
+    topPTProc   .reset(new TopPTWeighting (dataDirectory));
     setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
 
     turnOnCorr(CORR_XSEC);
@@ -51,6 +52,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, s
     turnOnCorr(CORR_SJBTAG);
     turnOnCorr(CORR_AK4BTAG);
     turnOnCorr(CORR_SDMASS);
+    turnOnCorr(CORR_TOPPT);
 }
 //--------------------------------------------------------------------------------------------------
 DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
@@ -96,6 +98,8 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_LEP) && !reader_genpart) mkErr("genParticle","CORR_LEP");
     if(isCorrOn(CORR_AK4BTAG) && !reader_jet) mkErr("ak4PuppiNoLepJet","CORR_AK4BTAG");
     if(isCorrOn(CORR_SJBTAG) && !reader_fatjet) mkErr("ak8PuppiNoLepJet","CORR_SJBTAG");
+    if(isCorrOn(CORR_TOPPT) && !reader_event) mkErr("event","CORR_TOPPT");
+    if(isCorrOn(CORR_TOPPT) && !reader_genpart) mkErr("genParticle","CORR_TOPPT");
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
@@ -211,6 +215,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         }
         if(isCorrOn(CORR_AK4BTAG)){
             weight *= ak4btagSFProc->getSF(jets_HbbV);
+        }
+        if(isCorrOn(CORR_TOPPT)){
+            weight *= topPTProc->getCorrection(mcProc,smDecayEvt);
         }
 
     }

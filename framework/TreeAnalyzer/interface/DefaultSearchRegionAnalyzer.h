@@ -25,6 +25,7 @@ class LeptonScaleFactors;
 class JetBTagScaleFactors;
 class SubJetBTagScaleFactors;
 class HbbFatJetScaleFactors;
+class TopPTWeighting;
 
 class Jet               ;
 class FatJet            ;
@@ -33,13 +34,14 @@ class Lepton            ;
 class DefaultSearchRegionAnalyzer : public BaseTreeAnalyzer {
 public:
     //corrections that can be applied
-    enum Corrections {CORR_XSEC =(1<<0)
-                     ,CORR_TRIG =(1<<1)
-                     ,CORR_PU   =(1<<2)
-                     ,CORR_LEP  =(1<<3)
+    enum Corrections {CORR_XSEC    =(1<<0)
+                     ,CORR_TRIG    =(1<<1)
+                     ,CORR_PU      =(1<<2)
+                     ,CORR_LEP     =(1<<3)
                      ,CORR_SJBTAG  =(1<<4)
-                     ,CORR_AK4BTAG  =(1<<5)
+                     ,CORR_AK4BTAG =(1<<5)
                      ,CORR_SDMASS  =(1<<6)
+                     ,CORR_TOPPT   =(1<<7)
     };
 
     DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt);
@@ -118,14 +120,15 @@ public:
     MomentumF                  hh                 ;
     float                      hbbMass     =0     ;
 
-    std::unique_ptr<FatJetProcessor>     fjProc     ;
-    std::unique_ptr<LeptonProcessor>     leptonProc ;
-    std::unique_ptr<TriggerScaleFactors> trigSFProc ;
-    std::unique_ptr<PUScaleFactors>      puSFProc ;
-    std::unique_ptr<LeptonScaleFactors>  leptonSFProc ;
+    std::unique_ptr<FatJetProcessor>        fjProc     ;
+    std::unique_ptr<LeptonProcessor>        leptonProc ;
+    std::unique_ptr<TriggerScaleFactors>    trigSFProc ;
+    std::unique_ptr<PUScaleFactors>         puSFProc ;
+    std::unique_ptr<LeptonScaleFactors>     leptonSFProc ;
     std::unique_ptr<JetBTagScaleFactors>    ak4btagSFProc ;
-    std::unique_ptr<SubJetBTagScaleFactors>    sjbtagSFProc ;
-    std::unique_ptr<HbbFatJetScaleFactors>    hbbFJSFProc ;
+    std::unique_ptr<SubJetBTagScaleFactors> sjbtagSFProc ;
+    std::unique_ptr<HbbFatJetScaleFactors>  hbbFJSFProc ;
+    std::unique_ptr<TopPTWeighting>         topPTProc ;
 };
 }
 #endif

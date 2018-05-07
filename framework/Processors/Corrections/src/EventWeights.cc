@@ -1,7 +1,10 @@
 
 #include "Processors/Corrections/interface/EventWeights.h"
+#include "Processors/GenTools/interface/SMDecayEvent.h"
 #include "TreeReaders/interface/EventReader.h"
+#include "DataFormats/interface/GenParticle.h"
 #include "TreeReaders/interface/FillerConstants.h"
+
 namespace TAna {
 namespace EventWeights {
 float calcNormalizedEventWeight(const EventReader& reader_event, const float cross, const float numE, const float lumi) {
@@ -64,6 +67,32 @@ float PUScaleFactors::getCorrection(const unsigned int trueNumInteractions, cons
         return 1.0;
     }
 }
+
+TopPTWeighting::TopPTWeighting(const std::string& dataDir, const std::string& sfFile, bool verbose ){
+    TFile * file = TObjectHelper::getFile(dataDir+sfFile,"read",verbose);
+    weightConsts.reset(new  TObjectHelper::Hist1DContainer(file,"weightConsts",verbose) );
+    a  = weightConsts->getBinContentByBinNumber(1).val();
+    b  = weightConsts->getBinContentByBinNumber(2).val();
+    nf = weightConsts->getBinContentByBinNumber(3).val();
+    delete file;
+}
+
+float TopPTWeighting::getCorrection(const ASTypes::size8 process,const SMDecayEvent& decayEvent) const{
+    if(process != FillerConstants::TTBAR) return 1;
+    return std::exp(a +b*getAvgPT(decayEvent))*nf;
+}
+
+float TopPTWeighting::getCorrectionNoNorm(const ASTypes::size8 process,const SMDecayEvent& decayEvent) const{
+    if(process != FillerConstants::TTBAR) return 1;
+    return std::exp(a +b*getAvgPT(decayEvent));
+}
+float TopPTWeighting::getAvgPT(const SMDecayEvent& decayEvent) const {
+    if(decayEvent.topDecays.size() != 2) return 0;
+    return std::sqrt( std::min(decayEvent.topDecays[0].top->pt(),float(800.0)) *
+            std::min(decayEvent.topDecays[1].top->pt(),float(800.0)));
+}
+
+
 }
 
 
