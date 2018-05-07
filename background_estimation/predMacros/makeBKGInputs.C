@@ -266,7 +266,7 @@ void convertFuncFitTo2DTemplate(const std::string& name, const std::string& file
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
         std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_";
-        jsonFile += name.find("w")!= std::string::npos ?btagCats[BTAG_LMT]:b;
+        jsonFile += name.find("w")!= std::string::npos ?btagCats[BTAG_I]:b;
         jsonFile+=std::string("_")+purCats[PURE_I]+"_"+hadCuts[HAD_NONE] +"_fit.json";
 
         CBFunctionFitter xFit(0,false,funcParamPostfix,{MOD_MJ});
@@ -375,8 +375,8 @@ void go(BKGModels modelToDo, std::string treeDir) {
     {
         std::string name = bkgSels[BKG_QG];
         std::string genSel = bkgSels[BKG_QG].cut + "&&"+ aQCD.cut;
-        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
-        //        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
+        //        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
         ////        //        //MVV
         makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,3,0.5,1);//x = hh
         //        //                makeBackgroundShapesMVVConditional(name+"_xs_0p75_xc_2_ys_0p75_yc_2,filename,treeArea,baseSel,0.75,2,0.75,2);//old
@@ -393,8 +393,8 @@ void go(BKGModels modelToDo, std::string treeDir) {
     if(modelToDo == BKG_LOSTTW){
         std::string name = bkgSels[BKG_LOSTTW];
         std::string genSel = bkgSels[BKG_LOSTTW].cut;
-        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
-        //        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
+        //        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
         ////        //MVV
         //        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,8,0.5,2);//x = hh old
         makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,4,0.5,2);//x = hh
@@ -411,9 +411,9 @@ void go(BKGModels modelToDo, std::string treeDir) {
     if(modelToDo == BKG_MW){
         std::string name = bkgSels[BKG_MW];
         std::string genSel = bkgSels[BKG_MW].cut;
-        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&" +hadCuts[HAD_LB].cut;
+        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&" +hadCuts[HAD_LB].cut;
         //MVV
-        //        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+        //        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,baseSel+"&&"+hbbRange.cut);
         cutMVVTemplate(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
@@ -429,9 +429,9 @@ void go(BKGModels modelToDo, std::string treeDir) {
     if(modelToDo == BKG_MT){
         std::string name = bkgSels[BKG_MT];
         std::string genSel = bkgSels[BKG_MT].cut;
-        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&" +hadCuts[HAD_LB].cut;
+        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&" +hadCuts[HAD_LB].cut;
         //MVV
-        //        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+        //        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,baseSel+"&&"+hbbRange.cut);
         cutMVVTemplate(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);

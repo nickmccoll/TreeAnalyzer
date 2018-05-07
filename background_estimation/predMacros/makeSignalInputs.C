@@ -192,7 +192,7 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename)
     const std::string fitName = "MVV_fit1stIt";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
-        if(b != btagCats[BTAG_LMT] ) continue;
+        if(b != btagCats[BTAG_I] ) continue;
         if(p != purCats[PURE_I] ) continue;
         if(h != hadCuts[HAD_LTMB]) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
@@ -208,7 +208,7 @@ void makeSignalMVVShapes1stIt(const std::string& name, const std::string& filena
     const std::string fitName = "MVV_fit1stIt";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
-        if(b != btagCats[BTAG_LMT] ) continue;
+        if(b != btagCats[BTAG_I] ) continue;
 //        if(p != purCats[PURE_I] ) continue;
         if(!(h == hadCuts[HAD_LTMB] || h == hadCuts[HAD_FULL])  ) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
@@ -224,7 +224,7 @@ void makeSignalMVVShapes2ndIt(const std::string& name, const std::string& filena
     const std::string fitName = "MVV_fit";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
-        if(b != btagCats[BTAG_LMT] ) continue;
+        if(b != btagCats[BTAG_I] ) continue;
         //        if(p != purCats[PURE_I] ) continue;
         if(!(h == hadCuts[HAD_LTMB] || h == hadCuts[HAD_FULL])  ) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
@@ -507,14 +507,14 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
-        if( b == btagCats[BTAG_LMT] ) continue;
+        if( b == btagCats[BTAG_I] ) continue;
         if(p == purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_FULL] ) continue;
         bool doExpo = b == btagCats[BTAG_L];
 
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
         std::string mjjCatName = lepCats[LEP_EMU]+"_"+b+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB];
-        std::string mvvCatName = l+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB];
+        std::string mvvCatName = l+"_"+btagCats[BTAG_I]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB];
 
         CJSON mjjJSON(     filename+"_"+name+"_"+mjjCatName+"_MJJ_fit.json");
         mjjJSON.fillFunctions(MOD_MS);
@@ -544,14 +544,14 @@ void combine2DShapesNoCond(const std::string& name, const std::string& filename)
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
-        if(b == btagCats[BTAG_LMT] ) continue;
+        if(b == btagCats[BTAG_I] ) continue;
         if(p == purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_FULL] ) continue;
         bool doExpo = b == btagCats[BTAG_L];
 
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
         std::string mjjCatName = lepCats[LEP_EMU]+"_"+b+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB];
-        std::string mvvCatName = l+"_"+btagCats[BTAG_LMT]+"_"+p+"_"+hadCuts[HAD_FULL];
+        std::string mvvCatName = l+"_"+btagCats[BTAG_I]+"_"+p+"_"+hadCuts[HAD_FULL];
 
         CJSON mjjJSON(     filename+"_"+name+"_"+mjjCatName+"_MJJ_fit.json");
         mjjJSON.fillFunctions(MOD_MS);

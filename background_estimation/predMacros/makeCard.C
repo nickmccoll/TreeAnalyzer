@@ -13,7 +13,7 @@ void go(const std::string& signalName, const std::string& filename, const std::s
     std::string cmd = "combineCards.py ";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
-        if(b == btagCats[BTAG_LMT]) continue;
+        if(b == btagCats[BTAG_I]) continue;
         if(p == purCats[PURE_I] ) continue;
         if(h != hadCuts[HAD_FULL] ) continue;
 
@@ -68,7 +68,7 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         card.addFixedYieldFromFile(bkgSels[BKG_LOSTTW],2,fPF+"_"+bkgSels[BKG_LOSTTW]+"_distributions.root",bkgSels[BKG_LOSTTW]+"_"+cat+"_"+hhMCS);
 
         //mW
-        card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,fullInputName(bkgSels[BKG_MW],lepCats[LEP_EMU],btagCats[BTAG_LMT],purCats[PURE_I],hadCuts[HAD_NONE],"fit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
+        card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,fullInputName(bkgSels[BKG_MW],lepCats[LEP_EMU],btagCats[BTAG_I],purCats[PURE_I],hadCuts[HAD_NONE],"fit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
         card.addHistoShapeFromFile(bkgSels[BKG_MW],{MOD_MR}, inputName(bkgSels[BKG_MW],"template.root"),"histo",{mwSyst("PT"),mwSyst("OPT")},false,0,MOD_MR);
         card.conditionalProduct(bkgSels[BKG_MW],bkgSels[BKG_MW] + "_"+MOD_MJ,MOD_MR,bkgSels[BKG_MW] + "_"+MOD_MR);
         card.addFixedYieldFromFile(bkgSels[BKG_MW],3,fPF+"_"+bkgSels[BKG_MW]+"_distributions.root",bkgSels[BKG_MW]+"_"+cat+"_"+hhMCS);

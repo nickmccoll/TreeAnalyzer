@@ -75,12 +75,16 @@ std::vector<CutStr> lepCats = {
         CutStr("mu" ,"isMuon==1")
 };
 
-enum BTAGCats  {BTAG_LMT, BTAG_L, BTAG_M,BTAG_T};
+enum BTAGCats  {BTAG_I, BTAG_L, BTAG_M, BTAG_T};
 std::vector<CutStr > btagCats = {
         CutStr("LMT","hbbCSVCat>=4"),
         CutStr("L"  ,"hbbCSVCat==4"),
         CutStr("M"  ,"hbbCSVCat==5"),
         CutStr("T"  ,"hbbCSVCat==6")
+};
+
+std::vector<CutStr > qgBtagCats = {
+        CutStr("AB","hbbCSVCat==1"),
 };
 
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
