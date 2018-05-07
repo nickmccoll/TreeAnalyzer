@@ -3,10 +3,7 @@
 using namespace CutConstants;
 using namespace ASTypes;
 
-bool runCR = false;
-bool simpleSignal = false;
-
-void go(const std::string& signalName, const std::string& filename, const std::string& mainDir) {
+void go(const std::string& signalName, const std::string& filename, const std::string& mainDir, bool runCR, bool simpleSignal) {
     const std::string inputDir =  mainDir + (runCR ? "/bkgInputsCR/" : "/bkgInputs/");
     const std::string sigInputDir =  mainDir + (simpleSignal ? "/signalInputsNoCond/" : "/signalInputs/");
     const std::string fPF = runCR ? inputDir+filename +"_CR" :  inputDir+filename;
@@ -141,11 +138,17 @@ void go(const std::string& signalName, const std::string& filename, const std::s
 
         card.makeCard();
     }
+    std::ofstream outFile("comp.sh",std::ios::out|std::ios::trunc);
+    outFile << cmd <<" > combinedCard.txt";
+    outFile.close();
+
     std::cout << cmd <<" > combinedCard.txt"<<std::endl;
 
 }
 #endif
 
-void makeCard(std::string mainDir = "../",std::string signalString = "radHH"){
-    go(signalString,hhFilename,mainDir);
+void makeCard( bool runSR = false, bool condSignal= true, std::string signalString = "radHH"){
+    std::cout <<" <<<<< "<< runSR <<" "<< condSignal <<" "<<signalString<<std::endl;
+    std::string mainDir = "../../";
+    go(signalString,hhFilename,mainDir,!runSR,!condSignal);
 }
