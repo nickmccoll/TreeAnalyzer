@@ -13,14 +13,19 @@ public:
     std::string cut;
     std::string title;
 };
-
-
 std::string hhFilename = "HHlnujj";
+
+
+enum PROC  {TTBAR,WJETS,QCD,OTHER};
+std::vector<CutStr > processes = {
+        CutStr("ttbar"     ,"process==2","t#bar{t}"),
+        CutStr("wjets"     ,"process==3","W+jets"),
+        CutStr("qcd"       ,"process==8","multijets"),
+        CutStr("other"     ,"(process>1&&!(process==2||process==3||process==8))","other")
+};
 
 CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
 
-CutStr bkgTS("bkgTS" , "(process==2||process==5||process==7)");
-CutStr bkgWS("bkgWS" , "(process==3||process==4||process==6||process==8)");
 CutStr aQCD ("aQCD"  , "process!=8");
 
 CutStr wjjBC("wjjBC" , "wjjMass>10");
