@@ -19,5 +19,5 @@ mv ${outputdir}/*.root ${outputdir}/mcPieces/
 mv ${outputdir}/mcPieces/out*radion*.root ${outputdir}/
 hadd ${outputdir}/betrees_data.root ${outputdir}/dataPieces/*.root
 hadd ${outputdir}/betrees_mc.root ${outputdir}/mcPieces/*.root
-RCMD="root -b -q '${skimLoc}(\"${outputdir}/betrees_mc.root\",\"${outputdir}/betrees_LMT_mc.root\",\"hbbCSVCat>=4\")'"
+RCMD="root -b -q '${skimLoc}(\"${outputdir}/betrees_mc.root\",\"${outputdir}/betrees\")'"
 eval $RCMD

@@ -213,3 +213,44 @@ h2->Draw("COLZ");
   }
   
 }
+
+
+
+// Get QCD Ratio
+{
+  TFile * f = new TFile("HHlnujj_bkg_getQCDRatio.root");
+  TString denSel = "wjets";
+  TString numSel = "qcd";
+  TString var = "hhMass";
+  int rebin = 5;
+  
+  std::vector<TString> leps = {"e","mu"};
+  // std::vector<TString> purs = {"I","LP","HP"};
+    std::vector<TString> purs = {"I"};
+  std::vector<TString> hads = {"ltmb","full"};
+  // std::vector<TString> btags = {"AB","LMT","L","M","T"};
+  std::vector<TString> btags = {"AB","LMT"};
+  
+  
+  for(const auto& l : leps ){
+    for(const auto& p : purs ){
+      for(const auto& h : hads ){
+        Plotter * plot = new Plotter();
+        for(const auto& b : btags ){
+          TH1 * hn = 0;
+          f->GetObject(numSel+"_"+l+"_"+b+"_"+p+"_"+h+"_"+var ,hn);          
+          TH1 * hd = 0;
+          f->GetObject(denSel+"_"+l+"_"+b+"_"+p+"_"+h+"_"+var ,hd);          
+          if(hn == 0 || hd==0) continue;
+          PlotTools::rebin(hn,rebin);
+          PlotTools::rebin(hd,rebin);
+          hn->Divide(hd);
+          plot->addHist(hn,b);        
+        }      
+        // p->setMinMax(0,1);
+        plot->setUnderflow(false);
+        auto* c= plot->draw(false,l+"_"+p+"_"+h);        
+      }
+    }
+  }
+}

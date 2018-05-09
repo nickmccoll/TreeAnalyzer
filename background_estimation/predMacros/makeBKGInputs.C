@@ -12,7 +12,25 @@
 #include "../predTools/InputsHelper.h"
 #include "../predTools/cutHistos1D.C"
 #include "../predTools/FunctionFitter.C"
+#include "../predTools/fitBKGRatio.C"
 #include "TRandom3.h"
+
+
+std::string getQCDSF(const std::string& name, const std::string& filename, const CutStr& l,const CutStr& p,const CutStr& h ){
+    CJSON json(filename+"_"+name+"_"+l+"_I_"+p+"_"+h+"_QCDSF.json");
+    std::string qToW = json.getP(0).second;
+    auto replace = [&](const std::string& vn, const std::string tf1n){
+        std:size_t index = 0;
+        while (true) {
+            index = qToW.find(vn, index);
+            if (index == std::string::npos) break;
+            qToW.replace(index, vn.size(), tf1n);
+            index += 1;
+        }
+    };
+    replace(MOD_MS,hhMCS);
+    return std::string("(")+processes[WJETS].cut+"?(1+"+qToW+"):1.0)";
+}
 
 void makeDetectorParam(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0"){
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
@@ -24,10 +42,10 @@ void makeDetectorParam(const std::string& name, const std::string& filename,  co
     gSystem->Exec(TString::Format("rm *_%s",resFile.c_str()));
 }
 
-void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0",float khxs = 1,float khxc = 5){
+void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0",const std::string& weight="1.0",float khxs = 1,float khxc = 5){
     std::string tempFile=filename+"_"+name+"_incl_template.root";
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
-    std::string args = std::string("-v -n histo ")+" -x "+hbbMCS.cut+" -g hbbGenMass -xb "+hbbInclBinning.cut+ " -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
+    std::string args = std::string("-v -n histo ")+" -x "+hbbMCS.cut+" -g hbbGenMass -xb "+hbbInclBinning.cut+ " -s "+cut+" -w "+weight+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
     args += " -kss -ks 1.5 -kr 1.5 -hs 0.00714 -hr 45 ";
     args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
     make1DTemplateWithAdaKern(inputFile,tempFile, args);
@@ -36,8 +54,8 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
     std::string tempFile=filename+"_"+name+"_incl_template.root";
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
 
-    float eMin = (name.find("mt") != std::string::npos) ?  2000:1500;
-    float eMax = (name.find("mt") != std::string::npos) ?  3500:2500;
+    float eMin = (name.find(bkgSels[BKG_MT]) != std::string::npos) ?  2000:1500;
+    float eMax = (name.find(bkgSels[BKG_MT]) != std::string::npos) ?  3500:2500;
 
     std::string args = std::string("-v -n histo ")+" -x "+hhMCS.cut+" -g hbbGenMass -xb "+hhInclBinning.cut+" -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
     args += " -kss -ks 1.5 -kr 1.5 -hs 0.0003 -hr 1200 ";
@@ -46,11 +64,12 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
     make1DTemplateWithAdaKern(inputFile,tempFile, args);
 }
 
-void makeBackgroundShapesMVVConditional(const std::string name, const std::string filename,  const std::string inputFile, const std::string cut="1.0", float khxs = 1,float khxc = 5,float khys = 1,float khyc = 5) {
+void makeBackgroundShapesMVVConditional(const std::string name, const std::string filename,  const std::string inputFile, const std::string cut="1.0", const std::string weight="1.0", float khxs = 1,float khxc = 5,float khys = 1,float khyc = 5) {
     std::string tempFile=filename+"_"+name+"_incl_COND2D_template.root";
-    float eMin = (name.find("lost") != std::string::npos) ? 1500 : 2000;
-    float eMax = (name.find("lost") != std::string::npos) ? 2500 : 4500;
-    std::string args = std::string("-v -n histo ") + " -vx "+ hhMCS.cut+ " -vy "+hbbMCS.cut+ " -xb "+hhInclBinning.cut+" -yb "+hbbInclBinning.cut+ " -ycb 50,60,80,100,120,140,160,180,200,220,250 "+ "-s "+ cut +" -w "+nomW.cut;
+    float eMin = (name.find(bkgSels[BKG_LOSTTW]) != std::string::npos) ? 1500 : 2000;
+    float eMax = (name.find(bkgSels[BKG_LOSTTW]) != std::string::npos) ? 2500 : 4500;
+    std::string args = std::string("-v -n histo ") + " -vx "+ hhMCS.cut+ " -vy "+hbbMCS.cut+ " -xb "+hhInclBinning.cut+" -yb "+hbbInclBinning.cut+ " -ycb 50,60,80,100,120,140,160,180,200,220,250 "+ "-s "+ cut +" ";
+    args += " -w "+weight+" ";
     args+=std::string(" -khxs ")+ flt2Str(khxs) +" -khxc "+ flt2Str(khxc) +" -khys "+ flt2Str(khys) +" -khyc "+ flt2Str(khyc) + " -hss ";
     args+=std::string(" -hs 0.0003 -hr 1200 ") + " -emin "+ flt2Str(eMin)+ " -emax "+ flt2Str(eMax);
     make2DTemplateWithAdaKern(inputFile,tempFile, args);
@@ -74,7 +93,40 @@ void cutMVVTemplate(const std::string& name, const std::string& filename){
 
 
 
-void makeFittingDistributions(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0", bool doIncl = true){
+void getQCDScaleFactor(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0"){
+    std::vector<PlotVar> vars;
+    vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nInclHHMassBins,minInclHHMass,maxInclHHMass);
+    std::vector<PlotSamp> samps = {
+            {name+"_"+processes[TTBAR],processes[TTBAR].cut},
+            {name+"_"+processes[WJETS],processes[WJETS].cut},
+            {name+"_"+processes[QCD],processes[QCD].cut},
+            {name+"_"+processes[OTHER],processes[OTHER].cut}
+    };
+
+    std::vector<CutStr > srPCrBtagCats = btagCats;
+    for(const auto& b : qgBtagCats) srPCrBtagCats.push_back(b);
+    srPCrBtagCats.push_back(CutStr("I","hbbCSVCat>=0"));
+
+    std::vector<PlotSel> sels;
+    for(const auto& l :lepCats) for(const auto& b :srPCrBtagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
+                l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
+    }
+    std::string distName=filename+"_"+name+ "_QCDSF_distributions.root";
+    //    MakePlots a(inputFile,distName,samps,sels,vars,cut,nomW.cut);
+
+
+    for(const auto& l :lepCats) for(const auto& b :srPCrBtagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        std::string args = "-nF "+distName +" -nH " + l +"_"+b+"_"+p +"_"+h + "_"+hhMCS.cut + " -nN "+ name+"_"+processes[QCD] + " -nD "+ name+"_"+processes[WJETS]
+                                                                                                                                                             + " -b 0,500,600,700,800,900,1000,1100,1250,1500,2000,2500,3500,5000 -lb " +" -g mix -fVar "+ MOD_MS + " -fMin "  +flt2Str(minHHMass)  + " -fMax "  +flt2Str(maxHHMass);
+
+        fitBKGRatio((filename+"_"+name+"_" +l +"_"+b+"_"+p +"_"+h +"_QCDSF.json").c_str(),args);
+    }
+}
+
+
+
+void makeFittingDistributions(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0", bool doIncl = true, bool addQCDSF = false,const std::vector<std::pair<std::string,std::string>>& samples={}){
     std::vector<PlotVar> vars;
     if(doIncl){
         vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nInclHbbMassBins,minInclHbbMass,maxInclHbbMass,hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nInclHHMassBins,minInclHHMass,maxInclHHMass );
@@ -84,10 +136,19 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
         vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
     }
     std::vector<PlotSamp> samps = { {name,"1.0"}};
+    if(samples.size()) samps= samples;
     std::vector<PlotSel> sels;
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
-        sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
-                l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
+        std::string baseSel = std::string("(")+l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut+")";
+        if(addQCDSF){
+            sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
+                    baseSel+"*"+getQCDSF(name,filename,l,p,h));
+            sels.emplace_back( std::string("noQCDSF_") +  l +"_"+b+"_"+p +"_"+h,
+                    baseSel);
+        } else {
+            sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
+                    baseSel);
+        }
     }
     std::string outFileName=filename+"_"+name+ (doIncl ? "_inclM_distributions.root" : "_distributions.root");
     MakePlots a(inputFile,outFileName,samps,sels,vars,cut,nomW.cut);
@@ -266,7 +327,7 @@ void convertFuncFitTo2DTemplate(const std::string& name, const std::string& file
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
         std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_";
-        jsonFile += name.find("w")!= std::string::npos ?btagCats[BTAG_I]:b;
+        jsonFile += name.find(bkgSels[BKG_MW])!= std::string::npos ?btagCats[BTAG_I]:b;
         jsonFile+=std::string("_")+purCats[PURE_I]+"_"+hadCuts[HAD_NONE] +"_fit.json";
 
         CBFunctionFitter xFit(0,false,funcParamPostfix,{MOD_MJ});
@@ -370,37 +431,44 @@ void makePseudoData(const std::string& name, const std::string& filename, const 
 
 void go(BKGModels modelToDo, std::string treeDir) {
     std::string filename = hhFilename;
-    std::string treeArea = treeDir + "/betrees_LMT_mc.root";
     if(modelToDo == BKG_QG)
     {
         std::string name = bkgSels[BKG_QG];
+        std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_QG].cut + "&&"+ aQCD.cut;
-        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
-        //        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
-        ////        //        //MVV
-        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,3,0.5,1);//x = hh
-        //        //                makeBackgroundShapesMVVConditional(name+"_xs_0p75_xc_2_ys_0p75_yc_2,filename,treeArea,baseSel,0.75,2,0.75,2);//old
-        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hhInclRange.cut,true);
-        //        //
-        ////        //        //MJJ
-        makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,baseSel+"&&"+hhRange.cut);
+        std::string kdeSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
+        std::string kdeWeight = nomW.cut+"*"+getQCDSF(name,filename,lepCats[LEP_EMU],purCats[PURE_I],hadCuts[HAD_LTMB]);
+        //makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+        //MVV
+        makeBackgroundShapesMVVConditional(name,filename,treeArea,kdeSel,kdeWeight,0.75,3,0.5,1);//x = hh
+        //                                makeBackgroundShapesMVVConditional(name+"_xs_0p75_xc_2_ys_0p75_yc_2,filename,treeArea,baseSel,0.75,2,0.75,2);//old
+        makeFittingDistributions(name,filename,treeArea,hhInclRange.cut+"&&"+hbbInclRange.cut,true,true,
+                {{bkgSels[BKG_QG],genSel},{bkgSels[BKG_QG]+"_wQCD",bkgSels[BKG_QG].cut}}
+        );
+
+        //MJJ
+        makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,kdeSel+"&&"+hhRange.cut,kdeWeight);
         mergeBackgroundShapes(name,filename);
-        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
+        makeFittingDistributions(name,filename,treeArea,hhRange.cut+"&&"+hbbRange.cut,false,true,
+                {{bkgSels[BKG_QG],genSel},{bkgSels[BKG_QG]+"_wQCD",bkgSels[BKG_QG].cut}}
+        );
         fitBackgroundShapesMVVConditional(name,filename);
         compile2DTemplatesForDebug(name,filename);
     }
 
     if(modelToDo == BKG_LOSTTW){
         std::string name = bkgSels[BKG_LOSTTW];
+        std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_LOSTTW].cut;
-        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
+        std::string kdeSel    = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
+        std::string kdeWeight = nomW.cut;
         //        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
         ////        //MVV
         //        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,8,0.5,2);//x = hh old
-        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,4,0.5,2);//x = hh
-        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hhInclRange.cut,true);
+        makeBackgroundShapesMVVConditional(name,filename,treeArea,kdeSel,kdeWeight,0.75,4,0.5,2);//x = hh
+        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
         ////        //MJJ
-        makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,baseSel+"&&"+hhRange.cut);
+        makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,kdeSel+"&&"+hhRange.cut,kdeWeight);
         mergeBackgroundShapes(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
         fitBackgroundShapesMVVConditional(name,filename);
@@ -410,6 +478,7 @@ void go(BKGModels modelToDo, std::string treeDir) {
 
     if(modelToDo == BKG_MW){
         std::string name = bkgSels[BKG_MW];
+        std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_MW].cut;
         std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&" +hadCuts[HAD_LB].cut;
         //MVV
@@ -428,6 +497,7 @@ void go(BKGModels modelToDo, std::string treeDir) {
 
     if(modelToDo == BKG_MT){
         std::string name = bkgSels[BKG_MT];
+        std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_MT].cut;
         std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&" +hadCuts[HAD_LB].cut;
         //MVV
