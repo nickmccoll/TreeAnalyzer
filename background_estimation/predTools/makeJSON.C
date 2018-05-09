@@ -1,4 +1,6 @@
 
+#ifndef TREEANALYZER_BACKGROUND_ESTIMATION_MAKEJSON_C
+#define TREEANALYZER_BACKGROUND_ESTIMATION_MAKEJSON_C
 #if !defined(__CINT__) || defined(__MAKECINT__)
 #include "AnalysisSupport/Utilities/interface/ParParser.h"
 #include "AnalysisSupport/Utilities/interface/TObjectHelper.h"
@@ -159,7 +161,10 @@ CJSON makeJSON(const std::string& outFileName,std::string& arguments){
             for(int iP = 0; iP < func->GetNpar(); ++iP){
                 fstring = std::regex_replace(fstring,std::regex(std::string("\\[")+ASTypes::int2Str(iP)+"\\]"),ASTypes::flt2Str(func->GetParameter(iP)));
             }
+
             return fstring;
+        } else if(name.find("mix") != std::string::npos){
+            return ASTypes::flt2Str(func->GetParameter(0))+"+"+ASTypes::flt2Str(func->GetParameter(1))+"*"+var+"+"+ASTypes::flt2Str(func->GetParameter(2))+"/"+var;
         }
         return "";
     };
@@ -207,6 +212,8 @@ CJSON makeJSON(const std::string& outFileName,std::string& arguments){
             for(unsigned int iP = 1; iP < laurPs.size(); ++iP){
                 func->FixParameter(iP-1,std::stof(laurPs[iP]));
             }
+        } else if(p.second.find("mix")!= std::string::npos){
+            func=new  TF1("mix","[0]+[1]*x+[2]/x",1,13000);
         }
         if(func==0) throw std::invalid_argument("MakeJSON::MakeJSON() -> Bad parsing");
         g->Fit(func,"","",*minX,*maxX);
@@ -226,3 +233,4 @@ void MakeJSON(std::string outFileName,std::string arguments){
 CJSON getJSON(std::string outFileName,std::string arguments){
     return makeJSON(outFileName, arguments);
 }
+#endif
