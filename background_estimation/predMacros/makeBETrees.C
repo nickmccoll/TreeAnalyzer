@@ -34,11 +34,6 @@ class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
-        leptonProc->lepSelParams.el_maxISO = -1;
-        leptonProc->lepSelParams.mu_maxISO = -1;
-
-        leptonProc->lepSelParams_dataABCDEF.el_maxISO = -1;
-        leptonProc->lepSelParams_dataABCDEF.mu_maxISO = -1;
     }
 
     virtual BaseEventAnalyzer * setupEventAnalyzer() override {return new CopierEventAnalyzer();}
@@ -69,6 +64,7 @@ public:
         i_hbbPT       =outTree->add<float>  ("","hbbPT"     ,"F",0);
         i_hbbNSJs     =outTree->add<size8>  ("","hbbNSJs"   ,"b",0);
         i_hbbCSVCat   =outTree->add<size8>  ("","hbbCSVCat" ,"b",0);
+        i_hbbBBT      =outTree->add<float>  ("","hbbBBT"    ,"F",0);
         i_hbbTau2o1   =outTree->add<float>  ("","hbbTau2o1" ,"F",0);
 
         i_hhMass      =outTree->add<float>  ("","hhMass"    ,"F",0);
@@ -96,7 +92,6 @@ public:
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
         if(!passTriggerPreselection) return false;
         if(!passEventFilters) return false;
-//        if(selectedLeptons.size() != 1) return false;
         if(selectedLeptons.size() == 0) return false;
         if(!hbbCand) return false;
         if(!wjjCand) return false;
@@ -132,6 +127,7 @@ public:
         outTree->fill(i_hbbPT       ,float(hbbCand->pt()));
         outTree->fill(i_hbbNSJs     ,size8(hbbNSJs));
         outTree->fill(i_hbbCSVCat   ,size8(hbbCSVCat));
+        outTree->fill(i_hbbBBT       ,float(hbbCand->bbt()));
         outTree->fill(i_hbbTau2o1   ,float(hbbCand->tau2otau1()));
 
         outTree->fill(i_hhMass      ,float(hh.mass()));
@@ -233,6 +229,7 @@ public:
     size i_hbbPT     = 0;
     size i_hbbNSJs   =0;
     size i_hbbCSVCat = 0;
+    size i_hbbBBT    = 0;
     size i_hbbTau2o1 = 0;
 
     size i_hhMass    = 0;
