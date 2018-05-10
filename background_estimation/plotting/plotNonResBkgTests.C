@@ -127,7 +127,7 @@ void test2DTemplate(std::string name, std::string filename){
     make2DTests(name + "_Temp_HHC" ,dH,hs,hNs,hhBinning,true,5);
 }
 
-void test2DFits(std::string name, std::string filename){
+void test2DFits(std::string name, std::string filename,const std::vector<std::string>& sels,const std::vector<double>& bins, bool binInY = true, double rebin = -1){
 
 
     TFile *fData = new TFile((filename + "_"+name  +"_distributions.root").c_str(),"read");
@@ -136,14 +136,6 @@ void test2DFits(std::string name, std::string filename){
 
     TH2 * hOT = 0;
     fTemp->GetObject("histo",hOT);
-
-    std::vector<double> hBBBinning = {30,50,100,150,210};
-    std::vector<double> hhBinning  = {800,900,1000,1500,2000,3000,4000,5000};
-
-    //    std::vector<double> hBBBinning = {30,210};
-    //    std::vector<double> hhBinning  = {800,5000};
-
-    std::vector<std::string> sels = {"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"};
     for(const auto& s : sels){
         TH2* dH = 0;
         std::vector<TH2*> hs;
@@ -154,8 +146,15 @@ void test2DFits(std::string name, std::string filename){
         fTempFit->GetObject((name+"_"+s).c_str(),hF);
         if(hF == 0) continue;
 
+        if(binInY){
+            make2DTests(name + "_Fit_HH_"+s,dH,{hF,hOT},{"Search region template","Baseline template"},bins,binInY,rebin);
+        } else {
+            make2DTests(name + " Fit_Hbb_ "+s ,dH,{hF,hOT},{"Search region template","Baseline template"},bins,binInY,rebin);
+        }
+//        make2DTests(name + "_Fit_Hbb_"+s,dH,{hF,hOT},{"Search region template","Baseline template"},hBBBinning,false,10);
+//        make2DTests(name + " Fit_HH_ "+s ,dH,{hF,hOT},{"Search region template","Baseline template"},hhBinning,true,5);
+
         //        make2DTests(name + " Fit HbbF "+s,dH,{hF,hOT},{"Search region template","Original template"},hBBBinning,false);
-        make2DTests(name + "_Fit_HbbC_"+s,dH,{hF,hOT},{"Search region template","Baseline template"},hBBBinning,false,10);
         //        make2DTests(name + " Fit HHF "+s ,dH,{hF,hOT},{"Search region template","Original template"},hhBinning,true);
         //        make2DTests(name + " Fit HHC "+s ,dH,{hF,hOT},{"Search region template","Baseline template"},hhBinning,true,5);
     }
@@ -164,13 +163,11 @@ void test2DFits(std::string name, std::string filename){
 
 }
 
-void testQCDSF(std::string name, std::string filename){
+void testQCDSF(std::string name, std::string filename, const std::vector<std::string>& sels){
     TFile *fData = new TFile((filename + "_"+name  +"_distributions.root").c_str(),"read");
 
     std::vector<double> hBBBinning = {30,210};
     std::vector<double> hhBinning  = {700,3500};
-
-    std::vector<std::string> sels = {"emu_LMT_I_ltmb","e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"};
     for(const auto& s : sels){
         TH2* hMC = 0;
         fData->GetObject((name+"_wQCD_noQCDSF_"+s+"_"+hbbMCS+"_"+hhMCS).c_str(),hMC);
@@ -338,31 +335,55 @@ public:
 
 
 
-
-void plotNonResBkgTests(int step = 0,bool doTW = true, bool doSR = true, std::string outName = ""){
-    //    hhFilename +="_CR";
-    std:: string inName = doSR ? "bkgInputs" : "bkgInputsCR";
+// REGION: 0==SR
+// 1=TopCR
+// 2=WCR
+void plotNonResBkgTests(int step = 0,bool doTW = true, int region = 0, std::string outName = ""){
+    std:: string inName =  "bkgInputs" ;
+    std::vector<std::string> srList = {"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"};
+    if(region == 1){
+        inName =  "bkgInputsTopCR";
+        hhFilename +="_TopCR";
+    }
+    else if(region == 2){
+        inName =  "bkgInputsQGCR";
+        hhFilename +="_QGCR";
+        srList = {"e_AB_LP_full","mu_AB_LP_full","e_AB_HP_full","mu_AB_HP_full"};
+    }
     std::string filename = inName +"/"+hhFilename;
 
     CutStr mod = bkgSels [doTW ? BKG_LOSTTW : BKG_QG];
     if(outName.size()){
-        outName += std::string("/") + mod +  (doSR ? "" : "CR");
+        outName += std::string("/") + mod;
+        if(region == 1) outName +=  "TopCR";
+        else if(region == 2) outName +=  "WCR";
     }
     switch(step){
     case 0:
         if(doTW) return;
         if(outName.size()) outName += "_QCDRatio.root";
-        testRatioFits(mod,filename,"QCDSF",{"emu_I_I_ltmb","e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"});
-        testRatioUncs(mod,filename,"QCDSF",{ {"emu_LMT_I_ltmb","emu_I_I_ltmb"},
-                {"e_L_LP_full","e_I_LP_full"},{"e_M_LP_full","e_I_LP_full"},{"e_T_LP_full","e_I_LP_full"},
-                {"e_L_HP_full","e_I_HP_full"},{"e_M_HP_full","e_I_HP_full"},{"e_T_HP_full","e_I_HP_full"},
-                {"mu_L_LP_full","mu_I_LP_full"},{"mu_M_LP_full","mu_I_LP_full"},{"mu_T_LP_full","mu_I_LP_full"},
-                {"mu_L_HP_full","mu_I_HP_full"},{"mu_M_HP_full","mu_I_HP_full"},{"mu_T_HP_full","mu_I_HP_full"}},1,1,1);
+        if(region==2){
+            testRatioFits(mod,filename,"QCDSF",{"emu_I_I_ltmb","e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"});
+            testRatioUncs(mod,filename,"QCDSF",{ {"emu_AB_I_ltmb","emu_I_I_ltmb"},
+                    {"e_AB_LP_full","e_I_LP_full"},{"e_AB_HP_full","e_I_HP_full"},
+                    {"mu_AB_LP_full","mu_I_LP_full"},{"mu_AB_HP_full","mu_I_HP_full"}},1,1,1);
+        } else {
+            testRatioFits(mod,filename,"QCDSF",{"emu_I_I_ltmb","e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"});
+            testRatioUncs(mod,filename,"QCDSF",{ {"emu_LMT_I_ltmb","emu_I_I_ltmb"},
+                    {"e_L_LP_full","e_I_LP_full"},{"e_M_LP_full","e_I_LP_full"},{"e_T_LP_full","e_I_LP_full"},
+                    {"e_L_HP_full","e_I_HP_full"},{"e_M_HP_full","e_I_HP_full"},{"e_T_HP_full","e_I_HP_full"},
+                    {"mu_L_LP_full","mu_I_LP_full"},{"mu_M_LP_full","mu_I_LP_full"},{"mu_T_LP_full","mu_I_LP_full"},
+                    {"mu_L_HP_full","mu_I_HP_full"},{"mu_M_HP_full","mu_I_HP_full"},{"mu_T_HP_full","mu_I_HP_full"}},1,1,1);
+        }
+
         break;
     case 1:
         if(doTW) return;
         if(outName.size()) outName += "_testQCDSF.root";
-        testQCDSF(mod,filename);
+        if(region == 2)
+            testQCDSF(mod,filename,{"emu_AB_I_ltmb","e_AB_LP_full","mu_AB_LP_full","e_AB_HP_full","mu_AB_HP_full"});
+        else
+            testQCDSF(mod,filename,{"emu_LMT_I_ltmb","e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"});
         break;
     case 2:
         if(outName.size()) outName += "_2DCondTemp.root";
@@ -378,12 +399,15 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, bool doSR = true, std::st
         break;
     case 5:
         if(outName.size()) outName += "_2DFits.root";
-        test2DFits(mod,filename);
+        test2DFits(mod,filename,srList,
+                {30.,50,100,150,210},false,10);
+//        test2DFits(mod,filename,srList,
+//                {800,900,1000,1500,2000,3000,4000,5000},true,5);
         break;
     case 6:
         if(outName.size()) outName += "_2DComp.root";
         writeables = test2DModel({mod},filename,
-                {"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},{700,4000});
+                srList,{700,4000});
         break;
     }
 

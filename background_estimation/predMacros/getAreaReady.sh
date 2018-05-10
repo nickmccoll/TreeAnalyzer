@@ -8,7 +8,8 @@ OUTSRV="cmslpc26.fnal.gov:"
 
 mkdir ${outputdir}
 mkdir ${outputdir}/../bkgInputs
-mkdir ${outputdir}/../bkgInputsCR
+mkdir ${outputdir}/../bkgInputsTopCR
+mkdir ${outputdir}/../bkgInputsQGCR
 mkdir ${outputdir}/../signalInputs
 mkdir ${outputdir}/../signalInputsNoCond
 scp ${OUTSRV}${inputdir}/* ${outputdir}/

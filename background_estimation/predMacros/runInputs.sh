@@ -33,18 +33,34 @@ RCMD="root -b -q '${macroLoc}/makeBKGInputs.C+(3)' &"
 eval $RCMD
 cd .. 
 
-cd ${startDir}/bkgInputsCR
-RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(5)'"
+cd ${startDir}/bkgInputsTopCR
+RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(true,5)'"
 eval $RCMD
-RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(0)' &"
+RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(true,0)' &"
 eval $RCMD
-RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(1)' &"
+RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(true,1)' &"
 eval $RCMD
-RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(2)' &"
+RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(true,2)' &"
 eval $RCMD
-RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(3)' &"
+RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(true,3)' &"
 eval $RCMD
-RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(-1)' &"
+RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(true,-1)' &"
+eval $RCMD
+cd .. 
+
+wait
+cd ${startDir}/bkgInputsQGCR
+RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(false,5)'"
+eval $RCMD
+RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(false,0)' &"
+eval $RCMD
+RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(false,1)' &"
+eval $RCMD
+RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(false,2)' &"
+eval $RCMD
+RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(false,3)' &"
+eval $RCMD
+RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(false,-1)' &"
 eval $RCMD
 cd .. 
 
