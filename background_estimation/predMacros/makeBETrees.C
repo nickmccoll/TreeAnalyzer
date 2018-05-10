@@ -92,7 +92,7 @@ public:
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
         if(!passTriggerPreselection) return false;
         if(!passEventFilters) return false;
-        if(selectedLeptons.size() == 0) return false;
+        if(selectedLeptons.size() != 1) return false;
         if(!hbbCand) return false;
         if(!wjjCand) return false;
 
