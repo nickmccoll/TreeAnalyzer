@@ -17,7 +17,7 @@
 
 
 std::string getQCDSF(const std::string& name, const std::string& filename, const CutStr& l,const CutStr& p,const CutStr& h ){
-    CJSON json(filename+"_"+name+"_"+l+"_I_"+p+"_"+h+"_QCDSF.json");
+    CJSON json(filename+"_"+name+"_"+l+"_"+inclBtagCat+"_"+p+"_"+h+"_QCDSF.json");
     std::string qToW = json.getP(0).second;
     auto replace = [&](const std::string& vn, const std::string tf1n){
         std:size_t index = 0;
@@ -105,7 +105,7 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,  co
 
     std::vector<CutStr > srPCrBtagCats = btagCats;
     for(const auto& b : qgBtagCats) srPCrBtagCats.push_back(b);
-    srPCrBtagCats.push_back(CutStr("I","hbbCSVCat>=0"));
+    srPCrBtagCats.push_back(inclBtagCat);
 
     std::vector<PlotSel> sels;
     for(const auto& l :lepCats) for(const auto& b :srPCrBtagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
@@ -113,8 +113,7 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,  co
                 l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
     }
     std::string distName=filename+"_"+name+ "_QCDSF_distributions.root";
-    //    MakePlots a(inputFile,distName,samps,sels,vars,cut,nomW.cut);
-
+    MakePlots a(inputFile,distName,samps,sels,vars,cut,nomW.cut);
 
     for(const auto& l :lepCats) for(const auto& b :srPCrBtagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         std::string args = "-nF "+distName +" -nH " + l +"_"+b+"_"+p +"_"+h + "_"+hhMCS.cut + " -nN "+ name+"_"+processes[QCD] + " -nD "+ name+"_"+processes[WJETS]
@@ -436,6 +435,9 @@ void go(BKGModels modelToDo, std::string treeDir) {
         std::string name = bkgSels[BKG_QG];
         std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_QG].cut + "&&"+ aQCD.cut;
+
+        getQCDScaleFactor(name,filename,  treeArea, bkgSels[BKG_QG].cut+"&&"+hbbRange.cut);
+
         std::string kdeSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
         std::string kdeWeight = nomW.cut+"*"+getQCDSF(name,filename,lepCats[LEP_EMU],purCats[PURE_I],hadCuts[HAD_LTMB]);
         //makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);

@@ -92,6 +92,8 @@ std::vector<CutStr > qgBtagCats = {
         CutStr("AB","hbbCSVCat==1"),
 };
 
+CutStr inclBtagCat("I","hbbCSVCat>=0");
+
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
         CutStr("I","1.0"),
