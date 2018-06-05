@@ -95,6 +95,8 @@ public:
         fT =  TObjectHelper::getFile(*fTN);
         fH =  TObjectHelper::getFile(*fHN);
         auto h = TObjectHelper::getObject<TH1F>(fT,*nT);
+        plotter.add1D((TH1*)h->Clone("originalPDF"));
+
         auto * xAxis = h->GetXaxis();
 
         RooWorkspace w("w",false);
