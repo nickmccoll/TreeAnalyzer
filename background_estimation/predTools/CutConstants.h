@@ -47,7 +47,7 @@ unsigned int nHHMassBins   =132;
 double minHHMass  = 700;
 double maxHHMass  = 4000;
 
-unsigned int nInclHHMassBins   =280;
+unsigned int nInclHHMassBins   =200;
 double minInclHHMass  = 0   ;
 double maxInclHHMass  = 5000;
 
