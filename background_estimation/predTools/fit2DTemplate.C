@@ -164,8 +164,11 @@ public:
         fT =  TObjectHelper::getFile(*fTN);
         fH =  TObjectHelper::getFile(*fHN);
         auto h = TObjectHelper::getObject<TH2F>(fT,*nT);
+        plotter.add1D((TH2*)h->Clone("originalPDF"));
+
         auto * xAxis = h->GetXaxis();
         auto * yAxis = h->GetYaxis();
+
 
         RooWorkspace w("w",false);
         RooArgSet varset;
@@ -178,6 +181,7 @@ public:
         varset.add(*w.var("y"));
         varlist.add(*w.var("x"));
         varlist.add(*w.var("y"));
+
 
         RooDataHist rH("nominalHist","nominalHist",varlist,&*h);
         RooHistPdf rP("nominalPDF","nominalPDF",varlist,rH);
@@ -219,7 +223,6 @@ public:
         for(const auto& syst : systList){
             std::cout << syst <<" -> "<< w.var(syst.c_str())->getVal()<<std::endl;
         }
-
         plotter.add1D(fitHist);
 
         std::vector<double> coefList;
