@@ -16,6 +16,22 @@
 #include "TRandom3.h"
 
 
+std::string getTTBarSF(const std::string& filename){
+    CJSON json(filename+"_ttbarSF.json");
+    std::string qToW = json.getP(0).second;
+    auto replace = [&](const std::string& vn, const std::string tf1n){
+        std:size_t index = 0;
+        while (true) {
+            index = qToW.find(vn, index);
+            if (index == std::string::npos) break;
+            qToW.replace(index, vn.size(), tf1n);
+            index += 1;
+        }
+    };
+    replace(MOD_MS,hhMCS);
+    return std::string("(")+processes[TTBAR].cut+"?("+qToW+"):1.0)";
+}
+
 std::string getQCDSF(const std::string& name, const std::string& filename, const CutStr& l,const CutStr& p,const CutStr& h ){
     CJSON json(filename+"_"+name+"_"+l+"_"+inclBtagCat+"_"+p+"_"+h+"_QCDSF.json");
     std::string qToW = json.getP(0).second;
@@ -40,56 +56,147 @@ void makeDetectorParam(const std::string& name, const std::string& filename,  co
     make2DDetectorParam(inputFile,std::string("y_")+resFile,yArgs);
     gSystem->Exec(TString::Format("hadd -f %s *_%s",resFile.c_str(),resFile.c_str()));
     gSystem->Exec(TString::Format("rm *_%s",resFile.c_str()));
+    //makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+    //        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+    //        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+    //        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
+
 }
 
-void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0",const std::string& weight="1.0",float khxs = 1,float khxc = 5){
-    std::string tempFile=filename+"_"+name+"_incl_template.root";
+std::string getMVVExpoMinMaxStr(std::string sample){
+    float eMin, eMax;
+    if(strFind(sample,bkgSels[BKG_QG])){
+        eMin = 2000;
+        eMax = 4500;
+    } else if(strFind(sample,bkgSels[BKG_LOSTTW])){
+        eMin = 1500;
+        eMax = 2500;
+    } else if(strFind(sample,bkgSels[BKG_MW])){
+        eMin = 1500;
+        eMax = 2500;
+    } else{
+       eMin = 2000 ;
+       eMax = 3500 ;
+    }
+    return std::string(" -emin ") + flt2Str(eMin) + " -emax "+flt2Str(eMax) + " ";
+}
+
+void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& baseSel="1.0",bool addQCDSF = false,float khxs = 1,float khxc = 5){
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
-    std::string args = std::string("-v -n histo ")+" -x "+hbbMCS.cut+" -g hbbGenMass -xb "+hbbInclBinning.cut+ " -s "+cut+" -w "+weight+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
-    args += " -kss -ks 1.5 -kr 1.5 -hs 0.00714 -hr 45 ";
-    args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
-    make1DTemplateWithAdaKern(inputFile,tempFile, args);
+
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(l != lepCats[LEP_EMU]) continue;
+        if(strFind(name,bkgSels[BKG_QG])||strFind(name,bkgSels[BKG_LOSTTW])){
+            if(b != btagCats[BTAG_LMT]) continue;
+        } else {
+            if(b == btagCats[BTAG_LMT]) continue;
+        }
+        if(p != purCats[PURE_I]) continue;
+        if(h != hadCuts[HAD_LTMB]) continue;
+
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
+        std::string tempFile=filename+"_"+name+"_"+catName+"_MJJ_incl_template.root";
+        std::string cut =  std::string("(")+baseSel+"&&"+l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut+")";
+        if(addQCDSF) cut += "*"+getQCDSF(name,filename,l,p,h);
+        std::string args = std::string("-v -n histo ")+" -x "+hbbMCS.cut+" -g hbbGenMass -xb "+hbbInclBinning.cut+ " -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
+        args += " -kss -ks 1.5 -kr 1.5 -hs 0.00714 -hr 45 ";
+        args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
+        make1DTemplateWithAdaKern(inputFile,tempFile, args);
+    }
 }
-void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0",float khxs = 1,float khxc = 5){
-    std::string tempFile=filename+"_"+name+"_incl_template.root";
+
+void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& baseSel="1.0",bool addQCDSF = false,float khxs = 1,float khxc = 5){
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
 
-    float eMin = (name.find(bkgSels[BKG_MT]) != std::string::npos) ?  2000:1500;
-    float eMax = (name.find(bkgSels[BKG_MT]) != std::string::npos) ?  3500:2500;
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(!strFind(name,bkgSels[BKG_QG])){
+            if(l != lepCats[LEP_EMU]) continue;
+        }
+        if(b != btagCats[BTAG_LMT]) continue;
+        if(p != purCats[PURE_I]) continue;
+        if(strFind(name,bkgSels[BKG_QG])||strFind(name,bkgSels[BKG_LOSTTW])){
+            if(h != hadCuts[HAD_LTMB]) continue;
+        } else{
+            if(h != hadCuts[HAD_LB]) continue;
+        }
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
+        std::string tempFile=filename+"_"+name+"_"+catName+"_MVV_incl_template.root";
+        std::string cut =  std::string("(")+baseSel+"&&"+l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut+")";
+        if(addQCDSF) cut += "*"+getQCDSF(name,filename,l,p,h);
 
-    std::string args = std::string("-v -n histo ")+" -x "+hhMCS.cut+" -g hbbGenMass -xb "+hhInclBinning.cut+" -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
-    args += " -kss -ks 1.5 -kr 1.5 -hs 0.0003 -hr 1200 ";
-    args += std::string(" -doS -emin ") + flt2Str(eMin) + " -emax "+flt2Str(eMax) + " ";
-    args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
-    make1DTemplateWithAdaKern(inputFile,tempFile, args);
+        std::string args = std::string("-v -n histo ")+" -x "+hhMCS.cut+" -g hbbGenMass -xb "+hhInclBinning.cut+" -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
+        args += " -kss -ks 1.5 -kr 1.5 -hs 0.0003 -hr 1200 ";
+        args += std::string(" -doS ") + getMVVExpoMinMaxStr(name);
+        args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
+        make1DTemplateWithAdaKern(inputFile,tempFile, args);
+    }
+
 }
 
-void makeBackgroundShapesMVVConditional(const std::string name, const std::string filename,  const std::string inputFile, const std::string cut="1.0", const std::string weight="1.0", float khxs = 1,float khxc = 5,float khys = 1,float khyc = 5) {
-    std::string tempFile=filename+"_"+name+"_incl_COND2D_template.root";
-    float eMin = (name.find(bkgSels[BKG_LOSTTW]) != std::string::npos) ? 1500 : 2000;
-    float eMax = (name.find(bkgSels[BKG_LOSTTW]) != std::string::npos) ? 2500 : 4500;
-    std::string args = std::string("-v -n histo ") + " -vx "+ hhMCS.cut+ " -vy "+hbbMCS.cut+ " -xb "+hhInclBinning.cut+" -yb "+hbbInclBinning.cut+ " -ycb 50,60,80,100,120,140,160,180,200,220,250 "+ "-s "+ cut +" ";
-    args += " -w "+weight+" ";
-    args+=std::string(" -khxs ")+ flt2Str(khxs) +" -khxc "+ flt2Str(khxc) +" -khys "+ flt2Str(khys) +" -khyc "+ flt2Str(khyc) + " -hss ";
-    args+=std::string(" -hs 0.0003 -hr 1200 ") + " -emin "+ flt2Str(eMin)+ " -emax "+ flt2Str(eMax);
-    make2DTemplateWithAdaKern(inputFile,tempFile, args);
+void makeBackgroundShapes2DConditional(const std::string name, const std::string filename,  const std::string inputFile, const std::string baseSel="1.0", bool addQCDSF = false, bool xIsCond = false, float khxs = 1,float khxc = 5,float khys = 1,float khyc = 5) {
+
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(l != lepCats[LEP_EMU]) continue;
+        if(b != btagCats[BTAG_LMT]) continue;
+        if(p != purCats[PURE_I]) continue;
+        if(h != hadCuts[HAD_LTMB]) continue;
+
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
+        const std::string tempFile=filename+"_"+name+"_"+catName+"_2D_cond_template.root";
+        std::string cut =  std::string("(")+baseSel+"&&"+l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut+")";
+        if(addQCDSF) cut += "*"+getQCDSF(name,filename,l,p,h);
+
+        std::string args = std::string("-v -n histo ") + " -vx "+ hbbMCS.cut+ " -vy "+hhMCS.cut+ " -xb "+hbbInclBinning.cut+" -yb "+hhInclBinning.cut+  " -s "+ cut +" -w "+nomW.cut+" ";
+        args+=std::string(" -khxs ")+ flt2Str(khxs) +" -khxc "+ flt2Str(khxc) +" -khys "+ flt2Str(khys) +" -khyc "+ flt2Str(khyc) + " -kss ";
+        args += "-eopt y  "+ getMVVExpoMinMaxStr(name);
+        if(xIsCond){
+            args+=" -hs 0.00714 -hr 45 ";
+            args+=" -xIsCond ";
+        } else {
+            args+=" -hs 0.0003 -hr 1200 ";
+        }
+
+        make2DTemplateWithAdaKern(inputFile,tempFile, args);
+    }
 }
 
 
-void mergeBackgroundShapes(const std::string& name, const std::string& filename){
-    std::string inFileX=filename+"_"+name+"_incl_template.root";
-    std::string inFileY=filename+"_"+name+"_incl_COND2D_template.root";
-    std::string rootFile=filename+"_"+name+"_2D_template.root";
-    std::string args = std::string("-v -n histo ") + " -inX "+  inFileX + " -inY "+ inFileY + " -sX Scale:ScaleX,Res:ResX,PT:PTX,OPT:OPTX -sY PT:PTY,OPT:OPTY "+ " -xb "+hbbBinning.cut+" -yb "+hhBinning.cut;
-    mergeHistosToPDF2D(rootFile, args);
+void mergeBackgroundShapes(const std::string& name, const std::string& filename, bool xIsCond){
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(!strFind(name,bkgSels[BKG_QG])){
+            if(l != lepCats[LEP_EMU]) continue;
+        }
+        if(b != btagCats[BTAG_LMT]) continue;
+        if(p != purCats[PURE_I]) continue;
+        if(h != hadCuts[HAD_LTMB]) continue;
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
+
+        std::string inFile1D=filename+"_"+name+"_"+ catName+"_"+(xIsCond? "MVV":"MJJ") +"_incl_template.root";
+        std::string inFile2D=filename+"_"+name+"_"+ lepCats[LEP_EMU] +"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_LTMB]+"_2D_cond_template.root";
+        std::string mergedTemp=filename+"_"+name+"_"+catName+"_2D_merged_template.root";
+
+        std::string args = std::string("-v -n histo ");
+        if(xIsCond){ args += " -xIsCond ";}
+        args += " -in1D "+  inFile1D + " -in2D "+ inFile2D + " -sX Scale:ScaleX,Res:ResX,PT:PTX,OPT:OPTX -sY PT:PTY,OPT:OPTY "+ " -xb "+hbbBinning.cut+" -yb "+hhBinning.cut;
+        mergeHistosToPDF2D(mergedTemp, args);
+    }
 }
 
 void cutMVVTemplate(const std::string& name, const std::string& filename){
-    std::string inFileX=filename+"_"+name+"_incl_template.root";
-    std::string rootFile=filename+"_"+name+"_template.root";
-    std::string args = std::string("-v -n histo ") + " -i "+  inFileX + " -s Scale:Scale,Res:Res,PT:PT,OPT:OPT "+ " -xb "+hhBinning.cut;
-    cutHistos1D(rootFile, args);
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(l != lepCats[LEP_EMU]) continue;
+        if(b != btagCats[BTAG_LMT]) continue;
+        if(p != purCats[PURE_I]) continue;
+        if(h != hadCuts[HAD_LB]) continue;
+
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
+        std::string inFileX=filename+"_"+name+"_"+catName+"_MVV_incl_template.root";
+        std::string outFileX=filename+"_"+name+"_"+catName+"_MVV_cut_template.root";
+        std::string args = std::string("-v -n histo ") + " -i "+  inFileX + " -s Scale:Scale,Res:Res,PT:PT,OPT:OPT "+ " -xb "+hhBinning.cut;
+        cutHistos1D(outFileX, args);
+    }
 }
+
 
 
 
@@ -104,7 +211,6 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,  co
     };
 
     std::vector<CutStr > srPCrBtagCats = btagCats;
-    for(const auto& b : qgBtagCats) srPCrBtagCats.push_back(b);
     srPCrBtagCats.push_back(inclBtagCat);
 
     std::vector<PlotSel> sels;
@@ -153,8 +259,7 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
     MakePlots a(inputFile,outFileName,samps,sels,vars,cut,nomW.cut);
 }
 
-void fitBackgroundShapesMVVConditional(std::string name, const std::string& filename, const std::string& fittedName =""){
-    std::string tempFile=filename+"_"+name+"_2D_template.root";
+void fitBackgroundShapes2DConditional(std::string name, const std::string& filename, bool xIsCond, const std::string& fittedName =""){
     //Different name in case we want to fit on a different selection with some template
     if(fittedName.size())name = fittedName;
     std::string distFileName=filename+"_"+name+"_distributions.root";
@@ -163,12 +268,16 @@ void fitBackgroundShapesMVVConditional(std::string name, const std::string& file
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
         std::string hName = name+"_"+catName+"_"+hbbMCS+"_"+hhMCS;
         std::string outName = filename + "_"+name+"_"+catName+"_2D_template.root";
+        std::string tempFile= filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]+"_2D_merged_template.root";
+        if(strFind(name,bkgSels[BKG_QG])){
+            tempFile=filename+"_"+name+"_"+l+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]+"_2D_merged_template.root";
+        }
         std::string args = std::string("-v ") + "-fT "+ tempFile+" -nT histo -s PTX,OPTX,PTY,OPTY " + " -fH " + distFileName + " -nH "+ hName;
+        if(xIsCond) args+=" -xCy ";
         fit2DTemplate(outName,args);
     }
 }
 void fitBackgroundShapesMVV(std::string name, const std::string& filename, const std::string& fittedName =""){
-    std::string tempFile=filename+"_"+name+"_template.root";
     //Different name in case we want to fit on a different selection with some template
     if(fittedName.size())name = fittedName;
     std::string distFileName=filename+"_"+name+"_distributions.root";
@@ -176,8 +285,9 @@ void fitBackgroundShapesMVV(std::string name, const std::string& filename, const
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
         std::string hName = name+"_"+catName+"_"+hhMCS;
-        std::string outName = filename + "_"+name+"_"+catName+"_template.root";
-        std::string args = std::string("-v ") + "-fT "+ tempFile+" -nT histo -s PT,OPT " + " -fH " + distFileName + " -nH "+ hName;
+        std::string inName = filename + "_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LB]+"_MVV_cut_template.root";
+        std::string outName = filename + "_"+name+"_"+catName+"_MVV_template.root";
+        std::string args = std::string("-v ") + "-fT "+ inName+" -nT histo -s PT,OPT " + " -fH " + distFileName + " -nH "+ hName;
         fit1DTemplate(outName,args);
     }
 }
@@ -326,7 +436,7 @@ void convertFuncFitTo2DTemplate(const std::string& name, const std::string& file
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
         std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_";
-        jsonFile += name.find(bkgSels[BKG_MW])!= std::string::npos ?btagCats[BTAG_I]:b;
+        jsonFile += strFind(name,bkgSels[BKG_MW]) ?btagCats[BTAG_LMT]:b;
         jsonFile+=std::string("_")+purCats[PURE_I]+"_"+hadCuts[HAD_NONE] +"_fit.json";
 
         CBFunctionFitter xFit(0,false,funcParamPostfix,{MOD_MJ});
@@ -338,7 +448,7 @@ void convertFuncFitTo2DTemplate(const std::string& name, const std::string& file
         CJSON json(jsonFile);
         json.fillFunctions(MOD_MR);
         auto pn = [&](const std::string& v) ->std::string{return v + funcParamPostfix;};
-        auto * iF =  TObjectHelper::getFile(filename + "_"+name+"_"+catName+"_template.root");
+        auto * iF =  TObjectHelper::getFile(filename + "_"+name+"_"+catName+"_MVV_template.root");
         if(iF==0) continue;
         auto hh_H = TObjectHelper::getObject<TH1>(iF,"histo",false,false);
         if(hh_H==0) continue;
@@ -430,31 +540,34 @@ void makePseudoData(const std::string& name, const std::string& filename, const 
 
 void go(BKGModels modelToDo, std::string treeDir) {
     std::string filename = hhFilename;
+
+    //Turn on TTBar scaling
+    nomW.cut = nomW.cut +"*"+getTTBarSF("../supportInputs/HHlnujj");
+
     if(modelToDo == BKG_QG)
     {
         std::string name = bkgSels[BKG_QG];
         std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_QG].cut + "&&"+ aQCD.cut;
-
         getQCDScaleFactor(name,filename,  treeArea, bkgSels[BKG_QG].cut+"&&"+hbbRange.cut);
-
-        std::string kdeSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
-        std::string kdeWeight = nomW.cut+"*"+getQCDSF(name,filename,lepCats[LEP_EMU],purCats[PURE_I],hadCuts[HAD_LTMB]);
-        //makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
-        //MVV
-        makeBackgroundShapesMVVConditional(name,filename,treeArea,kdeSel,kdeWeight,0.75,3,0.5,1);//x = hh
-        //                                makeBackgroundShapesMVVConditional(name+"_xs_0p75_xc_2_ys_0p75_yc_2,filename,treeArea,baseSel,0.75,2,0.75,2);//old
         makeFittingDistributions(name,filename,treeArea,hhInclRange.cut+"&&"+hbbInclRange.cut,true,true,
                 {{bkgSels[BKG_QG],genSel},{bkgSels[BKG_QG]+"_wQCD",bkgSels[BKG_QG].cut}}
         );
-
-        //MJJ
-        makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,kdeSel+"&&"+hhRange.cut,kdeWeight);
-        mergeBackgroundShapes(name,filename);
         makeFittingDistributions(name,filename,treeArea,hhRange.cut+"&&"+hbbRange.cut,false,true,
                 {{bkgSels[BKG_QG],genSel},{bkgSels[BKG_QG]+"_wQCD",bkgSels[BKG_QG].cut}}
         );
-        fitBackgroundShapesMVVConditional(name,filename);
+
+
+//        makeBackgroundShapes2DConditional(name,filename,treeArea,genSel,true,false,0.5,1,0.75,3);//P(hh|hbb) 0.75,2,0.75,2 old values
+//        makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,genSel+"&&"+hhRange.cut,true);
+//        mergeBackgroundShapes(name,filename,false);
+//        fitBackgroundShapes2DConditional(name,filename,false)
+
+        makeBackgroundShapes2DConditional(name,filename,treeArea,genSel,true,true,0.5,1,0.75,3);//P(hbb|hh)
+        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,true);
+        mergeBackgroundShapes(name,filename,true);
+        fitBackgroundShapes2DConditional(name,filename,true);
+
         compile2DTemplatesForDebug(name,filename);
     }
 
@@ -462,18 +575,18 @@ void go(BKGModels modelToDo, std::string treeDir) {
         std::string name = bkgSels[BKG_LOSTTW];
         std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_LOSTTW].cut;
-        std::string kdeSel    = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_LTMB].cut;
-        std::string kdeWeight = nomW.cut;
-        //        makeDetectorParam(name,filename,treeArea, genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
-        ////        //MVV
-        //        makeBackgroundShapesMVVConditional(name,filename,treeArea,baseSel,0.75,8,0.5,2);//x = hh old
-        makeBackgroundShapesMVVConditional(name,filename,treeArea,kdeSel,kdeWeight,0.75,4,0.5,2);//x = hh
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
-        ////        //MJJ
-        makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,kdeSel+"&&"+hhRange.cut,kdeWeight);
-        mergeBackgroundShapes(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
-        fitBackgroundShapesMVVConditional(name,filename);
+
+//        makeBackgroundShapes2DConditional(name,filename,treeArea,genSel,false,false,0.5,2,0.75,4);//P(hh|hbb) 0.5,2,0.75,8 old values
+//        makeBackgroundShapesMJJAdaKernel(name,filename,treeArea,genSel+"&&"+hhRange.cut);
+//        mergeBackgroundShapes(name,filename,false);
+//        fitBackgroundShapes2DConditional(name,filename,false);
+
+        makeBackgroundShapes2DConditional(name,filename,treeArea,genSel,false,true,0.5,2,0.75,4);//P(hbb|hh) 0.5,2,0.75,8 old values
+        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut);
+        mergeBackgroundShapes(name,filename,true);
+        fitBackgroundShapes2DConditional(name,filename,true);
 
         compile2DTemplatesForDebug(name,filename);
     }
@@ -482,16 +595,13 @@ void go(BKGModels modelToDo, std::string treeDir) {
         std::string name = bkgSels[BKG_MW];
         std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_MW].cut;
-        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&" +hadCuts[HAD_LB].cut;
-        //MVV
-        //        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
-        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,baseSel+"&&"+hbbRange.cut);
-        cutMVVTemplate(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
+        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
+
+        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut);
+        cutMVVTemplate(name,filename);
         fitBackgroundShapesMVV(name,filename);
 
-        //MJJ
-        makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
         makeResWMJJShapes1stIt(name,filename);
         makeResWMJJShapes2ndIt(name,filename);
         convertFuncFitTo2DTemplate(name,filename);
@@ -501,16 +611,13 @@ void go(BKGModels modelToDo, std::string treeDir) {
         std::string name = bkgSels[BKG_MT];
         std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_MT].cut;
-        std::string baseSel = genSel + "&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&" +hadCuts[HAD_LB].cut;
-        //MVV
-        //        makeDetectorParam(name,filename,treeArea,genSel + "&&"+ hhRange.cut+"&&"+hbbRange.cut+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_I].cut+"&&"+purCats[PURE_I].cut+"&&"+ hadCuts[HAD_NONE].cut);
-        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,baseSel+"&&"+hbbRange.cut);
-        cutMVVTemplate(name,filename);
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
-        fitBackgroundShapesMVV(name,filename);
-        //
-        //        //MJJ
         makeFittingDistributions(name,filename,treeArea,genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
+
+        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut);
+        cutMVVTemplate(name,filename);
+        fitBackgroundShapesMVV(name,filename);
+
         makeResTopMJJShapes1stIt(name,filename);
         makeResTopMJJShapes2ndIt(name,filename);
         convertFuncFitTo2DTemplate(name,filename);
