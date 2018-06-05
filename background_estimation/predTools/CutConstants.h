@@ -24,6 +24,8 @@ std::vector<CutStr > processes = {
         CutStr("other"     ,"(process>1&&!(process==2||process==3||process==8))","other")
 };
 
+enum REGION  {REG_SR, REG_TOPCR, REG_QGCR};
+
 CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
 
 CutStr aQCD ("aQCD"  , "process!=8");
