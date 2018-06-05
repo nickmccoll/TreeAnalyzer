@@ -3,17 +3,30 @@
 using namespace CutConstants;
 using namespace ASTypes;
 
-void go(const std::string& signalName, const std::string& filename, const std::string& mainDir, bool runCR, bool simpleSignal) {
-    const std::string inputDir =  mainDir + (runCR ? "/bkgInputsCR/" : "/bkgInputs/");
+void go(const std::string& signalName, const std::string& filename, const std::string& mainDir,  REGION reg, bool simpleSignal) {
     const std::string sigInputDir =  mainDir + (simpleSignal ? "/signalInputsNoCond/" : "/signalInputs/");
-    const std::string fPF = runCR ? inputDir+filename +"_CR" :  inputDir+filename;
-    const std::string sfPF =sigInputDir +   filename;
+    const std::string sfPF =sigInputDir + filename;
+
+    std::string inputDir = mainDir;
+
+    std::string fPF;
+    switch(reg){
+        case REG_SR:
+            fPF = mainDir + "/bkgInputs/" + filename;
+            break;
+        case REG_TOPCR:
+            fPF = mainDir + "/bkgInputsTopCR/" + filename + "_TopCR";
+            break;
+        case REG_QGCR:
+            fPF = mainDir + "/bkgInputsQGCR/" + filename + "_QGCR";
+            break;
+    }
 
     const std::string category = "std";
     std::string cmd = "combineCards.py ";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
-        if(b == btagCats[BTAG_I]) continue;
+        if(b == btagCats[BTAG_LMT]) continue;
         if(p == purCats[PURE_I] ) continue;
         if(h != hadCuts[HAD_FULL] ) continue;
 
@@ -68,19 +81,19 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         card.addFixedYieldFromFile(bkgSels[BKG_LOSTTW],2,fPF+"_"+bkgSels[BKG_LOSTTW]+"_distributions.root",bkgSels[BKG_LOSTTW]+"_"+cat+"_"+hhMCS);
 
         //mW
-        card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,fullInputName(bkgSels[BKG_MW],lepCats[LEP_EMU],btagCats[BTAG_I],purCats[PURE_I],hadCuts[HAD_NONE],"fit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
-        card.addHistoShapeFromFile(bkgSels[BKG_MW],{MOD_MR}, inputName(bkgSels[BKG_MW],"template.root"),"histo",{mwSyst("PT"),mwSyst("OPT")},false,0,MOD_MR);
+        card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,fullInputName(bkgSels[BKG_MW],lepCats[LEP_EMU],btagCats[BTAG_LMT],purCats[PURE_I],hadCuts[HAD_NONE],"fit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
+        card.addHistoShapeFromFile(bkgSels[BKG_MW],{MOD_MR}, inputName(bkgSels[BKG_MW],"MVV_template.root"),"histo",{mwSyst("PT"),mwSyst("OPT")},false,0,MOD_MR);
         card.conditionalProduct(bkgSels[BKG_MW],bkgSels[BKG_MW] + "_"+MOD_MJ,MOD_MR,bkgSels[BKG_MW] + "_"+MOD_MR);
         card.addFixedYieldFromFile(bkgSels[BKG_MW],3,fPF+"_"+bkgSels[BKG_MW]+"_distributions.root",bkgSels[BKG_MW]+"_"+cat+"_"+hhMCS);
 
         //mT
         card.add1DBKGParametricShape(bkgSels[BKG_MT],MOD_MJ,fullInputName(bkgSels[BKG_MT],lepCats[LEP_EMU],b,purCats[PURE_I],hadCuts[HAD_NONE],"fit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
-        card.addHistoShapeFromFile(bkgSels[BKG_MT],{MOD_MR}, inputName(bkgSels[BKG_MT],"template.root"),"histo",{mtSyst("PT"),mtSyst("OPT")},false,0,MOD_MR);
+        card.addHistoShapeFromFile(bkgSels[BKG_MT],{MOD_MR}, inputName(bkgSels[BKG_MT],"MVV_template.root"),"histo",{mtSyst("PT"),mtSyst("OPT")},false,0,MOD_MR);
         card.conditionalProduct(bkgSels[BKG_MT],bkgSels[BKG_MT] + "_"+MOD_MJ,MOD_MR,bkgSels[BKG_MT]+ "_"+MOD_MR);
         card.addFixedYieldFromFile(bkgSels[BKG_MT],4,fPF+"_"+bkgSels[BKG_MT]+"_distributions.root",bkgSels[BKG_MT]+"_"+cat+"_"+hhMCS);
 
         //Data
-        if(runCR){
+        if(reg != REG_SR){
             card.importBinnedData(fPF + "_data_distributions.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
         } else {
             //Pseudo data
@@ -147,8 +160,10 @@ void go(const std::string& signalName, const std::string& filename, const std::s
 }
 #endif
 
-void makeCard( bool runSR = false, bool condSignal= true, std::string signalString = "radHH"){
-    std::cout <<" <<<<< "<< runSR <<" "<< condSignal <<" "<<signalString<<std::endl;
+void makeCard(int inreg = REG_SR, bool condSignal= true, std::string signalString = "radHH"){
+    std::cout <<" <<<<< "<< inreg <<" "<< condSignal <<" "<<signalString<<std::endl;
+    REGION reg = REGION(inreg);
+    if(reg == REG_QGCR) btagCats = qgBtagCats;
     std::string mainDir = "../../";
-    go(signalString,hhFilename,mainDir,!runSR,!condSignal);
+    go(signalString,hhFilename,mainDir,reg,!condSignal);
 }
