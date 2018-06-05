@@ -20,8 +20,10 @@ public:
 
         ParParser p;
         auto name = p.addString("n","Histogram base names",true);
-        auto inX  = p.addString("inX" ,"file containing x template",true);
-        auto inY  = p.addString("inY" ,"file containing 2D template");
+        xIsCond   = p.addBool("xIsCond","If true, set x as the conditional variable P(X|Y)*P(Y), if false: P(Y|X)*PY(Y)");
+        auto in1D      = p.addString("in1D" ,"file containing 1D template",true);
+        auto in2D     = p.addString("in2D" ,"file containing 2D template");
+
         auto sX   = p.addString("sX"  ,"Comma seperated list of systematics-> TH1Name:SystName",true);
         auto sY   = p.addString("sY"  ,"Comma seperated list of systematics-> TH1Name:SystName",true);
         xb   = p.addVFloat("xb","x-variable binning",true);
@@ -36,46 +38,73 @@ public:
         if(xb->size() != 3)                     throw std::invalid_argument("Analyzer::Analyzer() -> Bad parsing");
         if(yb->size() != 3)                     throw std::invalid_argument("Analyzer::Analyzer() -> Bad parsing");
 
-        fX =  TObjectHelper::getFile(*inX);
-        fY =  TObjectHelper::getFile(*inY);
+        f1D =  TObjectHelper::getFile(*in1D);
+        f2D =  TObjectHelper::getFile(*in2D);
 
         makeHisto(*name,*name,*name);
         for(const auto& syst: xSysts){
-            makeHisto(*name +"_"+syst.second+"Up"  ,*name+"_"+syst.first+"Up"  ,*name);
-            makeHisto(*name +"_"+syst.second+"Down",*name+"_"+syst.first+"Down",*name);
+            if(*xIsCond){
+                makeHisto(*name +"_"+syst.second+"Up"  ,*name,*name+"_"+syst.first+"Up"  );
+                makeHisto(*name +"_"+syst.second+"Down",*name,*name+"_"+syst.first+"Down");
+            } else {
+                makeHisto(*name +"_"+syst.second+"Up"  ,*name+"_"+syst.first+"Up"  ,*name);
+                makeHisto(*name +"_"+syst.second+"Down",*name+"_"+syst.first+"Down",*name);
+            }
+
         }
         for(const auto& syst: ySysts){
-            makeHisto(*name +"_"+syst.second+"Up"  ,*name,*name+"_"+syst.first+"Up"  );
-            makeHisto(*name +"_"+syst.second+"Down",*name,*name+"_"+syst.first+"Down");
+            if(*xIsCond){
+                makeHisto(*name +"_"+syst.second+"Up"  ,*name+"_"+syst.first+"Up"  ,*name);
+                makeHisto(*name +"_"+syst.second+"Down",*name+"_"+syst.first+"Down",*name);
+            } else {
+                makeHisto(*name +"_"+syst.second+"Up"  ,*name,*name+"_"+syst.first+"Up"  );
+                makeHisto(*name +"_"+syst.second+"Down",*name,*name+"_"+syst.first+"Down");
+            }
         }
 
 
         plotter.write(outFileName);
-        fX->Close();
-        fY->Close();
+        f1D->Close();
+        f2D->Close();
 }
 
-    //the x axis of inY maps to the out y-axis
-    //the y axis of inY maps to the out x-axis
-    //the x axis of inX maps to the out x-axis
-    void makeHisto(const std::string& outName, const std::string& xName, const std::string& yName){
-//        auto inX =TObjectHelper::getObject<TH1F>(fX,xName);
-//        auto inY =TObjectHelper::getObject<TH2F>(fY,yName);
-        TH1 * inX = 0; TH2* inY = 0;
-        fX->GetObject(xName.c_str(),inX);fY->GetObject(yName.c_str(),inY);
-        if(inX == 0 || inY == 0) return;
+
+    void makeHisto(const std::string& outName, const std::string& h1DName, const std::string& h2DName){
+        TH1 * h1D = 0; TH2* h2D = 0;
+        f1D->GetObject(h1DName.c_str(),h1D);f2D->GetObject(h2DName.c_str(),h2D);
+        if(h1D == 0 || h2D == 0) return;
+
         auto outH = new TH2F("temp","",(*xb)[0],(*xb)[1],(*xb)[2],(*yb)[0],(*yb)[1],(*yb)[2]);
-        for(int iX = 1; iX <= inX->GetNbinsX(); ++iX){
-            int oBinX = outH->GetXaxis()->FindFixBin(inX->GetXaxis()->GetBinCenter(iX));
+
+        //first cut up conditional template
+        for(int iX = 1; iX <= h2D->GetNbinsX(); ++iX){
+            int oBinX = outH->GetXaxis()->FindFixBin(h2D->GetXaxis()->GetBinCenter(iX));
             if(oBinX < 1 || oBinX > outH->GetNbinsX() ) continue;
-            for(int iY = 1; iY <= inY->GetNbinsX(); ++iY){
-                int oBinY = outH->GetYaxis()->FindFixBin(inY->GetXaxis()->GetBinCenter(iY));
+            for(int iY = 1; iY <= h2D->GetNbinsY(); ++iY){
+                int oBinY = outH->GetYaxis()->FindFixBin(h2D->GetYaxis()->GetBinCenter(iY));
                 if(oBinY < 1 || oBinY > outH->GetNbinsY() ) continue;
-                outH->SetBinContent(oBinX,oBinY,inY->GetBinContent(iY,iX));
+                outH->SetBinContent(oBinX,oBinY,h2D->GetBinContent(iX,iY));
             }
-            const double SF = inX->GetBinContent(iX)/outH->Integral(oBinX,oBinX,0,-1);
-            for(int oBinY = 1; oBinY <= outH->GetNbinsY(); ++oBinY){
-                outH->SetBinContent(oBinX,oBinY,outH->GetBinContent(oBinX,oBinY)*SF);
+        }
+
+        //Now apply the 1D template
+        if(*xIsCond){
+            for(int iY = 1; iY <= h1D->GetNbinsX(); ++iY){
+                int oBinY = outH->GetYaxis()->FindFixBin(h1D->GetXaxis()->GetBinCenter(iY));
+                if(oBinY < 1 || oBinY > outH->GetNbinsY() ) continue;
+                const double SF = h1D->GetBinContent(iY)/outH->Integral(0,-1,oBinY,oBinY);
+                for(int oBinX = 1; oBinX <= outH->GetNbinsX(); ++oBinX){
+                    outH->SetBinContent(oBinX,oBinY,outH->GetBinContent(oBinX,oBinY)*SF);
+                }
+            }
+        } else {
+            for(int iX = 1; iX <= h1D->GetNbinsX(); ++iX){
+                int oBinX = outH->GetXaxis()->FindFixBin(h1D->GetXaxis()->GetBinCenter(iX));
+                if(oBinX < 1 || oBinX > outH->GetNbinsX() ) continue;
+                const double SF = h1D->GetBinContent(iX)/outH->Integral(oBinX,oBinX,0,-1);
+                for(int oBinY = 1; oBinY <= outH->GetNbinsY(); ++oBinY){
+                    outH->SetBinContent(oBinX,oBinY,outH->GetBinContent(oBinX,oBinY)*SF);
+                }
             }
         }
         outH->Scale(1./outH->Integral());
@@ -97,8 +126,9 @@ public:
     }
 
     HistGetter plotter;
-    TFile * fX = 0;
-    TFile * fY = 0;
+    TFile * f1D = 0;
+    TFile * f2D = 0;
+    std::shared_ptr<bool>                      xIsCond;
     std::shared_ptr<std::vector<double>>       xb;
     std::shared_ptr<std::vector<double>>       yb;
 
