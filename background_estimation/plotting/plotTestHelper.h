@@ -11,6 +11,88 @@
 using namespace CutConstants;
 using namespace ASTypes;
 
+std::vector<std::string> getSRList(REGION reg){
+    auto bcats = (reg == REG_QGCR ? qgBtagCats : btagCats);
+    std::vector<std::string> sels;
+    for(const auto& l :lepCats) for(const auto& b :bcats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(l == lepCats[LEP_EMU]) continue;
+        if(b == bcats[BTAG_LMT]) continue;
+        if(p == purCats[PURE_I]) continue;
+        if(h != hadCuts[HAD_FULL]) continue;
+        sels.emplace_back(l +"_"+b+"_"+p +"_"+h);
+    }
+    return sels;
+}
+
+
+std::vector<TObject*> test1DKern(std::string name, std::string filename,std::string var,const std::vector<std::string>& sels) {
+    std::vector<TObject*> writeables;
+    for(const auto& s : sels){
+        bool withRatio = true;
+        TFile *f = new TFile((filename + "_"+name+"_"+s+"_"+var+"_incl_template.root").c_str(),"read");
+        std::vector<TH1*> hs;
+        std::vector<std::string> hNs;
+        TH1* h = 0;
+        f->GetObject("histo_data",h);    hs.push_back(h);hNs.push_back("MC");
+        h = 0;
+        f->GetObject("histo",h);
+        if(h){
+            hs.push_back(h);
+            hNs.push_back("KDE");
+        }
+        h = 0;
+        f->GetObject("histo_KDE",h);
+        if(h){
+            hs.push_back(h);
+            hNs.push_back("KDE w/o smoothing");
+        }
+
+        int binL = hs[0]->FindFixBin(strFind(var,"JJ") ? minHbbMass: minHHMass);
+        int binH = hs[0]->FindFixBin(strFind(var,"JJ") ? maxHbbMass: maxHHMass);
+        for(unsigned int iH = 1; iH < hs.size(); ++iH) hs[iH]->Scale(hs[0]->Integral(binL,binH)/hs[iH]->Integral(binL,binH));
+
+        Plotter * p = new Plotter();
+        Plotter * pf = new Plotter();
+        for(unsigned int iH = 0; iH < hs.size(); ++iH){
+            hs[iH]->SetYTitle("N. of events");
+            hs[iH]->SetXTitle(hbbMCS.title.c_str());
+            if(iH == 0){
+                p->addHist(hs[iH],hNs[iH].c_str());
+                pf->addHist(hs[iH],hNs[iH].c_str());
+            }
+            else  {
+                p->addHistLine(hs[iH],hNs[iH].c_str());
+                pf->addHistLine(hs[iH],hNs[iH].c_str());
+            }
+        }
+
+        auto setupPlotter = [&](Plotter * p, std::string name, double rebin =-1){
+            p->setMinMax(.1,(rebin < 0 ? 1.0 : rebin) * hs[0]->Integral()/4);
+            p->setUnderflow(false);
+            p->setOverflow(false);
+            p->setBotMinMax(0,2);
+            if(rebin > 0) p->rebin(rebin);
+            if(withRatio){
+                auto * c = p->drawSplitRatio(1,"stack",false,false,name);
+                c->GetPad(1)->SetLogy();
+                c->GetPad(1)->Update();
+                writeables.push_back(c);
+
+            } else {
+                auto * c = p->draw(false,name);
+                c->SetLogy();
+                c->Update();
+                writeables.push_back(c);
+
+            }
+        };
+
+        setupPlotter(p,name+"_"+s + "_"+var+"_KDE_C",5);
+        setupPlotter(pf,name+"_"+s + "_"+var+"_KDE_F");
+    }
+    return writeables;
+
+}
 
 std::vector<TObject*> test1DFits(std::string name, std::string filename, std::string varName, std::string fitName, const std::vector<std::string>& sels, const std::vector<std::string>& canNames) {
     Plotter * p = new Plotter; //stupid CINT bugfix.....
@@ -164,6 +246,7 @@ std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filenam
       for(unsigned int iB = 0; iB + 1 < bins.size(); ++iB){
         int binL = ax->FindFixBin(bins[iB]);
         int binH = ax->FindFixBin(bins[iB+1]) -1;
+        if(binH<=binL) continue;
         auto proj =[&](TH2* h, const std::string& title) ->TH1*{
             return binInY ? h->ProjectionX(  (s + "_" + title+"_"+int2Str(iB)).c_str(),binL,binH) :  h->ProjectionY( (s + "_" + title+"_"+int2Str(iB)).c_str(),binL,binH);
         };
