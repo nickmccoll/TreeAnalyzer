@@ -20,6 +20,13 @@ RCMD="root -b -q '${macroLoc}/makeSignalInputs.C+(1)' &"
 eval $RCMD
 cd ../
 
+cd ${startDir}/supportInputs
+RCMD="root -b -q '${macroLoc}/makeTTBarSF.C+(0)'"
+eval $RCMD
+RCMD="root -b -q '${macroLoc}/makeTTBarSF.C+(1)'"
+eval $RCMD
+cd ../
+
 cd ${startDir}/bkgInputs
 RCMD="root -b -q '${macroLoc}/makeBKGInputs.C+(5)'"
 eval $RCMD
@@ -31,7 +38,7 @@ RCMD="root -b -q '${macroLoc}/makeBKGInputs.C+(2)' &"
 eval $RCMD
 RCMD="root -b -q '${macroLoc}/makeBKGInputs.C+(3)' &"
 eval $RCMD
-cd .. 
+cd ..
 
 cd ${startDir}/bkgInputsTopCR
 RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(true,5)'"
@@ -46,7 +53,7 @@ RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(true,3)' &"
 eval $RCMD
 RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(true,-1)' &"
 eval $RCMD
-cd .. 
+cd ..
 
 wait
 cd ${startDir}/bkgInputsQGCR
@@ -62,11 +69,11 @@ RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(false,3)' &"
 eval $RCMD
 RCMD="root -b -q '${macroLoc}/makeBKGCRInputs.C+(false,-1)' &"
 eval $RCMD
-cd .. 
+cd ..
 
 wait
 cd ${startDir}/bkgInputs
 RCMD="root -b -q '${macroLoc}/makeBKGInputs.C+(4)' &"
 eval $RCMD
-cd .. 
+cd ..
 
