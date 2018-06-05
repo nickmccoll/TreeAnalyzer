@@ -5,45 +5,65 @@ rr -b -q 'TreeAnalyzer/background_estimation/predMacros/makeBETrees.C+("/eos/usc
 #PREP
 ./compile.sh jobs/4_30_beTreees/ compiled/
 . /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/getAreaReady.sh /uscms/home/nmccoll/nobackup/2011-04-15-susyra2/rel_HbbWW/work/analyzer_running/compiled/ trees/ /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/skimTree.C
-
+. /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/runInputs.sh . /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/
+ 
 #TEST
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (0,true    ,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (1,true    ,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (2,true    ,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (3,true    ,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (4,true    ,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (3,false   ,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (4,false   ,"ePTRatio0p4_wQCD")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (0,true    ,"ePTRatio0p3Tight_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (1,true    ,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (2,true    ,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (3,true    ,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (4,true    ,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (3,false   ,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (4,false   ,"ePTRatio0p4_wQCD_sepQGemu")'
 
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+ (2,true,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+ (3,true,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+ (4,true,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+ (5,true,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+ (6,true,true,"ePTRatio0p4_wQCD")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+ (2,true,0,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+ (3,true,0,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+ (4,true,0,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+ (5,true,0,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+ (6,true,0,"ePTRatio0p4_wQCD_sepQGemu")'
 
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(0,false,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(1,false,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(2,false,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(3,false,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(4,false,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(5,false,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(6,false,true,"ePTRatio0p4_wQCD")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(0,false,1,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(1,false,1,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(2,false,1,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(3,false,1,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(4,false,1,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(5,false,1,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+(6,false,1,"ePTRatio0p4_wQCD_sepQGemu")'
 
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+    (0,true,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+    (1,true,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+    (2,true,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+    (3,true,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+    (4,true,true,"ePTRatio0p4_wQCD")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+    (0,true,true,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+    (1,true,true,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+    (2,true,true,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+    (3,true,true,"ePTRatio0p4_wQCD_sepQGemu")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+    (4,true,true,"ePTRatio0p4_wQCD_sepQGemu")'
 
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+   (0,false,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+   (1,false,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+   (2,false,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+   (3,false,true,"ePTRatio0p4_wQCD")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+   (4,false,true,"ePTRatio0p4_wQCD")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+   (0,false,2,"qgCR")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+   (1,false,2,"qgCR")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+   (2,false,2,"qgCR")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+   (3,false,2,"qgCR")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+   (4,false,2,"qgCR")'
 
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+    (5,true,true,"ePTRatio0p4_wQCD")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotResBkgTests.C+    (5,true,true,"ePTRatio0p4_wQCD_sepQGemu")'
+
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotCRBkgTests.C+    (0,true)'
 
 #limits
-. /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/makeCards.sh nonCond_ePTRatio0p4_wQCD 1 0 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/
+. /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/makeCards.sh nonCond_ePTRatio0p4_wQCD_sepQGemu 0 0 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/
 nohup combine -m 2500 -M AsymptoticLimits -v 2 --run expected  combinedCard.txt &
 nohup combine -m 1000 -M AsymptoticLimits -v 2 --run expected  combinedCard.txt &
+
+treeMaker->cd()
+Events->Draw("hbbCSVCat>>h1(7,-0.5,6.5)","xsec*trig_N*pu_N*lep_N*btag_N*((hwwPT/hhMass>(isMuon?0.3:0.4))&&wwDM<2&&nAK4Btags==0&&hbbNSJs==2&&wjjNSJs==2&&hhMass>700&&hbbMass>100&&hbbMass<150&&process==3)")
+new TCanvas();
+Events->Draw("hbbBBT>>h2(20,-1,1)","xsec*trig_N*pu_N*lep_N*btag_N*((hwwPT/hhMass>(isMuon?0.3:0.4))&&wwDM<2&&nAK4Btags==0&&hbbNSJs==2&&wjjNSJs==2&&hhMass>700&&hbbMass>100&&hbbMass<150&&process==3)")
+h1->Scale(1./h1->Integral());
+h2->Scale(1./h2->Integral());
+
+
+text2workspace.py combinedCard.txt -o combined.root
+~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M MaxLikelihoodFit -m 2000 combined.root  
+ python ~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/test/diffNuisances.py -g plots.root fitDiagnostics.root 
+ 
+ python ~/GitRepositories/TreeAnalyzer/limit_plotting/runPostFitHH.py -i combined.root -s "radHH" -r 0
+
+/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0 --plots
+/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0 --plots -t 100
