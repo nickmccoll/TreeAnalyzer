@@ -27,7 +27,6 @@ void makeDataDistributions(const std::string& name, const std::string& filename,
 void makeBKGCRInputs(bool doTopRegion = true, int bkgToDo = BKG_QG, std::string treeDir = "../trees/"){
     if(doTopRegion){
         hadCuts[HAD_NONE].cut = nSJs.cut;
-        hadCuts[HAD_LWW].cut  = nSJs.cut + "&&"+abV.cut;
         hadCuts[HAD_LB].cut   = nSJs.cut;
         hadCuts[HAD_LTMB].cut = nSJs.cut+ "&&"+abV.cut;
         hadCuts[HAD_FULL].cut = nSJs.cut + "&&"+abV.cut;

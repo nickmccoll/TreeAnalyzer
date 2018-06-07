@@ -104,10 +104,9 @@ std::vector<CutStr > purCats = {
         CutStr("HP"  ,"wjjTau2o1<0.55")
 };
 
-enum HADCuts  {HAD_NONE, HAD_LWW,HAD_LB,HAD_LTMB,HAD_FULL};
+enum HADCuts  {HAD_NONE,HAD_LB,HAD_LTMB,HAD_FULL};
 std::vector<CutStr > hadCuts = {
         CutStr("none",nSJs.cut),
-        CutStr("lWW" ,nSJs.cut+"&&"+wjjBC.cut+"&&"+bV.cut),
         CutStr("lb"  ,nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut),
         CutStr("ltmb",nSJs.cut+"&&"+exA.cut),
         CutStr("full",nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut)
