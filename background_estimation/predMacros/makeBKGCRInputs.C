@@ -32,12 +32,12 @@ void makeBKGCRInputs(bool doTopRegion = true, int bkgToDo = BKG_QG, std::string 
         hadCuts[HAD_LTMB].cut = nSJs.cut+ "&&"+abV.cut;
         hadCuts[HAD_FULL].cut = nSJs.cut + "&&"+abV.cut;
         hhFilename +="_TopCR";
-        go(static_cast<BKGModels>(bkgToDo),treeDir);
+        go(static_cast<BKGModels>(bkgToDo),treeDir+"/bkgCompLMT/");
         if(bkgToDo < 0) makeDataDistributions("data",hhFilename,treeDir+"betrees_data.root","1.0",false);
     } else {
         btagCats = qgBtagCats;
         hhFilename +="_QGCR";
-        go(static_cast<BKGModels>(bkgToDo),treeDir);
+        go(static_cast<BKGModels>(bkgToDo),treeDir+"/bkgCompAB/");
         if(bkgToDo < 0) makeDataDistributions("data",hhFilename,treeDir+"betrees_data.root","1.0",false);
     }
 

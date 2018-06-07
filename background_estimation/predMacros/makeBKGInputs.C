@@ -543,13 +543,14 @@ void go(BKGModels modelToDo, std::string treeDir) {
 
     //Turn on TTBar scaling
     nomW.cut = nomW.cut +"*"+getTTBarSF("../supportInputs/HHlnujj");
+    std::string treeAreaIncl = treeDir + "../betrees_mc.root";
 
     if(modelToDo == BKG_QG)
     {
         std::string name = bkgSels[BKG_QG];
         std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_QG].cut + "&&"+ aQCD.cut;
-        getQCDScaleFactor(name,filename,  treeArea, bkgSels[BKG_QG].cut+"&&"+hbbRange.cut);
+        getQCDScaleFactor(name,filename,  treeAreaIncl, bkgSels[BKG_QG].cut+"&&"+hbbRange.cut);
         makeFittingDistributions(name,filename,treeArea,hhInclRange.cut+"&&"+hbbInclRange.cut,true,true,
                 {{bkgSels[BKG_QG],genSel},{bkgSels[BKG_QG]+"_wQCD",bkgSels[BKG_QG].cut}}
         );
@@ -633,6 +634,6 @@ void go(BKGModels modelToDo, std::string treeDir) {
 }
 #endif
 
-void makeBKGInputs(int bkgToDo = BKG_QG, std::string treeDir = "../trees/"){
+void makeBKGInputs(int bkgToDo = BKG_QG, std::string treeDir = "../trees/bkgCompLMT/"){
     go(static_cast<BKGModels>(bkgToDo),treeDir);
 }
