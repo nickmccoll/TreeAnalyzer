@@ -22,3 +22,10 @@ hadd ${outputdir}/betrees_data.root ${outputdir}/dataPieces/*.root
 hadd ${outputdir}/betrees_mc.root ${outputdir}/mcPieces/*.root
 RCMD="root -b -q '${skimLoc}(\"${outputdir}/betrees_mc.root\",\"${outputdir}/betrees\")'"
 eval $RCMD
+
+mkdir ${outputdir}/bkgCompLMT
+mkdir ${outputdir}/bkgCompAB
+RCMD="root -b -q '${skimLoc}(\"${outputdir}/betrees_mc.root\",\"${outputdir}/bkgCompLMT/betrees\",\"hbbCSVCat>=4\",true)'"
+eval $RCMD
+RCMD="root -b -q '${skimLoc}(\"${outputdir}/betrees_mc.root\",\"${outputdir}/bkgCompAB/betrees\",\"hbbCSVCat==1\",true)'"
+eval $RCMD
