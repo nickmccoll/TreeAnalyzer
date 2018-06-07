@@ -30,7 +30,7 @@ CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
 
 CutStr aQCD ("aQCD"  , "process!=8");
 
-CutStr wjjBC("wjjBC" , "wjjMass>10");
+CutStr wjjBC("wjjBC" , "wjjTau2o1<0.75");
 CutStr exA  ("exA"   , "(hwwPT/hhMass>(isMuon?0.3:0.4))&&wwDM<2");
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr abV  ("abV"   , "nAK4Btags!=0");
