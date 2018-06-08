@@ -195,7 +195,7 @@ public:
         std::vector<std::unique_ptr<TH2F>> downHists;
         std::vector<std::unique_ptr<TH2F>> upHists;
         for(const auto& syst : systList){
-            w.factory((syst+"[-0.333,0.333]").c_str());
+            w.factory((syst+"[-1,1]").c_str());
             coeffList.add(*w.var(syst.c_str()));
             for(const auto& var : systVar){
                 auto * histV = &(var== "Up" ? upHists : downHists);
