@@ -214,6 +214,7 @@ CJSON makeJSON(const std::string& outFileName,std::string& arguments){
             }
         } else if(p.second.find("mix")!= std::string::npos){
             func=new  TF1("mix","[0]+[1]*x+[2]/x",1,13000);
+            func->SetParLimits(2,0,10000);
         }
         if(func==0) throw std::invalid_argument("MakeJSON::MakeJSON() -> Bad parsing");
         g->Fit(func,"","",*minX,*maxX);
