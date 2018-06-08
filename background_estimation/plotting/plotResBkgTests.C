@@ -110,7 +110,7 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR,  std::s
     switch(step){
     case 0:
         if(outName.size()) outName += "_MVV_temp.root";
-        writeables = test1DKern(mod,filename,"MVV",{"emu_LMT_I_lb"});
+        writeables = test1DKern(mod,filename,"MVV",{"emu_LMT_I_lt"});
         break;
     case 1:
         if(outName.size()) outName += "_MVV_fit.root";

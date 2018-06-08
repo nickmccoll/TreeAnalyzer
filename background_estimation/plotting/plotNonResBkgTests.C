@@ -160,7 +160,7 @@ void test2DFits(std::string name, std::string filename,const std::vector<std::st
         if(binInY){
             make2DTests(name + "_Fit_Hbb_"+s,dH,{hF,hOT},{"Search region template","Baseline template"},bins,binInY,rebin);
         } else {
-            make2DTests(name + " Fit_HH_ "+s ,dH,{hF,hOT},{"Search region template","Baseline template"},bins,binInY,rebin);
+            make2DTests(name + "_Fit_HH_"+s ,dH,{hF,hOT},{"Search region template","Baseline template"},bins,binInY,rebin);
         }
 //        make2DTests(name + "_Fit_Hbb_"+s,dH,{hF,hOT},{"Search region template","Baseline template"},hBBBinning,false,10);
 //        make2DTests(name + " Fit_HH_ "+s ,dH,{hF,hOT},{"Search region template","Baseline template"},hhBinning,true,5);
@@ -323,7 +323,7 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, std::
     case 0:
         if(doTW) return;
         if(outName.size()) outName += "_QCDRatio.root";
-        writeables = testRatioFits(mod,filename,"QCDSF",{"emu_I_I_ltmb","e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"});
+        writeables = testRatioFits(mod,filename,"QCDSF",{"emu_I_I_ltmb","e_I_LP_ltmb","mu_I_LP_ltmb","e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"});
         if(reg == REG_QGCR){
             writeables = testRatioUncs(mod,filename,"QCDSF",{ {"emu_LMT_I_ltmb","emu_I_I_ltmb"},
                     {"e_L_LP_full","e_I_LP_full"},{"e_L_HP_full","e_I_HP_full"},{"mu_L_LP_full","mu_I_LP_full"},
@@ -348,13 +348,13 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, std::
         break;
     case 3:
         if(outName.size()) outName += "_MVVKern.root";
-        if(doTW) stepSels = {"emu_LMT_I_ltmb"};
+        if(doTW) stepSels = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
         else stepSels = {"emu_LMT_I_ltmb","e_LMT_I_ltmb","mu_LMT_I_ltmb"};
         writeables = test1DKern(mod,filename,"MVV",stepSels);
         break;
     case 4:
         if(outName.size()) outName += "_2DTemp.root";
-        if(doTW) stepSels = {"emu_LMT_I_ltmb"};
+        if(doTW) stepSels = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
         else stepSels = {"emu_LMT_I_ltmb","e_LMT_I_ltmb","mu_LMT_I_ltmb"};
         test2DTemplate(mod,filename,stepSels);
         break;
@@ -367,8 +367,8 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, std::
 
 //        test2DFits(mod,filename,srList,
 //                {30.,210},false,10);
-//        test2DFits(mod,filename,srList,
-//                {700,4000},true,5);
+        test2DFits(mod,filename,srList,
+                {700,4000},true,5);
 
         break;
     case 6:
