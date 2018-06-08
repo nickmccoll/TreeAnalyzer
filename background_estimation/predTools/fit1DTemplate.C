@@ -99,6 +99,7 @@ public:
 
         auto * xAxis = h->GetXaxis();
 
+
         RooWorkspace w("w",false);
         RooArgSet varset;
         RooArgList varlist;
@@ -136,6 +137,12 @@ public:
         w.import(interpPDF);
 
         auto inH =TObjectHelper::getObject<TH1F>(fH,*nH);
+        for(int iB = 0; iB <= inH->GetNbinsX()+1; ++iB){
+            if(inH->GetBinContent(iB) >= 0) continue;
+            inH->SetBinContent(iB,0);
+            inH->SetBinError(iB,0);
+        }
+
         RooDataHist fitDataHist((*nH+"DH").c_str(),(*nH+"DH").c_str(),varlist,&*inH);
         w.import(fitDataHist);
         w.pdf("interpPDF")->fitTo(*w.data((*nH+"DH").c_str()),RooFit::SumW2Error(kTRUE));
