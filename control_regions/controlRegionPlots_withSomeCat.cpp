@@ -254,3 +254,85 @@ h2->Draw("COLZ");
     }
   }
 }
+
+
+///Test background assumptions
+{
+  TFile * f = new TFile("HHlnujj_mtw_distributions.root");
+
+  
+  // std::vector<TString> sels =  {"emu_LMT_I_ltmb","emu_LMT_I_lb","emu_LMT_I_lt","emu_LMT_I_full","emu_LMT_LP_full","emu_LMT_HP_full"};
+  // std::vector<TString> selNs = {"emu_LMT_I_ltmb","emu_LMT_I_lb","emu_LMT_I_lt","emu_LMT_I_full","emu_LMT_LP_full","emu_LMT_HP_full"};
+  
+  // std::vector<TString> sels =  {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_LP_lt","emu_LMT_LP_full","emu_LMT_HP_ltmb","emu_LMT_HP_full"};
+  // std::vector<TString> selNs = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_LP_lt","emu_LMT_LP_full","emu_LMT_HP_ltmb","emu_LMT_HP_full"};
+  
+  // std::vector<TString> sels =  {"emu_LMT_I_ltmb","emu_LMT_I_lb","emu_LMT_I_lt","emu_LMT_I_full","emu_LMT_LP_full","emu_LMT_HP_full"};
+  // std::vector<TString> selNs = {"emu_LMT_I_ltmb","emu_LMT_I_lb","emu_LMT_I_lt","emu_LMT_I_full","emu_LMT_LP_full","emu_LMT_HP_full"};
+  
+  
+  // std::vector<TString> sels =  {"emu_LMT_I_ltmb","emu_LMT_I_lt","e_LMT_I_lt","mu_LMT_I_lt"};
+  // std::vector<TString> selNs = {"emu_LMT_I_ltmb","emu_LMT_I_lt","e_LMT_I_lt","mu_LMT_I_lt"};
+  
+  std::vector<TString> sels =  {"emu_LMT_I_none","emu_L_I_none","emu_M_I_none","emu_T_I_none","emu_L_I_full","emu_M_I_full"};
+  std::vector<TString> selNs = {"emu_LMT_I_none","emu_L_I_none","emu_M_I_none","emu_T_I_none","emu_L_I_full","emu_M_I_full"};
+  
+  std::vector<TString> samps = {"mt","mw"};
+  std::vector<TString> vars = {"hhMass","hbbMass"};
+  std::vector<double> bins = {700,800,1000,1500,4000};
+
+for(const auto& var : vars ){
+  for(const auto& samp : samps ){
+    Plotter * p = new Plotter();
+    for(unsigned int iS = 0; iS < sels.size(); ++iS){
+      const auto& sel = sels[iS];
+      TH1 * h = 0;
+      f->GetObject(samp+"_"+sel+"_"+var,h);
+      
+      if(h==0){
+        std::cout << samp+"_"+sel+"_hbbMass"<<std::endl;
+        continue;
+      }
+      p->addHist(h,selNs[iS]);
+    }
+    p->rebin(5);
+    p->normalize();
+    p->setBotMinMax(0,2);
+    p->drawSplitRatio(0,"stack",false,false,samp+"_"+var);
+  }
+}
+
+
+
+auto int2Str =[](int val)->std::string{
+std::stringstream stream;
+stream << val;
+return stream.str();
+};
+
+for(const auto& samp : samps ){
+for(unsigned int iB = 0; iB + 1 < bins.size(); ++iB){
+      Plotter * p = new Plotter();
+                  
+      for(unsigned int iS = 0; iS < sels.size(); ++iS){
+        const auto& sel = sels[iS];
+        TH2 * h = 0;
+        f->GetObject(samp+"_"+sel+"_hbbMass_hhMass",h);
+        if(h==0) continue;
+        int binL = h->GetYaxis()->FindFixBin(bins[iB]);
+        int binH = h->GetYaxis()->FindFixBin(bins[iB+1]) -1;
+        if(binH<=binL) continue;        
+        
+        auto proj =[&](TH2* h, const std::string& title) ->TH1*{
+            return true ? h->ProjectionX(  ( title+"_"+int2Str(iB)).c_str(),binL,binH) :  h->ProjectionY( (title+"_"+int2Str(iB)).c_str(),binL,binH);
+        };        
+        auto h1 = proj(h,(samp+"_"+sel).Data());
+        p->addHist(h1,sel);
+      }
+      p->rebin(5);
+      p->normalize();
+      p->setBotMinMax(0,2);
+      p->drawSplitRatio(0,"stack",false,false,samp+"_"+int2Str(iB));
+    }
+  }
+}
