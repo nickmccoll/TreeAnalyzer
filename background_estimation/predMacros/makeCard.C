@@ -81,13 +81,13 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         card.addFixedYieldFromFile(bkgSels[BKG_LOSTTW],2,fPF+"_"+bkgSels[BKG_LOSTTW]+"_distributions.root",bkgSels[BKG_LOSTTW]+"_"+cat+"_"+hhMCS);
 
         //mW
-        card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,fullInputName(bkgSels[BKG_MW],lepCats[LEP_EMU],btagCats[BTAG_LMT],purCats[PURE_I],hadCuts[HAD_NONE],"fit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
+        card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,inputName(bkgSels[BKG_MW],"MJJ_SFFit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
         card.addHistoShapeFromFile(bkgSels[BKG_MW],{MOD_MR}, inputName(bkgSels[BKG_MW],"MVV_template.root"),"histo",{mwSyst("PT"),mwSyst("OPT")},false,0,MOD_MR);
         card.conditionalProduct(bkgSels[BKG_MW],bkgSels[BKG_MW] + "_"+MOD_MJ,MOD_MR,bkgSels[BKG_MW] + "_"+MOD_MR);
         card.addFixedYieldFromFile(bkgSels[BKG_MW],3,fPF+"_"+bkgSels[BKG_MW]+"_distributions.root",bkgSels[BKG_MW]+"_"+cat+"_"+hhMCS);
 
         //mT
-        card.add1DBKGParametricShape(bkgSels[BKG_MT],MOD_MJ,fullInputName(bkgSels[BKG_MT],lepCats[LEP_EMU],b,purCats[PURE_I],hadCuts[HAD_NONE],"fit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
+        card.add1DBKGParametricShape(bkgSels[BKG_MT],MOD_MJ,inputName(bkgSels[BKG_MT],"MJJ_SFFit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
         card.addHistoShapeFromFile(bkgSels[BKG_MT],{MOD_MR}, inputName(bkgSels[BKG_MT],"MVV_template.root"),"histo",{mtSyst("PT"),mtSyst("OPT")},false,0,MOD_MR);
         card.conditionalProduct(bkgSels[BKG_MT],bkgSels[BKG_MT] + "_"+MOD_MJ,MOD_MR,bkgSels[BKG_MT]+ "_"+MOD_MR);
         card.addFixedYieldFromFile(bkgSels[BKG_MT],4,fPF+"_"+bkgSels[BKG_MT]+"_distributions.root",bkgSels[BKG_MT]+"_"+cat+"_"+hhMCS);
