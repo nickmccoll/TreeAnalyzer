@@ -100,8 +100,8 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR,  std::s
     CutStr mod = bkgSels [doMT ? BKG_MT : BKG_MW];
     if(outName.size()){
         outName += std::string("/") + mod;
-        if(reg == REG_TOPCR) outName +=  "TopCR";
-        else if(reg == REG_QGCR) outName +=  "QGCR";
+        if(reg == REG_TOPCR) outName +=  "_TopCR";
+        else if(reg == REG_QGCR) outName +=  "_QGCR";
     }
 
     std::vector<std::string> mtMJJBinning = {"emu_LMT_I_none"};
@@ -118,18 +118,22 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR,  std::s
         break;
     case 2:
         if(outName.size()) outName += "_MJJ_fit1stIt.root";
-        writeables = testBKG1DFits(mod,filename,"","fit1stIt",mtMJJBinning);
+        writeables = testBKG1DFits(mod,filename,"","MJJ_fit1stIt",mtMJJBinning);
         break;
     case 3:
         if(outName.size()) outName += "_MJJ_fit.root";
-        writeables = testBKG1DFits(mod,filename,"","fit",mtMJJBinning);
+        writeables = testBKG1DFits(mod,filename,"","MJJ_fit",mtMJJBinning);
         break;
     case 4:
-        if(outName.size()) outName += "_2DComp.root";
-        writeables = test2DModel({mod},filename,srList,{700,4000});
+        if(outName.size()) outName += "_MJJ_SFFit.root";
+        writeables = test2DFits(mod,filename,srList,{700,4000},true,2,"MJJ_SFFit.json.root");
         break;
     case 5:
         if(outName.size()) outName += "_2DComp.root";
+        writeables = test2DModel({mod},filename,srList,{700,4000});
+        break;
+    case 6:
+        if(outName.size()) outName += "_all_2DComp.root";
         writeables = test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },
               filename,srList,{700,4000});
 //        writeables = test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },

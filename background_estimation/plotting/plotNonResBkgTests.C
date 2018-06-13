@@ -7,56 +7,8 @@ using namespace CutConstants;
 using namespace ASTypes;
 
 std::vector<TObject*> writeables;
+void addWr(std::vector<TObject*> nw) { writeables.insert( writeables.end(), nw.begin(), nw.end() );}
 
-void make2DTests(std::string plotTitle, const TH2* dH, const std::vector<TH2*>& hs,const std::vector<std::string>& hNs, const std::vector<double>& bins, bool binInY, double rebin = -1) {
-    bool withRatio = true;
-    if(dH)for(unsigned int iH = 0; iH < hs.size(); ++iH) hs[iH]->Scale(dH->Integral()/hs[iH]->Integral());
-    const TH1 * refHist = dH ? dH : hs[0];
-    const TAxis * ax =  binInY ? refHist->GetYaxis() : refHist->GetXaxis();
-
-    for(unsigned int iB = 0; iB + 1 < bins.size(); ++iB){
-        int binL = ax->FindFixBin(bins[iB]);
-        int binH = ax->FindFixBin(bins[iB+1]) -1;
-        if(binH <= binL) continue;
-        auto proj =[&](const TH2* h, const std::string& title) ->TH1*{
-            return binInY ? h->ProjectionX( (title+"_"+int2Str(iB)).c_str(),binL,binH) :  h->ProjectionY( (title+"_"+int2Str(iB)).c_str(),binL,binH);
-        };
-        Plotter * p = new Plotter();
-        if(dH){
-            auto dh1 = proj(dH,"MC");
-            p->addHist(dh1,"MC");
-        }
-
-        for(unsigned int iH = 0; iH < hs.size(); ++iH){
-            TH1 * h = proj(hs[iH],hNs[iH]);
-            if(withRatio) for(int iX = 1; iX <= h->GetNbinsX(); ++iX) h->SetBinError(iX,0);
-            p->addHistLine(h,hNs[iH].c_str());
-        }
-
-        auto setupPlotter = [&](Plotter * p, std::string name){
-            p->setMinMax(.0001,(rebin < 0 ? 1.0 : rebin) * refHist->Integral()/4);
-            p->setUnderflow(false);
-            p->setOverflow(false);
-            p->setBotMinMax(0,2);
-            p->setYTitle("N. of events");
-            if(rebin > 0) p->rebin(rebin);
-            if(withRatio){
-                auto * c = p->drawSplitRatio(dH?1:0,"stack",false,false,name);
-                c->GetPad(1)->SetLogy();
-                c->GetPad(1)->Update();
-                writeables.push_back(c);
-
-            } else {
-                auto * c = p->draw(false,name);
-                c->SetLogy();
-                c->Update();
-                writeables.push_back(c);
-            }
-        };
-        setupPlotter(p,plotTitle+"_"+  flt2Str(bins[iB]) +"_"+flt2Str(bins[iB+1]));
-    }
-
-}
 
 void test2DCondTemplate(std::string name, std::string filename, std::string sel){
     TH2* dH = 0;
@@ -88,10 +40,12 @@ void test2DCondTemplate(std::string name, std::string filename, std::string sel)
 
     std::vector<double> hBBBinning = {30,40,50,60,80,100,120,140,170,210};
     std::vector<double> hhBinning  = {700,800,900,1000,1500,2000,3000,4000,5000};
-    make2DTests(name + "_COND2D_HHF" ,dH,hs,hNs,hBBBinning,false,-1);
-    make2DTests(name + "_COND2D_HHC" ,dH,hs,hNs,hBBBinning,false,10);
-    make2DTests(name + "_COND2D_HbbF"  ,dH,hs,hNs,hhBinning,true,-1);
-    make2DTests(name + "_COND2D_HbbC"  ,dH,hs,hNs,hhBinning,true,5 );
+
+
+    addWr(make2DTests(name + "_COND2D_HHF" ,dH,hs,hNs,hBBBinning,false,-1));
+    addWr(make2DTests(name + "_COND2D_HHC" ,dH,hs,hNs,hBBBinning,false,10));
+    addWr(make2DTests(name + "_COND2D_HbbF"  ,dH,hs,hNs,hhBinning,true,-1));
+    addWr(make2DTests(name + "_COND2D_HbbC"  ,dH,hs,hNs,hhBinning,true,5 ));
 }
 
 void test2DTemplate(const std::string& name, const std::string& filename, const std::vector<std::string>& sels){
@@ -125,54 +79,14 @@ void test2DTemplate(const std::string& name, const std::string& filename, const 
 //        std::vector<double> hhBinning  = {700,800,900,1000,1500,2000,3000,4000,5000};
         std::vector<double> hBBBinning = {30,210};
         std::vector<double> hhBinning  = {700,4000};
-    //    make2DTests(name +"_"+s+ "_Temp_HbbF",dH,hs,hNs,hBBBinning,false);
-        make2DTests(name +"_"+s+ "_Temp_HHC",dH,hs,hNs,hBBBinning,false,10);
-    //    make2DTests(name +"_"+s+ "_Temp_HHF" ,dH,hs,hNs,hhBinning,true);
-        make2DTests(name +"_"+s+ "_Temp_HbbC" ,dH,hs,hNs,hhBinning,true,5);
+    //    addWr(make2DTests(name +"_"+s+ "_Temp_HbbF",dH,hs,hNs,hBBBinning,false));
+        addWr(make2DTests(name +"_"+s+ "_Temp_HHC",dH,hs,hNs,hBBBinning,false,10));
+    //    addWr(make2DTests(name +"_"+s+ "_Temp_HHF" ,dH,hs,hNs,hhBinning,true));
+        addWr(make2DTests(name +"_"+s+ "_Temp_HbbC" ,dH,hs,hNs,hhBinning,true,5));
     }
 
 }
 
-void test2DFits(std::string name, std::string filename,const std::vector<std::string>& sels,const std::vector<double>& bins, bool binInY = true, double rebin = -1){
-
-
-    TFile *fData = new TFile((filename + "_"+name  +"_distributions.root").c_str(),"read");
-//    TFile *fTemp = new TFile((filename + "_"+name  +"_2D_template.root").c_str(),"read");
-//    TFile *fTempFit = new TFile((filename + "_"+name  +"_2D_template_debug.root").c_str(),"read");
-
-
-    for(const auto& s : sels){
-        TH2* dH = 0;
-        std::vector<TH2*> hs;
-        std::vector<std::string> hNs;
-        fData->GetObject((name+"_"+s+"_"+hbbMCS+"_"+hhMCS).c_str(),dH);
-        if(dH==0) continue;
-
-        TFile *fTemp = new TFile((filename + "_"+name+"_" +s +"_2D_template.root").c_str(),"read");
-        TH2 * hF = 0;
-        fTemp->GetObject("histo",hF);
-        if(hF == 0) continue;
-
-        TH2 * hOT = 0;
-        fTemp->GetObject("originalPDF",hOT);
-        if(hOT == 0) continue;
-
-        if(binInY){
-            make2DTests(name + "_Fit_Hbb_"+s,dH,{hF,hOT},{"Search region template","Baseline template"},bins,binInY,rebin);
-        } else {
-            make2DTests(name + "_Fit_HH_"+s ,dH,{hF,hOT},{"Search region template","Baseline template"},bins,binInY,rebin);
-        }
-//        make2DTests(name + "_Fit_Hbb_"+s,dH,{hF,hOT},{"Search region template","Baseline template"},hBBBinning,false,10);
-//        make2DTests(name + " Fit_HH_ "+s ,dH,{hF,hOT},{"Search region template","Baseline template"},hhBinning,true,5);
-
-        //        make2DTests(name + " Fit HbbF "+s,dH,{hF,hOT},{"Search region template","Original template"},hBBBinning,false);
-        //        make2DTests(name + " Fit HHF "+s ,dH,{hF,hOT},{"Search region template","Original template"},hhBinning,true);
-        //        make2DTests(name + " Fit HHC "+s ,dH,{hF,hOT},{"Search region template","Baseline template"},hhBinning,true,5);
-    }
-
-
-
-}
 
 void testQCDSF(std::string name, std::string filename, const std::vector<std::string>& sels){
     TFile *fData = new TFile((filename + "_"+name  +"_distributions.root").c_str(),"read");
@@ -188,8 +102,8 @@ void testQCDSF(std::string name, std::string filename, const std::vector<std::st
         fData->GetObject((name+"_"+s+"_"+hbbMCS+"_"+hhMCS).c_str(),hSF);
         if(hMC == 0) continue;
 
-            make2DTests(name + "_testQCDSF_HHC_"+s,0,{hMC,hNoSF,hSF},{"QG+QCD","QG, no SF","QG, w/ SF"},hBBBinning,false,10);
-//                make2DTests(name + "testQCDSF_HbbC_"+s ,0,{hMC,hNoSF,hSF},{"QG+QCD","QG, no SF","QG, w/ SF"},hhBinning,true,5);
+        addWr(make2DTests(name + "_testQCDSF_HHC_"+s,0,{hMC,hNoSF,hSF},{"QG+QCD","QG, no SF","QG, w/ SF"},hBBBinning,false,10));
+//                addWr(make2DTests(name + "testQCDSF_HbbC_"+s ,0,{hMC,hNoSF,hSF},{"QG+QCD","QG, no SF","QG, w/ SF"},hhBinning,true,5));
     }
 }
 
@@ -313,8 +227,8 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, std::
     CutStr mod = bkgSels [doTW ? BKG_LOSTTW : BKG_QG];
     if(outName.size()){
         outName += std::string("/") + mod;
-        if(reg == REG_TOPCR) outName +=  "TopCR";
-        else if(reg == REG_QGCR) outName +=  "QGCR";
+        if(reg == REG_TOPCR) outName +=  "_TopCR";
+        else if(reg == REG_QGCR) outName +=  "_QGCR";
     }
 
 
