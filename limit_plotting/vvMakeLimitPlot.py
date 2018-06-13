@@ -90,8 +90,12 @@ N=0
 for mass,info in data.iteritems():
     print 'Setting mass',mass,info
 
-    if not ('exp' in info.keys() and '+1sigma' in info.keys() and '+2sigma' in info.keys() and '-1sigma' in info.keys() and '-2sigma' in info.keys() \
-                and 'obs' in info.keys()):
+    if options.blind==0 and not ('obs' in info.keys()) :
+        print 'Incomplete file'
+        continue
+
+
+    if not ('exp' in info.keys() and '+1sigma' in info.keys() and '+2sigma' in info.keys() and '-1sigma' in info.keys() and '-2sigma' in info.keys()):
         print 'Incomplete file'
         continue
     
@@ -103,7 +107,9 @@ for mass,info in data.iteritems():
     line_minus1.SetPoint(N,mass,info['-1sigma'])
     line_minus2.SetPoint(N,mass,info['-2sigma'])
 
-    bandObs.SetPoint(N,mass,info['obs'])
+    if options.blind==0 :
+        bandObs.SetPoint(N,mass,info['obs'])
+    
     band68.SetPointError(N,0.0,0.0,info['exp']-info['-1sigma'],info['+1sigma']-info['exp'])
     band95.SetPointError(N,0.0,0.0,info['exp']-info['-2sigma'],info['+2sigma']-info['exp'])
     N=N+1
@@ -191,7 +197,8 @@ fout.cd()
 c.Write()
 band68.Write()
 band95.Write()
-bandObs.Write()
+if options.blind==0:
+    bandObs.Write()
 line_plus1.Write()    
 line_plus2.Write()    
 line_minus1.Write()    
