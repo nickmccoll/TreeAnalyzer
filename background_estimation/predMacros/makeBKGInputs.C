@@ -13,6 +13,7 @@
 #include "../predTools/cutHistos1D.C"
 #include "../predTools/FunctionFitter.C"
 #include "../predTools/fitBKGRatio.C"
+#include "../predTools/fit2DFitKDETemplate.C"
 #include "TRandom3.h"
 
 
@@ -360,7 +361,7 @@ void makeBKG1DShapes(const std::string& name, const std::string& filename, const
 
 void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
-    const std::string fitName = "fit1stIt";
+    const std::string fitName = "MJJ_fit1stIt";
 
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l != lepCats[LEP_EMU] ) continue;
@@ -378,13 +379,13 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
 
 void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
-    const std::string fitName = "fit";
+    const std::string fitName = "MJJ_fit";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l != lepCats[LEP_EMU] ) continue;
         if(p != purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_NONE] ) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
-        CJSON oldJSON(     filename+"_"+name+"_"+catName+"_fit1stIt.json");
+        CJSON oldJSON(     filename+"_"+name+"_"+catName+"_MJJ_fit1stIt.json");
         oldJSON.fillFunctions(MOD_MR);
         makeBKG1DShapes(name,filename,catName,fitName,true,&oldJSON,iF);
 
@@ -402,7 +403,7 @@ void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename
 
 void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filename){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
-    const std::string fitName = "fit1stIt";
+    const std::string fitName = "MJJ_fit1stIt";
 
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l != lepCats[LEP_EMU] ) continue;
@@ -420,13 +421,13 @@ void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filena
 
 void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filename){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
-    const std::string fitName = "fit";
+    const std::string fitName = "MJJ_fit";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l != lepCats[LEP_EMU] ) continue;
         if(p != purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_NONE] ) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
-        CJSON oldJSON(     filename+"_"+name+"_"+catName+"_fit1stIt.json");
+        CJSON oldJSON(     filename+"_"+name+"_"+catName+"_MJJ_fit1stIt.json");
         oldJSON.fillFunctions(MOD_MR);
         makeBKG1DShapes(name,filename,catName,fitName,false,&oldJSON,iF);
 
@@ -441,13 +442,34 @@ void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filena
     }
 }
 
+
+void fitMJJSF(const std::string& name, const std::string& filename){
+    std::string fittingFileName = filename+"_"+name+"_distributions.root";
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
+
+        std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_";
+        jsonFile += strFind(name,bkgSels[BKG_MW]) ?btagCats[BTAG_LMT]:b;
+        jsonFile+=std::string("_")+purCats[PURE_I]+"_"+hadCuts[HAD_NONE] +"_MJJ_fit.json";
+
+        std::string kdeFile = filename + "_"+name+"_"+catName+"_MVV_template.root";
+        std::string outFile = filename + "_"+name+"_"+catName+"_MJJ_SFFit.json";
+
+        std::string args = std::string(" -v -fT ")+kdeFile+" -nT histo "+ " -varX "+MOD_MJ+" -varY "+MOD_MR
+               + " -fJS "+jsonFile + " -sS 0.05 -sR 0.2 " + " -fH "+ fittingFileName
+               + " -nH "+ name+"_"+catName+"_"+hbbMCS+"_"+hhMCS +" ";
+        if(strFind(name,bkgSels[BKG_MT])) args+= " -sA1 0.2 -mTop ";
+
+        fit2DFitKDETemplate(outFile,args);
+
+    }
+}
+
 void convertFuncFitTo2DTemplate(const std::string& name, const std::string& filename,const std::string& funcParamPostfix=""){
     TFile *oF = new TFile((filename + "_"+name+"_2D_template_debug.root").c_str(),"recreate");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
-        std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_";
-        jsonFile += strFind(name,bkgSels[BKG_MW]) ?btagCats[BTAG_LMT]:b;
-        jsonFile+=std::string("_")+purCats[PURE_I]+"_"+hadCuts[HAD_NONE] +"_fit.json";
+        std::string jsonFile = filename + "_"+name+"_"+catName +"_MJJ_SFFit.json";
 
         CBFunctionFitter xFit(0,false,funcParamPostfix,{MOD_MJ});
         xFit.w->var(MOD_MJ.c_str())->setMin(minHbbMass);
@@ -615,6 +637,7 @@ void go(BKGModels modelToDo, std::string treeDir) {
 
         makeResWMJJShapes1stIt(name,filename);
         makeResWMJJShapes2ndIt(name,filename);
+        fitMJJSF(name,filename);
         convertFuncFitTo2DTemplate(name,filename);
     }
 
@@ -631,6 +654,7 @@ void go(BKGModels modelToDo, std::string treeDir) {
 
         makeResTopMJJShapes1stIt(name,filename);
         makeResTopMJJShapes2ndIt(name,filename);
+        fitMJJSF(name,filename);
         convertFuncFitTo2DTemplate(name,filename);
     }
 
