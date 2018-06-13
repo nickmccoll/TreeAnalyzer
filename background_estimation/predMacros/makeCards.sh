@@ -12,4 +12,6 @@ eval $RCMD
 . comp.sh
 cd ..
 RCMD="scp -r ${catName} cmslpc26.fnal.gov:/uscms/home/nmccoll/nobackup/2011-04-15-susyra2/rel_HbbWW/work/combineWork/"
-eval $RCMD
+if [ "${runSR}" = "0" ]; then
+    eval $RCMD
+fi
