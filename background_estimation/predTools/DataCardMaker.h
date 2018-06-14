@@ -12,16 +12,14 @@
 #include "HiggsAnalysis/CombinedLimit/interface/VerticalInterpHistPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/HZZ2L2QRooPdfs.h"
 #include "RooExponential.h"
+#include "PDFAdder.h"
 
 #include <utility>
 
 
+using PDFAdder::StrFlt;
+using PDFAdder::StrFlts;
 
-typedef std::pair<std::string,std::string> StrStr;
-typedef std::vector<StrStr> StrStrs;
-
-typedef std::pair<std::string,double> StrFlt;
-typedef std::vector<StrFlt> StrFlts;
 
 struct Systematic{
     //For parameterizaed uncertainties
@@ -63,6 +61,7 @@ public:
         systematics.emplace_back(name,kind,values);
     }
     void addParamSystematic(const std::string& name,const double pV0,const double pV1){
+        addVar(name,pV0,pV0-pV1*4,pV0+pV1*4,false);
         systematics.emplace_back(name,pV0,pV1);
     }
 
@@ -84,138 +83,38 @@ public:
         CJSON json( jsonFile);
         const std::string varXPF =  name+"_"+PDFPF+(PDFPF.size() ? "_":"")+tag;
         const std::string PDFName = name+"_"+PDFPF+(PDFPF.size() ? "_":"")+tag;
-        addCB(PDFName,pVar,variableX,varXPF,modelPF,json,scale_X,resolution_X);
+        PDFAdder::addCB(w,PDFName,pVar,variableX,varXPF,modelPF,json,scale_X,resolution_X);
     }
+
 
     void add2DSignalParametricShape(const std::string& name,const std::string& variableX,const std::string& variableY,const std::string& jsonFile,const StrFlts& scale_X,const StrFlts& resolution_X
             ,const StrFlts& scale_Y,const StrFlts& resolution_Y, bool exponential_X, const std::string& pVar="MH"){
-        CJSON json( jsonFile);
-        const std::string varXCBPDFName = exponential_X ? name+"_"+variableX+"_"+"CB"+"_"+tag : name+"_"+variableX+"_"+tag;
-        const std::string varXEPDFName = name+"_"+variableX+"_"+"E"+"_"+tag;
-        const std::string varXPF = name+"_"+variableX+"_"+tag;
-        const std::string varYPF = name+"_"+variableY+"_"+tag;
-        const std::string varXPDFName = name+"_"+variableX+"_"+tag;
-        const std::string varYPDFName = name+"_"+variableY+"_"+tag;
-        const std::string PDFName = name+"_"+tag;
-
-        addCB(varXCBPDFName,pVar,variableX,varXPF,variableX,json,scale_X,resolution_X);
-        if(exponential_X){
-            std::string vN = std::string("fE") +"_"+varXPF;
-            std::string expr = std::string("min(")+ pVar+"*0+"+json.getP(std::string("fE")+variableX)+",1)";
-            RooFormulaVar varF(vN.c_str(),vN.c_str(),expr.c_str(),RooArgList(*w->var(pVar.c_str())));
-            w->import(varF);
-            addExpo(varXEPDFName,pVar,variableX,varXPF,variableX,json);
-
-            RooAddPdf modelC(varXPDFName.c_str(),varXPDFName.c_str(),*w->pdf(varXEPDFName.c_str()),*w->pdf(varXCBPDFName.c_str()),*w->function(vN.c_str()));
-            w->import(modelC);
-        }
-
-        addCondCB(varYPDFName,pVar,variableY,varYPF,variableY,json,scale_Y,resolution_Y,variableX,varXPF);
-        RooProdPdf condProdP(PDFName.c_str(), (varXPDFName+"*"+varYPDFName).c_str(),*w->pdf(varXPDFName.c_str()),RooFit::Conditional(*w->pdf(varYPDFName.c_str()), *w->var(variableY.c_str())) );
-        w->import(condProdP);
+        PDFAdder::add2DCB(w,name,tag,variableX,variableY,jsonFile,
+                scale_X,resolution_X,scale_Y,resolution_Y,exponential_X,pVar);
     }
 
     void add2DSignalParametricShapeNoCond(const std::string& name,const std::string& variableX,const std::string& variableY,const std::string& jsonFile,const StrFlts& scale_X,const StrFlts& resolution_X
             ,const StrFlts& scale_Y,const StrFlts& resolution_Y, bool exponential_X, const std::string& pVar="MH"){
-        CJSON json( jsonFile);
-        const std::string varXCBPDFName = exponential_X ? name+"_"+variableX+"_"+"CB"+"_"+tag : name+"_"+variableX+"_"+tag;
-        const std::string varXEPDFName = name+"_"+variableX+"_"+"E"+"_"+tag;
-        const std::string varXPF = name+"_"+variableX+"_"+tag;
-        const std::string varYPF = name+"_"+variableY+"_"+tag;
-        const std::string varXPDFName = name+"_"+variableX+"_"+tag;
-        const std::string varYPDFName = name+"_"+variableY+"_"+tag;
-        const std::string PDFName = name+"_"+tag;
-
-        addCB(varXCBPDFName,pVar,variableX,varXPF,variableX,json,scale_X,resolution_X);
-        if(exponential_X){
-            std::string vN = std::string("fE") +"_"+varXPF;
-            std::string expr = std::string("min(")+ pVar+"*0+"+json.getP(std::string("fE")+variableX)+",1)";
-            RooFormulaVar varF(vN.c_str(),vN.c_str(),expr.c_str(),RooArgList(*w->var(pVar.c_str())));
-            w->import(varF);
-            addExpo(varXEPDFName,pVar,variableX,varXPF,variableX,json);
-
-            RooAddPdf modelC(varXPDFName.c_str(),varXPDFName.c_str(),*w->pdf(varXEPDFName.c_str()),*w->pdf(varXCBPDFName.c_str()),*w->function(vN.c_str()));
-            w->import(modelC);
-        }
-
-        addCB(varYPDFName,pVar,variableY,varYPF,variableY,json,scale_Y,resolution_Y);
-        RooProdPdf condProdP(PDFName.c_str(), (varXPDFName+"*"+varYPDFName).c_str(),RooArgSet(*w->pdf(varXPDFName.c_str()), *w->pdf(varYPDFName.c_str())) );
-        w->import(condProdP);
+        PDFAdder::add2DCBNoCond(w,name,tag,variableX,variableY,jsonFile,
+                scale_X,resolution_X,scale_Y,resolution_Y,exponential_X,pVar);
     }
 
-    void addParametricYieldWithUncertainty(const std::string& name,const unsigned int ID,const std::string& jsonFile, const double constant, const std::string& uncName,const std::string& uncFormula,const double& uncValue,  const std::string& pVar="MS"){
+    void addParametricYieldWithUncertainty(const std::string& name,const unsigned int ID,const std::string& jsonFile, const double constant, const std::string& uncName,const std::string& uncFormula, const std::string& pVar="MS"){
         CJSON json( jsonFile);
         const std::string PDFName = name+"_"+tag;
         const std::string PDFNorm = PDFName+"_norm";
         std::string expr = std::string("(")+ json.getP("yield") +")*"+lumiV+"*("+ASTypes::flt2Str(constant)+"+"+uncName+"*"+uncFormula+")";
-        addVar(uncName,0,-1,1,false);
 
         RooFormulaVar varF(PDFNorm.c_str(),PDFNorm.c_str(),expr.c_str(),RooArgList(*w->var(pVar.c_str()),*w->var(lumiV.c_str()),*w->var(uncName.c_str())));
         w->import(varF);
-        addParamSystematic(uncName,0.0,uncValue);
         contributions.emplace_back(name,PDFName,ID,1.0);
     }
 
-    void addHistoShapeFromFile(const std::string& name, const std::vector<std::string>& obs, const std::string& fileName, const std::string& hName, const StrStrs& systs, const bool conditional = false, const int order = 0,
-            const std::string& PDFPF = "", const std::string& newTag = ""  ){
-        RooArgSet varset;
-        RooArgList varlist;
-        std::vector<RooRealVar*> varPointers;
 
-        for(const auto& v : obs){
-            varPointers.push_back(w->var(v.c_str()));
-            varset.add(*varPointers.back());
-            varlist.add(*varPointers.back());
-        }
-
-        const std::string modelTag = newTag.size() ? newTag : name + "_"+tag;
-        auto* iF =  TObjectHelper::getFile(fileName);
-        auto h = TObjectHelper::getObject<TH1>(iF,hName);
-
-        const std::string nominalHistName = name + (systs.size()?"NominalHIST_":"HIST_") +modelTag;
-        const std::string nominalPDFName  = name + (systs.size()?"Nominal_":"_") +tag;
-
-        RooDataHist nHist(nominalHistName.c_str(),nominalHistName.c_str(),varlist,&*h);
-        w->import(nHist);
-        RooHistPdf nPDF(nominalPDFName.c_str(),nominalPDFName.c_str(),varset,nHist,order);
-        w->import(nPDF);
-
-        RooArgList coefList;
-        RooArgList pdfList(*w->pdf(nominalPDFName.c_str()));
-        for(const auto& s : systs ){
-            addVar(s.second,0,-1,1,false);
-            coefList.add(*w->var(s.second.c_str()));
-            auto sh = TObjectHelper::getObject<TH1>(iF,hName);
-
-            auto addVar = [&](const std::string& var){
-                auto sh =  TObjectHelper::getObject<TH1>(iF,hName+"_"+s.first+var);
-                const std::string vHistName = name +"_"+s.first+var+"HIST_"+modelTag;
-                const std::string vPDFName = name +"_"+s.first+var+"_"+tag;
-                RooDataHist vRooHist(vHistName.c_str(),vHistName.c_str(),varlist,&*sh);
-                w->import(vRooHist);
-                RooHistPdf pdf(vPDFName.c_str(),vPDFName.c_str(),varset,vRooHist,order);
-                w->import(pdf);
-                pdfList.add(*w->pdf(vPDFName.c_str()));
-            };
-            addVar("Up");
-            addVar("Down");
-
-        }
-
-        const std::string& PDFName = name+"_"+PDFPF+(PDFPF.size() ? "_":"")+tag;
-        if(systs.size()){
-            if(obs.size() == 1){
-                FastVerticalInterpHistPdf total(PDFName.c_str(),PDFName.c_str(),*w->var(obs[0].c_str()),pdfList,coefList);
-                w->import(total);
-            } else if(obs.size() == 2){
-                FastVerticalInterpHistPdf2D total(PDFName.c_str(),PDFName.c_str(),*w->var(obs[0].c_str()),*w->var(obs[1].c_str()),conditional,pdfList,coefList);
-                w->import(total);
-            }
-        }
-
-
-        iF->Close();
-        delete iF;
+    void addHistoShapeFromFile(const std::string& name,const std::vector<std::string>& obs, const std::string& fileName,const std::string& hName,
+            const PDFAdder::InterpSysts& systs, const bool conditional = false, const int order = 0,const std::string& PDFPF = ""){
+        std::string PF = PDFPF+(PDFPF.size() ? "_":"")+tag;
+        PDFAdder::addHistoShapeFromFile(w,name,PF,obs,fileName,hName,systs,conditional,order);
     }
 
     void addFixedYieldFromFile(const std::string& name, const int id, const std::string& fileName, const std::string& hName, const double constant = 1.0){
@@ -227,11 +126,11 @@ public:
         delete iF;
 
     }
-    void conditionalProduct(const std::string& name, const std::string& pdf1, const std::string& varName, const std::string& pdf2, const std::string& tag1="", const std::string& tag2=""){
+    void conditionalProduct(const std::string& name, const std::string& pdfName_cxoy, const std::string& varName_x, const std::string& pdfName_y, const std::string& tag_pdf_cxoy="", const std::string& tag_pdf_y=""){
         const std::string& pdfName = name +"_"+tag;
-        const std::string& pdfName1 = pdf1 +"_"+ (tag1.size() ? tag1 : tag);
-        const std::string& pdfName2 = pdf2 +"_"+ (tag2.size() ? tag2 : tag);
-        w->factory((std::string("PROD::")+pdfName+"("+pdfName1+"|"+varName+","+pdfName2+")").c_str());
+        const std::string& pdfName1 = pdfName_cxoy +"_"+ (tag_pdf_cxoy.size() ? tag_pdf_cxoy : tag);
+        const std::string& pdfName2 = pdfName_y +"_"+ (tag_pdf_y.size() ? tag_pdf_y : tag);
+        PDFAdder::conditionalProduct(w,pdfName,pdfName1,varName_x,pdfName2);
     }
 
     void importBinnedData(const std::string& fileName,const std::string& hName, const std::vector<std::string>& variables, const std::string& name="data_obs", const double scale = 1){
@@ -338,107 +237,6 @@ public:
 
 
 private:
-
-
-    void addSystToWksp (const StrFlts& inSysts, const std::vector<std::string>& extraParams, std::string& systMathStr, RooArgList& paramList) {
-        for(const auto& p : extraParams) paramList.add(*w->var(p.c_str()));
-        systMathStr = "0";
-        for(const auto& s : inSysts) {
-            systMathStr = systMathStr +"+"+ASTypes::flt2Str(s.second)+"*"+s.first;
-            paramList.add(*w->var(s.first.c_str()));
-        }
-    }
-
-    void addParam (const std::string& vN,const std::string& expr, const RooArgList& pList, const std::string& systStr = ""){
-        std::string sS ="";
-        if(systStr.size()){sS = "*(1+"+systStr+")";}
-        RooFormulaVar varF(vN.c_str(),vN.c_str(),(expr+sS).c_str(),pList);
-        w->import(varF);
-    }
-
-    void addExpo(const std::string& pdfName,const std::string& pVar,const std::string& varName, const std::string& parPostFix,const std::string& JSONPostFix, const CJSON& json){
-        auto pN = [&](const std::string& v)->std::string{return v +"_"+parPostFix;};
-        auto pJS = [&](const std::string& v)->std::string{return std::string("(0*")+pVar+"+"  +json.getP(v+JSONPostFix)+")";};
-        auto pF = [&](const std::string& v)->RooAbsReal*{return w->function(pN(v).c_str());};
-
-        RooArgList paramList_std; paramList_std.add(*w->var(pVar.c_str()));
-        addParam(pN("slope")    ,pJS("slope"),paramList_std);
-        RooExponential modelE(pdfName.c_str(),pdfName.c_str(),*w->var(varName.c_str()), *pF("slope"));
-        w->import(modelE);
-    }
-
-    void addCB(const std::string& pdfName,const std::string& pVar, const std::string& varName, const std::string& parPostFix,const std::string& JSONPostFix, const CJSON& json,const StrFlts& scale,const StrFlts& resolution){
-        auto pN = [&](const std::string& v)->std::string{return v +"_"+parPostFix;};
-        auto pJS = [&](const std::string& v)->std::string{return std::string("(0*")+pVar+"+"  +json.getP(v+JSONPostFix)+")";};
-        auto pF = [&](const std::string& v)->RooAbsReal*{return w->function(pN(v).c_str());};
-
-
-        RooArgList paramList_std; paramList_std.add(*w->var(pVar.c_str()));
-        std::string systStr_scale;
-        std::string systStr_res;
-        RooArgList paramList_scale;
-        RooArgList paramList_res;
-        addSystToWksp(scale,{pVar}, systStr_scale,paramList_scale);
-        addSystToWksp(resolution,{pVar},systStr_res,paramList_res);
-
-        addParam(pN("mean")  ,pJS("mean"),paramList_scale,systStr_scale);
-        addParam(pN("sigma") ,pJS("sigma"),paramList_res,systStr_res);
-        addParam(pN("alpha") ,pJS("alpha"),paramList_std);
-        addParam(pN("n")     ,pJS("n"),paramList_std);
-        addParam(pN("alpha2"),pJS("alpha2"),paramList_std);
-        addParam(pN("n2")    ,pJS("n2"),paramList_std);
-
-        RooDoubleCB modelP(pdfName.c_str(),pdfName.c_str(),*w->var(varName.c_str()),
-                *pF("mean"),*pF("sigma"),*pF("alpha"),*pF("n") ,*pF("alpha2"),*pF("n2"));
-        w->import(modelP);
-    }
-
-
-    void addCondCB(const std::string& pdfName,const std::string& pVar, const std::string& varName,  const std::string& parPostFix,const std::string& JSONPostFix, const CJSON& json,const StrFlts& scale,const StrFlts& resolution,
-            const std::string& condVarName, const std::string& condParPostFix
-    ){
-        auto cPN = [&](const std::string& v)->std::string{return v +"_"+condParPostFix;};
-        auto cPF = [&](const std::string& v)->RooAbsReal*{return w->function(cPN(v).c_str());};
-
-        auto pN = [&](const std::string& v)->std::string{return v +"_"+parPostFix;};
-        auto pJS = [&](const std::string& v)->std::string{return std::string("(0*")+pVar+"+"  +json.getP(v+JSONPostFix)+")";};
-        auto pF = [&](const std::string& v)->RooAbsReal*{return w->function(pN(v).c_str());};
-
-
-        RooArgList paramList_std; paramList_std.add(*w->var(pVar.c_str()));
-        std::string systStr_scale;
-        std::string systStr_res;
-        RooArgList paramList_scale;
-        RooArgList paramList_res;
-        addSystToWksp(scale,{pVar}, systStr_scale,paramList_scale);
-        addSystToWksp(resolution,{pVar},systStr_res,paramList_res);
-
-        addParam(pN("mean")  ,pJS("mean"),paramList_scale,systStr_scale);
-        addParam(pN("sigma") ,pJS("sigma"),paramList_res,systStr_res);
-        addParam(pN("alpha") ,pJS("alpha"),paramList_std);
-        addParam(pN("n")     ,pJS("n"),paramList_std);
-        addParam(pN("alpha2"),pJS("alpha2"),paramList_std);
-        addParam(pN("n2")    ,pJS("n2"),paramList_std);
-
-        addParam(pN("maxS")     ,pJS("maxS"),paramList_std);
-        addParam(pN("mean_p1")  ,pJS("mean_p1"),paramList_std);
-        addParam(pN("sigma_p1") ,pJS("sigma_p1"),paramList_std);
-
-        RooFormulaVar xSig  (pN("xSig"  ).c_str(),"(@0-@1)/@2",RooArgList(*w->var(condVarName.c_str()),*cPF("mean"),*cPF("sigma")));
-        w->import(xSig  );
-        RooFormulaVar xSigC  (pN("xSigC"  ).c_str(),"max(-1*@0,min(@1,@0))",RooArgList(*pF("maxS"  ),*pF("xSig"  )));
-        w->import(xSigC  );
-
-        RooFormulaVar meanYDepX  (pN("meanYDepX"  ).c_str(),"@0*(1+@1*@2)"     ,RooArgList(*pF("mean"  ),*pF("mean_p1"  ),*pF("xSigC"  )));
-        RooFormulaVar sigmaYDepX (pN("sigmaYDepX" ).c_str(),"@0*(1+(@2>=0?0:@1*abs(@2)))",RooArgList(*pF("sigma" ),*pF("sigma_p1" ),*pF("xSigC"  )));
-        w->import(meanYDepX  );
-        w->import(sigmaYDepX );
-
-        RooDoubleCB modelP(pdfName.c_str(),pdfName.c_str(),*w->var(varName.c_str()),
-                *pF("meanYDepX"),*pF("sigmaYDepX"),*pF("alpha"),*pF("n") ,*pF("alpha2"),*pF("n2"));
-        w->import(modelP);
-    }
-
     const std::string finalstate;
     const std::string category;
     const std::string period;

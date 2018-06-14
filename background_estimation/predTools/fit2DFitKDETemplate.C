@@ -99,7 +99,7 @@ public:
             PDFAdder::addCB(&w,fitName, kdeVar,fitVar,"","",json,{{"scaleSyst",1}},{{"resSyst",1}});
 
         //2D PDF
-        PDFAdder::conditionalProduct(&w,modelName,fitName,kdeVar,kdeName);
+        PDFAdder::conditionalProduct(&w,modelName,fitName,fitVar,kdeName);
 
 
         auto original2D = w.pdf(modelName.c_str())->createHistogram("originalPDF",
@@ -114,9 +114,6 @@ public:
         plotter.add1D(original1D);
 
         w.pdf(modelName.c_str())->fitTo(*w.data((*nH+"DH").c_str()),RooFit::SumW2Error(kTRUE));
-
-//        w.var(MOD_MJ.c_str())->setRange("fit",100,210);
-//        w.pdf(modelName.c_str())->fitTo(*w.data((*nH+"DH").c_str()),RooFit::SumW2Error(kTRUE),RooFit::Range("fit"));
 
         std::cout <<"Doing "<< outFileName <<" Fit"<<std::endl;
         std::cout << "scaleSyst -> "<< w.var("scaleSyst")->getVal()<<std::endl;

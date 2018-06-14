@@ -21,8 +21,19 @@ namespace PDFAdder{
 typedef std::pair<std::string,double> StrFlt;
 typedef std::vector<StrFlt> StrFlts;
 
-typedef std::pair<std::string,StrFlts> InterpSyst; // [histogram name, vector<systematics>]
-typedef std::vector<InterpSyst> InterpSysts;
+struct InterpSyst {
+    InterpSyst(const std::string& hName, const StrFlts& systPs) :
+        hName(hName), systPs(systPs){}
+    std::string hName; //Histogram name for interpolation
+    StrFlts systPs;    //list of systematic parameters
+};
+
+struct InterpSysts : public std::vector<InterpSyst> {
+        void addSyst(const std::string& hName, const StrFlts& systPs) {
+            emplace_back(hName,systPs);
+        }
+};
+
 
 //Add a systematic to the worspace, it makes a new formula variable based on the initial expression and the systematics
 //systematics are a list of the systematic variables and their multiplicative scales
@@ -41,6 +52,14 @@ void makeParamFormula (RooWorkspace* w, const std::string& newFormulaName,const 
 
     RooFormulaVar varF(newFormulaName.c_str(),newFormulaName.c_str(),(varExp+systMathStr).c_str(),paramList);
     w->import(varF);
+}
+
+
+
+void conditionalProduct(RooWorkspace* w, const std::string& pdfName, const std::string& pdfName_cxoy, const std::string& varName_x, const std::string& pdfName_y){
+    std::string title = pdfName_cxoy+"("+varName_x+"|y)*"+pdfName_y+"(y)";
+    RooProdPdf condProd(pdfName.c_str(),title.c_str(),*w->pdf(pdfName_y.c_str()),RooFit::Conditional(*w->pdf(pdfName_cxoy.c_str()), *w->var(varName_x.c_str()))  );
+    w->import(condProd);
 }
 
 
@@ -108,6 +127,60 @@ void addCondCB(RooWorkspace* w, const std::string& pdfName,const std::string& pV
     w->import(modelP);
 }
 
+
+void add2DCBNoCond(RooWorkspace* w, const std::string& name,const std::string& PF,const std::string& variableX,const std::string& variableY,const std::string& jsonFile,const StrFlts& scale_X,const StrFlts& resolution_X
+        ,const StrFlts& scale_Y,const StrFlts& resolution_Y, bool exponential_X, const std::string& pVar){
+    CJSON json( jsonFile);
+    const std::string varXCBPDFName = exponential_X ? name+"_"+variableX+"_"+"CB"+"_"+PF : name+"_"+variableX+"_"+PF;
+    const std::string varXEPDFName = name+"_"+variableX+"_"+"E"+"_"+PF;
+    const std::string varXPF = name+"_"+variableX+"_"+PF;
+    const std::string varYPF = name+"_"+variableY+"_"+PF;
+    const std::string varXPDFName = name+"_"+variableX+"_"+PF;
+    const std::string varYPDFName = name+"_"+variableY+"_"+PF;
+    const std::string PDFName = name+"_"+PF;
+
+    addCB(w,varXCBPDFName,pVar,variableX,varXPF,variableX,json,scale_X,resolution_X);
+    if(exponential_X){
+        std::string vN = std::string("fE") +"_"+varXPF;
+        std::string expr = std::string("min(")+ pVar+"*0+"+json.getP(std::string("fE")+variableX)+",1)";
+        RooFormulaVar varF(vN.c_str(),vN.c_str(),expr.c_str(),RooArgList(*w->var(pVar.c_str())));
+        w->import(varF);
+        PDFAdder::addExpo(w,varXEPDFName,pVar,variableX,varXPF,variableX,json);
+
+        RooAddPdf modelC(varXPDFName.c_str(),varXPDFName.c_str(),*w->pdf(varXEPDFName.c_str()),*w->pdf(varXCBPDFName.c_str()),*w->function(vN.c_str()));
+        w->import(modelC);
+    }
+
+    addCB(w,varYPDFName,pVar,variableY,varYPF,variableY,json,scale_Y,resolution_Y);
+    conditionalProduct(w,PDFName,varYPDFName,variableY,varXPDFName);
+
+}
+
+void add2DCB(RooWorkspace* w, const std::string& name,const std::string& PF, const std::string& variableX,const std::string& variableY,const std::string& jsonFile,const StrFlts& scale_X,const StrFlts& resolution_X
+        ,const StrFlts& scale_Y,const StrFlts& resolution_Y, bool exponential_X, const std::string& pVar){
+    CJSON json( jsonFile);
+    const std::string varXCBPDFName = exponential_X ? name+"_"+variableX+"_"+"CB"+"_"+PF : name+"_"+variableX+"_"+PF;
+    const std::string varXEPDFName = name+"_"+variableX+"_"+"E"+"_"+PF;
+    const std::string varXPF = name+"_"+variableX+"_"+PF;
+    const std::string varYPF = name+"_"+variableY+"_"+PF;
+    const std::string varXPDFName = name+"_"+variableX+"_"+PF;
+    const std::string varYPDFName = name+"_"+variableY+"_"+PF;
+    const std::string PDFName = name+"_"+PF;
+
+    PDFAdder::addCB(w,varXCBPDFName,pVar,variableX,varXPF,variableX,json,scale_X,resolution_X);
+    if(exponential_X){
+        std::string vN = std::string("fE") +"_"+varXPF;
+        std::string expr = std::string("min(")+ pVar+"*0+"+json.getP(std::string("fE")+variableX)+",1)";
+        RooFormulaVar varF(vN.c_str(),vN.c_str(),expr.c_str(),RooArgList(*w->var(pVar.c_str())));
+        w->import(varF);
+        PDFAdder::addExpo(w,varXEPDFName,pVar,variableX,varXPF,variableX,json);
+
+        RooAddPdf modelC(varXPDFName.c_str(),varXPDFName.c_str(),*w->pdf(varXEPDFName.c_str()),*w->pdf(varXCBPDFName.c_str()),*w->function(vN.c_str()));
+        w->import(modelC);
+    }
+    conditionalProduct(w,PDFName,varYPDFName,variableY,varXPDFName);
+}
+
 //Add a FastVerticleInterp
 //Name is the prefix of everything
 //PF is the post fix to everything...the final PDF name will be Name_PF
@@ -145,10 +218,10 @@ void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF, con
     RooArgList pdfList(*w->pdf(nominalPDFName.c_str()));
     for(const auto& s : systs ){
 
-        std::string coefName = name+"_"+s.first+PF;
+        std::string coefName = name+"_"+s.hName+PF;
         RooArgList paramList;
         std::string systMathStr = "0";
-        for(const auto& es : s.second) {
+        for(const auto& es : s.systPs) {
             systMathStr = systMathStr +"+"+ASTypes::flt2Str(es.second)+"*"+es.first;
             paramList.add(*w->var(es.first.c_str()));
         }
@@ -157,9 +230,9 @@ void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF, con
         coefList.add(*w->arg(coefName.c_str()));
 
         auto addVar = [&](const std::string& var){
-            auto sh =  TObjectHelper::getObject<TH1>(iF,hName+"_"+s.first+var);
-            const std::string vHistName = name+"_" +s.first+var+"_HIST"+PF;
-            const std::string vPDFName = name +"_"+s.first+var+PF;
+            auto sh =  TObjectHelper::getObject<TH1>(iF,hName+"_"+s.hName+var);
+            const std::string vHistName = name+"_" +s.hName+var+"_HIST"+PF;
+            const std::string vPDFName = name +"_"+s.hName+var+PF;
             RooDataHist vRooHist(vHistName.c_str(),vHistName.c_str(),varlist,&*sh);
             w->import(vRooHist);
             RooHistPdf pdf(vPDFName.c_str(),vPDFName.c_str(),varset,vRooHist,order);
@@ -184,11 +257,6 @@ void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF, con
 
     iF->Close();
     delete iF;
-}
-
-
-void conditionalProduct(RooWorkspace* w, const std::string& pdfName, const std::string& pdfName1, const std::string& varName, const std::string& pdfName2){
-    w->factory((std::string("PROD::")+pdfName+"("+pdfName1+"|"+varName+","+pdfName2+")").c_str());
 }
 
 
