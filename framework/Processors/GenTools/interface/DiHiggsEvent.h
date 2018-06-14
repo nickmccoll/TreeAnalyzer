@@ -2,6 +2,7 @@
 #define TREEANALYZER_FRAMEWORK_PROCESSORS_GENTOOLS_INTERFACE_DIHIGGSEVENT_H_
 
 #include <vector>
+#include <tuple>
 
 namespace TAna {
 class GenParticle;

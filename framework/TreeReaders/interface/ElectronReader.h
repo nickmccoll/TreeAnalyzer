@@ -30,6 +30,9 @@ public:
      std::vector<float >         * eaRelISO = new std::vector<float >;
      std::vector<ASTypes::size16>* id       = new std::vector<ASTypes::size16>;
 
+     std::vector<float>			 * dRnorm   = new std::vector<float> ;
+     std::vector<float>			 * PtRatioLepAct   = new std::vector<float> ;
+
 	//objects created in process
     ElectronCollection electrons;
 

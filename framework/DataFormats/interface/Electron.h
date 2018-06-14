@@ -17,8 +17,8 @@ public :
     Electron(const ROOT::Math::LorentzVector<InputCoordSystem> &mom,
             const int idx,
             const ASTypes::int8 q, const  float d0,
-            const  float dz,const  float sip3D,const  float miniIso)
-        : Lepton(mom, idx,q,d0,dz,sip3D,miniIso,false) {}
+            const  float dz,const  float sip3D,const  float miniIso, const float dRnorm, const float PtRatioLepAct)
+        : Lepton(mom, idx,q,d0,dz,sip3D,miniIso,false, dRnorm, PtRatioLepAct) {}
     ~Electron() {}
 
     void addElectronInfo(float scEta, float mvaID, ASTypes::size8 mvaIDCat, float eaRelISO, ASTypes::size16 id);

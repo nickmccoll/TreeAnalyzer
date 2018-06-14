@@ -23,7 +23,8 @@ ElectronReader::~ElectronReader(){
     delete miniIso   ;
     delete eaRelISO  ;
     delete id        ;
-
+    delete dRnorm    ;
+    delete PtRatioLepAct;
 }
 
 void ElectronReader::setup(TreeReadingWrapper * wrapper){
@@ -40,13 +41,15 @@ void ElectronReader::setup(TreeReadingWrapper * wrapper){
     wrapper->setBranchAddressPre(branchName,"miniIso"  ,&miniIso  );
     wrapper->setBranchAddressPre(branchName,"eaRelISO" ,&eaRelISO );
     wrapper->setBranchAddressPre(branchName,"id"       ,&id       );
+    wrapper->setBranchAddressPre(branchName,"dRnorm"       ,&dRnorm       );
+    wrapper->setBranchAddressPre(branchName,"PtRatioLepAct"       ,&PtRatioLepAct       );
 }
 
 void ElectronReader::processVars() {
     electrons.clear();
     for(unsigned int iO = 0; iO < pt->size(); ++iO){
         electrons.emplace_back(ASTypes::CylLorentzVectorF(pt->at(iO),eta->at(iO),phi->at(iO),0),iO,
-                q->at(iO),d0->at(iO),dz->at(iO),sip3D->at(iO),miniIso->at(iO));
+                q->at(iO),d0->at(iO),dz->at(iO),sip3D->at(iO),miniIso->at(iO), dRnorm->at(iO),PtRatioLepAct->at(iO));
         electrons.back().addElectronInfo(scEta->at(iO),mvaID->at(iO),mvaID_cat->at(iO),eaRelISO->at(iO),id->at(iO));
     }
     std::sort(electrons.begin(), electrons.end(), PhysicsUtilities::greaterPT<Electron>());

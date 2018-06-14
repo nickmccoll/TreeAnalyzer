@@ -15,8 +15,8 @@ public :
     Muon(const ROOT::Math::LorentzVector<InputCoordSystem> &mom,
             const int idx,
             const ASTypes::int8 q, const  float d0,
-            const  float dz,const  float sip3D,const  float miniIso)
-        : Lepton(mom, idx,q,d0,dz,sip3D,miniIso,true) {}
+            const  float dz,const  float sip3D,const  float miniIso, const float dRnorm, const float PtRatioLepAct)
+        : Lepton(mom, idx,q,d0,dz,sip3D,miniIso,true,dRnorm,PtRatioLepAct) {}
     ~Muon() {}
 
     void addMuonInfo(float dbRelISO, ASTypes::size16 id);
