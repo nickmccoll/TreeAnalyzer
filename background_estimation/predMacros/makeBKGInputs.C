@@ -82,6 +82,17 @@ std::string getMVVExpoMinMaxStr(std::string sample){
     return std::string(" -emin ") + flt2Str(eMin) + " -emax "+flt2Str(eMax) + " ";
 }
 
+const float hh_scaleUnc = 0.0005; // coef of 1 means that we get a 100% scale at 2 TeV;
+const float hh_resUnc   = 2000; // coef of 1 means that we get a 100% scale at 2 TeV;
+
+const float hbb_scaleUnc = 0.005; // coef of 1 means that we get a 100% scale at 200 GeV;
+const float hbb_resUnc   = 200;   // coef of 1 means that we get a 100% scale at 2 TeV;
+
+//Originals////
+//JJ ->   -hs 0.00714 -hr 45  ( 142.8%,%22.5) @ 200 GeV
+//VV ->   -hs 0.0003 -hr 1200  (60%,60%) @ 2 TeV
+
+
 void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& baseSel="1.0",bool addQCDSF = false,float khxs = 1,float khxc = 5){
     std::string resFile=filename+"_"+name+"_detectorResponse.root";
 
@@ -100,7 +111,7 @@ void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string
         std::string cut =  std::string("(")+baseSel+"&&"+l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut+")";
         if(addQCDSF) cut += "*"+getQCDSF(name,filename,l,p,h);
         std::string args = std::string("-v -n histo ")+" -x "+hbbMCS.cut+" -g hbbGenMass -xb "+hbbInclBinning.cut+ " -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
-        args += " -kss -ks 1.5 -kr 1.5 -hs 0.00714 -hr 45 ";
+        args += " -kss -ks 1.5 -kr 1.5 -hs " + flt2Str(hbb_scaleUnc) + " -hr " + flt2Str(hbb_scaleUnc) + " ";
         args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
         make1DTemplateWithAdaKern(inputFile,tempFile, args);
     }
@@ -132,7 +143,7 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
         if(addQCDSF) cut += "*"+getQCDSF(name,filename,l,p,h);
 
         std::string args = std::string("-v -n histo ")+" -x "+hhMCS.cut+" -g hbbGenMass -xb "+hhInclBinning.cut+" -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
-        args += " -kss -ks 1.5 -kr 1.5 -hs 0.0003 -hr 1200 ";
+        args += " -kss -ks 1.5 -kr 1.5 -hs "+flt2Str(hh_scaleUnc) +" -hr "+flt2Str(hh_resUnc)+" ";
         args += std::string(" -doS ") + getMVVExpoMinMaxStr(name);
         args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
         make1DTemplateWithAdaKern(inputFile,tempFile, args);
@@ -157,10 +168,10 @@ void makeBackgroundShapes2DConditional(const std::string name, const std::string
         args+=std::string(" -khxs ")+ flt2Str(khxs) +" -khxc "+ flt2Str(khxc) +" -khys "+ flt2Str(khys) +" -khyc "+ flt2Str(khyc) + " -kss ";
         args += "-eopt y  "+ getMVVExpoMinMaxStr(name);
         if(xIsCond){
-            args+=" -hs 0.00714 -hr 45 ";
+            args+=" -hs "+ flt2Str(hbb_scaleUnc) + " -hr " + flt2Str(hbb_scaleUnc) + " ";
             args+=" -xIsCond ";
         } else {
-            args+=" -hs 0.0003 -hr 1200 ";
+            args+=" -hs "+flt2Str(hh_scaleUnc) +" -hr "+flt2Str(hh_resUnc)+" ";
         }
 
         make2DTemplateWithAdaKern(inputFile,tempFile, args);

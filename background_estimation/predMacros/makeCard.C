@@ -99,18 +99,18 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         card.addParamSystematic("CMS_scale_MET",0.0,0.02);
         card.addParamSystematic("CMS_res_MET",0.0,0.01);
         //KDE shape systematics
-        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTX") ,0.0,0.333);
-        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTX"),0.0,0.6);
-        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTY") ,0.0,0.333);
-        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTY"),0.0,0.333);
-        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"PTX") ,0.0,0.333);
-        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"OPTX"),0.0,0.6);
-        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"PTY") ,0.0,0.333);
-        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"OPTY"),0.0,0.333);
-        card.addParamSystematic(systName(bkgSels[BKG_MW]    ,"PT")  ,0.0,0.333);
-        card.addParamSystematic(systName(bkgSels[BKG_MW]    ,"OPT") ,0.0,0.333);
-        card.addParamSystematic(systName(bkgSels[BKG_MT]    ,"PT")  ,0.0,0.333);
-        card.addParamSystematic(systName(bkgSels[BKG_MT]    ,"OPT") ,0.0,0.333);
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTX") ,0.0,0.48);
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTX"),0.0,0.135);
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTY") ,0.0,0.2);
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTY"),0.0,0.2);
+        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"PTX") ,0.0,0.48);
+        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"OPTX"),0.0,0.135);
+        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"PTY") ,0.0,0.2);
+        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"OPTY"),0.0,0.2);
+        card.addParamSystematic(systName(bkgSels[BKG_MW]    ,"PT")  ,0.0,0.2);
+        card.addParamSystematic(systName(bkgSels[BKG_MW]    ,"OPT") ,0.0,0.2);
+        card.addParamSystematic(systName(bkgSels[BKG_MT]    ,"PT")  ,0.0,0.2);
+        card.addParamSystematic(systName(bkgSels[BKG_MT]    ,"OPT") ,0.0,0.2);
 
 
         //---------------------------------------------------------------------------------------------------
