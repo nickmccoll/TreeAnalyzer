@@ -11,12 +11,14 @@ hadd  -f HHlnujj_ttbarSF_all_inputPlots.root HHlnujj_ttbarSF_data_inputPlots.roo
 {
   TFile * f = new TFile("HHlnujj_ttbarSF_all_inputPlots.root","read");
     // TFile * f = new TFile("HHlnujj_ttbarSF_all_testPlots.root","read");
+  // std::string selection = "cr_hhMass";
+  TString selection = "cr_lmass_hhMass";
   TH1* hd;
   TH1*ho;
   TH1*ht;
-  f->GetObject("data_cr_hhMass",hd);
-  f->GetObject("other_cr_hhMass",ho);
-  f->GetObject("ttbar_cr_hhMass",ht);
+  f->GetObject("data_"+selection,hd);
+  f->GetObject("other_"+selection,ho);
+  f->GetObject("ttbar_"+selection,ht);
 
   double bins[]={0,500,600,700,800,900,1000,1100,1200,1400,1600,2000,2500,3000,4000,5000};
   int nBins = 15;

@@ -11,7 +11,7 @@
 using namespace CutConstants;
 
 
-void fitTTBarSF(std::string inputMC,std::string inputData, std::string outputName){
+void fitTTBarSF(std::string inputMC,std::string inputData, std::string selection, std::string outputName){
 
     double bins[]={0,500,600,700,800,900,1000,1100,1200,1400,1600,2000,2500,3000,4000,5000};
     int nBins = 15;
@@ -22,9 +22,9 @@ void fitTTBarSF(std::string inputMC,std::string inputData, std::string outputNam
 
     TFile * fM =  TObjectHelper::getFile(inputMC);
     TFile * fD =  TObjectHelper::getFile(inputData);
-    auto hd = TObjectHelper::getObject<TH1F>(fD,"data_cr_hhMass");
-    auto ho = TObjectHelper::getObject<TH1F>(fM,"other_cr_hhMass");
-    auto ht = TObjectHelper::getObject<TH1F>(fM,"ttbar_cr_hhMass");
+    auto hd = TObjectHelper::getObject<TH1F>(fD,"data_"+selection);
+    auto ho = TObjectHelper::getObject<TH1F>(fM,"other_"+selection);
+    auto ht = TObjectHelper::getObject<TH1F>(fM,"ttbar_"+selection);
 
     TH1 * hd_c = plotter.getOrMake1D("data_binned",(std::string(";")+hhMCS.title).c_str(),nBins,bins  );
     TH1 * ho_c = plotter.getOrMake1D("other_binned",(std::string(";")+hhMCS.title).c_str(),nBins,bins  );
@@ -148,6 +148,8 @@ void go(int step, std::string treeDir) {
     };
     std::vector<PlotSel> sels;
     sels.emplace_back("cr",abV.cut+"&&"+hbbMCS.cut+">80"+"&&"+btagCats[BTAG_LMT].cut);
+    sels.emplace_back("cr_lmass",abV.cut+"&&"+hbbMCS.cut+">80"+"&&"+hbbMCS.cut+"<150"+"&&"+btagCats[BTAG_LMT].cut);
+    sels.emplace_back("cr_hmass",abV.cut+"&&"+hbbMCS.cut+">150"+"&&"+btagCats[BTAG_LMT].cut);
     sels.emplace_back("noHbb",abV.cut+"&&"+hbbMCS.cut+">30"+"&&"+btagCats[BTAG_LMT].cut);
     sels.emplace_back("fullHbbHH",abV.cut+"&&"+hhRange.cut+"&&"+hbbRange.cut+"&&"+btagCats[BTAG_LMT].cut);
 
@@ -156,7 +158,9 @@ void go(int step, std::string treeDir) {
         MakePlots mcPlots(mcTree,filename+"_ttbarSF_mc_inputPlots.root",mcSamps,sels,vars,"1.0",nomW.cut);
         MakePlots dataPlots(dataTree,filename+"_ttbarSF_data_inputPlots.root",dataSamps,sels,vars,"1.0","1.0");
 
-        fitTTBarSF(filename+"_ttbarSF_mc_inputPlots.root",filename+"_ttbarSF_data_inputPlots.root",filename+"_ttbarSF.json");
+        fitTTBarSF(filename+"_ttbarSF_mc_inputPlots.root",filename+"_ttbarSF_data_inputPlots.root","cr_hhMass",filename+"_ttbarSF.json");
+        fitTTBarSF(filename+"_ttbarSF_mc_inputPlots.root",filename+"_ttbarSF_data_inputPlots.root","cr_lmass_hhMass",filename+"lmass_ttbarSF.json");
+        fitTTBarSF(filename+"_ttbarSF_mc_inputPlots.root",filename+"_ttbarSF_data_inputPlots.root","cr_hmass_hhMass",filename+"hmass_ttbarSF.json");
     }
 
     if(step==1){
