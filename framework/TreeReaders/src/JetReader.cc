@@ -15,10 +15,15 @@ JetReader::~JetReader(){
     delete eta         ;
     delete phi         ;
     delete mass        ;
+    delete chef        ;
+    delete toRawFact   ;
+    delete metUnc_rawPx;
+    delete metUnc_rawPy;
     delete csv         ;
     delete id          ;
     delete hadronFlavor;
     delete partonFlavor;
+    delete JECUnc;
     delete genIDX      ;
     delete gen_pt      ;
     delete gen_eta     ;
@@ -33,12 +38,17 @@ void JetReader::setup(TreeReadingWrapper * wrapper){
         wrapper->setBranchAddressPre(branchName,"eta"         ,&eta         ,true);
         wrapper->setBranchAddressPre(branchName,"phi"         ,&phi         ,true);
         wrapper->setBranchAddressPre(branchName,"mass"        ,&mass        ,true);
+        wrapper->setBranchAddressPre(branchName,"chef"        ,&chef        ,true);
+        wrapper->setBranchAddressPre(branchName,"toRawFact"   ,&toRawFact        ,true);
+        wrapper->setBranchAddressPre(branchName,"metUnc_rawPx",&metUnc_rawPx        ,true);
+        wrapper->setBranchAddressPre(branchName,"metUnc_rawPy",&metUnc_rawPy        ,true);
         wrapper->setBranchAddressPre(branchName,"csv"         ,&csv         ,true);
         wrapper->setBranchAddressPre(branchName,"id"          ,&id          ,true);
 
         if(!realData){
             wrapper->setBranchAddressPre(branchName,"hadronFlavor",&hadronFlavor,true);
             wrapper->setBranchAddressPre(branchName,"partonFlavor",&partonFlavor,true);
+            wrapper->setBranchAddressPre(branchName,"JECUnc"      ,&JECUnc,true);
         }
         if(fillGenJets && !realData) {
             wrapper->setBranchAddressPre(branchName,"genIDX"      ,&genIDX      ,true);
@@ -74,15 +84,21 @@ void JetReader::processVars() {
 
     if(fillRecoJets){
         for(unsigned int iO = 0; iO < pt->size(); ++iO){
-            ASTypes::int8 hadronFlv =  realData  ? ASTypes::int8(0) : hadronFlavor->at(iO);
-            ASTypes::int8 partonFlv =  realData  ? ASTypes::int8(0) : partonFlavor->at(iO);
+            ASTypes::int8 hadronFlv =  0;
+            ASTypes::int8 partonFlv =  0;
+            float         jecUnc    =  0;
+           if(!realData){
+               hadronFlv = hadronFlavor->at(iO);
+               partonFlv = partonFlavor->at(iO);
+               jecUnc    = JECUnc->at(iO);
+           }
             GenJet *gj = 0;
             if(fillGenJets && !realData && genIDX->at(iO) != 255 ){
                 gj = genInd[genIDX->at(iO)];
             }
 
             jets.emplace_back(ASTypes::CylLorentzVectorF(pt->at(iO),eta->at(iO),phi->at(iO),mass->at(iO)),iO,
-                    csv->at(iO),id->at(iO), hadronFlv,partonFlv,gj);
+                    toRawFact->at(iO),csv->at(iO),id->at(iO), hadronFlv,partonFlv,jecUnc,gj);
         }
         std::sort(jets.begin(), jets.end(), PhysicsUtilities::greaterPT<Jet>());
     }

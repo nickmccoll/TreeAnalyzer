@@ -153,7 +153,6 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
     const std::string fitName = "MJJ_fit1stIt";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l != lepCats[LEP_EMU] ) continue;
-        if(b == btagCats[BTAG_I] ) continue;
         if(p != purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_LTMB]) continue;
         bool doExpo = b == btagCats[BTAG_L];
@@ -171,7 +170,6 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
     const std::string fitName = "MJJ_fit";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l != lepCats[LEP_EMU] ) continue;
-        if(b == btagCats[BTAG_I] ) continue;
         if(p != purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_LTMB]) continue;
         bool doExpo = b == btagCats[BTAG_L];
@@ -509,7 +507,7 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
-        if(b == btagCats[BTAG_I] || b == btagCats[BTAG_LMT] ) continue;
+        if( b == btagCats[BTAG_LMT] ) continue;
         if(p == purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_FULL] ) continue;
         bool doExpo = b == btagCats[BTAG_L];
@@ -546,7 +544,7 @@ void combine2DShapesNoCond(const std::string& name, const std::string& filename)
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
-        if(b == btagCats[BTAG_I] || b == btagCats[BTAG_LMT] ) continue;
+        if(b == btagCats[BTAG_LMT] ) continue;
         if(p == purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_FULL] ) continue;
         bool doExpo = b == btagCats[BTAG_L];
@@ -599,6 +597,9 @@ void go(int step,std::string treeDir) {
         makeSignalMVVShapes1stIt(name,filename);
 //        makeSignalMVVShapes2ndIt(name,filename);
         combine2DShapesNoCond(name,filename);
+    }
+
+    if(step == 3){
     }
 
 

@@ -22,10 +22,15 @@ public:
     std::vector<float>          * eta            = new std::vector<float>;
     std::vector<float>          * phi            = new std::vector<float>;
     std::vector<float>          * mass           = new std::vector<float>;
+    std::vector<float>          * toRawFact      = new std::vector<float> ;
+    std::vector<float>          * chef           = new std::vector<float> ;
+    std::vector<float>          * metUnc_rawPx   = new std::vector<float> ;
+    std::vector<float>          * metUnc_rawPy   = new std::vector<float> ;
     std::vector<float>          * csv            = new std::vector<float>;
     std::vector<ASTypes::size8> * id             = new std::vector<ASTypes::size8>;
     std::vector<ASTypes::int8>  * hadronFlavor   = new std::vector<ASTypes::int8> ;
     std::vector<ASTypes::int8>  * partonFlavor   = new std::vector<ASTypes::int8> ;
+    std::vector<float>          * JECUnc         = new std::vector<float>         ;
     std::vector<ASTypes::size8> * genIDX         = new std::vector<ASTypes::size8>;
     std::vector<float>          * gen_pt         = new std::vector<float>;
     std::vector<float>          * gen_eta        = new std::vector<float>;

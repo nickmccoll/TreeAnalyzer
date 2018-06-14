@@ -13,21 +13,28 @@ public:
     std::string cut;
     std::string title;
 };
-
-
 std::string hhFilename = "HHlnujj";
+
+
+enum PROC  {TTBAR,WJETS,QCD,OTHER};
+std::vector<CutStr > processes = {
+        CutStr("ttbar"     ,"process==2","t#bar{t}"),
+        CutStr("wjets"     ,"process==3","W+jets"),
+        CutStr("qcd"       ,"process==8","multijets"),
+        CutStr("other"     ,"(process>1&&!(process==2||process==3||process==8))","other")
+};
+
+enum REGION  {REG_SR, REG_TOPCR, REG_QGCR};
 
 CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
 
-CutStr bkgTS("bkgTS" , "(process==2||process==5||process==7)");
-CutStr bkgWS("bkgWS" , "(process==3||process==4||process==6||process==8)");
 CutStr aQCD ("aQCD"  , "process!=8");
 
-CutStr wjjBC("wjjBC" , "wjjMass>10");
-CutStr exA  ("exA"   , "wlnuDR<3.2&&wwDM<2");
+CutStr wjjBC("wjjBC" , "wjjTau2o1<0.75");
+CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&wwDM<2");
 CutStr bV   ("bV"    , "nAK4Btags==0");
-CutStr abV  ("abV"    , "nAK4Btags!=0");
-CutStr nSJs ("nSJs"  , "hbbNSJs==2&&wjjNSJs==2");
+CutStr abV  ("abV"   , "nAK4Btags!=0");
+CutStr nSJs ("nSJs"  , "hbbNSJs==2&&wjjNSJs==2&&tightE");
 
 
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{H#rightarrowbb} [GeV]");
@@ -40,7 +47,7 @@ unsigned int nHHMassBins   =132;
 double minHHMass  = 700;
 double maxHHMass  = 4000;
 
-unsigned int nInclHHMassBins   =280;
+unsigned int nInclHHMassBins   =200;
 double minInclHHMass  = 0   ;
 double maxInclHHMass  = 5000;
 
@@ -75,14 +82,20 @@ std::vector<CutStr> lepCats = {
         CutStr("mu" ,"isMuon==1")
 };
 
-enum BTAGCats  {BTAG_I, BTAG_LMT, BTAG_L, BTAG_M,BTAG_T};
+enum BTAGCats  {BTAG_LMT, BTAG_L, BTAG_M, BTAG_T};
 std::vector<CutStr > btagCats = {
-        CutStr("I"  ,"1.0"),
         CutStr("LMT","hbbCSVCat>=4"),
         CutStr("L"  ,"hbbCSVCat==4"),
         CutStr("M"  ,"hbbCSVCat==5"),
         CutStr("T"  ,"hbbCSVCat==6")
 };
+
+std::vector<CutStr > qgBtagCats = {
+        CutStr("LMT","hbbCSVCat==1"),
+        CutStr("L"  ,"hbbCSVCat==1")
+};
+
+CutStr inclBtagCat("I","hbbCSVCat>=0");
 
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
@@ -91,11 +104,11 @@ std::vector<CutStr > purCats = {
         CutStr("HP"  ,"wjjTau2o1<0.55")
 };
 
-enum HADCuts  {HAD_NONE, HAD_LWW,HAD_LB,HAD_LTMB,HAD_FULL};
+enum HADCuts  {HAD_NONE,HAD_LB,HAD_LT,HAD_LTMB,HAD_FULL};
 std::vector<CutStr > hadCuts = {
         CutStr("none",nSJs.cut),
-        CutStr("lWW" ,nSJs.cut+"&&"+wjjBC.cut+"&&"+bV.cut),
         CutStr("lb"  ,nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut),
+        CutStr("lt"  ,nSJs.cut+"&&"+exA.cut+"&&"+bV.cut),
         CutStr("ltmb",nSJs.cut+"&&"+exA.cut),
         CutStr("full",nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut)
 

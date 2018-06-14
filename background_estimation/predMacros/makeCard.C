@@ -3,19 +3,39 @@
 using namespace CutConstants;
 using namespace ASTypes;
 
-bool runCR = true;
-bool simpleSignal = true;
 
-void go(const std::string& signalName, const std::string& filename) {
-    const std::string inputDir = "../inputs/";
-    const std::string fPF = runCR ? std::string("../controlReg/")+filename +"_CR" :  inputDir+filename;
-    const std::string sfPF =inputDir+ (simpleSignal ? "nonCond/" : "") +   filename;
+std::string getSystName (const std::string& prefix, const std::string& proc,const std::string& name, const std::string& sel){
+    std::string sn = prefix;
+    if(proc.size() )sn += "_"+proc;
+    if(name.size() )sn += "_"+name;
+    if(sel.size() )sn += "_"+sel;
+    return sn;
+};
+
+void go(const std::string& signalName, const std::string& filename, const std::string& mainDir,  REGION reg, bool simpleSignal) {
+    const std::string sigInputDir =  mainDir + (simpleSignal ? "/signalInputsNoCond/" : "/signalInputs/");
+    const std::string sfPF =sigInputDir + filename;
+
+    std::string inputDir = mainDir;
+
+    std::string fPF;
+    switch(reg){
+    case REG_SR:
+        fPF = mainDir + "/bkgInputs/" + filename;
+        break;
+    case REG_TOPCR:
+        fPF = mainDir + "/bkgInputsTopCR/" + filename + "_TopCR";
+        break;
+    case REG_QGCR:
+        fPF = mainDir + "/bkgInputsQGCR/" + filename + "_QGCR";
+        break;
+    }
 
     const std::string category = "std";
     std::string cmd = "combineCards.py ";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
-        if(b == btagCats[BTAG_LMT]|| b==btagCats[BTAG_I] ) continue;
+        if(b == btagCats[BTAG_LMT]) continue;
         if(p == purCats[PURE_I] ) continue;
         if(h != hadCuts[HAD_FULL] ) continue;
 
@@ -29,26 +49,73 @@ void go(const std::string& signalName, const std::string& filename) {
         auto inputName =[&](const std::string& proc, const std::string& pf) -> std::string {return fPF + "_"+proc +"_"+cat +"_"+ pf; };
         auto signalInputName =[&](const std::string& proc, const std::string& pf) -> std::string {return sfPF + "_"+proc +"_"+cat +"_"+ pf; };
 
-
-        auto qgSyst =[&](const std::string& n)->StrStr{return StrStr(n,std::string("CMS_"+filename+"_"+bkgSels[BKG_QG]+"_"+n+"_"+cat ));};
-        auto lostTWSyst =[&](const std::string& n)->StrStr{return StrStr(n,std::string("CMS_"+filename+"_"+bkgSels[BKG_LOSTTW]+"_"+n+"_"+cat ));};
-        auto mwSyst =[&](const std::string& n)->StrStr{return StrStr(n,std::string("CMS_"+filename+"_"+bkgSels[BKG_MW]+"_"+n+"_"+cat));};
-        auto mtSyst =[&](const std::string& n)->StrStr{return StrStr(n,std::string("CMS_"+filename+"_"+bkgSels[BKG_MT]+"_"+n+"_"+cat ));};
-
+        auto systName = [&](const std::string& proc,const std::string& name, const std::string& sel = "-1")->std::string {
+            return getSystName("CMS_" + filename,proc,name, sel == "-1" ? cat : sel  );
+        };
 
         //Make search variables
         card.addVar(MOD_MJ,100,0,1000,false);
         card.addVar(MOD_MR,1000,0,10000,false);
         card.addVar(MOD_MS,2000,true);
 
-        //Systematic vars
-        card.addVar("CMS_scale_prunedj",0,-.1,1,false);
-        card.addVar("CMS_res_prunedj",0,-.5,0.5,false);
-        card.addVar("CMS_scale_j",0,-.1,1,false);
-        card.addVar("CMS_scale_MET",0,-.1,1,false);
-        card.addVar("CMS_res_j",0,-.5,0.5,false);
-        card.addVar("CMS_res_MET",0,-.5,0.5,false);
 
+        //---------------------------------------------------------------------------------------------------
+        //Add Systematics first since the param systs need to have the variables added to the workspace
+        //---------------------------------------------------------------------------------------------------
+        //luminosity
+        card.addSystematic("CMS_lumi","lnN",{{"radHH",1.026}});
+        //kPDF uncertainty for the signal
+        card.addSystematic("CMS_pdf","lnN",{{"radHH",1.01}});
+        //
+        //lepton efficiency
+        card.addSystematic("CMS_eff_"+l,"lnN",{{"radHH",1.1}});
+        //
+        //W+jets cross section in acceptance-dominated by pruned mass
+        card.addSystematic(systName(bkgSels[BKG_QG],"norm")    ,"lnN",{{bkgSels[BKG_QG],1.5}});
+        card.addSystematic(systName(bkgSels[BKG_LOSTTW],"norm"),"lnN",{{bkgSels[BKG_LOSTTW],1.5}});
+        card.addSystematic(systName(bkgSels[BKG_MW],"norm")    ,"lnN",{{bkgSels[BKG_MW],1.5}});
+        card.addSystematic(systName(bkgSels[BKG_MT],"norm")    ,"lnN",{{bkgSels[BKG_MT],1.5}});
+        //
+        //tau21
+        card.addParamSystematic("CMS_tau21_PtDependence",0.0,0.041);
+        if(p == purCats[PURE_HP])
+            card.addSystematic(systName("","tau21_eff",""),"lnN",{{"radHH",1+0.14}});
+        if(p == purCats[PURE_LP])
+            card.addSystematic(systName("","tau21_eff",""),"lnN",{{"radHH",1-0.33}});
+        //Btag
+        card.addSystematic("CMS_btag_fake","lnN",{{"radHH",1+0.02}});
+        if(p == btagCats[BTAG_L])
+            card.addSystematic("CMS_btag_eff" ,"lnN",{{"radHH",1-0.03}});
+        if(p == btagCats[BTAG_M])
+            card.addSystematic("CMS_btag_eff" ,"lnN",{{"radHH",1+0.03}});
+        if(p == btagCats[BTAG_T])
+            card.addSystematic("CMS_btag_eff" ,"lnN",{{"radHH",1+0.06}});
+
+        //pruned mass scale
+        card.addParamSystematic("CMS_scale_j",0.0,0.02);
+        card.addParamSystematic("CMS_res_j",0.0,0.05);
+        card.addParamSystematic("CMS_scale_prunedj",0.0,0.0094);
+        card.addParamSystematic("CMS_res_prunedj",0.0,0.2);
+        card.addParamSystematic("CMS_scale_MET",0.0,0.02);
+        card.addParamSystematic("CMS_res_MET",0.0,0.01);
+        //KDE shape systematics
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTX") ,0.0,0.333);
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTX"),0.0,0.6);
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTY") ,0.0,0.333);
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTY"),0.0,0.333);
+        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"PTX") ,0.0,0.333);
+        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"OPTX"),0.0,0.6);
+        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"PTY") ,0.0,0.333);
+        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"OPTY"),0.0,0.333);
+        card.addParamSystematic(systName(bkgSels[BKG_MW]    ,"PT")  ,0.0,0.333);
+        card.addParamSystematic(systName(bkgSels[BKG_MW]    ,"OPT") ,0.0,0.333);
+        card.addParamSystematic(systName(bkgSels[BKG_MT]    ,"PT")  ,0.0,0.333);
+        card.addParamSystematic(systName(bkgSels[BKG_MT]    ,"OPT") ,0.0,0.333);
+
+
+        //---------------------------------------------------------------------------------------------------
+        //Signal
+        //---------------------------------------------------------------------------------------------------
         if(signalName=="radHH"){
             //Conditional template
             if(!simpleSignal){
@@ -59,92 +126,81 @@ void go(const std::string& signalName, const std::string& filename) {
                 card.add2DSignalParametricShapeNoCond(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
                         {{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},{{"CMS_scale_j",1},{"CMS_scale_MET",1}},{{"CMS_res_j",1},{"CMS_res_MET",1}}, b == btagCats[BTAG_L],MOD_MS);
             }
-            card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),1,"CMS_tau21_PtDependence","log("+MOD_MS+"/600)",0.041,MOD_MS);
+            card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),1,"CMS_tau21_PtDependence",
+                    p == purCats[PURE_HP] ? "log("+MOD_MS+"/600)" : "((0.054/0.041)*(-log("+MOD_MS+"/600)))"
+                            ,MOD_MS);
         } else throw std::invalid_argument("makeCard::go() -> Bad parsing");
 
-        //qg bkg
-        card.addHistoShapeFromFile(bkgSels[BKG_QG],{MOD_MJ,MOD_MR}, inputName(bkgSels[BKG_QG],"2D_template.root"),"histo",{qgSyst("PTX"),qgSyst("OPTX"),qgSyst("PTY"),qgSyst("OPTY")});
+        //---------------------------------------------------------------------------------------------------
+        //QG
+        //---------------------------------------------------------------------------------------------------
+        PDFAdder::InterpSysts qgKDESysts;
+        qgKDESysts.addSyst("PTX",{{systName(bkgSels[BKG_QG],"PTX"),1  }});
+        qgKDESysts.addSyst("OPTX",{{systName(bkgSels[BKG_QG],"OPTX"),1  }});
+        qgKDESysts.addSyst("PTY",{{systName(bkgSels[BKG_QG],"PTY"),1  }});
+        qgKDESysts.addSyst("OPTY",{{systName(bkgSels[BKG_QG],"OPTY"),1  }});
+        card.addHistoShapeFromFile(bkgSels[BKG_QG],{MOD_MJ,MOD_MR}, inputName(bkgSels[BKG_QG],"2D_template.root"),"histo",qgKDESysts);
         card.addFixedYieldFromFile(bkgSels[BKG_QG],1,fPF+"_"+bkgSels[BKG_QG]+"_distributions.root",bkgSels[BKG_QG]+"_"+cat+"_"+hhMCS);
-        //lost t/w bkg
-        card.addHistoShapeFromFile(bkgSels[BKG_LOSTTW],{MOD_MJ,MOD_MR},inputName(bkgSels[BKG_LOSTTW],"2D_template.root"),"histo",{lostTWSyst("PTX"),lostTWSyst("OPTX"),lostTWSyst("PTY"),lostTWSyst("OPTY")});
+
+        //---------------------------------------------------------------------------------------------------
+        //Lost t/W
+        //---------------------------------------------------------------------------------------------------
+        PDFAdder::InterpSysts twKDESysts;
+        twKDESysts.addSyst("PTX",{{systName(bkgSels[BKG_LOSTTW],"PTX"),1  }});
+        twKDESysts.addSyst("OPTX",{{systName(bkgSels[BKG_LOSTTW],"OPTX"),1  }});
+        twKDESysts.addSyst("PTY",{{systName(bkgSels[BKG_LOSTTW],"PTY"),1  }});
+        twKDESysts.addSyst("OPTY",{{systName(bkgSels[BKG_LOSTTW],"OPTY"),1  }});
+        card.addHistoShapeFromFile(bkgSels[BKG_LOSTTW],{MOD_MJ,MOD_MR},inputName(bkgSels[BKG_LOSTTW],"2D_template.root"),"histo",twKDESysts);
         card.addFixedYieldFromFile(bkgSels[BKG_LOSTTW],2,fPF+"_"+bkgSels[BKG_LOSTTW]+"_distributions.root",bkgSels[BKG_LOSTTW]+"_"+cat+"_"+hhMCS);
 
+        //---------------------------------------------------------------------------------------------------
         //mW
-        card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,fullInputName(bkgSels[BKG_MW],lepCats[LEP_EMU],btagCats[BTAG_LMT],purCats[PURE_I],hadCuts[HAD_NONE],"fit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
-        card.addHistoShapeFromFile(bkgSels[BKG_MW],{MOD_MR}, inputName(bkgSels[BKG_MW],"template.root"),"histo",{mwSyst("PT"),mwSyst("OPT")},false,0,MOD_MR);
-        card.conditionalProduct(bkgSels[BKG_MW],bkgSels[BKG_MW] + "_"+MOD_MJ,MOD_MR,bkgSels[BKG_MW] + "_"+MOD_MR);
+        //---------------------------------------------------------------------------------------------------
+        PDFAdder::InterpSysts mwKDESysts;
+        mwKDESysts.addSyst("PT",{{systName(bkgSels[BKG_MW],"PT"),1  }});
+        mwKDESysts.addSyst("OPT",{{systName(bkgSels[BKG_MW],"OPT"),1  }});
+        card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,inputName(bkgSels[BKG_MW],"MJJ_SFFit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
+        card.addHistoShapeFromFile(bkgSels[BKG_MW],{MOD_MR}, inputName(bkgSels[BKG_MW],"MVV_template.root"),"histo",mwKDESysts,false,0,MOD_MR);
+        card.conditionalProduct(bkgSels[BKG_MW],bkgSels[BKG_MW] + "_"+MOD_MJ,MOD_MJ,bkgSels[BKG_MW] + "_"+MOD_MR);
         card.addFixedYieldFromFile(bkgSels[BKG_MW],3,fPF+"_"+bkgSels[BKG_MW]+"_distributions.root",bkgSels[BKG_MW]+"_"+cat+"_"+hhMCS);
 
-        //mT
-        card.add1DBKGParametricShape(bkgSels[BKG_MT],MOD_MJ,fullInputName(bkgSels[BKG_MT],lepCats[LEP_EMU],b,purCats[PURE_I],hadCuts[HAD_NONE],"fit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
-        card.addHistoShapeFromFile(bkgSels[BKG_MT],{MOD_MR}, inputName(bkgSels[BKG_MT],"template.root"),"histo",{mtSyst("PT"),mtSyst("OPT")},false,0,MOD_MR);
-        card.conditionalProduct(bkgSels[BKG_MT],bkgSels[BKG_MT] + "_"+MOD_MJ,MOD_MR,bkgSels[BKG_MT]+ "_"+MOD_MR);
+        //---------------------------------------------------------------------------------------------------
+        //mt
+        //---------------------------------------------------------------------------------------------------
+        PDFAdder::InterpSysts mtKDESysts;
+        mtKDESysts.addSyst("PT",{{systName(bkgSels[BKG_MT],"PT"),1  }});
+        mtKDESysts.addSyst("OPT",{{systName(bkgSels[BKG_MT],"OPT"),1  }});
+        card.add1DBKGParametricShape(bkgSels[BKG_MT],MOD_MJ,inputName(bkgSels[BKG_MT],"MJJ_SFFit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
+        card.addHistoShapeFromFile(bkgSels[BKG_MT],{MOD_MR}, inputName(bkgSels[BKG_MT],"MVV_template.root"),"histo",mtKDESysts,false,0,MOD_MR);
+        card.conditionalProduct(bkgSels[BKG_MT],bkgSels[BKG_MT] + "_"+MOD_MJ,MOD_MJ,bkgSels[BKG_MT]+ "_"+MOD_MR);
         card.addFixedYieldFromFile(bkgSels[BKG_MT],4,fPF+"_"+bkgSels[BKG_MT]+"_distributions.root",bkgSels[BKG_MT]+"_"+cat+"_"+hhMCS);
 
+        //---------------------------------------------------------------------------------------------------
         //Data
-        if(runCR){
+        //---------------------------------------------------------------------------------------------------
+        if(reg != REG_SR){
             card.importBinnedData(fPF + "_data_distributions.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
         } else {
             //Pseudo data
             card.importBinnedData(fPF + "_pd.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
         }
 
-        //Systematics
-        //luminosity
-        card.addSystematic("CMS_lumi","lnN",{StrFlt("radHH",1.026)});
-        //kPDF uncertainty for the signal
-        card.addSystematic("CMS_pdf","lnN",{StrFlt("radHH",1.01)});
-        //
-        //lepton efficiency
-        card.addSystematic("CMS_eff_"+l,"lnN",{StrFlt("radHH",1.1)});
-        //
-        //W+jets cross section in acceptance-dominated by pruned mass
-        card.addSystematic("CMS_"+filename +"_"+ bkgSels[BKG_QG]+"_norm_"+cat,"lnN",{StrFlt(bkgSels[BKG_QG],1.5)});
-        card.addSystematic("CMS_"+filename +"_"+ bkgSels[BKG_LOSTTW]+"_norm_"+cat,"lnN",{StrFlt(bkgSels[BKG_LOSTTW],1.5)});
-        card.addSystematic("CMS_"+filename +"_"+ bkgSels[BKG_MW]+"_norm_"+cat,"lnN",{StrFlt(bkgSels[BKG_MW],1.5)});
-        card.addSystematic("CMS_"+filename +"_"+ bkgSels[BKG_MT]+"_norm_"+cat,"lnN",{StrFlt(bkgSels[BKG_MT],1.5)});
-        //
-        //tau21
-        if(p == purCats[PURE_HP])
-            card.addSystematic("CMS_"+filename+"_tau21_eff","lnN",{StrFlt("radHH",1+0.14)});
-        if(p == purCats[PURE_LP])
-            card.addSystematic("CMS_"+filename+"_tau21_eff","lnN",{StrFlt("radHH",1-0.33)});
-        //Btag
-        card.addSystematic("CMS_btag_fake","lnN",{StrFlt("radHH",1+0.02)});
-        if(p == btagCats[BTAG_L])
-            card.addSystematic("CMS_btag_eff" ,"lnN",{StrFlt("radHH",1-0.03)});
-        if(p == btagCats[BTAG_M])
-            card.addSystematic("CMS_btag_eff" ,"lnN",{StrFlt("radHH",1+0.03)});
-        if(p == btagCats[BTAG_T])
-            card.addSystematic("CMS_btag_eff" ,"lnN",{StrFlt("radHH",1+0.06)});
-
-        //pruned mass scale
-        card.addParamSystematic("CMS_scale_j",0.0,0.02);
-        card.addParamSystematic("CMS_res_j",0.0,0.05);
-        card.addParamSystematic("CMS_scale_prunedj",0.0,0.0094);
-        card.addParamSystematic("CMS_res_prunedj",0.0,0.2);
-        card.addParamSystematic("CMS_scale_MET",0.0,0.02);
-        card.addParamSystematic("CMS_res_MET",0.0,0.01);
-        card.addParamSystematic(qgSyst("PTX") .second,0.0,0.333);
-        card.addParamSystematic(qgSyst("OPTX").second,0.0,0.6);
-        card.addParamSystematic(qgSyst("PTY") .second,0.0,0.333);
-        card.addParamSystematic(qgSyst("OPTY").second,0.0,0.333);
-        card.addParamSystematic(lostTWSyst("PTX") .second,0.0,0.333);
-        card.addParamSystematic(lostTWSyst("OPTX").second,0.0,0.6);
-        card.addParamSystematic(lostTWSyst("PTY") .second,0.0,0.333);
-        card.addParamSystematic(lostTWSyst("OPTY").second,0.0,0.333);
-        card.addParamSystematic(mwSyst("PT") .second,0.0,0.333);
-        card.addParamSystematic(mwSyst("OPT") .second,0.0,0.333);
-        card.addParamSystematic(mtSyst("PT") .second,0.0,0.333);
-        card.addParamSystematic(mtSyst("OPT") .second,0.0,0.333);
 
         card.makeCard();
     }
+    std::ofstream outFile("comp.sh",std::ios::out|std::ios::trunc);
+    outFile << cmd <<" > combinedCard.txt";
+    outFile.close();
+
     std::cout << cmd <<" > combinedCard.txt"<<std::endl;
 
 }
 #endif
 
-void makeCard(std::string signalString = "radHH"){
-    go(signalString,hhFilename);
+void makeCard(int inreg = REG_SR, bool condSignal= true, std::string signalString = "radHH"){
+    std::cout <<" <<<<< "<< inreg <<" "<< condSignal <<" "<<signalString<<std::endl;
+    REGION reg = REGION(inreg);
+    if(reg == REG_QGCR) btagCats = qgBtagCats;
+    std::string mainDir = "../../";
+    go(signalString,hhFilename,mainDir,reg,!condSignal);
 }

@@ -24,13 +24,21 @@ void makeDataDistributions(const std::string& name, const std::string& filename,
 
 #endif
 
-void makeBKGCRInputs(int bkgToDo = BKG_QG, std::string treeDir = "../trees/"){
-    hadCuts[HAD_NONE].cut = nSJs.cut;
-    hadCuts[HAD_LWW].cut  = nSJs.cut + "&&"+abV.cut;
-    hadCuts[HAD_LB].cut   = nSJs.cut;
-    hadCuts[HAD_LTMB].cut = nSJs.cut+ "&&"+abV.cut;
-    hadCuts[HAD_FULL].cut = nSJs.cut + "&&"+abV.cut;
-    hhFilename +="_CR";
-    go(static_cast<BKGModels>(bkgToDo),treeDir);
-    if(bkgToDo < 0) makeDataDistributions("data",hhFilename,treeDir+"betrees_data.root","1.0",false);
+void makeBKGCRInputs(bool doTopRegion = true, int bkgToDo = BKG_QG, std::string treeDir = "../trees/"){
+    if(doTopRegion){
+        hadCuts[HAD_NONE].cut = nSJs.cut;
+        hadCuts[HAD_LB].cut   = nSJs.cut+"&&"+wjjBC.cut;
+        hadCuts[HAD_LT].cut   = nSJs.cut+ "&&"+abV.cut;
+        hadCuts[HAD_LTMB].cut = nSJs.cut ;
+        hadCuts[HAD_FULL].cut = nSJs.cut + "&&"+abV.cut+"&&"+wjjBC.cut;
+        hhFilename +="_TopCR";
+        go(static_cast<BKGModels>(bkgToDo),treeDir+"/bkgCompLMT/");
+        if(bkgToDo < 0) makeDataDistributions("data",hhFilename,treeDir+"betrees_data.root","1.0",false);
+    } else {
+        btagCats = qgBtagCats;
+        hhFilename +="_QGCR";
+        go(static_cast<BKGModels>(bkgToDo),treeDir+"/bkgCompAB/");
+        if(bkgToDo < 0) makeDataDistributions("data",hhFilename,treeDir+"betrees_data.root","1.0",false);
+    }
+
 }

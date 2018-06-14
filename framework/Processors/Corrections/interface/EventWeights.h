@@ -6,6 +6,7 @@
 
 namespace TAna {
 class EventReader;
+class SMDecayEvent;
 namespace EventWeights {
     //function to calculate weight normalized to some lumi
     float calcNormalizedEventWeight(const EventReader& reader_event, const float cross, const float numE, const float lumi);
@@ -17,7 +18,6 @@ namespace EventWeights {
     float getNormalizedEventWeight(const EventReader& reader_event, const float cross, const float numE, const float lumi = 1);
 
     float get4bXSecLimit(unsigned int  mass);
-
 }
 
 class PUScaleFactors {
@@ -30,7 +30,22 @@ private:
     std::unique_ptr<TObjectHelper::Hist1DContainer> upSF;
     std::unique_ptr<TObjectHelper::Hist1DContainer> downSF;
 };
+class TopPTWeighting {
+public:
+    TopPTWeighting(const std::string& dataDir, const std::string& sfFile = "corrections/topPTWeight.root", bool verbose = false);
+    float getCorrection(const ASTypes::size8 process,const SMDecayEvent& decayEvent) const;
+    float getCorrectionNoNorm(const ASTypes::size8 process,const SMDecayEvent& decayEvent) const;
+    float getAvgPT(const SMDecayEvent& decayEvent) const;
+
+private:
+    std::unique_ptr<TObjectHelper::Hist1DContainer> weightConsts;
+    float a;
+    float b;
+    float nf;
+};
 }
+
+
 
 
 

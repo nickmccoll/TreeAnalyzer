@@ -6,6 +6,7 @@
 namespace TAna{
 
 EventReader::EventReader(std::string branchName, bool isRealData) : BaseReader("EventReader",branchName),realData(isRealData) {};
+EventReader::~EventReader() { delete genWeights;}
 
 void EventReader::setup(TreeReadingWrapper * wrapper){
 
@@ -18,8 +19,8 @@ void EventReader::setup(TreeReadingWrapper * wrapper){
     wrapper->setBranchAddressPre(branchName,"met_pt"            , &met_pt           , true );
     wrapper->setBranchAddressPre(branchName,"met_phi"           , &met_phi          , true );
     wrapper->setBranchAddressPre(branchName,"met_sig"           , &met_sig          , false);
-    wrapper->setBranchAddressPre(branchName,"met_unclUp"        , &met_unclUp       , false);
-    wrapper->setBranchAddressPre(branchName,"met_unclDown"      , &met_unclDown     , false);
+    wrapper->setBranchAddressPre(branchName,"met_unclUp_pt"     , &met_unclUp_phi   , false);
+    wrapper->setBranchAddressPre(branchName,"met_unclUp_phi"    , &met_unclUp_phi  , false);
     wrapper->setBranchAddressPre(branchName,"met_raw_pt"        , &met_raw_pt       , false);
     wrapper->setBranchAddressPre(branchName,"met_raw_phi"       , &met_raw_phi      , false);
 
@@ -27,6 +28,8 @@ void EventReader::setup(TreeReadingWrapper * wrapper){
         wrapper->setBranchAddressPre(branchName,"nTruePUInts"       , &nTruePUInts  , false);
         wrapper->setBranchAddressPre(branchName,"weight"            , &weight       , false);
         wrapper->setBranchAddressPre(branchName,"process"           , &process      , false);
+        wrapper->setBranchAddressPre(branchName,"genWeights"        ,&genWeights    , false);
+
         normWeightLoaded = wrapper->setBranchAddressPre(branchName,"normWeight"            , &normWeight       , false);
     } else {
         wrapper->setBranchAddressPre(branchName,"dataset"           , &dataset      , false);
@@ -34,6 +37,7 @@ void EventReader::setup(TreeReadingWrapper * wrapper){
         weight = 1;
         normWeightLoaded = false;
         normWeight = 1;
+        process = 0;
     }
 
     wrapper->setBranchAddressPre(branchName,"metFilters"         , &metFilters      , false);

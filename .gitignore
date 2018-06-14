@@ -5,8 +5,7 @@
 *.pyc
 *.pcm
 *C_ACLiC_mainC
-*C_ACliC_dict.o*
-*ACLiC_dict.cxx
+*ACLiC_dict*
 framework/Utilities/HiggsCombineImport/obj/TreeAnalyzerDict.cc
 
 # Prerequisites

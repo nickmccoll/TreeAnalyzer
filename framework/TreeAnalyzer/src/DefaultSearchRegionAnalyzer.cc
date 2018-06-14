@@ -42,6 +42,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, s
     ak4btagSFProc.reset(new JetBTagScaleFactors (dataDirectory));
     sjbtagSFProc.reset(new SubJetBTagScaleFactors (dataDirectory));
     hbbFJSFProc .reset(new HbbFatJetScaleFactors (dataDirectory));
+    topPTProc   .reset(new TopPTWeighting (dataDirectory));
     setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
 
     turnOnCorr(CORR_XSEC);
@@ -51,6 +52,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, s
     turnOnCorr(CORR_SJBTAG);
     turnOnCorr(CORR_AK4BTAG);
     turnOnCorr(CORR_SDMASS);
+    turnOnCorr(CORR_TOPPT);
 }
 //--------------------------------------------------------------------------------------------------
 DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
@@ -63,7 +65,8 @@ void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr) {FillerConstants
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::loadVariables()  {
     reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
-    reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData());  load(reader_fatjet  );
+    reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiJet",isRealData());  load(reader_fatjet  );
+    reader_fatjet_noLep=std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);  load(reader_fatjet_noLep  );
     reader_jet_chs =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jet_chs );
     reader_jet     =std::make_shared<JetReader>     ("ak4PuppiJet",isRealData(),false);  load(reader_jet     );
     reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
@@ -95,6 +98,8 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_LEP) && !reader_genpart) mkErr("genParticle","CORR_LEP");
     if(isCorrOn(CORR_AK4BTAG) && !reader_jet) mkErr("ak4PuppiNoLepJet","CORR_AK4BTAG");
     if(isCorrOn(CORR_SJBTAG) && !reader_fatjet) mkErr("ak8PuppiNoLepJet","CORR_SJBTAG");
+    if(isCorrOn(CORR_TOPPT) && !reader_event) mkErr("event","CORR_TOPPT");
+    if(isCorrOn(CORR_TOPPT) && !reader_genpart) mkErr("genParticle","CORR_TOPPT");
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
@@ -131,7 +136,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
     if(reader_fatjet && selectedLepton){
-        fatjetCands = fjProc->loadFatJets(*reader_fatjet,selectedLepton);
+        fjProc->loadFatJets(*reader_fatjet,*reader_fatjet_noLep,selectedLepton);
         hbbCand     = fjProc->getHBBCand();
         wjjCand     = fjProc->getWjjCand();
         hbbCSVCat   = fjProc->getHbbCSVCat();
@@ -141,7 +146,6 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         passHbbSel  = fjProc->passHbbSel();
         passWjjSel  = fjProc->passWjjSel();
     } else {
-        fatjetCands.clear();
         wjjCand    =  0;
         hbbCand    =  0;
         hbbCSVCat   = BTagging::CSVSJ_INCL;
@@ -211,6 +215,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         }
         if(isCorrOn(CORR_AK4BTAG)){
             weight *= ak4btagSFProc->getSF(jets_HbbV);
+        }
+        if(isCorrOn(CORR_TOPPT)){
+            weight *= topPTProc->getCorrection(mcProc,smDecayEvt);
         }
 
     }

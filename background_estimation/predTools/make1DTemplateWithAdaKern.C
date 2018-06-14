@@ -31,7 +31,7 @@ public:
         ks       = p.addFloat("ks","KDE scaling: scale");
         kr       = p.addFloat("kr","KDE scaling: resolution");
         khs      = p.addFloat("khs","KDE h-scale factor",false,1.);
-        khc      = p.addFloat ("khc","KDE adaptive bandwidth cutoff",false,5);
+        khc      = p.addFloat("khc","KDE adaptive bandwidth cutoff",false,5);
         kss      = p.addBool ("kss","KDE sigma scaling");
 
 
@@ -49,34 +49,38 @@ public:
 
         if(b->size() != 3)                     throw std::invalid_argument("Analyzer::Analyzer() -> Bad parsing");
 
-        auto file =  TObjectHelper::getFile(*asf);
-        avgScale.reset(new TObjectHelper::Hist1DContainer(file,*ash));
-        delete file;
-
         vAxis.reset(new TAxis((*b)[0],(*b)[1],(*b)[2]));
-
 
         tree.getTree()->SetBranchStatus("*",1);
         sForm.reset(new TTreeFormula("sForm", TString::Format("%s*(%s)",w->c_str(),s->c_str()),tree.getTree()));
         vForm.reset(new TTreeFormula("vForm", v->c_str(),tree.getTree()));
-        gForm.reset(new TTreeFormula("gForm", g->c_str(),tree.getTree()));
-        vsForm.reset(new TTreeFormula("vsForm", asv->c_str(),tree.getTree()));
 
         const int nEntries =  tree.getTree()->GetEntries(TString::Format("%s*(%s)",w->c_str(),s->c_str()));
 
         nominalX .reset(new std::vector<double>);
         upSX     .reset(new std::vector<double>);
         downSX   .reset(new std::vector<double>);
-        upRX     .reset(new std::vector<double>);
-        downRX   .reset(new std::vector<double>);
         weight   .reset(new std::vector<double>);
 
         nominalX ->reserve(nEntries);
         upSX     ->reserve(nEntries);
         downSX   ->reserve(nEntries);
-        upRX     ->reserve(nEntries);
-        downRX   ->reserve(nEntries);
         weight   ->reserve(nEntries);
+
+        needScaleFile = (kt->find('R') != std::string::npos)||(kt->find('r') != std::string::npos) ;
+        if( needScaleFile ){
+            auto file =  TObjectHelper::getFile(*asf);
+            avgScale.reset(new TObjectHelper::Hist1DContainer(file,*ash));
+            delete file;
+
+            upRX     .reset(new std::vector<double>);
+            downRX   .reset(new std::vector<double>);
+            upRX     ->reserve(nEntries);
+            downRX   ->reserve(nEntries);
+
+            gForm.reset(new TTreeFormula("gForm", g->c_str(),tree.getTree()));
+            vsForm.reset(new TTreeFormula("vsForm", asv->c_str(),tree.getTree()));
+        }
 }
 
 
@@ -86,22 +90,27 @@ public:
         if(s==0) return false;
 
         double v   = vForm->EvalInstance();
-        double g   = gForm->EvalInstance();
-        double sv   = vsForm->EvalInstance();
-        double avgS = avgScale->getBinContentByValue(sv).val();
 
         double upScale = *ks*v;
         double downScale = (*ks-1.)*v;
 
-        double upRes= std::max(0.0,avgS*g + *kr* (v -avgS*g));
-        double downRes = std::max(0.0,avgS*g + (*kr-1.)*(v -avgS*g));
-
         nominalX ->push_back(v);
         upSX     ->push_back(upScale);
         downSX   ->push_back(downScale);
-        upRX     ->push_back(upRes);
-        downRX   ->push_back(downRes);
         weight   ->push_back(s);
+
+        if(needScaleFile){
+            double g   = gForm->EvalInstance();
+            double sv   = vsForm->EvalInstance();
+
+            double avgS = avgScale->getBinContentByValue(sv).val();
+            double upRes= std::max(0.0,avgS*g + *kr* (v -avgS*g));
+            double downRes = std::max(0.0,avgS*g + (*kr-1.)*(v -avgS*g));
+
+            upRX     ->push_back(upRes);
+            downRX   ->push_back(downRes);
+        }
+
         return true;
     }
 
@@ -227,6 +236,7 @@ public:
     std::unique_ptr<std::vector<double>> downRX    ;
     std::unique_ptr<std::vector<double>> weight    ;
 
+    bool needScaleFile = false;
     HistGetter plotter;
 
 
