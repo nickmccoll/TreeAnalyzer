@@ -234,7 +234,7 @@ public:
             std::cout << "Trying -> "<<systList[iS]<<std::endl;
             const bool isXSyst = (systList[iS].find("Y") == std::string::npos);
             const bool condOnX = !*xCy;
-            const bool isCondOnSyst = condOnX && isXSyst;
+            const bool isCondOnSyst = (condOnX == isXSyst);
             if(isCondOnSyst){
                 auto condOnTH1Up =  conditionalOn(*nT + "_"+systList[iS]+"Up" + "_Debug_1D", hfit,&*h,&*upHists[iS],condOnX);
                 auto condOnTH1Down =  conditionalOn(*nT + "_"+systList[iS]+"Down" + "_Debug_1D", hfit,&*h,&*downHists[iS],condOnX);
