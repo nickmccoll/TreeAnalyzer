@@ -67,7 +67,7 @@ void makeDetectorParam(const std::string& name, const std::string& filename,  co
 std::string getMVVExpoMinMaxStr(std::string sample){
     float eMin, eMax;
     if(strFind(sample,bkgSels[BKG_QG])){
-        eMin = 2000;
+        eMin = 3000;
         eMax = 4500;
     } else if(strFind(sample,bkgSels[BKG_LOSTTW])){
         eMin = 1500;
@@ -83,14 +83,14 @@ std::string getMVVExpoMinMaxStr(std::string sample){
 }
 
 const float hh_scaleUnc = 0.0005; // coef of 1 means that we get a 100% scale at 2 TeV;
-const float hh_resUnc   = 2000; // coef of 1 means that we get a 100% scale at 2 TeV;
+const float hh_resUnc   = 700; // coef of 1 means that we get a 100% scale at 700 GeV
 
 const float hbb_scaleUnc = 0.005; // coef of 1 means that we get a 100% scale at 200 GeV;
-const float hbb_resUnc   = 200;   // coef of 1 means that we get a 100% scale at 2 TeV;
+const float hbb_resUnc   = 30;   // coef of 1 means that we get a 100% scale at 30 GeV;
 
 //Originals////
-//JJ ->   -hs 0.00714 -hr 45  ( 142.8%,%22.5) @ 200 GeV
-//VV ->   -hs 0.0003 -hr 1200  (60%,60%) @ 2 TeV
+//JJ ->   -hs 0.00714 -hr 45
+//VV ->   -hs 0.0003 -hr 1200
 
 
 void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& baseSel="1.0",bool addQCDSF = false,float khxs = 1,float khxc = 5){
@@ -111,7 +111,7 @@ void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string
         std::string cut =  std::string("(")+baseSel+"&&"+l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut+")";
         if(addQCDSF) cut += "*"+getQCDSF(name,filename,l,p,h);
         std::string args = std::string("-v -n histo ")+" -x "+hbbMCS.cut+" -g hbbGenMass -xb "+hbbInclBinning.cut+ " -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
-        args += " -kss -ks 1.5 -kr 1.5 -hs " + flt2Str(hbb_scaleUnc) + " -hr " + flt2Str(hbb_scaleUnc) + " ";
+        args += " -kss -ks 1.5 -kr 1.5 -hs " + flt2Str(hbb_scaleUnc) + " -hr " + flt2Str(hbb_resUnc) + " ";
         args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
         make1DTemplateWithAdaKern(inputFile,tempFile, args);
     }
@@ -123,7 +123,6 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(strFind(name,bkgSels[BKG_QG])){
             if(b != btagCats[BTAG_LMT]) continue;
-            if(p != purCats[PURE_I]) continue;
             if(h != hadCuts[HAD_LTMB]) continue;
         }
         if(strFind(name,bkgSels[BKG_LOSTTW])){
@@ -168,7 +167,7 @@ void makeBackgroundShapes2DConditional(const std::string name, const std::string
         args+=std::string(" -khxs ")+ flt2Str(khxs) +" -khxc "+ flt2Str(khxc) +" -khys "+ flt2Str(khys) +" -khyc "+ flt2Str(khyc) + " -kss ";
         args += "-eopt y  "+ getMVVExpoMinMaxStr(name);
         if(xIsCond){
-            args+=" -hs "+ flt2Str(hbb_scaleUnc) + " -hr " + flt2Str(hbb_scaleUnc) + " ";
+            args+=" -hs "+ flt2Str(hbb_scaleUnc) + " -hr " + flt2Str(hbb_resUnc) + " ";
             args+=" -xIsCond ";
         } else {
             args+=" -hs "+flt2Str(hh_scaleUnc) +" -hr "+flt2Str(hh_resUnc)+" ";
@@ -183,7 +182,6 @@ void mergeBackgroundShapes(const std::string& name, const std::string& filename,
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(strFind(name,bkgSels[BKG_QG])){
             if(b != btagCats[BTAG_LMT]) continue;
-            if(p != purCats[PURE_I]) continue;
             if(h != hadCuts[HAD_LTMB]) continue;
         } else {
             if(l != lepCats[LEP_EMU]) continue;
@@ -292,7 +290,7 @@ void fitBackgroundShapes2DConditional(std::string name, const std::string& filen
 
         std::string tempFile= filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+p+"_"+hadCuts[HAD_LTMB]+"_2D_merged_template.root";
         if(strFind(name,bkgSels[BKG_QG])){
-            tempFile=filename+"_"+name+"_"+l+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]+"_2D_merged_template.root";
+            tempFile=filename+"_"+name+"_"+l+"_"+btagCats[BTAG_LMT]+"_"+p+"_"+hadCuts[HAD_LTMB]+"_2D_merged_template.root";
         }
         std::string args = std::string("-v ") + "-fT "+ tempFile+" -nT histo -s PTX,OPTX,PTY,OPTY " + " -fH " + distFileName + " -nH "+ hName;
         if(xIsCond) args+=" -xCy ";
