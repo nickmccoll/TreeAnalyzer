@@ -21,15 +21,18 @@ namespace PDFAdder{
 typedef std::pair<std::string,double> StrFlt;
 typedef std::vector<StrFlt> StrFlts;
 
+typedef std::pair<std::string,std::string> StrStr;
+typedef std::vector<StrStr> StrStrs;
+
 struct InterpSyst {
-    InterpSyst(const std::string& hName, const StrFlts& systPs) :
+    InterpSyst(const std::string& hName, const StrStrs& systPs) :
         hName(hName), systPs(systPs){}
     std::string hName; //Histogram name for interpolation
-    StrFlts systPs;    //list of systematic parameters
+    StrStrs systPs;    //list of systematic parameters
 };
 
 struct InterpSysts : public std::vector<InterpSyst> {
-        void addSyst(const std::string& hName, const StrFlts& systPs) {
+        void addSyst(const std::string& hName, const StrStrs& systPs) {
             emplace_back(hName,systPs);
         }
 };
@@ -222,7 +225,7 @@ void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF, con
         RooArgList paramList;
         std::string systMathStr = "0";
         for(const auto& es : s.systPs) {
-            systMathStr = systMathStr +"+"+ASTypes::flt2Str(es.second)+"*"+es.first;
+            systMathStr = systMathStr +"+("+es.second+")*"+es.first;
             paramList.add(*w->var(es.first.c_str()));
         }
         RooFormulaVar varF(coefName.c_str(),coefName.c_str(),systMathStr.c_str(),paramList);
