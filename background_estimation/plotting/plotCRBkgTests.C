@@ -26,7 +26,7 @@ public:
 
 void plotCRBkgTests(int step = 0, bool topCR = true,  std::string outName = ""){
     std:: string inName =  "bkgInputs" ;
-    std::vector<std::string> srList = {"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"};
+    std::vector<std::string> srList = {"emu_LMT_I_full","e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"};
     if(topCR == true){
         inName =  "bkgInputsTopCR";
         hhFilename +="_TopCR";

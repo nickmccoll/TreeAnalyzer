@@ -263,7 +263,7 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, std::
     case 3:
         if(outName.size()) outName += "_MVVKern.root";
         if(doTW) stepSels = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
-        else stepSels = {"emu_LMT_I_ltmb","e_LMT_I_ltmb","mu_LMT_I_ltmb"};
+        else stepSels = {"e_LMT_HP_ltmb","mu_LMT_HP_ltmb","e_LMT_LP_ltmb","mu_LMT_LP_ltmb"};
         writeables = test1DKern(mod,filename,"MVV",stepSels);
         break;
     case 4:
