@@ -117,13 +117,14 @@ public:
         PDFAdder::addHistoShapeFromFile(w,name,PF,obs,fileName,hName,systs,conditional,order);
     }
 
-    void addFixedYieldFromFile(const std::string& name, const int id, const std::string& fileName, const std::string& hName, const double constant = 1.0){
+    double addFixedYieldFromFile(const std::string& name, const int id, const std::string& fileName, const std::string& hName, const double constant = 1.0){
         auto* iF =  TObjectHelper::getFile(fileName);
         auto h = TObjectHelper::getObject<TH1>(iF,hName);
         const double nEvts = h->Integral()*luminosity*constant;
         contributions.emplace_back(name,name+"_"+tag,id,nEvts);
         iF->Close();
         delete iF;
+        return nEvts;
 
     }
     void conditionalProduct(const std::string& name, const std::string& pdfName_cxoy, const std::string& varName_x, const std::string& pdfName_y, const std::string& tag_pdf_cxoy="", const std::string& tag_pdf_y=""){
