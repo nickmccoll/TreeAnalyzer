@@ -24,7 +24,7 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         fPF = mainDir + "/bkgInputs/" + filename;
         break;
     case REG_TOPCR:
-        fPF = mainDir + "/bkgInputsTopCR/" + filename + "_TopCR";
+        fPF = mainDir + "/bkgInputsTopCRTight/" + filename + "_TopCR";
         break;
     case REG_QGCR:
         fPF = mainDir + "/bkgInputsQGCR/" + filename + "_QGCR";
@@ -101,17 +101,17 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         card.addParamSystematic("CMS_res_MET",0.0,0.01);
         //KDE shape systematics
         card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTX") ,0.0,0.48);
-        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTX"),0.0,0.135);
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTX"),0.0,0.9);
         card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTY") ,0.0,0.2);
-        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTY"),0.0,0.2);
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTY"),0.0,0.6);
         //top HH resolution and scale
-        card.addParamSystematic(systName("top","res"  ) ,0.0,0.1);
+        card.addParamSystematic(systName("top","res"  ) ,0.0,0.20);
         card.addParamSystematic(systName("top","scale") ,0.0,0.25);
         card.addParamSystematic(systName("top","mt_rel_scale",b) ,0.0,0.25);
         card.addParamSystematic(systName("top","lostmw_rel_scale",b) ,0.0,0.25);
         //top Hbb resolution and scale
         card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"PTX" ,b),0.0,0.3);
-        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"OPTX",b),0.0,0.1);
+        card.addParamSystematic(systName(bkgSels[BKG_LOSTTW],"OPTX",b),0.0,0.6);
         //Normalization
         card.addSystematic(systName(bkgSels[BKG_QG],"norm")  ,"lnN",{{bkgSels[BKG_QG],1.5}});
         card.addSystematic(systName("top","norm")            ,"lnN",{{bkgSels[BKG_LOSTTW],1.25},{bkgSels[BKG_MW],1.25},{bkgSels[BKG_MT],1.25}});
