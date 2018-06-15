@@ -86,11 +86,14 @@ public:
         auto fTN = p.addString("fT","template file name",true);
         auto nT  = p.addString("nT","template histogram base name",true);
         auto s   = p.addString("s" ,"Comma separated list of systematics",true);
+        auto sA  = p.addString("sA" ,"Comma separated list of systematics to be included in te output but not fit to.",false,"");
         auto fHN = p.addString("fH","Fitting histogram file name",true);
         auto nH  = p.addString("nH","fitting histogram name",true);
         p.parse(arguments);
 
         std::vector<std::string> systList = getList(*s);
+        std::vector<std::string> extraSysts;
+        if(sA->size()) extraSysts = getList(*sA);
 
         fT =  TObjectHelper::getFile(*fTN);
         fH =  TObjectHelper::getFile(*fHN);
@@ -164,6 +167,20 @@ public:
         for(unsigned int iS = 0; iS < systList.size(); ++iS){
             systHist(*nT + "_"+systList[iS]+"Up",hfit,&*h,&*upHists[iS] );
             systHist(*nT + "_"+systList[iS]+"Down",hfit,&*h,&*downHists[iS] );
+        }
+
+        //Add in extra systematics
+        std::vector<std::unique_ptr<TH1F>> downExtraHists;
+        std::vector<std::unique_ptr<TH1F>> upExtraHists;
+        for(const auto& syst : extraSysts){
+            for(const auto& var : systVar){
+                auto * histV = &(var== "Up" ? upHists : downHists);
+                histV->emplace_back(TObjectHelper::getObject<TH1F>(fT,*nT+"_"+syst+var));
+            }
+        }
+        for(unsigned int iS = 0; iS < extraSysts.size(); ++iS){
+            systHist(*nT + "_"+extraSysts[iS]+"Up",hfit,&*h,&*upExtraHists[iS] );
+            systHist(*nT + "_"+extraSysts[iS]+"Down",hfit,&*h,&*downExtraHists[iS] );
         }
 
 
