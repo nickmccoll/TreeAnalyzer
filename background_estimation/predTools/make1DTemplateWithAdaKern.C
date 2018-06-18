@@ -27,6 +27,9 @@ public:
         auto b   = p.addVFloat("xb","x-variable binning",true);
         auto s   = p.addString("s","selection",false,"1.0");
         auto w   = p.addString("w","weight",false,"1.0");
+        auto sw  = p.addBool("sw","add systematic weight");
+        auto swUp= p.addString("swUp","systematic weight up",false,"1.0");
+        auto swDown= p.addString("swDown","systematic weight down",false,"1.0");
         kt       = p.addString("t","Types of templates to calculate",false, "nrRsSo");
         ks       = p.addFloat("ks","KDE scaling: scale");
         kr       = p.addFloat("kr","KDE scaling: resolution");
@@ -53,6 +56,10 @@ public:
 
         tree.getTree()->SetBranchStatus("*",1);
         sForm.reset(new TTreeFormula("sForm", TString::Format("%s*(%s)",w->c_str(),s->c_str()),tree.getTree()));
+        if(*sw){
+            sFormUp.reset(new TTreeFormula("sFormUp", TString::Format("%s*(%s)",swUp->c_str(),s->c_str()),tree.getTree()));
+            sFormDown.reset(new TTreeFormula("sFormDown", TString::Format("%s*(%s)",swDown->c_str(),s->c_str()),tree.getTree()));
+        }
         vForm.reset(new TTreeFormula("vForm", v->c_str(),tree.getTree()));
 
         const int nEntries =  tree.getTree()->GetEntries(TString::Format("%s*(%s)",w->c_str(),s->c_str()));
@@ -61,11 +68,19 @@ public:
         upSX     .reset(new std::vector<double>);
         downSX   .reset(new std::vector<double>);
         weight   .reset(new std::vector<double>);
+        if(*sw){
+        systWeightUp   .reset(new std::vector<double>);
+        systWeightDown   .reset(new std::vector<double>);
+        }
 
         nominalX ->reserve(nEntries);
         upSX     ->reserve(nEntries);
         downSX   ->reserve(nEntries);
         weight   ->reserve(nEntries);
+        if(*sw){
+        systWeightUp   ->reserve(nEntries);
+        systWeightDown   ->reserve(nEntries);
+        }
 
         needScaleFile = (kt->find('R') != std::string::npos)||(kt->find('r') != std::string::npos) ;
         if( needScaleFile ){
@@ -87,6 +102,7 @@ public:
     void loadVariables() override{};
     bool runEvent() override {
         double s   = sForm->EvalInstance();
+
         if(s==0) return false;
 
         double v   = vForm->EvalInstance();
@@ -98,6 +114,12 @@ public:
         upSX     ->push_back(upScale);
         downSX   ->push_back(downScale);
         weight   ->push_back(s);
+        if(systWeightUp){
+        double sUp   = sFormUp->EvalInstance();
+        double sDown   = sFormDown->EvalInstance();
+        systWeightUp   ->push_back(sUp);
+        systWeightDown   ->push_back(sDown);
+        }
 
         if(needScaleFile){
             double g   = gForm->EvalInstance();
@@ -114,18 +136,18 @@ public:
         return true;
     }
 
-    const TH1* makeKDE(std::string name, const std::vector<double>& xvals){
+    const TH1* makeKDE(std::string name, const std::vector<double>& xvals, const std::vector<double>& weights){
         const int   nBsX   = vAxis->GetNbins();
         const float minX   = vAxis->GetXmin();
         const float maxX   = vAxis->GetXmax();
 
-        KDEProducer pdfProd(&xvals,&*weight,*khs,nBsX,minX,maxX,*khc,*kss);
+        KDEProducer pdfProd(&xvals,&weights,*khs,nBsX,minX,maxX,*khc,*kss);
 
         plotter.add1D(pdfProd.getPDF(name+"_debug_KDE0","",nBsX,minX,maxX));
 
         TH1 * dataH = new TH1F((name+"_data").c_str(),"",nBsX,minX,maxX);
         for(unsigned int iP = 0; iP < xvals.size(); ++iP){
-            dataH->Fill((xvals)[iP],(*weight)[iP]);
+            dataH->Fill((xvals)[iP],(weights)[iP]);
         }
         plotter.add1D(dataH);
 
@@ -187,16 +209,27 @@ public:
     void process(std::string outFileName) {
 
         if (kt->find('n') != std::string::npos) {
-            auto kde = makeKDE(*name,*nominalX);
+            auto kde = makeKDE(*name,*nominalX,*weight);
             kde = *doS ? smoothTail(*name,kde) : cloneAndWrite(*name,kde);
             transform(*name+"_PTDown" ,kde, [&](double x){return  1./(1. + *hs*x);})  ;
             transform(*name+"_PTUp"   ,kde, [&](double x){return  (1. + *hs*x);})  ;
+
+            transform(*name+"_PT2Down" ,kde, [&](double x){return  1./(1. + *hs*x*x);})  ;
+            transform(*name+"_PT2Up"   ,kde, [&](double x){return  (1. + *hs*x*x);})  ;
+
             transform(*name+"_OPTDown",kde, [&](double x){return  1./(1. + *hr/x);})  ;
             transform(*name+"_OPTUp"  ,kde, [&](double x){return  (1. + *hr/x);})  ;
+
+            if(systWeightUp){
+            auto kdeUp = makeKDE(*name+"_WeightUp",*nominalX,*systWeightUp);
+            kde = *doS ? smoothTail(*name+"_WeightUp",kdeUp) : cloneAndWrite(*name+"_WeightUp",kdeUp);
+            auto kdeDown = makeKDE(*name+"_WeightDown",*nominalX,*systWeightDown);
+            kde = *doS ? smoothTail(*name+"_WeightDown",kdeDown) : cloneAndWrite(*name+"_WeightDown",kdeDown);
+            }
         }
 
         auto justDoNominal = [&](std::string name, const std::vector<double>& xvals ){
-            auto kde = makeKDE(name,xvals);
+            auto kde = makeKDE(name,xvals,*weight);
             *doS ? smoothTail(name,kde) : cloneAndWrite(name,kde);
         };
 
@@ -210,6 +243,8 @@ public:
 
     std::unique_ptr<TAxis> vAxis;
     std::unique_ptr<TTreeFormula> sForm;
+    std::unique_ptr<TTreeFormula> sFormUp;
+    std::unique_ptr<TTreeFormula> sFormDown;
     std::unique_ptr<TTreeFormula> vForm;
     std::unique_ptr<TTreeFormula> gForm;
     std::unique_ptr<TTreeFormula> vsForm;
@@ -235,6 +270,8 @@ public:
     std::unique_ptr<std::vector<double>> upRX      ;
     std::unique_ptr<std::vector<double>> downRX    ;
     std::unique_ptr<std::vector<double>> weight    ;
+    std::unique_ptr<std::vector<double>> systWeightUp;
+    std::unique_ptr<std::vector<double>> systWeightDown;
 
     bool needScaleFile = false;
     HistGetter plotter;
