@@ -33,7 +33,7 @@ std::string getTTBarSF(const std::string& filename){
     return std::string("(")+processes[TTBAR].cut+"?("+qToW+"):1.0)";
 }
 
-std::string getQCDSF(const std::string& name, const std::string& filename, const CutStr& l,const CutStr& p,const CutStr& h ){
+std::string getQCDSF(const std::string& name, const std::string& filename, const CutStr& l,const CutStr& p,const CutStr& h, double sf=1.0 ){
     CJSON json(filename+"_"+name+"_"+l+"_"+inclBtagCat+"_"+p+"_"+h+"_QCDSF.json");
     std::string qToW = json.getP(0).second;
     auto replace = [&](const std::string& vn, const std::string tf1n){
@@ -46,7 +46,7 @@ std::string getQCDSF(const std::string& name, const std::string& filename, const
         }
     };
     replace(MOD_MS,hhMCS);
-    return std::string("(")+processes[WJETS].cut+"?(1+"+qToW+"):1.0)";
+    return std::string("(")+processes[WJETS].cut+"?(1+("+flt2Str(sf)+")*(" +qToW+")):1.0)";
 }
 
 void makeDetectorParam(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0"){
@@ -83,7 +83,7 @@ std::string getMVVExpoMinMaxStr(std::string sample){
 }
 
 const float hh_scaleUnc = 0.0005; // coef of 1 means that we get a 100% scale at 2 TeV;
-const float hh_resUnc   = 700; // coef of 1 means that we get a 100% scale at 700 GeV
+const float hh_resUnc   = 1400; // coef of 1 means that we get a 200% scale at 700 GeV
 
 const float hbb_scaleUnc = 0.005; // coef of 1 means that we get a 100% scale at 200 GeV;
 const float hbb_resUnc   = 30;   // coef of 1 means that we get a 100% scale at 30 GeV;
@@ -139,9 +139,16 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
         std::string tempFile=filename+"_"+name+"_"+catName+"_MVV_incl_template.root";
         std::string cut =  std::string("(")+baseSel+"&&"+l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut+")";
-        if(addQCDSF) cut += "*"+getQCDSF(name,filename,l,p,h);
+        std::string weight = std::string("(") + nomW.cut+")";
+//        std::string weightUp = weight;
+//        std::string weightDown = weight;
+        if(addQCDSF){
+            weight += "*"+getQCDSF(name,filename,l,p,h);
+//            weightUp += "*"+getQCDSF(name,filename,l,p,h,2);
+//            weightDown += "*"+getQCDSF(name,filename,l,p,h,0.5);
+        }
 
-        std::string args = std::string("-v -n histo ")+" -x "+hhMCS.cut+" -g hbbGenMass -xb "+hhInclBinning.cut+" -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
+        std::string args = std::string("-v -n histo ")+" -x "+hhMCS.cut+" -g hbbGenMass -xb "+hhInclBinning.cut+" -s "+cut+" -w "+weight + " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
         args += " -kss -ks 1.5 -kr 1.5 -hs "+flt2Str(hh_scaleUnc) +" -hr "+flt2Str(hh_resUnc)+" ";
         args += std::string(" -doS ") + getMVVExpoMinMaxStr(name);
         args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
@@ -196,7 +203,7 @@ void mergeBackgroundShapes(const std::string& name, const std::string& filename,
 
         std::string args = std::string("-v -n histo ");
         if(xIsCond){ args += " -xIsCond ";}
-        args += " -in1D "+  inFile1D + " -in2D "+ inFile2D + " -sX Scale:ScaleX,Res:ResX,PT:PTX,OPT:OPTX -sY PT:PTY,OPT:OPTY "+ " -xb "+hbbBinning.cut+" -yb "+hhBinning.cut;
+        args += " -in1D "+  inFile1D + " -in2D "+ inFile2D + " -sX Scale:ScaleX,Res:ResX,PT:PTX,OPT:OPTX -sY PT:PTY,OPT:OPTY,PT2:PT2Y "+ " -xb "+hbbBinning.cut+" -yb "+hhBinning.cut;
         mergeHistosToPDF2D(mergedTemp, args);
     }
 }
@@ -292,7 +299,7 @@ void fitBackgroundShapes2DConditional(std::string name, const std::string& filen
         if(strFind(name,bkgSels[BKG_QG])){
             tempFile=filename+"_"+name+"_"+l+"_"+btagCats[BTAG_LMT]+"_"+p+"_"+hadCuts[HAD_LTMB]+"_2D_merged_template.root";
         }
-        std::string args = std::string("-v ") + "-fT "+ tempFile+" -nT histo -s PTX,OPTX,PTY,OPTY " + " -fH " + distFileName + " -nH "+ hName;
+        std::string args = std::string("-v ") + "-fT "+ tempFile+" -nT histo -s PTX,OPTX,PTY,OPTY  -sA PT2Y " + " -fH " + distFileName + " -nH "+ hName;
         if(xIsCond) args+=" -xCy ";
         fit2DTemplate(outName,args);
     }
