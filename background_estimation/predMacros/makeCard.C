@@ -39,6 +39,7 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         if(p == purCats[PURE_I] ) continue;
         if(h != hadCuts[HAD_FULL] ) continue;
 
+
         auto card = DataCardMaker(l,b+"_"+p +"_"+h ,"13TeV",1,category);
 
         const std::string cat = l +"_"+b+"_"+p +"_"+h;
@@ -100,10 +101,11 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         card.addParamSystematic("CMS_scale_MET",0.0,0.02);
         card.addParamSystematic("CMS_res_MET",0.0,0.01);
         //KDE shape systematics
-        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTX") ,0.0,0.48);
-        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTX"),0.0,0.9);
-        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTY") ,0.0,0.2);
-        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTY"),0.0,0.6);
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTX",b) ,0.0,0.5);
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTX",b),0.0,1.0);
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTY")   ,0.0,1.0);
+        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTY")  ,0.0,1.0);
+//        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PT2Y") ,0.0,1.0);
         //top HH resolution and scale
         card.addParamSystematic(systName("top","res"  ) ,0.0,0.20);
         card.addParamSystematic(systName("top","scale") ,0.0,0.25);
@@ -115,8 +117,14 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         //Normalization
         card.addSystematic(systName(bkgSels[BKG_QG],"norm")  ,"lnN",{{bkgSels[BKG_QG],1.5}});
         card.addSystematic(systName("top","norm")            ,"lnN",{{bkgSels[BKG_LOSTTW],1.25},{bkgSels[BKG_MW],1.25},{bkgSels[BKG_MT],1.25}});
-        card.addSystematic(systName("top","wFrac",b)         ,"lnN",{{bkgSels[BKG_MW],1.0+0.25},{bkgSels[BKG_MT],1.0-0.25*rate_mw/rate_mt}});
-        card.addSystematic(systName("top","lostFrac",b)      ,"lnN",{{bkgSels[BKG_LOSTTW],1.0+0.25},{bkgSels[BKG_MT],1.0-0.25*rate_lostTW/rate_mt}});
+        if(reg == REG_QGCR){
+            card.addSystematic(systName("top","tFrac",b)         ,"lnN",{{bkgSels[BKG_MT],1.0+0.25},{bkgSels[BKG_MW],1.0-0.25*rate_mt/rate_mw}});
+            card.addSystematic(systName("top","lostFrac",b)      ,"lnN",{{bkgSels[BKG_LOSTTW],1.0+0.25},{bkgSels[BKG_MW],1.0-0.25*rate_lostTW/rate_mw}});
+        } else {
+            card.addSystematic(systName("top","wFrac",b)         ,"lnN",{{bkgSels[BKG_MW],1.0+0.25},{bkgSels[BKG_MT],1.0-0.25*rate_mw/rate_mt}});
+            card.addSystematic(systName("top","lostFrac",b)      ,"lnN",{{bkgSels[BKG_LOSTTW],1.0+0.25},{bkgSels[BKG_MT],1.0-0.25*rate_lostTW/rate_mt}});
+        }
+
 
 
         //---------------------------------------------------------------------------------------------------
@@ -141,10 +149,11 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         //QG
         //---------------------------------------------------------------------------------------------------
         PDFAdder::InterpSysts qgKDESysts;
-        qgKDESysts.addSyst("PTX",{{systName(bkgSels[BKG_QG],"PTX"),"1"  }});
-        qgKDESysts.addSyst("OPTX",{{systName(bkgSels[BKG_QG],"OPTX"),"1"  }});
+        qgKDESysts.addSyst("PTX",{{systName(bkgSels[BKG_QG],"PTX",b),"1"  }});
+        qgKDESysts.addSyst("OPTX",{{systName(bkgSels[BKG_QG],"OPTX",b),"1"  }});
         qgKDESysts.addSyst("PTY",{{systName(bkgSels[BKG_QG],"PTY"),"1"  }});
         qgKDESysts.addSyst("OPTY",{{systName(bkgSels[BKG_QG],"OPTY"),"1"  }});
+//        qgKDESysts.addSyst("PT2Y",{{systName(bkgSels[BKG_QG],"PT2Y"),"1"  }});
         card.addHistoShapeFromFile(bkgSels[BKG_QG],{MOD_MJ,MOD_MR}, inputName(bkgSels[BKG_QG],"2D_template.root"),"histo",qgKDESysts);
 
         //---------------------------------------------------------------------------------------------------

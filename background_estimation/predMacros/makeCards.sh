@@ -15,3 +15,4 @@ RCMD="scp -r ${catName} cmslpc26.fnal.gov:/uscms/home/nmccoll/nobackup/2011-04-1
 if [ "${runSR}" = "0" ]; then
     eval $RCMD
 fi
+cd ${catName}
