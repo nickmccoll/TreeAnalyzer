@@ -174,7 +174,7 @@ public:
         std::vector<std::unique_ptr<TH1F>> upExtraHists;
         for(const auto& syst : extraSysts){
             for(const auto& var : systVar){
-                auto * histV = &(var== "Up" ? upHists : downHists);
+                auto * histV = &(var== "Up" ? upExtraHists : downExtraHists);
                 histV->emplace_back(TObjectHelper::getObject<TH1F>(fT,*nT+"_"+syst+var));
             }
         }
