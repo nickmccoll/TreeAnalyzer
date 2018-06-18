@@ -154,12 +154,16 @@ public:
         auto fTN = p.addString("fT","template file name",true);
         auto nT  = p.addString("nT","template histogram base name",true);
         auto s   = p.addString("s" ,"Comma separated list of systematics",true);
+        auto sA  = p.addString("sA" ,"Comma separated list of systematics to be included in te output but not fit to.",false,"");
         auto fHN = p.addString("fH","Fitting histogram file name",true);
         auto nH  = p.addString("nH","fitting histogram name",true);
         auto xCy  = p.addBool("xCy","True if x is conditional on y (P(x|y)), otherwise assume P(y|x)");
         p.parse(arguments);
 
         std::vector<std::string> systList = getList(*s);
+        std::vector<std::string> extraSysts;
+        if(sA->size()) extraSysts = getList(*sA);
+
 
         fT =  TObjectHelper::getFile(*fTN);
         fH =  TObjectHelper::getFile(*fHN);
@@ -249,6 +253,32 @@ public:
             }
         }
 
+        //Add in extra systematics
+        std::vector<std::unique_ptr<TH2F>> downExtraHists;
+        std::vector<std::unique_ptr<TH2F>> upExtraHists;
+        for(const auto& syst : extraSysts){
+            for(const auto& var : systVar){
+                auto * histV = &(var== "Up" ? upExtraHists : downExtraHists);
+                histV->emplace_back(TObjectHelper::getObject<TH2F>(fT,*nT+"_"+syst+var));
+            }
+        }
+        for(unsigned int iS = 0; iS < extraSysts.size(); ++iS){
+            const bool isXSyst = (extraSysts[iS].find("Y") == std::string::npos);
+            const bool condOnX = !*xCy;
+            const bool isCondOnSyst = (condOnX == isXSyst);
+            if(isCondOnSyst){
+                auto condOnTH1Up =  conditionalOn(*nT + "_"+extraSysts[iS]+"Up" + "_Debug_1D", hfit,&*h,&*upExtraHists[iS],condOnX);
+                auto condOnTH1Down =  conditionalOn(*nT + "_"+extraSysts[iS]+"Down" + "_Debug_1D", hfit,&*h,&*downExtraHists[iS],condOnX);
+                mergeConditionalHistos(*nT + "_"+extraSysts[iS]+"Up",hfit,condOnTH1Up,condOnX);
+                mergeConditionalHistos(*nT + "_"+extraSysts[iS]+"Down",hfit,condOnTH1Down,condOnX);
+            } else {
+                auto condOnTH1Nom =  conditionalOn(*nT + "_"+extraSysts[iS]+"_Nom" + "_Debug_1D", hfit,&*h,&*h,condOnX);
+                auto condTH2Up = conditional(*nT + "_"+extraSysts[iS]+"Up" + "__Debug_COND2D",hfit,&*h,&*upExtraHists[iS],condOnX);
+                auto condTH2Down = conditional(*nT + "_"+extraSysts[iS]+"Down" + "__Debug_COND2D",hfit,&*h,&*downExtraHists[iS],condOnX);
+                mergeConditionalHistos(*nT + "_"+extraSysts[iS]+"Up",condTH2Up,condOnTH1Nom,condOnX);
+                mergeConditionalHistos(*nT + "_"+extraSysts[iS]+"Down",condTH2Down,condOnTH1Nom,condOnX);
+            }
+        }
 
         plotter.write(outFileName);
         fT->Close();
