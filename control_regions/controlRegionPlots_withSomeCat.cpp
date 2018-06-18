@@ -1,4 +1,6 @@
+// ------------------------------------------------------------------------------------
 ///Categorization
+// ------------------------------------------------------------------------------------
 {
 // TH2 * h2 = bkg_categories;
 TH2 * h2 = signal_categories;
@@ -69,8 +71,9 @@ h2->Draw("COLZ");
   rPlot->draw(false,sels[iS] +"_ratio");
 }
 }
-
+// ------------------------------------------------------------------------------------
 ///CONTROL REGION PLOTS
+// ------------------------------------------------------------------------------------
 {
   TFile * f = new TFile("HHlnujj_findCRPlots.root");
   //for ttbar cr
@@ -174,8 +177,9 @@ h2->Draw("COLZ");
   
 }
 
-
+// ------------------------------------------------------------------------------------
 ///QCD Scaling
+// ------------------------------------------------------------------------------------
 {
   TFile * f = new TFile("HHlnujj_QCDAll_distributions.root");
   //ttbar cr
@@ -215,8 +219,9 @@ h2->Draw("COLZ");
 }
 
 
-
+// ------------------------------------------------------------------------------------
 // Get QCD Ratio
+// ------------------------------------------------------------------------------------
 {
   TFile * f = new TFile("HHlnujj_bkg_getQCDRatio.root");
   TString denSel = "wjets";
@@ -255,8 +260,9 @@ h2->Draw("COLZ");
   }
 }
 
-
+// ------------------------------------------------------------------------------------
 ///Test background assumptions
+// ------------------------------------------------------------------------------------
 {
   TFile * f = new TFile("HHlnujj_mtw_distributions.root");
 
@@ -335,4 +341,177 @@ for(unsigned int iB = 0; iB + 1 < bins.size(); ++iB){
       p->drawSplitRatio(0,"stack",false,false,samp+"_"+int2Str(iB));
     }
   }
+}
+
+
+// ------------------------------------------------------------------------------------
+////TEST QCD SCALING
+// ------------------------------------------------------------------------------------
+
+{
+  
+  TFile * fd = new TFile("HHlnujj_QGCR_data_distributions.root","read");
+  TFile * fm = new TFile("HHlnujj_QGCR_qg_distributions.root","read");
+  TFile * fm2 = new TFile("HHlnujj_QGCR_mw_distributions.root","read");
+  // TString sel = "qg_mu_L_HP_lt_hbbMass_hhMass"  
+      TString sel = "mu_L_HP_full_hhMass" ; 
+  Plotter * p = new Plotter();
+
+  TH1 * hd = 0;
+  fd->GetObject("data_"+ sel,hd);
+  std::cout <<hd<<endl;
+  p->addHist(hd,"data");
+  
+  TH1 * ho = 0;
+  fm2->GetObject("mw_"+ sel,ho);
+  std::cout <<ho<<endl;
+  TH1 * h = 0;
+  fm->GetObject("qg_"+ sel,h);
+  h->Add(ho);
+  p->addHist(h,"wjets+SF");
+  fm->GetObject("qg_noQCDSF_"+ sel,h);
+  h->Add(ho);
+  p->addHist(h,"wjets");
+  fm->GetObject("qg_wQCD_noQCDSF_"+ sel,h);
+  h->Add(ho);
+  p->addHist(h,"wjets+QCD");
+  
+  p->rebin(2);
+  p->drawSplitRatio();
+}
+
+
+{
+  
+  TFile * fd = new TFile("HHlnujj_QGCR_data_distributions.root","read");
+  TFile * fm = new TFile("HHlnujj_QGCR_qg_distributions.root","read");
+  TFile * fm2 = new TFile("HHlnujj_QGCR_mw_distributions.root","read");
+  TFile * fm3 = new TFile("HHlnujj_QGCR_losttw_distributions.root","read");
+  // TString sel = "qg_mu_L_HP_lt_hbbMass_hhMass"  
+      TString sel = "emu_L_HP_full_hhMass" ; 
+  Plotter * p = new Plotter();
+
+  TH1 * hd = 0;
+  fd->GetObject("data_"+ sel,hd);
+  std::cout <<hd<<endl;
+  p->addHist(hd,"data");
+  
+  TH1 * ho = 0;
+  fm2->GetObject("mw_"+ sel,ho);
+  TH1 * ho2 = 0;
+  fm3->GetObject("losttw_"+ sel,ho2);
+  ho->Add(ho2);
+  
+  
+  std::cout <<ho<<endl;
+  TH1 * h = 0;
+  fm->GetObject("qg_"+ sel,h);
+  h->Add(ho);
+  p->addHist(h,"wjets+SF");
+  fm->GetObject("qg_noQCDSF_"+ sel,h);
+  h->Add(ho);
+  p->addHist(h,"wjets");
+  fm->GetObject("qg_wQCD_"+ sel,h);
+  h->Add(ho);
+  p->addHist(h,"wjets+QCDx2");
+  
+  p->rebin(4);
+  p->normalize();
+  p->drawSplitRatio(0);
+}
+
+
+//TTBAR SF and PT
+
+
+{
+  TFile * f = new TFile("HHlnujj_ttbar_getQCDRatio.root","read");
+  std::vector<TString> samps = {"all","losttw","mw","mt"};
+  std::vector<TString> sampNs = {"all","lost t/W bkg.","m_{W} bkg.","m_{t} bkg."};
+  std::vector<TString> sels = {"emu_LMT_I_full","e_LMT_I_full","mu_LMT_I_full","emu_L_I_full","emu_M_I_full","emu_T_I_full","emu_LMT_LP_full","emu_LMT_HP_full"};
+  std::vector<TString> vars = {"avgTopPT","hhMass"};
+  
+    for(unsigned int iV = 0; iV < vars.size();++iV){
+      for(unsigned int iS = 0; iS < sels.size();++iS){
+        Plotter * p = new Plotter();
+        for(unsigned int iR = 0; iR < samps.size();++iR){
+          TH1 * h = 0;
+          f->GetObject(samps[iR] +"_"+sels[iS]+"_"+vars[iV],h);
+          if(h==0) continue;
+          p->addHist(h,sampNs[iR]);
+        }
+        p->drawRatio(0,"stack",true,false,sels[iS]+"_"+vars[iV]);        
+      }
+    }
+
+}
+
+
+
+
+
+
+{
+  TFile * f = new TFile("HHlnujj_ttbar_getQCDRatio.root","read");
+  std::vector<TString> samps = {"all","losttw","mw","mt"};
+  std::vector<TString> sampNs = {"all","lost t/W bkg.","m_{W} bkg.","m_{t} bkg."};
+  // std::vector<TString> sels = {"emu_LMT_I_full","e_LMT_I_full","mu_LMT_I_full","emu_L_I_full","emu_M_I_full","emu_T_I_full","emu_LMT_LP_full","emu_LMT_HP_full"};
+    std::vector<TString> sels = {"emu_LMT_I_full","emu_L_I_full","emu_M_I_full","emu_T_I_full"};
+  
+  std::vector<TString> systs = {"","p50","m50"};
+  
+  std::vector<TString> vars = {"hhMass"};
+  
+    for(unsigned int iV = 0; iV < vars.size();++iV){
+      for(unsigned int iS = 0; iS < sels.size();++iS){
+        for(unsigned int iR = 0; iR < samps.size();++iR){
+          Plotter * p = new Plotter();
+        for(unsigned int iSys = 0; iSys < systs.size();++iSys){
+          TH1 * h = 0;
+          if(iSys)
+            f->GetObject(samps[iR] +"_"+sels[iS]+"_"+systs[iSys]+"_"+vars[iV],h);
+          else
+            f->GetObject(samps[iR] +"_"+sels[iS]+"_"+vars[iV],h);
+          if(h==0) continue;
+          p->addHist(h,iSys ? systs[iSys] : "nominal");
+
+      }
+      p->normalize();
+      p->drawSplitRatio(0,"stack",true,false,samps[iR]+"_"+sels[iS]+"_"+vars[iV]);        
+    }
+    }
+    
+  }
+
+}
+
+{
+  TFile * f = new TFile("HHlnujj_ttbar_testTopPT.root","read");
+  // std::vector<TString> samps = {"all","losttw","mw","mt"};
+  // std::vector<TString> sampNs = {"all","lost t/W bkg.","m_{W} bkg.","m_{t} bkg."};
+  
+  // std::vector<TString> samps = {"mt","losttw","mw"};
+  // std::vector<TString> sampNs = {"m_{t} bkg.","lost t/W bkg.","m_{W} bkg."};
+  
+  std::vector<TString> samps = {"mt","mt_o_losttw"};
+  std::vector<TString> sampNs = {"m_{t} bkg.","lost t/W and m_{W} bkg."};
+  
+  std::vector<TString> sels = {"emu_LMT_I_full","e_LMT_I_full","mu_LMT_I_full","emu_L_I_full","emu_M_I_full","emu_T_I_full","emu_LMT_LP_full","emu_LMT_HP_full"};
+  std::vector<TString> vars = {"hhMass"};
+  
+    for(unsigned int iV = 0; iV < vars.size();++iV){
+      for(unsigned int iS = 0; iS < sels.size();++iS){
+        Plotter * p = new Plotter();
+        for(unsigned int iR = 0; iR < samps.size();++iR){
+          TH1 * h = 0;
+          f->GetObject(samps[iR] +"_"+sels[iS]+"_"+vars[iV],h);
+          if(h==0) continue;
+          p->addHist(h,sampNs[iR]);
+        }
+        p->rebin(4);
+        p->normalize();
+        // p->drawSplitRatio(0,"stack",false,false,sels[iS]+"_"+vars[iV]);
+        p->drawRatio(0,"stack",false,false,sels[iS]+"_"+vars[iV]);
+      }
+    }
 }
