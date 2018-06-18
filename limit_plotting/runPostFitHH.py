@@ -15,6 +15,21 @@ parser.add_option("-u","--doUncBand",dest="doUncBand",type=int,default=0,help="d
 (options,args) = parser.parse_args()
 
 
+def saveComponents(plotter,name):
+    file = ROOT.TFile(name,"recreate");
+    file.cd()
+    for i in range(0,len(plotter.contributions)):
+        plotter.contributions[i]['histo'].Write(plotter.contributions[i]['name'])
+    file.Close();    
+    
+    
+def save2D(plotter,name,c,var1,var2):
+    file = ROOT.TFile(name,"recreate");
+    file.cd()
+    for i in range(0,len(plotter.contributions)):
+        data = plotter.contributions[i]
+        plotter.fetch2DHistogram(var1,var2,c,data['name'],data['signal'],data['suffix']).Write(data['name'])
+    file.Close();        
 
 def saveCanvas(canvas,name):
   canvas.SaveAs(name+".root")
@@ -75,31 +90,33 @@ for c in ['L','M','T']:
         pur=['LP','HP']
     for p in pur:
         for l in ['mu','e']:
-#            continue
 
-#             label="W #rightarrow "+(("e","#mu")[l=='mu'])+"#nu"
-            label=" "
+            label="W #rightarrow "+(("e","#mu")[l=='mu'])+"#nu"
             
             binLabel = "std_"+ l +"_"+c+"_"+p +"_full_13TeV"
 
             plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,1,"")
             cmsLabel(plotter.canvas)
             saveCanvas(plotter.canvas,directory+"/postFitMVV_"+s+"_"+binLabel)
+            saveComponents(plotter,directory+"/postFitMVV_"+s+"_"+binLabel+"_comp.root")
 
             plotter.drawBinned("MJ","#it{m}_{H#rightarrowbb} [GeV]",label,binLabel,[0,0],options.doUncBand,0,"")
             cmsLabel(plotter.canvas)
             saveCanvas(plotter.canvas,directory+"/postFitMJJ_"+s+"_"+binLabel)
+            saveComponents(plotter,directory+"/postFitMJJ_"+s+"_"+binLabel+"_comp.root")
+            
+            save2D(plotter,directory+"/postFitMJJMVV_"+s+"_"+binLabel+"_comp.root",binLabel,"MJ","MR")
 
-            plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,0,"MJ:sig:110:140")
-            cmsLabel(plotter.canvas)
-            saveCanvas(plotter.canvas,directory+"/postFitMVVW_"+s+"_"+binLabel)
-
-            plotter.frame.GetXaxis().SetRangeUser(1000.,2000.)
-            plotter.frame.GetYaxis().SetRangeUser(0.,1.1*(plotter.frame.getHist("datapoints").GetY()[9]+plotter.frame.getHist("datapoints").GetEYhigh()[9]))
-            plotter.frame2.GetXaxis().SetRangeUser(1000.,2000.)
-            plotter.line.SetX1(1000.)
-            plotter.line.SetX2(2000.)
-            saveCanvas(plotter.canvas,directory+"/postFitMVVWZoom_"+s+"_"+binLabel)
+#             plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,0,"MJ:sig:110:140")
+#             cmsLabel(plotter.canvas)
+#             saveCanvas(plotter.canvas,directory+"/postFitMVVW_"+s+"_"+binLabel)
+# 
+#             plotter.frame.GetXaxis().SetRangeUser(1000.,2000.)
+#             plotter.frame.GetYaxis().SetRangeUser(0.,1.1*(plotter.frame.getHist("datapoints").GetY()[9]+plotter.frame.getHist("datapoints").GetEYhigh()[9]))
+#             plotter.frame2.GetXaxis().SetRangeUser(1000.,2000.)
+#             plotter.line.SetX1(1000.)
+#             plotter.line.SetX2(2000.)
+#             saveCanvas(plotter.canvas,directory+"/postFitMVVWZoom_"+s+"_"+binLabel)
 
 #            plotter.drawBinned("MLNuJ","m_{WV} (GeV)",label,c+"_"+l+"_"+p+"_13TeV",[0,10000],options.doUncBand,c!='vbf',"")
 #            cmsLabel(plotter.canvas)
@@ -109,13 +126,13 @@ for c in ['L','M','T']:
 #            cmsLabel(plotter.canvas)
 #            saveCanvas(plotter.canvas,directory+"/postFit_"+s+"_"+c+"_"+l+"_"+p+"_13TeV")
 
-            plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,c!='vbf',"MJ:low:30:80")
-            cmsLabel(plotter.canvas)
-            saveCanvas(plotter.canvas,directory+"/postFitMVVLo_"+s+"_"+binLabel)
-
-            plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,c!='vbf',"MJ:high:160:210")
-            cmsLabel(plotter.canvas)
-            saveCanvas(plotter.canvas,directory+"/postFitMVVHi_"+s+"_"+binLabel)
+#             plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,c!='vbf',"MJ:low:30:80")
+#             cmsLabel(plotter.canvas)
+#             saveCanvas(plotter.canvas,directory+"/postFitMVVLo_"+s+"_"+binLabel)
+# 
+#             plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,c!='vbf',"MJ:high:160:210")
+#             cmsLabel(plotter.canvas)
+#             saveCanvas(plotter.canvas,directory+"/postFitMVVHi_"+s+"_"+binLabel)
 
 
 
