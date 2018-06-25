@@ -349,6 +349,44 @@ for(unsigned int iB = 0; iB + 1 < bins.size(); ++iB){
 // ------------------------------------------------------------------------------------
 
 {
+  treeMaker->cd();
+  Events->Draw("hbbMass>>hq(36,30,210)","xsec*trig_N*pu_N*lep_N*btag_N*(process==8&&hbbNSJs==2&&wjjNSJs==2&&tightE&&hhMass>700&&hbbMass>30&&hbbMass<210)");
+  Events->Draw("hbbMass>>hw(36,30,210)","xsec*trig_N*pu_N*lep_N*btag_N*(process==3&&hbbNSJs==2&&wjjNSJs==2&&tightE&&hhMass>700&&hbbMass>30&&hbbMass<210)");
+  Plotter * p = new Plotter();
+  p->addHist(hq,"multijets");
+  p->addHist(hw,"W+jets");
+  p->setXTitle("#it{m}_{H#rightarrowbb} [GeV]");
+  p->setYTitle("arbitrary units");
+  p->normalize();
+  p->draw(true,"qcd_wjets_hbbComp.pdf");
+}
+
+{
+  treeMaker->cd();
+  Events->Draw("hbbCSVCat-1>>hq(6,-0.5,5.5)","xsec*trig_N*pu_N*lep_N*btag_N*(process==8&&hbbNSJs==2&&wjjNSJs==2&&tightE&&hhMass>700&&hbbMass>30&&hbbMass<210)");
+  Events->Draw("hbbCSVCat-1>>hw(6,-0.5,5.5)","xsec*trig_N*pu_N*lep_N*btag_N*(process==3&&hbbNSJs==2&&wjjNSJs==2&&tightE&&hhMass>700&&hbbMass>30&&hbbMass<210)");
+  Plotter * p = new Plotter();
+  p->addHist(hq,"multijets");
+  p->addHist(hw,"W+jets");
+  p->setXTitle("#it{m}_{H#rightarrowbb} [GeV]");
+  p->setYTitle("arbitrary units");
+  p->normalize();  
+  auto * c = p->draw(false);
+  
+  p->xAxis()->SetBinLabel(1,"No loose");
+  p->xAxis()->SetBinLabel(2,"One loose");
+  p->xAxis()->SetBinLabel(3,"Two loose");
+  p->xAxis()->SetBinLabel(4,"One medium, no loose");
+  p->xAxis()->SetBinLabel(5,"One medium, one loose");
+  p->xAxis()->SetBinLabel(6,"Two medium");
+  p->xAxis()->SetTitle(" ");
+  c->Update();
+  c->Print("qcd_wjets_hbbCSVComp.pdf");
+  
+}
+
+
+{
   
   TFile * fd = new TFile("HHlnujj_QGCR_data_distributions.root","read");
   TFile * fm = new TFile("HHlnujj_QGCR_qg_distributions.root","read");

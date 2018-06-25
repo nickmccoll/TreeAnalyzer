@@ -8,6 +8,48 @@ data_cr_hhMass->Draw();
 
 hadd  -f HHlnujj_ttbarSF_all_inputPlots.root HHlnujj_ttbarSF_data_inputPlots.root HHlnujj_ttbarSF_mc_inputPlots.root
 
+
+{
+
+  TFile * f = new TFile("HHlnujj_ttbarSF_all_testPlots.root","read");
+  TH1* hd;
+  TH1*ho;
+  TH1*ht;
+  f->GetObject("data_cr_hhMass",hd);
+  f->GetObject("other_cr_hhMass",ho);
+  f->GetObject("ttbar_cr_hhMass",ht);
+
+  std::vector<TString> plots ={"cr_hhMass","cr_hbbMass","noHbb_hhMass","noHbb_hbbMass","fullHbbHH_hhMass","fullHbbHH_hbbMass"};
+  std::vector<TObject*> objects;
+  for(unsigned int iP = 0; iP < plots.size(); ++iP){
+    TH1* hd;
+    TH1*ho;
+    TH1*ht;
+    TH1*hmv;
+    f->GetObject( "data_"+plots[iP],hd);
+    f->GetObject("other_"+plots[iP],ho);
+    f->GetObject("ttbar_noSF_"+plots[iP],ht);
+
+    Plotter * p = new Plotter();
+    p->addHist(hd,"data");
+    p->addStackHist(ht,"t#bar{bar} MC");
+    p->addStackHist(ho,"non-t#bar{t} MC");
+    p->rebin(5);
+    p->setBotMinMax(0,2);
+    p->setYTitle(plots[iP]);
+    // p->normalize();
+      // auto * c = p->drawSplitRatio(-1,"stack",false,false,plots[iP]);
+      // objects.push_back(c);
+    p->setYTitle("N. of events / 10 GeV");
+    p->setCMSLumi();
+    p->draw(true,"ttbarSFregion_"+plots[iP]+".pdf");
+  }
+  // Drawing::drawAll(objects,"all");
+
+
+}
+
+
 {
   TFile * f = new TFile("HHlnujj_ttbarSF_all_inputPlots.root","read");
     // TFile * f = new TFile("HHlnujj_ttbarSF_all_testPlots.root","read");

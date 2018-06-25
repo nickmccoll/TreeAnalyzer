@@ -51,13 +51,6 @@ rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimati
 nohup combine -m 2500 -M AsymptoticLimits -v 2 --run expected  combinedCard.txt &
 nohup combine -m 1000 -M AsymptoticLimits -v 2 --run expected  combinedCard.txt &
 
-treeMaker->cd()
-Events->Draw("hbbCSVCat>>h1(7,-0.5,6.5)","xsec*trig_N*pu_N*lep_N*btag_N*((hwwPT/hhMass>(isMuon?0.3:0.4))&&wwDM<2&&nAK4Btags==0&&hbbNSJs==2&&wjjNSJs==2&&hhMass>700&&hbbMass>100&&hbbMass<150&&process==3)")
-new TCanvas();
-Events->Draw("hbbBBT>>h2(20,-1,1)","xsec*trig_N*pu_N*lep_N*btag_N*((hwwPT/hhMass>(isMuon?0.3:0.4))&&wwDM<2&&nAK4Btags==0&&hbbNSJs==2&&wjjNSJs==2&&hhMass>700&&hbbMass>100&&hbbMass<150&&process==3)")
-h1->Scale(1./h1->Integral());
-h2->Scale(1./h2->Integral());
-
 
 text2workspace.py combinedCard.txt -o combined.root
 ~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M MaxLikelihoodFit -m 2000 combined.root  
@@ -67,3 +60,13 @@ text2workspace.py combinedCard.txt -o combined.root
 
 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq
 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 
+
+
+
+------
+rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,"trees/betrees_mc.root","mc")' &
+rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,"trees/betrees_data.root","data")' &
+rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,"trees/out_radion_hh_bbinc_m1000_0.root","m1000")' &
+rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,"trees/out_radion_hh_bbinc_m2500_0.root","m2500")' &
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (1,"","")' 
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (2,"","")' 

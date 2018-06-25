@@ -102,6 +102,7 @@ void testQCDSF(std::string name, std::string filename, const std::vector<std::st
         fData->GetObject((name+"_"+s+"_"+hbbMCS+"_"+hhMCS).c_str(),hSF);
         if(hMC == 0) continue;
 
+
         addWr(make2DTests(name + "_testQCDSF_HHC_"+s,0,{hMC,hNoSF,hSF},{"QG+QCD","QG, no SF","QG, w/ SF"},hBBBinning,false,10));
 //                addWr(make2DTests(name + "testQCDSF_HbbC_"+s ,0,{hMC,hNoSF,hSF},{"QG+QCD","QG, no SF","QG, w/ SF"},hhBinning,true,5));
     }
@@ -124,8 +125,10 @@ std::vector<TObject*> testRatioFits(std::string name, std::string filename,  std
             }
             if(!can) return;
             can->GetYaxis()->SetTitle(s.c_str());
+            can->GetXaxis()->SetTitle(hhMCS.title.c_str());
             list.push_back(can);
         };
+
 
         addGraph("RATIO", paramPads);
     }
