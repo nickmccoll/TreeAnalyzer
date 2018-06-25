@@ -57,6 +57,19 @@ public:
         w = new RooWorkspace("w","w");
         w->factory((lumiV+"["+ASTypes::flt2Str(luminosity)+"]").c_str());
 }
+    void rebinX(int nBins, double min, double max) {rebinner.reset(new PDFAdder::HistRebinX(nBins,min,max)); }
+    void rebinX(const  std::vector<double>& bins){rebinner.reset(new PDFAdder::HistRebinX(bins)); }
+    void rebinY(int nBins, double min, double max) {rebinner.reset(new PDFAdder::HistRebinY(nBins,min,max)); }
+    void rebinY(const  std::vector<double>& bins){rebinner.reset(new PDFAdder::HistRebinY(bins)); }
+    void rebinXY(int nBinsX, double minX, double maxX,int nBinsY, double minY, double maxY)
+    {rebinner.reset(new PDFAdder::HistRebinXY(nBinsX,minX,maxX,nBinsY,minY,maxY)); }
+    void rebinXY(const  std::vector<double>& binsX,int nBinsY, double minY, double maxY)
+    {rebinner.reset(new PDFAdder::HistRebinXY(binsX,nBinsY,minY,maxY)); }
+    void rebinXY(int nBinsX, double minX, double maxX, std::vector<double>& binsY)
+    {rebinner.reset(new PDFAdder::HistRebinXY(nBinsX,minX,maxX,binsY)); }
+    void rebinXY(std::vector<double>& binsX, std::vector<double> binsY)
+    {rebinner.reset(new PDFAdder::HistRebinXY(binsX,binsY)); }
+
     void addSystematic(const std::string& name,const std::string& kind, const StrFlts& values){
         systematics.emplace_back(name,kind,values);
     }
@@ -112,19 +125,25 @@ public:
 
 
     void addHistoShapeFromFile(const std::string& name,const std::vector<std::string>& obs, const std::string& fileName,const std::string& hName,
-            const PDFAdder::InterpSysts& systs, const bool conditional = false, const int order = 0,const std::string& PDFPF = ""){
+            const PDFAdder::InterpSysts& systs, const bool conditional = false, const int order = 0,const std::string& PDFPF = "",bool isY = false){
         std::string PF = PDFPF+(PDFPF.size() ? "_":"")+tag;
-        PDFAdder::addHistoShapeFromFile(w,name,PF,obs,fileName,hName,systs,conditional,order);
+        PDFAdder::addHistoShapeFromFile(w,name,PF,obs,fileName,hName,systs,conditional,order,&*rebinner,isY);
     }
 
-    double addFixedYieldFromFile(const std::string& name, const int id, const std::string& fileName, const std::string& hName, const double constant = 1.0){
+    double addFixedYieldFromFile(const std::string& name, const int id, const std::string& fileName, const std::string& hName, const double constant = 1.0, bool isY = false){
         auto* iF =  TObjectHelper::getFile(fileName);
         auto h = TObjectHelper::getObject<TH1>(iF,hName);
-        const double nEvts = h->Integral()*luminosity*constant;
-        contributions.emplace_back(name,name+"_"+tag,id,nEvts);
+        double nEvents =luminosity*constant;
+        if(rebinner){
+            auto * nh = rebinner->process(&*h,std::string(h->GetName())+"_rebin",isY);
+            nEvents *= nh->Integral();
+            delete nh;
+        }
+        else nEvents *= h->Integral();
+        contributions.emplace_back(name,name+"_"+tag,id,nEvents);
         iF->Close();
         delete iF;
-        return nEvts;
+        return nEvents;
 
     }
     void conditionalProduct(const std::string& name, const std::string& pdfName_cxoy, const std::string& varName_x, const std::string& pdfName_y, const std::string& tag_pdf_cxoy="", const std::string& tag_pdf_y=""){
@@ -134,9 +153,13 @@ public:
         PDFAdder::conditionalProduct(w,pdfName,pdfName1,varName_x,pdfName2);
     }
 
-    void importBinnedData(const std::string& fileName,const std::string& hName, const std::vector<std::string>& variables, const std::string& name="data_obs", const double scale = 1){
+    void importBinnedData(const std::string& fileName,const std::string& hName, const std::vector<std::string>& variables, const std::string& name="data_obs", const double scale = 1, bool isY=false){
         auto* iF =  TObjectHelper::getFile(fileName);
-        auto h = TObjectHelper::getObject<TH1>(iF,hName);
+        auto inh = TObjectHelper::getObject<TH1>(iF,hName);
+        TH1 * h = &*inh;
+        if(rebinner){
+            h = rebinner->process(&*h,std::string(h->GetName())+"_rebin",isY);
+        }
         if(scale != 1) h->Scale(scale);
 
         const unsigned int nD = variables.size();
@@ -152,11 +175,12 @@ public:
         if(nD > 1)doBinning(variables[1],h->GetYaxis());
         if(nD > 2)doBinning(variables[2],h->GetZaxis());
         if(nD > 3)throw std::invalid_argument("makeCard::importBinnedData() -> Too many observables!");
-        RooDataHist dataHist(name.c_str(),name.c_str(),args,&*h);
+        RooDataHist dataHist(name.c_str(),name.c_str(),args,h);
         w->import(dataHist);
 
         iF->Close();
         delete iF;
+        if(rebinner) delete h;
     }
 
     void makeCard(){
@@ -246,9 +270,8 @@ private:
     const std::string lumiV;
     const std::string tag;
     const double sqrt_s= 13000;
-
-
     TFile * rootFile=0;
+    std::unique_ptr<PDFAdder::HistRebin> rebinner;
 public:
     RooWorkspace* w=0;
     std::vector<Contribution> contributions;

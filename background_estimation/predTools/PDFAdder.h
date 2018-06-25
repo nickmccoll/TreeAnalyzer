@@ -32,9 +32,190 @@ struct InterpSyst {
 };
 
 struct InterpSysts : public std::vector<InterpSyst> {
-        void addSyst(const std::string& hName, const StrStrs& systPs) {
-            emplace_back(hName,systPs);
+    void addSyst(const std::string& hName, const StrStrs& systPs) {
+        emplace_back(hName,systPs);
+    }
+};
+
+class HistRebin{
+public:
+    virtual ~HistRebin() {}
+    virtual TH1 * rebin1D(TH1* inH,const std::string& newName,bool isYAxis1D = false) = 0;
+    virtual TH1 * rebin2D(TH1* inH,const std::string& newName) = 0;
+    TH1 * process(TH1* inH, const std::string& newName,bool isYAxis1D = false) {
+        TH1 * oH =0;
+        if (  dynamic_cast<const TH2*>(inH) ){
+            oH =rebin2D(inH,newName);
+        } else
+            oH= rebin1D(inH,newName,isYAxis1D);
+        oH->SetDirectory(0);
+        return oH;
+    }
+
+    TString getTitle(const TH1* inH, bool is2D){
+        return is2D ? TString("; ")+  inH->GetXaxis()->GetTitle() + " ; "+inH->GetYaxis()->GetTitle() :
+                TString("; ")+  inH->GetXaxis()->GetTitle();
+    }
+    void add1DData(const TH1* inH, TH1* outH){
+        outH->Sumw2(true);
+        for(int inX = 1; inX <= inH->GetNbinsX(); ++inX){
+            int outX = outH->FindFixBin(inH->GetBinCenter(inX));
+            if(outX == 0 || outX > outH->GetNbinsX()) continue;
+            outH->SetBinContent(outX, outH->GetBinContent(outX)+inH->GetBinContent(inX)  );
+            (*outH->GetSumw2())[outX] += (*inH->GetSumw2())[inX];
         }
+    }
+    void add2DData(const TH1* inH, TH1* outH){
+        outH->Sumw2(true);
+        for(int inX = 1; inX <= inH->GetNbinsX(); ++inX){
+            int outX = outH->GetXaxis()->FindFixBin(inH->GetXaxis()->GetBinCenter(inX));
+            if(outX == 0 || outX > outH->GetNbinsX()) continue;
+            for(int inY = 1; inY <= inH->GetNbinsY(); ++inY){
+                int outY = outH->GetYaxis()->FindFixBin(inH->GetYaxis()->GetBinCenter(inY));
+                if(outY == 0 || outY > outH->GetNbinsY()) continue;
+                outH->SetBinContent(outX,outY, outH->GetBinContent(outX,outY)+inH->GetBinContent(inX,inY)  );
+                int outBin = outH->GetBin(outX,outY);
+                int inBin = inH->GetBin(inX,inY);
+                (*outH->GetSumw2())[outBin] += (*inH->GetSumw2())[inBin];
+            }
+        }
+    }
+
+};
+
+class HistRebinX : public HistRebin {
+public:
+
+    HistRebinX(int nBins, double min, double max) : nBins(nBins), min(min), max(max) {}
+    HistRebinX(const  std::vector<double>& bins): bins(bins),nBins(bins.size()-1){}
+    virtual ~HistRebinX() {}
+
+    virtual TH1 * rebin1D(TH1* inH,const std::string& newName,bool isYAxis1D = false){
+        if(isYAxis1D) return (TH1*)inH->Clone(newName.c_str());
+        TH1 * outH = 0;
+        if(bins.size())
+            outH = new TH1F(newName.c_str(),getTitle(inH,false),nBins,&bins[0]);
+        else
+            outH = new TH1F(newName.c_str(),getTitle(inH,false),nBins,min,max);
+        add1DData(inH,outH);
+        return outH;
+    }
+    virtual TH1 * rebin2D(TH1* inH,const std::string& newName){
+        TH1 * outH = 0;
+        if(bins.size()){
+            if(inH->GetYaxis()->GetXbins()->GetSize())
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),nBins,&bins[0],inH->GetNbinsY(),inH->GetYaxis()->GetXbins()->GetArray());
+            else
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),nBins,&bins[0],inH->GetNbinsY(),inH->GetYaxis()->GetXmin(),inH->GetYaxis()->GetXmax());
+        } else {
+            if(inH->GetYaxis()->GetXbins()->GetSize())
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),nBins,min,max,inH->GetNbinsY(),inH->GetYaxis()->GetXbins()->GetArray());
+            else
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),nBins,min,max,inH->GetNbinsY(),inH->GetYaxis()->GetXmin(),inH->GetYaxis()->GetXmax());
+        }
+        add2DData(inH,outH);
+        return outH;
+    }
+
+    std::vector<double> bins; //set to size 0 if using fixed width bins
+    int nBins = -1;
+    double min =-1;
+    double max =-1;
+};
+
+class HistRebinY : public HistRebin {
+public:
+
+    HistRebinY(int nBins, double min, double max) : nBins(nBins), min(min), max(max) {}
+    HistRebinY(const  std::vector<double>& bins):  bins(bins),nBins(bins.size()-1){}
+    virtual ~HistRebinY() {}
+
+
+    virtual TH1 * rebin1D(TH1* inH,const std::string& newName,bool isYAxis1D = false){
+        if(!isYAxis1D) return (TH1*)inH->Clone(newName.c_str());
+        TH1 * outH = 0;
+        if(bins.size())
+            outH = new TH1F(newName.c_str(),getTitle(inH,false),nBins,&bins[0]);
+        else
+            outH = new TH1F(newName.c_str(),getTitle(inH,false),nBins,min,max);
+        add1DData(inH,outH);
+        return outH;
+    }
+    virtual TH1 * rebin2D(TH1* inH,const std::string& newName){
+        TH1 * outH = 0;
+        if(bins.size()){
+            if(inH->GetXaxis()->GetXbins()->GetSize())
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),inH->GetNbinsX(),inH->GetXaxis()->GetXbins()->GetArray(),nBins,&bins[0]);
+            else
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),inH->GetNbinsX(),inH->GetXaxis()->GetXmin(),inH->GetXaxis()->GetXmax(),nBins,&bins[0]);
+        } else {
+            if(inH->GetXaxis()->GetXbins()->GetSize())
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),inH->GetNbinsX(),inH->GetXaxis()->GetXbins()->GetArray(),nBins,min,max);
+            else
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),inH->GetNbinsX(),inH->GetXaxis()->GetXmin(),inH->GetXaxis()->GetXmax(),nBins,min,max);
+        }
+        add2DData(inH,outH);
+        return outH;
+    }
+    std::vector<double> bins; //set to size 0 if using fixed width bins
+    int nBins = -1;
+    double min =-1;
+    double max =-1;
+};
+
+class HistRebinXY : public HistRebin {
+public:
+
+    HistRebinXY(int nBinsX, double minX, double maxX,int nBinsY, double minY, double maxY) :
+        nBinsX(nBinsX), minX(minX), maxX(maxX),nBinsY(nBinsY), minY(minY), maxY(maxY) {}
+    HistRebinXY(const std::vector<double>& binsX,int nBinsY, double minY, double maxY) :
+         binsX(binsX),nBinsX(binsX.size()-1),nBinsY(nBinsY), minY(minY), maxY(maxY) {}
+    HistRebinXY(int nBinsX, double minX, double maxX,std::vector<double>& binsY) :
+        nBinsX(nBinsX), minX(minX), maxX(maxX), binsY(binsY),nBinsY(binsY.size() -1) {}
+    HistRebinXY(const std::vector<double>& binsX,const std::vector<double>& binsY) :
+        binsX(binsX),nBinsX(binsX.size()-1),binsY(binsY),nBinsY(binsY.size()-1) {}
+
+    virtual TH1 * rebin1D(TH1* inH,const std::string& newName,bool isYAxis1D = false){
+        TH1 * outH = 0;
+        if(isYAxis1D){
+            if(binsY.size())
+                outH = new TH1F(newName.c_str(),getTitle(inH,false),nBinsY,&binsY[0]);
+            else
+                outH = new TH1F(newName.c_str(),getTitle(inH,false),nBinsY,minY,maxY);
+        } else {
+            if(binsX.size())
+                outH = new TH1F(newName.c_str(),getTitle(inH,false),nBinsX,&binsX[0]);
+            else
+                outH = new TH1F(newName.c_str(),getTitle(inH,false),nBinsX,minX,maxX);
+        }
+        add1DData(inH,outH);
+        return outH;
+    }
+    virtual TH1 * rebin2D(TH1* inH,const std::string& newName){
+        TH1 * outH = 0;
+        if(binsX.size() && binsY.size())
+            outH = new TH2F(newName.c_str(),getTitle(inH,true),nBinsX,&binsX[0],nBinsY,&binsY[0]);
+        else if(binsX.size() && !binsY.size())
+            outH = new TH2F(newName.c_str(),getTitle(inH,true),nBinsX,&binsX[0],nBinsY,minY,maxY);
+        else if(!binsX.size() && binsY.size())
+            outH = new TH2F(newName.c_str(),getTitle(inH,true),nBinsX,minX,maxX,nBinsY,&binsY[0]);
+        else
+            outH = new TH2F(newName.c_str(),getTitle(inH,true),nBinsX,minX,maxX,nBinsY,minY,maxY);
+        add2DData(inH,outH);
+        return outH;
+    }
+
+
+    std::vector<double> binsX; //set to size 0 if using fixed width bins
+    int nBinsX = -1;
+    double minX =-1;
+    double maxX =-1;
+
+
+    std::vector<double> binsY; //set to size 0 if using fixed width bins
+    int nBinsY = -1;
+    double minY =-1;
+    double maxY =-1;
 };
 
 
@@ -192,7 +373,8 @@ void add2DCB(RooWorkspace* w, const std::string& name,const std::string& PF, con
 //Systs are the shape systematics...the first entry is the name in the file....hName_FIRST(Up|Down)...the second is the vector of of the systematics and the relative scales
 //Conditional and order are parameters in the roofit classes
 //All systematics are assumed to have already been added to the worksapce (def for shapes: addVar(s.second,0,-1,1,false);)
-void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF, const std::vector<std::string>& obs, const std::string& fileName, const std::string& hName, const InterpSysts& systs, const bool conditional = false, const int order = 0){
+void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF, const std::vector<std::string>& obs, const std::string& fileName, const std::string& hName, const InterpSysts& systs,
+        const bool conditional = false, const int order = 0, HistRebin* rebinner= 0, bool isY = false){
     //Save a few steps
     if(PF.size()) PF = "_"+PF;
     const std::string PDFName = name+PF;
@@ -207,12 +389,14 @@ void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF, con
         varlist.add(*varPointers.back());
     }
     auto* iF =  TObjectHelper::getFile(fileName);
-    auto h = TObjectHelper::getObject<TH1>(iF,hName);
+    auto inh = TObjectHelper::getObject<TH1>(iF,hName);
+    TH1 * h = &*inh;
+    if(rebinner) h = rebinner->process(&*h,std::string(h->GetName()) +"_rebin",isY);
 
     const std::string nominalHistName = name+"_Nominal_HIST"+PF;
     const std::string nominalPDFName  = systs.size() ? name+"_Nominal"+PF : PDFName;
 
-    RooDataHist nHist(nominalHistName.c_str(),nominalHistName.c_str(),varlist,&*h);
+    RooDataHist nHist(nominalHistName.c_str(),nominalHistName.c_str(),varlist,h);
     w->import(nHist);
     RooHistPdf nPDF(nominalPDFName.c_str(),nominalPDFName.c_str(),varset,nHist,order);
     w->import(nPDF);
@@ -233,14 +417,17 @@ void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF, con
         coefList.add(*w->arg(coefName.c_str()));
 
         auto addVar = [&](const std::string& var){
-            auto sh =  TObjectHelper::getObject<TH1>(iF,hName+"_"+s.hName+var);
+            auto inh =  TObjectHelper::getObject<TH1>(iF,hName+"_"+s.hName+var);
             const std::string vHistName = name+"_" +s.hName+var+"_HIST"+PF;
             const std::string vPDFName = name +"_"+s.hName+var+PF;
-            RooDataHist vRooHist(vHistName.c_str(),vHistName.c_str(),varlist,&*sh);
+            TH1 * sh = &*inh;
+            if(rebinner) sh =  rebinner->process(&*sh,std::string(sh->GetName()) +"_rebin",isY);
+            RooDataHist vRooHist(vHistName.c_str(),vHistName.c_str(),varlist,sh);
             w->import(vRooHist);
             RooHistPdf pdf(vPDFName.c_str(),vPDFName.c_str(),varset,vRooHist,order);
             w->import(pdf);
             pdfList.add(*w->pdf(vPDFName.c_str()));
+            if(rebinner) delete sh;
         };
         addVar("Up");
         addVar("Down");
@@ -260,6 +447,7 @@ void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF, con
 
     iF->Close();
     delete iF;
+    if(rebinner) delete h;
 }
 
 
