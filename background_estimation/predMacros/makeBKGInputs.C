@@ -67,11 +67,11 @@ void makeDetectorParam(const std::string& name, const std::string& filename,  co
 std::string getMVVExpoMinMaxStr(std::string sample){
     float eMin, eMax;
     if(strFind(sample,bkgSels[BKG_QG])){
-        eMin = 3000;
+        eMin = 2500;
         eMax = 4500;
     } else if(strFind(sample,bkgSels[BKG_LOSTTW])){
-        eMin = 1500;
-        eMax = 2250;
+        eMin = 2000;
+        eMax = 3000;
     } else if(strFind(sample,bkgSels[BKG_MW])){
         eMin = 1500;
         eMax = 2500;
@@ -111,7 +111,7 @@ void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string
         std::string cut =  std::string("(")+baseSel+"&&"+l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut+")";
         if(addQCDSF) cut += "*"+getQCDSF(name,filename,l,p,h);
         std::string args = std::string("-v -n histo ")+" -x "+hbbMCS.cut+" -g hbbGenMass -xb "+hbbInclBinning.cut+ " -s "+cut+" -w "+nomW.cut+ " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
-        args += " -kss -ks 1.5 -kr 1.5 -hs " + flt2Str(hbb_scaleUnc) + " -hr " + flt2Str(hbb_resUnc) + " ";
+        args += " -ks 1.5 -kr 1.5 -hs " + flt2Str(hbb_scaleUnc) + " -hr " + flt2Str(hbb_resUnc) + " ";
         args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
         make1DTemplateWithAdaKern(inputFile,tempFile, args);
     }
@@ -149,7 +149,7 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
         }
 
         std::string args = std::string("-v -n histo ")+" -x "+hhMCS.cut+" -g hbbGenMass -xb "+hhInclBinning.cut+" -s "+cut+" -w "+weight + " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
-        args += " -kss -ks 1.5 -kr 1.5 -hs "+flt2Str(hh_scaleUnc) +" -hr "+flt2Str(hh_resUnc)+" ";
+        args += " -ks 1.5 -kr 1.5 -hs "+flt2Str(hh_scaleUnc) +" -hr "+flt2Str(hh_resUnc)+" ";
         args += std::string(" -doS ") + getMVVExpoMinMaxStr(name);
         args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
         make1DTemplateWithAdaKern(inputFile,tempFile, args);
@@ -171,7 +171,7 @@ void makeBackgroundShapes2DConditional(const std::string name, const std::string
         if(addQCDSF) cut += "*"+getQCDSF(name,filename,l,p,h);
 
         std::string args = std::string("-v -n histo ") + " -vx "+ hbbMCS.cut+ " -vy "+hhMCS.cut+ " -xb "+hbbInclBinning.cut+" -yb "+hhInclBinning.cut+  " -s "+ cut +" -w "+nomW.cut+" ";
-        args+=std::string(" -khxs ")+ flt2Str(khxs) +" -khxc "+ flt2Str(khxc) +" -khys "+ flt2Str(khys) +" -khyc "+ flt2Str(khyc) + " -kss ";
+        args+=std::string(" -khxs ")+ flt2Str(khxs) +" -khxc "+ flt2Str(khxc) +" -khys "+ flt2Str(khys) +" -khyc "+ flt2Str(khyc) + " ";
         args += "-eopt y  "+ getMVVExpoMinMaxStr(name);
         if(xIsCond){
             args+=" -hs "+ flt2Str(hbb_scaleUnc) + " -hr " + flt2Str(hbb_resUnc) + " ";
@@ -586,7 +586,7 @@ void makePseudoData(const std::string& name, const std::string& filename, const 
     delete rand;
 }
 
-void go(BKGModels modelToDo, std::string treeDir) {
+void go(int modelToDo, std::string treeDir) {
     std::string filename = hhFilename;
 
     //Turn on TTBar scaling
@@ -612,7 +612,7 @@ void go(BKGModels modelToDo, std::string treeDir) {
 //        mergeBackgroundShapes(name,filename,false);
 //        fitBackgroundShapes2DConditional(name,filename,false)
 
-        makeBackgroundShapes2DConditional(name,filename,treeArea,genSel,true,true,0.5,1,0.5,3);//P(hbb|hh)
+        makeBackgroundShapes2DConditional(name,filename,treeArea,genSel,true,true,0.4,1,0.75,3);//P(hbb|hh)
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,true,1,3);
         mergeBackgroundShapes(name,filename,true);
         fitBackgroundShapes2DConditional(name,filename,true);
@@ -633,7 +633,7 @@ void go(BKGModels modelToDo, std::string treeDir) {
 //        fitBackgroundShapes2DConditional(name,filename,false);
 
         makeBackgroundShapes2DConditional(name,filename,treeArea,genSel,false,true,0.5,3,0.75,5);//P(hbb|hh) 0.5,2,0.75,8 old values
-        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,false,1,3);
+        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,false,1,4);
         mergeBackgroundShapes(name,filename,true);
         fitBackgroundShapes2DConditional(name,filename,true);
 
@@ -685,5 +685,5 @@ void go(BKGModels modelToDo, std::string treeDir) {
 #endif
 
 void makeBKGInputs(int bkgToDo = BKG_QG, std::string treeDir = "../trees/bkgCompLMT/"){
-    go(static_cast<BKGModels>(bkgToDo),treeDir);
+    go(bkgToDo,treeDir);
 }
