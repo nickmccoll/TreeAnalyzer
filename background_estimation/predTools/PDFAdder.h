@@ -336,7 +336,9 @@ void add2DCBNoCond(RooWorkspace* w, const std::string& name,const std::string& P
     }
 
     addCB(w,varYPDFName,pVar,variableY,varYPF,variableY,json,scale_Y,resolution_Y);
-    conditionalProduct(w,PDFName,varYPDFName,variableY,varXPDFName);
+    RooProdPdf prodP(PDFName.c_str(), (varXPDFName+"*"+varYPDFName).c_str(),RooArgSet(*w->pdf(varXPDFName.c_str()), *w->pdf(varYPDFName.c_str())) );
+    w->import(prodP);
+
 
 }
 
@@ -362,6 +364,7 @@ void add2DCB(RooWorkspace* w, const std::string& name,const std::string& PF, con
         RooAddPdf modelC(varXPDFName.c_str(),varXPDFName.c_str(),*w->pdf(varXEPDFName.c_str()),*w->pdf(varXCBPDFName.c_str()),*w->function(vN.c_str()));
         w->import(modelC);
     }
+    addCondCB(w,varYPDFName,pVar,variableY,varYPF,variableY,json,scale_Y,resolution_Y,variableX,varXPF);
     conditionalProduct(w,PDFName,varYPDFName,variableY,varXPDFName);
 }
 
