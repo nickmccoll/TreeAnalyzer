@@ -29,6 +29,11 @@ def save2D(plotter,name,c,var1,var2):
     for i in range(0,len(plotter.contributions)):
         data = plotter.contributions[i]
         plotter.fetch2DHistogram(var1,var2,c,data['name'],data['signal'],data['suffix']).Write(data['name'])
+    
+    cutStr="CMS_channel==CMS_channel::"+c
+    dataset=plotter.w.data("data_obs").reduce(cutStr)
+    dataset.createHistogram(name+"_"+c+"_data",plotter.w.var(var1),ROOT.RooFit.YVar(plotter.w.var(var2))).Write("data_obs")
+        
     file.Close();        
 
 def saveCanvas(canvas,name):
