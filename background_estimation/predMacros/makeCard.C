@@ -196,13 +196,9 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         //---------------------------------------------------------------------------------------------------
         //Data
         //---------------------------------------------------------------------------------------------------
-        if(reg != REG_SR){
-            card.importBinnedData(fPF + "_data_distributions.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
-        } else {
-            //Pseudo data
-            card.importBinnedData(fPF + "_pd.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
-        }
+        card.importBinnedData(fPF + "_data_distributions.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
 
+//        card.importBinnedData(fPF + "_pd.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
 
         card.makeCard();
     }
