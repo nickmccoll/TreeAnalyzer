@@ -19,7 +19,7 @@ void testHHPDFFits(std::string name, std::string filename, const std::vector<std
 
         TFile * ff = new TFile((filename+"_"+name+"_"+s+"_MVV_template.root").c_str(),"read");
         TH1* h = 0;
-        ff->GetObject("histo",h);hs.push_back(h);hNs.push_back("Nominal SR PDF");
+        ff->GetObject("histo",h);hs.push_back(h);hNs.push_back("SR Template: "+ s);
         ff->GetObject("originalPDF",h);hs.push_back(h);hNs.push_back("Baseline KDE before MC fit");
 
         for(unsigned int iH = 0; iH < hs.size(); ++iH) hs[iH]->Scale(hd->Integral()/hs[iH]->Integral());
@@ -31,12 +31,13 @@ void testHHPDFFits(std::string name, std::string filename, const std::vector<std
             for(int iX = 1; iX <= h1D->GetNbinsX(); ++iX)h1D->SetBinError(iX,0);
             p->addHist(h1D,hNs[iH],-1,1,4,20,1,false,true,false,"E");
         }
-        p->setMinMax(.0001,hs[0]->Integral());
+        p->setMinMax(.01,hs[0]->Integral());
         p->setUnderflow(false);
         p->setOverflow(false);
         p->rebin(8);
-        p->setXTitle("HH mass [GeV]");
+        p->setXTitle(hhMCS.title);
         p->setYTitle("N. of events");
+
         p->setBotMinMax(0,2);
         // auto * c = p->drawSplitRatio(0,"stack",false,false,s);
         // c->GetPad(1)->SetLogy();
@@ -66,10 +67,11 @@ public:
     Dummy(const std::string& outName = "") : outName(outName) {};
     ~Dummy() {
         if(outName.size()){
-            TFile * f = new TFile(outName.c_str(),"recreate");
+            TFile * f = new TFile((outName+".root").c_str(),"recreate");
             f->cd();
             for(auto * w : writeables){
                 w->Write();
+                w->Print((outName +"_"+w->GetTitle() +".pdf").c_str());
             }
             f->Close();
         }
@@ -109,33 +111,33 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR,  std::s
 
     switch(step){
     case 0:
-        if(outName.size()) outName += "_MVV_temp.root";
+        if(outName.size()) outName += "_MVV_temp";
         writeables = test1DKern(mod,filename,"MVV",{"emu_LMT_I_lt"});
         break;
     case 1:
-        if(outName.size()) outName += "_MVV_fit.root";
+        if(outName.size()) outName += "_MVV_fit";
         testHHPDFFits(mod,filename,srList);
         break;
     case 2:
-        if(outName.size()) outName += "_MJJ_fit1stIt.root";
+        if(outName.size()) outName += "_MJJ_fit1stIt";
         writeables = testBKG1DFits(mod,filename,"","MJJ_fit1stIt",mtMJJBinning);
         break;
     case 3:
-        if(outName.size()) outName += "_MJJ_fit.root";
+        if(outName.size()) outName += "_MJJ_fit";
         writeables = testBKG1DFits(mod,filename,"","MJJ_fit",mtMJJBinning);
         break;
     case 4:
-        if(outName.size()) outName += "_MJJ_SFFit.root";
+        if(outName.size()) outName += "_MJJ_SFFit";
         writeables = test2DFits(mod,filename,srList,{700,4000},true,2,"MJJ_SFFit.json.root");
         break;
     case 5:
-        if(outName.size()) outName += "_2DComp.root";
+        if(outName.size()) outName += "_2DComp";
         writeables = test2DModel({mod},filename,srList,{700,4000});
         break;
     case 6:
-        if(outName.size()) outName += "_all_2DComp.root";
+        if(outName.size()) outName += "_all_2DComp";
         writeables = test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },
-              filename,srList,{700,4000});
+              filename,{"emu_LMT_I_full"},{700,4000});
 //        writeables = test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },
 //              filename,srList,{100,150},false);
 

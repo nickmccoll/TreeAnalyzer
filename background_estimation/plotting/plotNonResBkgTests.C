@@ -30,7 +30,7 @@ void test2DCondTemplate(std::string name, std::string filename, std::string sel)
         if(addKDE){
             TH2* h;
             f->GetObject("histo_KDE",h);
-            hs.push_back(h); hNs.push_back(extraPre.size() ? extraPre +"_NoSmear"  : std::string("KDE_NoSmear"));
+            hs.push_back(h); hNs.push_back(extraPre.size() ? extraPre +"_NoSmear"  : std::string("KDE w/o smoothing"));
         }
     };
 
@@ -39,13 +39,13 @@ void test2DCondTemplate(std::string name, std::string filename, std::string sel)
     //      for(const auto& s : extras ) addHistos(s,true,false);
 
     std::vector<double> hBBBinning = {30,40,50,60,80,100,120,140,170,210};
-    std::vector<double> hhBinning  = {700,800,900,1000,1500,2000,3000,4000,5000};
+    std::vector<double> hhBinning  = {700,4000,700,800,900,1000,1500,2000,3000,4000,5000};
 
 
     addWr(make2DTests(name + "_COND2D_HHF" ,dH,hs,hNs,hBBBinning,false,-1));
     addWr(make2DTests(name + "_COND2D_HHC" ,dH,hs,hNs,hBBBinning,false,10));
-    addWr(make2DTests(name + "_COND2D_HbbF"  ,dH,hs,hNs,hhBinning,true,-1));
-    addWr(make2DTests(name + "_COND2D_HbbC"  ,dH,hs,hNs,hhBinning,true,5 ));
+    addWr(make2DTests(name + "_COND2D_HbbF"  ,dH,hs,hNs,hhBinning,true,-1,false));
+    addWr(make2DTests(name + "_COND2D_HbbC"  ,dH,hs,hNs,hhBinning,true,5 ,false));
 }
 
 void test2DTemplate(const std::string& name, const std::string& filename, const std::vector<std::string>& sels){
@@ -198,16 +198,18 @@ public:
     Dummy(const std::string& outName = "") : outName(outName) {};
     ~Dummy() {
         if(outName.size()){
-            TFile * f = new TFile(outName.c_str(),"recreate");
+            TFile * f = new TFile((outName+".root").c_str(),"recreate");
             f->cd();
             for(auto * w : writeables){
                 w->Write();
+                w->Print((outName +"_"+w->GetTitle() +".pdf").c_str());
             }
             f->Close();
         }
     }
     std::string outName;
 };
+
 
 
 
@@ -239,7 +241,7 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, std::
     switch(step){
     case 0:
         if(doTW) return;
-        if(outName.size()) outName += "_QCDRatio.root";
+        if(outName.size()) outName += "_QCDRatio";
         writeables = testRatioFits(mod,filename,"QCDSF",{"emu_I_I_ltmb","e_I_LP_ltmb","mu_I_LP_ltmb","e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"});
         if(reg == REG_QGCR){
             writeables = testRatioUncs(mod,filename,"QCDSF",{ {"emu_LMT_I_ltmb","emu_I_I_ltmb"},
@@ -255,28 +257,28 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, std::
         break;
     case 1:
         if(doTW) return;
-        if(outName.size()) outName += "_testQCDSF.root";
+        if(outName.size()) outName += "_testQCDSF";
         stepSels = srList; stepSels.push_back("emu_LMT_I_ltmb");
         testQCDSF(mod,filename,stepSels);
         break;
     case 2:
-        if(outName.size()) outName += "_2DCondTemp.root";
+        if(outName.size()) outName += "_2DCondTemp";
         test2DCondTemplate(mod,filename,"emu_LMT_I_ltmb");
         break;
     case 3:
-        if(outName.size()) outName += "_MVVKern.root";
+        if(outName.size()) outName += "_MVVKern";
         if(doTW) stepSels = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
         else stepSels = {"e_LMT_HP_ltmb","mu_LMT_HP_ltmb","e_LMT_LP_ltmb","mu_LMT_LP_ltmb"};
         writeables = test1DKern(mod,filename,"MVV",stepSels);
         break;
     case 4:
-        if(outName.size()) outName += "_2DTemp.root";
+        if(outName.size()) outName += "_2DTemp";
         if(doTW) stepSels = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
         else stepSels = {"emu_LMT_I_ltmb","e_LMT_I_ltmb","mu_LMT_I_ltmb"};
         test2DTemplate(mod,filename,stepSels);
         break;
     case 5:
-        if(outName.size()) outName += "_2DFits.root";
+        if(outName.size()) outName += "_2DFits";
         test2DFits(mod,filename,srList,
                 {30.,210, 100,150},false,10);
 //        test2DFits(mod,filename,srList,
@@ -289,7 +291,7 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, std::
 
         break;
     case 6:
-        if(outName.size()) outName += "_2DComp.root";
+        if(outName.size()) outName += "_2DComp";
         writeables = test2DModel({mod},filename,
                 srList,{700,4000});
         break;

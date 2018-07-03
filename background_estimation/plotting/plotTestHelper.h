@@ -67,10 +67,11 @@ std::vector<TObject*> test1DKern(std::string name, std::string filename,std::str
         }
 
         auto setupPlotter = [&](Plotter * p, std::string name, double rebin =-1){
-            p->setMinMax(.1,(rebin < 0 ? 1.0 : rebin) * hs[0]->Integral()/4);
+            p->setMinMax(.01,(rebin < 0 ? 1.0 : rebin) * hs[0]->Integral()/4);
             p->setUnderflow(false);
             p->setOverflow(false);
             p->setBotMinMax(0,2);
+            if(strFind(var,"VV")) p->setXTitle(hhMCS.title);
             if(rebin > 0) p->rebin(rebin);
             if(withRatio){
                 auto * c = p->drawSplitRatio(1,"stack",false,false,name);
@@ -107,6 +108,7 @@ std::vector<TObject*> test1DFits(std::string name, std::string filename, std::st
             TCanvas * can= 0;
             fo->GetObject(name.c_str(),can);
             if(can != 0) list.push_back(can);
+
         };
         auto addGraph = [&](const std::string& name,std::vector<TObject*>& list){
             TGraphErrors * can= 0;
@@ -116,6 +118,7 @@ std::vector<TObject*> test1DFits(std::string name, std::string filename, std::st
             if(!can) fo->GetObject(name.c_str(),can);
             if(!can) return;
             can->GetYaxis()->SetTitle(name.c_str());
+            can->GetXaxis()->SetTitle( (ASTypes::strFind(fitName,"J") ? hhMCS.title : hbbMCS.title).c_str() );
             list.push_back(can);
         };
 
@@ -131,9 +134,11 @@ std::vector<TObject*> test1DFits(std::string name, std::string filename, std::st
         addGraph(vN("n2"    ), paramPads);
         addGraph(vN("slope" ), paramPads);
         addGraph(vN("fE"    ), paramPads);
-        addGraph("chi2", paramPads);
+//        addGraph("chi2", paramPads);
         auto *c   =Drawing::drawAll(fitPads, (s + "_fits").c_str());
+        c->SetTitle((s + "_fits").c_str());
         auto * c1 =Drawing::drawAll(paramPads, (s + "_params").c_str());
+        c1->SetTitle((s + "_params").c_str());
         writeables.push_back(c);
         writeables.push_back(c1);
     }
@@ -172,6 +177,7 @@ std::vector<TObject*> make2DTests(std::string plotTitle, const TH2* dH, const st
             p->setOverflow(false);
             p->setBotMinMax(0,2);
             p->setYTitle("N. of events");
+            p->setXTitle(binInY ? hbbMCS.title : hhMCS.title);
             if(rebin > 0) p->rebin(rebin);
             if(withRatio){
                 auto * c = p->drawSplitRatio(dH?1:0,"stack",false,false,name);
@@ -353,7 +359,7 @@ std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filenam
 
         } else {
             auto dh1 = proj(dh,"MC");
-            p->addHist(dh1,"MC");
+//            p->addHist(dh1,"MC");
         }
 
         for(unsigned int iH = 0; iH < hs.size(); ++iH){
@@ -368,14 +374,14 @@ std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filenam
         p->setXTitle( (binInY ? hbbMCS : hhMCS) .title.c_str());
         p->setYTitle("N. of events");
         p->setCMSLumi();
-//        auto * c = p->draw(false,(s + ": "+flt2Str(bins[iB]) +"-"+flt2Str(bins[iB+1])).c_str());
+        auto * c = p->draw(false,(s + ": "+flt2Str(bins[iB]) +"-"+flt2Str(bins[iB+1])).c_str());
 //           c->SetLogy();
 //           c->Update();
 
-         p->setBotMinMax(0,2);
-         p->setYTitleBot("N/N(template)");
-         auto * c = p->drawSplitRatio(-1,"stack",false,false,(s + "_"+flt2Str(bins[iB]) +"_"+flt2Str(bins[iB+1])).c_str());
-         writeables.push_back(c);
+//         p->setBotMinMax(0,2);
+//         p->setYTitleBot("N/N(template)");
+//         auto * c = p->drawSplitRatio(-1,"stack",false,false,(s + "_"+flt2Str(bins[iB]) +"_"+flt2Str(bins[iB+1])).c_str());
+//         writeables.push_back(c);
 
         // c->GetPad(1)->SetLogy();
         // c->GetPad(1)->Update();
