@@ -96,21 +96,22 @@ for c in ['L','M','T']:
     for p in pur:
         for l in ['mu','e']:
 
-            label="W #rightarrow "+(("e","#mu")[l=='mu'])+"#nu"
+#             label="W #rightarrow "+(("e","#mu")[l=='mu'])+"#nu"
+            label = ""
             
             binLabel = "std_"+ l +"_"+c+"_"+p +"_full_13TeV"
 
-            plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,1,"")
-            cmsLabel(plotter.canvas)
-            saveCanvas(plotter.canvas,directory+"/postFitMVV_"+s+"_"+binLabel)
-            saveComponents(plotter,directory+"/postFitMVV_"+s+"_"+binLabel+"_comp.root")
-
-            plotter.drawBinned("MJ","#it{m}_{H#rightarrowbb} [GeV]",label,binLabel,[0,0],options.doUncBand,0,"")
-            cmsLabel(plotter.canvas)
-            saveCanvas(plotter.canvas,directory+"/postFitMJJ_"+s+"_"+binLabel)
-            saveComponents(plotter,directory+"/postFitMJJ_"+s+"_"+binLabel+"_comp.root")
-            
-            save2D(plotter,directory+"/postFitMJJMVV_"+s+"_"+binLabel+"_comp.root",binLabel,"MJ","MR")
+#             plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,0,"")
+#             cmsLabel(plotter.canvas)
+#             saveCanvas(plotter.canvas,directory+"/postFitMVV_"+s+"_"+binLabel)
+#             saveComponents(plotter,directory+"/postFitMVV_"+s+"_"+binLabel+"_comp.root")
+# 
+#             plotter.drawBinned("MJ","#it{m}_{H#rightarrowbb} [GeV]",label,binLabel,[0,0],options.doUncBand,0,"")
+#             cmsLabel(plotter.canvas)
+#             saveCanvas(plotter.canvas,directory+"/postFitMJJ_"+s+"_"+binLabel)
+#             saveComponents(plotter,directory+"/postFitMJJ_"+s+"_"+binLabel+"_comp.root")
+#             
+#             save2D(plotter,directory+"/postFitMJJMVV_"+s+"_"+binLabel+"_comp.root",binLabel,"MJ","MR")
 
 #             plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,0,"MJ:sig:110:140")
 #             cmsLabel(plotter.canvas)
@@ -127,17 +128,22 @@ for c in ['L','M','T']:
 #            cmsLabel(plotter.canvas)
 #            saveCanvas(plotter.canvas,directory+"/postFitMVV_"+s+"_"+c+"_"+l+"_"+p+"_13TeV")
 
-#            plotter.drawBinned("MJ","m_{jet} (GeV)",label,c+"_"+l+"_"+p+"_13TeV",[64,106],options.doUncBand,0,"")
-#            cmsLabel(plotter.canvas)
-#            saveCanvas(plotter.canvas,directory+"/postFit_"+s+"_"+c+"_"+l+"_"+p+"_13TeV")
-
-#             plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,c!='vbf',"MJ:low:30:80")
-#             cmsLabel(plotter.canvas)
-#             saveCanvas(plotter.canvas,directory+"/postFitMVVLo_"+s+"_"+binLabel)
-# 
-#             plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,c!='vbf',"MJ:high:160:210")
-#             cmsLabel(plotter.canvas)
-#             saveCanvas(plotter.canvas,directory+"/postFitMVVHi_"+s+"_"+binLabel)
+            plotter.drawBinned("MJ","m_{H#rightarrowbb} (GeV)",label,binLabel,[100,150],options.doUncBand,0,"")
+            cmsLabel(plotter.canvas)
+            saveCanvas(plotter.canvas,directory+"/postFit_"+s+"_"+binLabel)
+            
+            plotter.drawBinned("MJ","m_{H#rightarrowbb} (GeV)",label,binLabel,[0,0],options.doUncBand,0,"MR:low:700:1000")
+            cmsLabel(plotter.canvas)
+            saveCanvas(plotter.canvas,directory+"/postFitLo_"+s+"_"+binLabel)
+            
+#  
+            plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,c!='vbf',"MJ:low:30:100")
+            cmsLabel(plotter.canvas)
+            saveCanvas(plotter.canvas,directory+"/postFitMVVLo_"+s+"_"+binLabel)
+# # 
+            plotter.drawBinned("MR","#it{m}_{HH} [GeV]",label,binLabel,[0,0],options.doUncBand,False,"MJ:high:150:210")
+            cmsLabel(plotter.canvas)
+            saveCanvas(plotter.canvas,directory+"/postFitMVVHi_"+s+"_"+binLabel)
 
 
 
