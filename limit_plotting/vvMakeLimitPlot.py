@@ -50,19 +50,19 @@ for event in limit:
     if not (event.mh in data.keys()):
         data[event.mh]={}
 
-
+    
     if event.quantileExpected<0:            
-        data[event.mh]['obs']=event.limit
+        data[event.mh]['obs']=event.limit*1000
     if event.quantileExpected>0.02 and event.quantileExpected<0.03:            
-        data[event.mh]['-2sigma']=event.limit
+        data[event.mh]['-2sigma']=event.limit*1000
     if event.quantileExpected>0.15 and event.quantileExpected<0.17:            
-        data[event.mh]['-1sigma']=event.limit
+        data[event.mh]['-1sigma']=event.limit*1000
     if event.quantileExpected>0.49 and event.quantileExpected<0.51:            
-        data[event.mh]['exp']=event.limit
+        data[event.mh]['exp']=event.limit*1000
     if event.quantileExpected>0.83 and event.quantileExpected<0.85:            
-        data[event.mh]['+1sigma']=event.limit
+        data[event.mh]['+1sigma']=event.limit*1000
     if event.quantileExpected>0.974 and event.quantileExpected<0.976:            
-        data[event.mh]['+2sigma']=event.limit
+        data[event.mh]['+2sigma']=event.limit*1000
 
 
 band68=ROOT.TGraphAsymmErrors()
@@ -100,10 +100,10 @@ for mass,info in data.iteritems():
         continue
     
 
-    band68.SetPoint(N,mass,info['exp'])
-    band95.SetPoint(N,mass,info['exp'])
-    line_plus1.SetPoint(N,mass,info['+1sigma'])
-    line_plus2.SetPoint(N,mass,info['+2sigma'])
+    band68.SetPoint(N,mass     ,info['exp'])
+    band95.SetPoint(N,mass     ,info['exp'])
+    line_plus1.SetPoint(N,mass ,info['+1sigma'])
+    line_plus2.SetPoint(N,mass ,info['+2sigma'])
     line_minus1.SetPoint(N,mass,info['-1sigma'])
     line_minus2.SetPoint(N,mass,info['-2sigma'])
 
