@@ -106,7 +106,7 @@ std::vector<TObject*> comparePreAndPostFits(std::vector<CutStr> types, std::stri
 
         if(dataHist){
             auto dataHist1 = proj(dataHist,"data");
-            p->addHist(dataHist1,"data");
+            p->addHist(dataHist1,"data",-1,1,4,20,1,true,true,true);
             double max = 0;
             for(int iB = 1; iB <= dataHist1->GetNbinsX();++iB) if(dataHist1->GetBinContent(iB) > max) max =dataHist1->GetBinContent(iB);
             p->setMinMax(.0001,3*max);
@@ -157,7 +157,7 @@ void plotCRBkgTests(int step = 0, bool topCR = true,  std::string outName = ""){
     else{
         inName =  "bkgInputsQGCR";
         hhFilename +="_QGCR";
-        srList = {"emu_L_I_full","e_L_LP_full","mu_L_LP_full","e_L_HP_full","mu_L_HP_full"};
+        srList = {"e_L_LP_full","mu_L_LP_full","e_L_HP_full","mu_L_HP_full"};
     }
 
     if(outName.size()){
@@ -174,8 +174,8 @@ void plotCRBkgTests(int step = 0, bool topCR = true,  std::string outName = ""){
 
     if(step== 1){
         if(outName.size())         outName += "_postPreComp.root";
-        writeables =  comparePreAndPostFits({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },filename,"limits/baseline_topSyst_reallybigptyunc_QGCR/PlotsPostFit_radHH/postFitMJJMVV_radHH_std",srList,{700,4000},true,true);
-        writeables =  comparePreAndPostFits({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },filename,"limits/baseline_topSyst_reallybigptyunc_QGCR/PlotsPostFit_radHH/postFitMJJMVV_radHH_std",srList,{30,210,100,150},false,true);
+        writeables =  comparePreAndPostFits({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },filename,"limits/nc_baseline_topSyst_qgsyst_kdebf_QGCR/PlotsPostFit_radHH/postFitMJJMVV_radHH_std",srList,{700,4000},true,true,false);
+        writeables =  comparePreAndPostFits({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },filename,"limits/nc_baseline_topSyst_qgsyst_kdebf_QGCR/PlotsPostFit_radHH/postFitMJJMVV_radHH_std",srList,{30,210,100,150},false,true,false);
     }
 
     Dummy d(outName);
