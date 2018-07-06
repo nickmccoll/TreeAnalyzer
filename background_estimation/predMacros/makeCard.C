@@ -24,7 +24,7 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         fPF = mainDir + "/bkgInputs/" + filename;
         break;
     case REG_TOPCR:
-        fPF = mainDir + "/bkgInputsTopCRTight/" + filename + "_TopCR";
+        fPF = mainDir + "/bkgInputsTopCR/" + filename + "_TopCR";
         break;
     case REG_QGCR:
         fPF = mainDir + "/bkgInputsQGCR/" + filename + "_QGCR";

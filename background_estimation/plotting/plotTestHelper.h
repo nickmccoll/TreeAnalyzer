@@ -359,7 +359,7 @@ std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filenam
 
         } else {
             auto dh1 = proj(dh,"MC");
-//            p->addHist(dh1,"MC");
+            p->addHist(dh1,"MC");
         }
 
         for(unsigned int iH = 0; iH < hs.size(); ++iH){
