@@ -7,6 +7,7 @@ macroLoc=$4
 
 mkdir ${catName}
 cd ${catName}
+mkdir plots
 RCMD="root -b -q '${macroLoc}/makeCard.C+(${runSR},${condSignal})'"
 eval $RCMD
 . comp.sh
@@ -16,3 +17,5 @@ if [ "${runSR}" = "0" ]; then
     eval $RCMD
 fi
 cd ${catName}
+RCMD="text2workspace.py combinedCard.txt -o combined.root"
+eval $RCMD
