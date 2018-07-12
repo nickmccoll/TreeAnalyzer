@@ -368,7 +368,6 @@ public:
                 StatTesterAnalyzer * a= 0;
                 if(useBuiltInToys){
                     auto bins = getBins(cont,iB);
-                    std::cout << iB <<" "<< bins.first<<" "<<bins.second<<std::endl;
                     std::vector<StatTesterAnalyzer::ModelAndData> toys; toys.reserve(toyFits.size());
                     for(unsigned int iT = 0; iT < toyFits.size(); ++iT ){
                         toys.emplace_back((TH1D*)makeProjection(toyFits[iT],std::string("toyDataFit_")+ASTypes::int2Str(iT),s,iB,bins.first,bins.second),
