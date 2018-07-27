@@ -33,6 +33,9 @@ public:
      std::vector<float>			 * dRnorm   = new std::vector<float> ;
      std::vector<float>			 * PtRatioLepAct   = new std::vector<float> ;
 
+     std::vector<float>          * sc_act_o_pt = new std::vector<float> ;
+     std::vector<float>          * sc_dr_act   = new std::vector<float> ;
+
 	//objects created in process
     ElectronCollection electrons;
 

@@ -25,6 +25,8 @@ ElectronReader::~ElectronReader(){
     delete id        ;
     delete dRnorm    ;
     delete PtRatioLepAct;
+    delete sc_act_o_pt;
+    delete sc_dr_act;
 }
 
 void ElectronReader::setup(TreeReadingWrapper * wrapper){
@@ -43,6 +45,8 @@ void ElectronReader::setup(TreeReadingWrapper * wrapper){
     wrapper->setBranchAddressPre(branchName,"id"       ,&id       );
     wrapper->setBranchAddressPre(branchName,"dRnorm"       ,&dRnorm       );
     wrapper->setBranchAddressPre(branchName,"PtRatioLepAct"       ,&PtRatioLepAct       );
+    wrapper->setBranchAddressPre(branchName,"sc_act_o_pt"       ,&sc_act_o_pt       );
+    wrapper->setBranchAddressPre(branchName,"sc_dr_act"       ,&sc_dr_act       );
 }
 
 void ElectronReader::processVars() {
