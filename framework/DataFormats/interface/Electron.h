@@ -27,7 +27,6 @@ public :
     float mvaID      () const;
     size  mvaIDCat   () const;
     float eaRelISO   () const;
-    float eaRelISO   () const;
     float sc_act_o_pt() const;
     float sc_dr_act  () const;
 
