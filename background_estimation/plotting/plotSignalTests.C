@@ -106,19 +106,20 @@ void test2DFits(std::string name, std::string filename, std::string fitName,bool
             if(can == 0) return;
             std::cout <<"fl: "<<can<<" "<<std::endl;
             can->GetYaxis()->SetTitle(name.c_str());
+            can->GetXaxis()->SetTitle(sigMCS.title.c_str());
             list.push_back(can);
         };
         std::vector<TObject*> paramPads;
         auto vX=[&](const std::string& v )->std::string{ return v +MOD_MJ;};
         auto vY=[&](const std::string& v )->std::string{ return v +MOD_MR;};
-        addGraph(vX("mean"  ), paramPads);
-        addGraph(vX("sigma" ), paramPads);
-        addGraph(vX("alpha" ), paramPads);
-        addGraph(vX("alpha2"), paramPads);
-        addGraph(vX("n"     ), paramPads);
-        addGraph(vX("n2"    ), paramPads);
-        addGraph(vX("slope" ), paramPads);
-        addGraph(vX("fE"    ), paramPads);
+//        addGraph(vX("mean"  ), paramPads);
+//        addGraph(vX("sigma" ), paramPads);
+//        addGraph(vX("alpha" ), paramPads);
+//        addGraph(vX("alpha2"), paramPads);
+//        addGraph(vX("n"     ), paramPads);
+//        addGraph(vX("n2"    ), paramPads);
+//        addGraph(vX("slope" ), paramPads);
+//        addGraph(vX("fE"    ), paramPads);
 
         addGraph(vY("mean_p1" ), paramPads);
         addGraph(vY("sigma_p1" ), paramPads);
@@ -131,11 +132,10 @@ void test2DFits(std::string name, std::string filename, std::string fitName,bool
         addGraph(vY("n2"    ), paramPads);
 
 
-
-        //        Drawing::drawAll(mcPads, (s + ": MC").c_str(),"COLZ");
-        //        Drawing::drawAll(pdfPads, (s + ": PDF").c_str(),"COLZ");
         TCanvas * c =Drawing::drawAll(compPads, (s + "_COMP").c_str());
         TCanvas * c1 =Drawing::drawAll(paramPads, (s + "_params").c_str());
+        c->SetTitle((s + "_COMP").c_str());
+        c1->SetTitle((s + "_params").c_str());
         writeables.push_back(c);
         writeables.push_back(c1);
 
@@ -160,13 +160,63 @@ void plotYields(std::string name, std::string filename,std::string fitName, cons
             if(!can) fo->GetObject(name.c_str(),can);
             if(!can) return;
             can->GetYaxis()->SetTitle(s.c_str());
+            can->GetXaxis()->SetTitle(sigMCS.title.c_str());
             list.push_back(can);
         };
 
         addGraph("yield", paramPads);
     }
     auto * c = Drawing::drawAll(paramPads,"Yields");
+    c->SetTitle((name+"_yields").c_str());
+    c->SetName((name+"_yields").c_str());
     writeables.push_back(c);
+
+}
+
+void plotEfficiencies(std::string name, std::string filename,std::string fitName) {
+//    gROOT->SetBatch(true);
+    Plotter * p = new Plotter; //stupid CINT bugfix.....
+    std::vector<TObject*> paramPads;
+    double inclusiveN  = 1000*35.9; //1000 fb x lumi
+//    inclusiveN *= 2*0.5824*(.2137+.002619); //BR to bbVV
+    inclusiveN *= 2*0.5824*(.2137); //BR to bbWW
+    inclusiveN *= 2*.676*(.216+.108*.3524);//BR of WW to he, hmu or htau where the tau is leptonic
+    for(auto& l : lepCats){
+        if(l == lepCats[LEP_EMU]) continue;
+        for(auto& p : purCats){
+            if(p == purCats[PURE_I]) continue;
+            for(auto& h : hadCuts){
+                if(h != hadCuts[HAD_FULL]) continue;
+                Plotter * plot = new Plotter();
+                for(auto& b : btagCats){
+                    std::string s = l+"_"+b+"_"+p+"_"+h;
+                    TFile * fo = new TFile((filename+"_"+name+"_"+s+"_"+fitName+".root").c_str(),"read");
+                    if(fo == 0) continue;
+                    TGraphErrors * gr= 0;
+                    fo->GetObject("yield",gr);
+                    if(gr == 0) continue;
+                    gr->GetXaxis()->SetTitle(sigMCS.title.c_str());
+                    gr->GetYaxis()->SetTitle("efficiency");
+                    for(int iP = 0; iP < gr->GetN(); ++iP){
+                        double x,y,ey;
+                        gr->GetPoint(iP,x,y);
+                        ey = gr->GetErrorY(iP);
+                        gr->SetPoint(iP,x,y/inclusiveN);
+                        gr->SetPointError(iP,0,ey/inclusiveN);
+                    }
+                    plot->addGraph(gr,b.title);
+                }
+                plot->setMinMax(0,.1);
+                plot->addText(l.title+", "+p.title,0.1454849,0.866087,0.04);
+                plot->setLegendPos(0.5016722,0.7286957,0.9682274,0.9165217);
+                auto c = plot->draw(false,(name+"_"+l+"_"+p+"_"+h+"_sigeff") .c_str());
+                writeables.push_back(c);
+            }
+        }
+
+    }
+//    gROOT->SetBatch(false);
+
 
 }
 
@@ -182,10 +232,11 @@ public:
     Dummy(const std::string& outName = "") : outName(outName) {};
     ~Dummy() {
         if(outName.size()){
-            TFile * f = new TFile(outName.c_str(),"recreate");
+            TFile * f = new TFile((outName+".root").c_str(),"recreate");
             f->cd();
             for(auto * w : writeables){
                 w->Write();
+                w->Print((outName +"_"+w->GetTitle() +".pdf").c_str());
             }
             f->Close();
         }
@@ -201,24 +252,25 @@ void plotSignalTests(int cat = 0, bool doCond = true, std::string outName = ""){
     if(outName.size()) outName += doCond ? std::string("/signal") : std::string("/signalNoCond");
     switch(cat) {
     case 0:
-        if(outName.size()) outName += "_yield.root";
-        plotYields(radionSig,filename,"yield",{"emu_LMT_I_full","e_L_LP_full","e_M_LP_full","e_T_LP_full","e_L_HP_full","e_M_HP_full","e_T_HP_full","mu_L_LP_full","mu_M_LP_full","mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
+        if(outName.size()) outName += "_yield";
+        plotYields(radionSig,filename,"yield",{"e_L_LP_full","e_M_LP_full","e_T_LP_full","e_L_HP_full","e_M_HP_full","e_T_HP_full","mu_L_LP_full","mu_M_LP_full","mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
+        plotEfficiencies(radionSig,filename,"yield" );
         break;
     case 1:
-        if(outName.size()) outName += "_MJJ_fit1stIt.root";
+        if(outName.size()) outName += "_MJJ_fit1stIt";
         writeables = testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit1stIt",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
         break;
     case 2:
-        if(outName.size()) outName += "_MJJ_fit.root";
+        if(outName.size()) outName += "_MJJ_fit";
         writeables = testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
         break;
     case 3:
-        if(outName.size()) outName += "_MVV_fit.root";
+        if(outName.size()) outName += "_MVV_fit";
         if(doCond) writeables =  testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_I_ltmb","mu_LMT_I_ltmb"});
         else  writeables =  testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_LP_full","e_LMT_HP_full","mu_LMT_LP_full","mu_LMT_HP_full"});
         break;
     case 4:
-        if(outName.size()) outName += "_2D_fit.root";
+        if(outName.size()) outName += "_2D_fit";
         test2DFits(radionSig,filename,"2D_fit",false,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},outName);
         break;
     }

@@ -2,7 +2,12 @@
 #include "../predTools/StatTester.h"
 #include <vector>
 #include "TFile.h"
+#include "TTree.h"
 #include "TStyle.h"
+#include "TGraph.h"
+#include "TArrow.h"
+#include "TFitResultPtr.h"
+#include "TFitResult.h"
 #include "HistoPlotting/include/Plotter.h"
 #include "HistoPlotting/include/PlotTools.h"
 #include "plotTestHelper.h"
@@ -15,10 +20,11 @@ public:
     Dummy(const std::string& outName = "") : outName(outName) {};
     ~Dummy() {
         if(outName.size()){
-            TFile * f = new TFile(outName.c_str(),"recreate");
+            TFile * f = new TFile((outName+".root").c_str(),"recreate");
             f->cd();
             for(auto * w : writeables){
                 w->Write();
+                w->Print((outName +"_"+w->GetTitle() +".pdf").c_str());
             }
             f->Close();
         }
@@ -38,6 +44,7 @@ struct DataPlotPrefs {
     std::vector<double> bins; // if bin+1 < bin, it will skip [bin,bin+1], if bin +1 == bin it will skip [bin,bin+1] and [bin+1,bin+2]
     bool binInY = true;
     std::vector<std::string> sels;
+    std::vector<std::string> titles;
 
 
     int rebinFactor = 1; //-1 means go to rebins...1 means dont rebin...2+ is standard grouping
@@ -258,7 +265,9 @@ public:
 
     std::vector<TObject*> makePlots() {
         std::vector<TObject*> writeables;
-        for(const auto& s :prefs.sels){
+        for(unsigned int iS = 0; iS < prefs.sels.size(); ++iS){
+            const auto& s = prefs.sels[iS];
+            const auto& st = prefs.titles[iS];
             HistContainter cont;
             getBackgrounds(s,cont);
             if(prefs.modelType == MOD_POST && prefs.addErrorBars)
@@ -307,8 +316,10 @@ public:
                 p->setXTitle( (prefs.binInY ? hbbMCS : hhMCS) .title.c_str());
                 p->setYTitle((std::string("N. of events / ") + flt2Str(binWidth) +" [GeV]").c_str() );
                 p->setCMSLumi();
+                p->addText(st,0.1789298,0.8390655,0.04);
 
                 if(prefs.doLog) p->setMinMax(0.1,1000 );
+                else if(cont.data) p->setMinMax(0,(cont.data->GetMaximum()  + std::sqrt(cont.data->GetMaximum()))*1.5);
                 if(prefs.addRatio){
                     p->setBotMinMax(0,2);
                     p->setYTitleBot((std::string("N/N(") + modTitles[prefs.modelType] +")").c_str());
@@ -437,6 +448,199 @@ std::vector<TObject*> doStatTest(const DataPlotPrefs& dataPlot, const std::strin
     return a.makeStatTest(outNamePrefix);
 }
 
+void doGlobChi2(std::vector<TObject*>& writeables, const std::string& limitBaseName, const double mH = 2000, const std::string& toyN = "toys"){
+    TFile * fd = new TFile((limitBaseName+"/higgsCombineTest.GoodnessOfFit.mH"+ASTypes::flt2Str(2000)+".root").c_str(),"read");
+    if(!fd){
+        std::cout <<"No data file!"<<std::endl;
+    }
+    TTree * dataTree = 0;
+    fd->GetObject("limit",dataTree);
+    if(!dataTree){
+        std::cout <<"No data tree!"<<std::endl;
+    }
+    double dl=0;
+    dataTree->SetBranchAddress("limit",&dl);
+    dataTree->GetEntry(0);
+    double dataLimit = dl;
+    fd->Close();
+
+    TFile * ft = new TFile((limitBaseName+"/higgsCombineTest.GoodnessOfFit.mH"+ASTypes::flt2Str(2000)+"."+toyN+".root").c_str(),"read");
+    if(!ft) return ;
+    TTree * toyTree = 0;
+    ft->GetObject("limit",toyTree);
+    if(!toyTree) return ;
+
+    double minT = toyTree->GetMinimum("limit");
+    double maxT = toyTree->GetMaximum("limit");
+    int nT = toyTree->GetEntries()/25;
+    double width = (maxT - minT)/float(nT);
+    TH1 * toyH = new TH1F("toyGlobChi2",";test statistic; N. of toys",nT, minT -width , maxT+width);
+    toyTree->Draw("limit>>+toyGlobChi2","","goff");
+    toyH->SetDirectory(0);
+    TH1::AddDirectory(kFALSE);
+
+    Plotter * p = new Plotter();
+    p->addStackHist(toyH,"toy data");
+    auto c = p->draw(false,"globChi2");
+    c->SetTitle("globChi2");
+    double yV =float(toyH->GetMaximum())*.75;
+    TArrow * arrow = new TArrow(dataLimit,yV,dataLimit,0);
+    arrow->Draw();
+    writeables.push_back(c);
+    ft->Close();
+}
+
+void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseName ){
+
+
+    auto makeBiasPlot = [&](const std::string& filename, const std::string& hName, const double rV, TFitResultPtr& fitres) ->TH1*  {
+        TFile * f = new TFile(filename.c_str(),"read");
+        if(!f) return 0;
+        TTree * tree = 0;
+        f->GetObject("tree_fit_sb",tree);
+        if(!tree){return 0;}
+        double fr=0;
+        double frerr=0;
+        tree->SetBranchAddress("r",&fr);
+        tree->SetBranchAddress("rErr",&frerr);
+        std::vector<double> biases;
+        for(unsigned int iE = 0; tree->GetEntry(iE); ++iE ){
+            if(frerr == 0) continue;
+            if(std::fabs((fr - rV)/frerr ) > 5) continue;
+            biases.push_back( (fr - rV)/frerr   );
+        }
+        f->Close();
+
+        TH1 * h = new TH1D(hName.c_str(),";signal strength pull",10, -5,5);
+        h->SetDirectory(0);
+        TH1::AddDirectory(kFALSE);
+        for(auto b : biases) h->Fill(b);
+        auto c = new TCanvas(hName.c_str(),hName.c_str());
+        h->Draw();
+        fitres = h->Fit("gaus","S");;
+        writeables.push_back(c);
+//        std::sort(biases.begin(),biases.end(), [](const double a, const double b){return a < b;});
+//        double nToys = biases.size();
+//        h->SetDirectory(0);
+//        TH1::AddDirectory(kFALSE);
+//        for(auto b : biases) h->Fill(b);
+//        std::cout << hName <<" "<< biases[nToys*0.5]<<std::endl;
+//        return h;
+
+        return h;
+
+    };
+
+    std::vector<std::pair<int,double>> massRs = {{1000,0.0600585},{1600,0.0239257},{2500,0.0141601}};
+    std::vector<std::pair<int,double>> massRx2s = {{1000,0.120117},{1600,0.0478514},{2500,0.0283202}};
+    std::vector<std::pair<int,double>> massRx5s = {{1000,0.3002925},{1600,0.1196285},{2500,0.0708005}};
+    Plotter * p = new Plotter();
+    Plotter * pw = new Plotter();
+
+    std::vector<std::vector<double>> means(massRs.size());
+    std::vector<std::vector<double>> meanErs(massRs.size());
+
+    auto doSet = [&] (const std::string& label,const std::string& plotlabel, const std::vector<std::pair<int,double>>& massRs ){
+        TGraphErrors * gr = new TGraphErrors();
+        TGraphErrors * grw = new TGraphErrors();
+        int iP = 0;
+
+         for(unsigned int iM = 0; iM < massRs.size(); ++iM){
+             const auto& mr = massRs[iM];
+            TFitResultPtr fitres ;
+            auto dist = makeBiasPlot(limitBaseName + "/biasInput_"+label+"_"+int2Str(mr.first)+".root",
+                    "biasDist_"+label+"_"+int2Str(mr.first), mr.second,fitres);
+            if(dist){
+                auto pars = fitres->GetParams();
+                auto errs = fitres->GetErrors();
+                gr->SetPoint(iP,double(mr.first),pars[1]);
+                gr->SetPointError(iP,0,errs[1]);
+                grw->SetPoint(iP,double(mr.first),pars[2]);
+                grw->SetPointError(iP,0,errs[2]);
+                means[iM].push_back(pars[1]);
+                meanErs[iM].push_back(errs[1]);
+            }
+            ++iP;
+        }
+        if(iP){
+            p->addGraph(gr,plotlabel);
+            pw->addGraph(grw,plotlabel);
+        }
+    };
+
+//   doSet("prefit"    ,"prefit b-model: r=excluded"   ,massRs);
+   doSet("postfit"   ,"postfit b-model: r=excluded"  ,massRs);
+//   doSet("prefit_t2" ,"prefit b-model: r=2*excluded" ,massRx2s);
+   doSet("postfit_t2","postfit b-model: r=2*excluded",massRx2s);
+   doSet("postfit_t5","postfit b-model: r=5*excluded",massRx5s);
+
+   p->setYTitle("signal strength bias");
+    p->setXTitle((sigMCS.title).c_str());
+    auto c = p->draw(false,"signalInjectTest_bias");
+    c->SetTitle("signalInjectTest_bias");
+    writeables.push_back(c);
+
+     pw->setYTitle("signal strength width");
+     pw->setXTitle((sigMCS.title).c_str());
+     auto cw = pw->draw(false,"signalInjectTest_width");
+     cw->SetTitle("signalInjectTest_width");
+     writeables.push_back(cw);
+
+     std::cout << std::endl << std::endl;
+     for(unsigned int iM = 0; iM < massRs.size(); ++iM){
+         std::cout << int2Str(massRs[iM].first) << "&";
+         for(unsigned int iR = 0; iR < means[iM].size(); ++iR ){
+             std::cout <<TString::Format("$%0.2f\\pm%0.2f$",means[iM][iR],meanErs[iM][iR]);
+             if(iR+1 ==  means[iM].size()) std::cout <<" \\\\ \n";
+             else std::cout <<" & ";
+         }
+
+     }
+     std::cout << std::endl << std::endl;
+
+
+
+}
+
+void doUncPlots(std::vector<TObject*>& writeables, const std::string& limitBaseName){
+    TFile * fd = new TFile((limitBaseName+"/plots.root").c_str(),"read");
+    if(!fd){
+        std::cout <<"No plots file!"<<std::endl;
+        return;
+    }
+
+
+    auto procCan =[&](const std::string& canN){
+        TCanvas * nuisances = 0;
+        fd->GetObject(canN.c_str(),nuisances);
+        if(!nuisances){
+            std::cout <<"No nuisances!"<<std::endl;
+            return;
+        }
+        nuisances->SetLeftMargin(0.06742323);
+        nuisances->SetRightMargin(0.01535381);
+        nuisances->SetTopMargin(0.04210526);
+        nuisances->SetBottomMargin(0.4147368);
+        nuisances->Draw();
+        nuisances->SetWindowSize(1500,500);
+        auto leg = (TLegend*)nuisances->FindObject("TPave");
+        leg->SetX1NDC(0.5447263);
+        leg->SetY1NDC(0.7936842);
+        leg->SetX2NDC(0.8351135);
+        leg->SetY2NDC(0.9347368);
+        leg->Draw();
+        writeables.push_back(nuisances);
+    };
+    procCan("nuisances");
+    procCan("post_fit_errs");
+
+
+    fd->Close();
+    return;
+
+
+}
+
 void runPostFit(const std::string& inName, const std::string& outName, double fixR=0){
     PostFitter fitter(inName,fixR);
     //        fitter.addSignal("radHH");
@@ -466,20 +670,23 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  std::string limitBaseName 
 
     std:: string inName =  "bkgInputs" ;
     auto srList = getSRList(reg);
+    auto srListTitles = getSRListTitles(reg);
+    std::string outName = limitBaseName +"/plots/";
 
     if(reg == REG_TOPCR){
         inName =  "bkgInputsTopCR";
         hhFilename +="_TopCR";
         limitBaseName +="_TopCR";
+        outName=limitBaseName+"/plots/TopCR_";
     }
     else if(reg == REG_QGCR){
         inName =  "bkgInputsQGCR";
         hhFilename +="_QGCR";
         limitBaseName +="_QGCR";
+        outName=limitBaseName+"/plots/QGCR_";
         btagCats = qgBtagCats;
 
     }
-    std::string outName = limitBaseName +"/plots/";
     std::string filename = inName +"/"+hhFilename;
     std::string postFitFilename = limitBaseName +"/postFit.root";
 
@@ -489,13 +696,14 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  std::string limitBaseName 
 
 
     if(step== 1){ //prefit
-        if(outName.size())         outName += "prefit_dataComp.root";
+        if(outName.size())         outName += "prefit_dataComp";
 
         DataPlotPrefs hhPlot;
         hhPlot.modelType = MOD_PRE;
         hhPlot.bins = {30,210,100,150};
         hhPlot.binInY = false;
         hhPlot.sels = srList;
+        hhPlot.titles = srListTitles;
         writeables = doDataPlot(hhPlot,filename,postFitFilename);
         DataPlotPrefs hbbPlot = hhPlot;
         hbbPlot.bins = {700,4000};
@@ -506,7 +714,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  std::string limitBaseName 
     }
 
     if(step== 2){ //postfit
-        if(outName.size())         outName += "postfit_dataComp.root";
+        if(outName.size())         outName += "postfit_dataComp";
 
         DataPlotPrefs hhPlot;
         hhPlot.modelType = MOD_POST;
@@ -518,6 +726,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  std::string limitBaseName 
         }
         hhPlot.binInY = false;
         hhPlot.sels =  srList;
+        hhPlot.titles = srListTitles;
+
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
         //        hhPlot.addData = false;
@@ -541,6 +751,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  std::string limitBaseName 
         }
         hhTest.binInY = false;
         hhTest.sels = srList;
+        hhTest.titles = srListTitles;
         hhTest.addErrorBars =true;
         writeables = doStatTest(hhTest,filename,postFitFilename,outName + "statTest");
 
@@ -557,8 +768,20 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  std::string limitBaseName 
             writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         }
 
-        Dummy d(outName+ "statTest_summary.root");
+        Dummy d(outName+ "statTest_summary");
 
+    }
+
+    if(step==4){ //summary plots
+        if(outName.size())         outName += "summaryPlots";
+        doGlobChi2(writeables,limitBaseName);
+        doUncPlots(writeables,limitBaseName);
+        Dummy d(outName);
+    }
+    if(step==5){ //bias test
+        if(outName.size())         outName += "biasTest";
+        doBiasTest(writeables,limitBaseName);
+        Dummy d(outName);
     }
 
 

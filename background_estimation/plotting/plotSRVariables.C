@@ -32,18 +32,18 @@ void makeDataDistributions(const std::string& name, const std::string& filename,
 }
 
 void compilePlots(const std::string& prefix, const std::string& mcFile, const std::string& dataFile,  const std::vector<std::string> signalFiles,  const std::vector<std::string> signalNames){
-    TFile * fd = new TFile((prefix+dataFile).c_str(),"READ");
-    TFile * fm = new TFile((prefix+mcFile  ).c_str(),"READ");
+    TFile * fd = new TFile((dataFile).c_str(),"READ");
+    TFile * fm = new TFile((mcFile  ).c_str(),"READ");
     std::vector<TFile*> sFs;
     for(const auto& f :signalFiles)
-        sFs.push_back(new TFile((prefix+f).c_str(),"READ"));
+        sFs.push_back(new TFile((f).c_str(),"READ"));
 
 
     for(unsigned int iV = 1; iV <= vars.size(); ++iV){
         Plotter * p = new Plotter;
 
         for(unsigned int iS = 0; iS < signalFiles.size(); ++iS){
-            TFile * f = new TFile((prefix+signalFiles[iS]).c_str(),"READ");
+            TFile * f = sFs[iS];
             TH1 * hm = 0;
             f->GetObject((std::string("all_loose_")+vars[iV].varName+"_"+vars[iV].varName).c_str(),hm);
             if(hm == 0) continue;
@@ -99,9 +99,9 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
 }
 
 void categoryPlots(const std::string& prefix, const std::string& mcFile){
-    TFile * fm = new TFile((prefix+mcFile  ).c_str(),"READ");
+    TFile * fm = new TFile((mcFile  ).c_str(),"READ");
 
-    for(unsigned int iV = 1; iV <= vars.size(); ++iV){
+    for(unsigned int iV = 0; iV < vars.size(); ++iV){
         Plotter * p = new Plotter;
 
 
@@ -149,7 +149,25 @@ void categoryPlots(const std::string& prefix, const std::string& mcFile){
 
 #endif
 
-void plotSRVariables(int step, std::string tree, std::string name){
+void plotSRVariables( int step, int reg,std::string tree, std::string name){
+    std::string prefix = "srVarDists/";
+    if(reg == REG_TOPCR){
+        prefix+="TopCR_";
+        hhFilename += "_TopCR";
+        blindCut.cut = "(1.0)";
+        hadCuts[HAD_NONE].cut = nSJs.cut;
+        hadCuts[HAD_LB].cut   = nSJs.cut+"&&"+wjjBC.cut;
+        hadCuts[HAD_LT].cut   = nSJs.cut+ "&&"+abV.cut;
+        hadCuts[HAD_LTMB].cut = nSJs.cut ;
+        hadCuts[HAD_FULL].cut = nSJs.cut + "&&"+abV.cut+"&&"+wjjBC.cut;
+    } else if(reg==REG_QGCR){
+        prefix+="QGCR_";
+        btagCats = qgBtagCats;
+        hhFilename +="_QGCR";
+        blindCut.cut = "(1.0)";
+    }
+
+
     bool isData = ASTypes::strFind(tree,"data");
     std::string cut =hhRange.cut+"&&"+hbbRange.cut ;
     std::string out = "srVarDists/"+hhFilename;
@@ -167,21 +185,24 @@ void plotSRVariables(int step, std::string tree, std::string name){
 
 
     samps.emplace_back("all","1.0");
-    samps.emplace_back(processes[TTBAR],processes[TTBAR].cut);
-    samps.emplace_back(processes[WJETS],processes[WJETS].cut);
-    samps.emplace_back(processes[QCD],processes[QCD].cut);
-    samps.emplace_back(processes[OTHER],processes[OTHER].cut);
-    samps.emplace_back(bkgSels[BKG_QG],bkgSels[BKG_QG].cut);
-    samps.emplace_back(bkgSels[BKG_LOSTTW],bkgSels[BKG_LOSTTW].cut);
-    samps.emplace_back(bkgSels[BKG_MW],bkgSels[BKG_MW].cut);
-    samps.emplace_back(bkgSels[BKG_MT],bkgSels[BKG_MT].cut);
+    if(!isData){
+        samps.emplace_back(processes[TTBAR],processes[TTBAR].cut);
+        samps.emplace_back(processes[WJETS],processes[WJETS].cut);
+        samps.emplace_back(processes[QCD],processes[QCD].cut);
+        samps.emplace_back(processes[OTHER],processes[OTHER].cut);
+        samps.emplace_back(bkgSels[BKG_QG],bkgSels[BKG_QG].cut);
+        samps.emplace_back(bkgSels[BKG_LOSTTW],bkgSels[BKG_LOSTTW].cut);
+        samps.emplace_back(bkgSels[BKG_MW],bkgSels[BKG_MW].cut);
+        samps.emplace_back(bkgSels[BKG_MT],bkgSels[BKG_MT].cut);
+    }
+
 
     if(step==0){
         makeDataDistributions(name,out,tree,cut ,isData);
     }
     if(step==1){
-        compilePlots("srVarDists/",hhFilename+"_mc_srVarDistributions.root",hhFilename+"_data_srVarDistributions.root",
-                {hhFilename+"_m1000_srVarDistributions.root",hhFilename+"_m2500_srVarDistributions.root"}, {"#it{m}_{X}=1 TeV","#it{m}_{X}=2.5 TeV"});
+        compilePlots(prefix,out+"_mc_srVarDistributions.root",out+"_data_srVarDistributions.root",
+                {out+"_m1000_srVarDistributions.root",out+"_m2500_srVarDistributions.root"}, {"#it{m}_{X}=1 TeV","#it{m}_{X}=2.5 TeV"});
     }
-    if(step==2) categoryPlots("srVarDists/",hhFilename+"_mc_srVarDistributions.root");
+    if(step==2) categoryPlots(prefix,out+"_mc_srVarDistributions.root");
 }

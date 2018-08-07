@@ -24,6 +24,21 @@ std::vector<std::string> getSRList(REGION reg){
     return sels;
 }
 
+std::vector<std::string> getSRListTitles(REGION reg){
+    auto bcats = (reg == REG_QGCR ? qgBtagCats : btagCats);
+    std::vector<std::string> sels;
+    for(const auto& l :lepCats) for(const auto& b :bcats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(l == lepCats[LEP_EMU]) continue;
+        if(b == bcats[BTAG_LMT]) continue;
+        if(p == purCats[PURE_I]) continue;
+        if(h != hadCuts[HAD_FULL]) continue;
+        sels.emplace_back(l.title +", "+b.title+", "+p.title);
+    }
+    return sels;
+}
+
+
+
 
 std::vector<TObject*> test1DKern(std::string name, std::string filename,std::string var,const std::vector<std::string>& sels) {
     std::vector<TObject*> writeables;
@@ -110,15 +125,17 @@ std::vector<TObject*> test1DFits(std::string name, std::string filename, std::st
             if(can != 0) list.push_back(can);
 
         };
-        auto addGraph = [&](const std::string& name,std::vector<TObject*>& list){
+        auto addGraph = [&](const std::string& vname,std::vector<TObject*>& list){
             TGraphErrors * can= 0;
             if(ff){
-                ff->GetObject((name).c_str(),can);
+                ff->GetObject((vname).c_str(),can);
             }
-            if(!can) fo->GetObject(name.c_str(),can);
+            if(!can) fo->GetObject(vname.c_str(),can);
             if(!can) return;
-            can->GetYaxis()->SetTitle(name.c_str());
-            can->GetXaxis()->SetTitle( (ASTypes::strFind(fitName,"J") ? hhMCS.title : hbbMCS.title).c_str() );
+            can->GetYaxis()->SetTitle(vname.c_str());
+            std::string title = (ASTypes::strFind(fitName,"J") ? hhMCS.title : hbbMCS.title);
+            if(ASTypes::strFind(name,"HH") && ASTypes::strFind(fitName,"J")  ) title = sigMCS.title;
+            can->GetXaxis()->SetTitle( title.c_str() );
             list.push_back(can);
         };
 
