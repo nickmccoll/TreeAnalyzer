@@ -77,22 +77,22 @@ std::vector<CutStr > bkgSels = {
 
 enum LEPCats  {LEP_EMU, LEP_E, LEP_MU};
 std::vector<CutStr> lepCats = {
-        CutStr("emu","isMuon>=0"),
-        CutStr("e"  ,"isMuon==0"),
-        CutStr("mu" ,"isMuon==1")
+        CutStr("emu","isMuon>=0","electron or muon"),
+        CutStr("e"  ,"isMuon==0","electron"),
+        CutStr("mu" ,"isMuon==1","muon")
 };
 
 enum BTAGCats  {BTAG_LMT, BTAG_L, BTAG_M, BTAG_T};
 std::vector<CutStr > btagCats = {
-        CutStr("LMT","hbbCSVCat>=4"),
-        CutStr("L"  ,"hbbCSVCat==4"),
-        CutStr("M"  ,"hbbCSVCat==5"),
-        CutStr("T"  ,"hbbCSVCat==6")
+        CutStr("LMT","hbbCSVCat>=4","loose, medium or tight b-tagging"),
+        CutStr("L"  ,"hbbCSVCat==4","loose b-tagging"),
+        CutStr("M"  ,"hbbCSVCat==5","medium b-tagging"),
+        CutStr("T"  ,"hbbCSVCat==6","tight b-tagging")
 };
 
 std::vector<CutStr > qgBtagCats = {
-        CutStr("LMT","hbbCSVCat==1"),
-        CutStr("L"  ,"hbbCSVCat==1")
+        CutStr("LMT","hbbCSVCat==1","no b-tagging"),
+        CutStr("L"  ,"hbbCSVCat==1","no b-tagging")
 };
 
 CutStr inclBtagCat("I","hbbCSVCat>=0");
@@ -100,8 +100,8 @@ CutStr inclBtagCat("I","hbbCSVCat>=0");
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
         CutStr("I","1.0"),
-        CutStr("LP" ,"wjjTau2o1>=0.55"),
-        CutStr("HP"  ,"wjjTau2o1<0.55")
+        CutStr("LP" ,"wjjTau2o1>=0.55","low purity"),
+        CutStr("HP"  ,"wjjTau2o1<0.55","high purity")
 };
 
 enum HADCuts  {HAD_NONE,HAD_LB,HAD_LT,HAD_LTMB,HAD_FULL};
@@ -123,6 +123,8 @@ std::vector<int> signalMassBins = {600,800,1000,1200,1400,1600,1800,2000,2500,30
 std::string MOD_MJ("MJ");
 std::string MOD_MR("MR");
 std::string MOD_MS("MH");
+
+CutStr sigMCS("mx","mx","#it{m}_{#it{X}} [GeV]");
 
 
 }
