@@ -7,17 +7,17 @@ from tdrstyle import *
 parser = optparse.OptionParser()
 parser.add_option("-o","--output",dest="output",default='limitPlot.root',help="Limit plot")
 
-parser.add_option("-x","--minX",dest="minX",type=float,help="minimum x",default=1000.0)
-parser.add_option("-X","--maxX",dest="maxX",type=float,help="maximum x",default=5000.0)
-parser.add_option("-y","--minY",dest="minY",type=float,help="minimum y",default=0.00001)
-parser.add_option("-Y","--maxY",dest="maxY",type=float,help="maximum y",default=1000)
+parser.add_option("-x","--minX",dest="minX",type=float,help="minimum x",default=800.0)
+parser.add_option("-X","--maxX",dest="maxX",type=float,help="maximum x",default=3000.0)
+parser.add_option("-y","--minY",dest="minY",type=float,help="minimum y",default=1)
+parser.add_option("-Y","--maxY",dest="maxY",type=float,help="maximum y",default=10000000)
 parser.add_option("-b","--blind",dest="blind",type=int,help="Not do observed ",default=1)
 parser.add_option("-l","--log",dest="log",type=int,help="Log plot",default=1)
 
 parser.add_option("-t","--titleX",dest="titleX",default='M_{X} [GeV]',help="title of x axis")
-parser.add_option("-T","--titleY",dest="titleY",default='#sigma x BR(X #rightarrow WW) [pb]  ',help="title of y axis")
+parser.add_option("-T","--titleY",dest="titleY",default='#sigma x BR(X #rightarrow HH) [fb]  ',help="title of y axis")
 
-parser.add_option("-p","--period",dest="period",default='2015',help="period")
+parser.add_option("-p","--period",dest="period",default='2016',help="period")
 parser.add_option("-f","--final",dest="final",type=int, default=1,help="Preliminary or not")
 
 
