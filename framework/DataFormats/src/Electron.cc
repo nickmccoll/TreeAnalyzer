@@ -4,18 +4,22 @@
 
 namespace TAna {
 //--------------------------------------------------------------------------------------------------
-void Electron::addElectronInfo(float scEta, float mvaID, ASTypes::size8 mvaIDCat, float eaRelISO, ASTypes::size16 id) {
+void Electron::addElectronInfo(float scEta, float mvaID, ASTypes::size8 mvaIDCat, float eaRelISO, ASTypes::size16 id, float sc_act_o_pt, float sc_dr_act) {
     _scEta   =  scEta   ;
     _mvaID   =  mvaID   ;
     _mvaIDCat=  mvaIDCat   ;
     _eaRelISO=  eaRelISO;
     _id      =  id      ;
+    _sc_act_o_pt = sc_act_o_pt;
+    _sc_dr_act = sc_dr_act;
 }
 //--------------------------------------------------------------------------------------------------
 float Electron::scEta      () const {return _scEta;}
 float Electron::mvaID      () const {return _mvaID;}
 size  Electron::mvaIDCat   () const {return _mvaIDCat;}
 float Electron::eaRelISO   () const {return _eaRelISO;}
+float Electron::sc_act_o_pt() const {return _sc_act_o_pt;}
+float Electron::sc_dr_act  () const {return _sc_dr_act;}
 bool  Electron::passVetoID () const {return FillerConstants::doesPass(_id,FillerConstants::ELID_CUT_VETO);}
 bool  Electron::passLooseID() const {return FillerConstants::doesPass(_id,FillerConstants::ELID_CUT_LOOSE);}
 bool  Electron::passMedID  () const {return FillerConstants::doesPass(_id,FillerConstants::ELID_CUT_MED);}

@@ -16,23 +16,21 @@ private:
 
 public:
 	//branches from the tree
-     std::vector<float>          * pt       = new std::vector<float> ;
-     std::vector<float>          * eta      = new std::vector<float> ;
-     std::vector<float>          * phi      = new std::vector<float> ;
-     std::vector<ASTypes::int8  >* q        = new std::vector<ASTypes::int8  >;
-     std::vector<float >         * scEta    = new std::vector<float >;
-     std::vector<float >         * d0       = new std::vector<float >;
-     std::vector<float >         * dz       = new std::vector<float >;
-     std::vector<float >         * sip3D    = new std::vector<float >;
-     std::vector<float >         * mvaID    = new std::vector<float >;
-     std::vector<ASTypes::size8 >* mvaID_cat= new std::vector<ASTypes::size8 >;
-     std::vector<float >         * miniIso  = new std::vector<float >;
-     std::vector<float >         * eaRelISO = new std::vector<float >;
-     std::vector<ASTypes::size16>* id       = new std::vector<ASTypes::size16>;
-
-     std::vector<float>			 * dRnorm   = new std::vector<float> ;
-     std::vector<float>			 * PtRatioLepAct   = new std::vector<float> ;
-
+     std::vector<float>          * pt          = new std::vector<float> ;
+     std::vector<float>          * eta         = new std::vector<float> ;
+     std::vector<float>          * phi         = new std::vector<float> ;
+     std::vector<ASTypes::int8  >* q           = new std::vector<ASTypes::int8  >;
+     std::vector<float >         * scEta       = new std::vector<float >;
+     std::vector<float >         * d0          = new std::vector<float >;
+     std::vector<float >         * dz          = new std::vector<float >;
+     std::vector<float >         * sip3D       = new std::vector<float >;
+     std::vector<float >         * mvaID       = new std::vector<float >;
+     std::vector<ASTypes::size8 >* mvaID_cat   = new std::vector<ASTypes::size8 >;
+     std::vector<float >         * miniIso     = new std::vector<float >;
+     std::vector<float >         * eaRelISO    = new std::vector<float >;
+     std::vector<ASTypes::size16>* id          = new std::vector<ASTypes::size16>;
+     std::vector<float>			 * dRnorm      = new std::vector<float> ;
+     std::vector<float>			 * lepAct_o_pt = new std::vector<float> ;
      std::vector<float>          * sc_act_o_pt = new std::vector<float> ;
      std::vector<float>          * sc_dr_act   = new std::vector<float> ;
 

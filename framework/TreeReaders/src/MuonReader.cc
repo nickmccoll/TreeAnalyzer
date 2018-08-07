@@ -21,7 +21,7 @@ MuonReader::~MuonReader(){
     delete dBRelISO  ;
     delete id        ;
     delete dRnorm    ;
-    delete PtRatioLepAct;
+    delete lepAct_o_pt;
 
 }
 
@@ -36,9 +36,8 @@ void MuonReader::setup(TreeReadingWrapper * wrapper){
     wrapper->setBranchAddressPre(branchName,"miniIso"  ,&miniIso  );
     wrapper->setBranchAddressPre(branchName,"dBRelISO" ,&dBRelISO );
     wrapper->setBranchAddressPre(branchName,"id"       ,&id       );
-
-    wrapper->setBranchAddressPre(branchName,"dRnorm"       ,&dRnorm       );
-    wrapper->setBranchAddressPre(branchName,"PtRatioLepAct"       ,&PtRatioLepAct       );
+    wrapper->setBranchAddressPre(branchName,"dRnorm"     ,&dRnorm     ,false);
+    wrapper->setBranchAddressPre(branchName,"lepAct_o_pt",&lepAct_o_pt,false);
 
 }
 
@@ -46,7 +45,8 @@ void MuonReader::processVars() {
     muons.clear();
     for(unsigned int iO = 0; iO < pt->size(); ++iO){
         muons.emplace_back(ASTypes::CylLorentzVectorF(pt->at(iO),eta->at(iO),phi->at(iO),0),iO,
-                q->at(iO),d0->at(iO),dz->at(iO),sip3D->at(iO),miniIso->at(iO),dRnorm->at(iO),PtRatioLepAct->at(iO));
+                q->at(iO),d0->at(iO),dz->at(iO),sip3D->at(iO),miniIso->at(iO),
+                dRnorm->size() ? dRnorm->at(iO) : 0,lepAct_o_pt->size() ? lepAct_o_pt->at(iO) : 0);
         muons.back().addMuonInfo(dBRelISO->at(iO),id->at(iO));
     }
     std::sort(muons.begin(), muons.end(), PhysicsUtilities::greaterPT<Muon>());
