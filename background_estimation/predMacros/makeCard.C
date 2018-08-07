@@ -148,7 +148,7 @@ void go(const std::string& signalName, const std::string& filename, const std::s
                         {{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},{{"CMS_scale_j",1},{"CMS_scale_MET",1}},{{"CMS_res_j",1},{"CMS_res_MET",1}}, b == btagCats[BTAG_L],MOD_MS);
             }
             card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),1,"CMS_tau21_PtDependence",
-                    p == purCats[PURE_HP] ? "log("+MOD_MS+"/600)" : "((0.054/0.041)*(-log("+MOD_MS+"/600)))"
+                    p == purCats[PURE_HP] ? "log("+MOD_MS+"/1000)" : "((0.054/0.041)*(-log("+MOD_MS+"/1000)))"
                             ,MOD_MS);
         } else throw std::invalid_argument("makeCard::go() -> Bad parsing");
 
