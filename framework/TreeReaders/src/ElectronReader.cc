@@ -6,7 +6,8 @@
 
 namespace TAna{
 
-ElectronReader::ElectronReader(std::string branchName) : BaseReader("ElectronReader",branchName)
+ElectronReader::ElectronReader(std::string branchName, bool fillSCs) : BaseReader("ElectronReader",branchName),
+        fillSCs(fillSCs)
 {};
 
 ElectronReader::~ElectronReader(){
@@ -27,6 +28,9 @@ ElectronReader::~ElectronReader(){
     delete lepAct_o_pt;
     delete sc_act_o_pt;
     delete sc_dr_act;
+    delete sccol_et  ;
+    delete sccol_eta ;
+    delete sccol_phi ;
 }
 
 void ElectronReader::setup(TreeReadingWrapper * wrapper){
@@ -47,6 +51,12 @@ void ElectronReader::setup(TreeReadingWrapper * wrapper){
     wrapper->setBranchAddressPre(branchName,"lepAct_o_pt",&lepAct_o_pt,false);
     wrapper->setBranchAddressPre(branchName,"sc_act_o_pt",&sc_act_o_pt,false);
     wrapper->setBranchAddressPre(branchName,"sc_dr_act"  ,&sc_dr_act  ,false);
+    if(fillSCs){
+        wrapper->setBranchAddressPre(branchName,"sccol_et"   ,&sccol_et   ,false);
+        wrapper->setBranchAddressPre(branchName,"sccol_eta"  ,&sccol_eta  ,false);
+        wrapper->setBranchAddressPre(branchName,"sccol_phi"  ,&sccol_phi  ,false);
+    }
+
 }
 
 void ElectronReader::processVars() {
@@ -59,6 +69,14 @@ void ElectronReader::processVars() {
                 sc_act_o_pt->size() ? sc_act_o_pt->at(iO) : 0,sc_dr_act->size() ? sc_dr_act->at(iO) : 0 );
     }
     std::sort(electrons.begin(), electrons.end(), PhysicsUtilities::greaterPT<Electron>());
+
+    if(fillSCs){
+        superclusters.clear();
+        for(unsigned int iO = 0; iO < sccol_et->size(); ++iO){
+            superclusters.emplace_back(ASTypes::CylLorentzVectorF(sccol_et->at(iO),sccol_eta->at(iO),sccol_phi->at(iO),0));
+        }
+        std::sort(superclusters.begin(), superclusters.end(), PhysicsUtilities::greaterPT<MomentumF>());
+    }
 }
 
 
