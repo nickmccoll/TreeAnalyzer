@@ -78,8 +78,8 @@ protected:
 
 class POGLeptonScaleFactors : public LeptonScaleFactors {
 public:
-    POGLeptonScaleFactors(const std::string& dataDir, const std::string& electronSFFile = "corrections/electronSF_tightID_mini0p1ISO_POGParam.root",
-            const std::string& muonSFFile = "corrections/muonSF_medID_mini0p2ISO_POGParam.root",
+    POGLeptonScaleFactors(const std::string& dataDir, const std::string& electronSFFile = "corrections/electronSF_tightID_mini0p1ISO.root",
+            const std::string& muonSFFile = "corrections/muonSF_medID_mini0p2ISO.root",
             bool verbose = false);
 
     float getElectronSF(
@@ -104,6 +104,39 @@ private:
     std::unique_ptr<TObjectHelper::GraphAEContainer> muonRecoSFs;
     std::unique_ptr<TObjectHelper::Hist2DContainer> muonIDSFs;
     std::unique_ptr<TObjectHelper::Hist2DContainer> muonISOSFs;
+};
+
+
+class ActParamScaleFactors : public LeptonScaleFactors {
+public:
+    ActParamScaleFactors(const std::string& dataDir, const std::string& electronSFFile = "corrections/electronSF_tightID_mini0p1ISO.root",
+            const std::string& muonSFFile = "corrections/muonSF_medID_mini0p2ISO.root",
+            bool verbose = false);
+
+    float getElectronSF(
+            const CorrHelp::CORRTYPE recoT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE idT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE isoT = CorrHelp::NOMINAL
+    ) const;
+    float getMuonSF(
+            const CorrHelp::CORRTYPE recoT = CorrHelp::NONE, const CorrHelp::CORRTYPE idT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE isoT = CorrHelp::NOMINAL
+    ) const;
+
+    float flatSFUNC_m_reco = 0.00;
+    float flatSFUnc_m_id   = 0.01;
+    float flatSFUnc_m_iso  = 0.05;
+    float flatSFUNC_e_reco = 0.05;
+    float flatSFUNC_e_reco_ex = 0.10;
+    float flatSFUnc_e_id   = 0.00;
+    float flatSFUnc_e_iso  = 0.00;
+
+private:
+    std::unique_ptr<TObjectHelper::Hist2DContainer> electronRecoSFs;
+    std::unique_ptr<TObjectHelper::Hist2DContainer> electronIDSFs;
+    std::unique_ptr<TObjectHelper::Hist2DContainer> electronISOSFs;
+
+    std::unique_ptr<TObjectHelper::GraphAEContainer> muonRecoSFs;
+    std::unique_ptr<TObjectHelper::Hist2DContainer> muonIDSFs;
+    std::unique_ptr<TObjectHelper::Hist2DContainer> muonISOSFs;
+    std::unique_ptr<TObjectHelper::Hist2DContainer> muonISOActSFs;
 };
 
 }
