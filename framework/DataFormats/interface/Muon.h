@@ -16,7 +16,7 @@ public :
             const int idx,
             const ASTypes::int8 q, const  float d0,
             const  float dz,const  float sip3D,const  float miniIso, const float dRnorm, const float lepAct_o_pt)
-        : Lepton(mom, idx,q,d0,dz,sip3D,miniIso,false, dRnorm, lepAct_o_pt) {}
+        : Lepton(mom, idx,q,d0,dz,sip3D,miniIso,true, dRnorm, lepAct_o_pt) {}
     ~Muon() {}
 
     void addMuonInfo(float dbRelISO, ASTypes::size16 id);
