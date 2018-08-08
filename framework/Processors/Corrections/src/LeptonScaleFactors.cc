@@ -66,7 +66,7 @@ float POGLeptonScaleFactors::getElectronSF( const CORRTYPE recoT, const CORRTYPE
         const float pt = l->pt();
         if(recoT >= DOWN){ sf *= getSF(recoT,electronRecoSFs->getBinContentByValue(eta,pt),(pt >= 80 || pt < 20 ? flatSFUNC_e_reco : 0.0));}
         if(idT   >= DOWN){ sf *= getSF(idT  ,electronIDSFs->getBinContentByValue(eta,pt)  ,flatSFUnc_e_id  );}
-        if(isoT  >= DOWN){ sf *= getSF(isoT ,electronISOSFs->getBinContentByValue(pt,std::fabs(eta)) ,flatSFUnc_e_iso );}
+        if(isoT  >= DOWN){ sf *= getSF(isoT ,electronISOSFs->getBinContentByValue(eta,pt) ,flatSFUnc_e_iso );}
     }
     return sf;
 }
