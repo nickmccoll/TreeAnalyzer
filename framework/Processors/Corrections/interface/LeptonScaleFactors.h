@@ -33,8 +33,7 @@ public:
             const CorrHelp::CORRTYPE muReco = CorrHelp::NONE, const CorrHelp::CORRTYPE muID = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE muISO = CorrHelp::NOMINAL
     ) const;
 
-    virtual void load(const SMDecayEvent& genDecays, const std::vector<const Lepton*>& selectedLeptons,
-            const std::vector<const Jet*>* jets = 0);
+    virtual void load(const SMDecayEvent& genDecays, const std::vector<const Lepton*>& selectedLeptons);
 
     const std::vector<const Muon*>& getPromptMuons() const {return promptMuons;}
     const std::vector<const Electron*>& getPromptElectrons() const {return promptElectrons;}

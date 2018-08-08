@@ -17,9 +17,7 @@ float LeptonScaleFactors::getSF(
     return getElectronSF(elReco,elID,elISO) * getMuonSF(muReco,muID,muISO);
 }
 //--------------------------------------------------------------------------------------------------
-void LeptonScaleFactors::load(const SMDecayEvent& genDecays, const std::vector<const Lepton*>& selectedLeptons,
-        const std::vector<const Jet*>* jets) {
-    jets = 0; //warnign removal :D
+void LeptonScaleFactors::load(const SMDecayEvent& genDecays, const std::vector<const Lepton*>& selectedLeptons) {
     promptMuons    .clear();
     promptElectrons.clear();
 
@@ -160,8 +158,13 @@ float ActParamScaleFactors::getMuonSF( const CORRTYPE recoT, const CORRTYPE idT,
         const float pt = l->pt();
         if(recoT >= DOWN){ sf *= getSFNoStat(recoT,muonRecoSFs->eval(l->eta()),flatSFUNC_m_reco);}
         if(idT   >= DOWN){ sf *= getSF(idT  ,muonIDSFs->getBinContentByValue(eta,pt) ,flatSFUnc_m_id  );}
-        auto* isoH = &*((l->lepAct_o_pt() < 0.2 || l->dRnorm() > 1.0 ) ? muonISOSFs : muonISOActSFs);
-        if(isoT  >= DOWN){ sf *= getSF(isoT ,isoH->getBinContentByValue(eta,pt),flatSFUnc_m_iso );}
+        if(isoT  >= DOWN){
+            if(l->lepAct_o_pt() < 0.2 || l->dRnorm() > 1.0 )
+                sf *= getSF(isoT ,muonISOSFs->getBinContentByValue(eta,pt),flatSFUnc_m_iso );
+            else
+                sf *= getSF(isoT ,muonISOActSFs->getBinContentByValue(l->dRnorm(),l->lepAct_o_pt()),flatSFUnc_m_iso );
+
+        }
     }
     return sf;
 }
