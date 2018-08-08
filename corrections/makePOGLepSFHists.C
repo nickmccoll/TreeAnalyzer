@@ -6,13 +6,13 @@ TFile * fo = new TFile("Muon/muonSF_medID_mini0p2ISO.root","recreate");
 TString recoFile = "Muon/Tracking_EfficienciesAndSF_BCDEFGH.root";
 TString recoHist = "ratio_eff_eta3_dr030e030_corr";
 
-TString idFile = "Muon/EffAndSF_Medium2016_IP_PtEta.root";
+TString idFile = "Muon/TnPEffAndSF.root";
 TString idHist = "Medium2016_IP_PtEta/abseta_pt_ratio";
 
-TString isoFile = "Muon/EffAndSF_MiniIso_PtEta.root";
+TString isoFile = "Muon/TnPEffAndSF.root";
 TString isoHist = "MiniIso_PtEta/abseta_pt_ratio";
 
-TString isoActFile = "Muon/EffAndSF_MiniIso_JetAct.root";
+TString isoActFile = "Muon/TnPEffAndSF.root";
 TString isoActHist = "MiniIso_JetAct/dR_lepact_ratio";
 
 TFile * fr = new TFile(recoFile,"read");
