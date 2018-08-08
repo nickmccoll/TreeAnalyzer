@@ -80,7 +80,9 @@ public:
         cout <<"Selected leptons: ";
         for(unsigned int iS = 0; iS < selectedLeptons.size(); ++iS){
             const auto* sl = selectedLeptons[iS];
-            cout << "["<< (sl->isMuon() ? "M" : "E") << (isPrompt[iS] ? "P" : "F")  << *sl <<"] ";
+            cout << "["<< (sl->isMuon() ? "M" : "E") << (isPrompt[iS] ? "P" : "F")  << *sl <<
+                    (sl->isElectron() ?  ASTypes::flt2Str( ((const Electron*)sl)->sc_act_o_pt()) + ","+ASTypes::flt2Str( ((const Electron*)sl)->sc_dr_act())
+            : ASTypes::flt2Str(sl->lepAct_o_pt()) + ","+ASTypes::flt2Str(sl->dRnorm()) )  <<"] ";
         }
         cout << endl;
 
