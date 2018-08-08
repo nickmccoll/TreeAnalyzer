@@ -38,7 +38,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, s
     leptonProc  .reset(new LeptonProcessor ()); DefaultLeptonSelections::setDefaultLeptonProcessor(*leptonProc);
     trigSFProc  .reset(new TriggerScaleFactors (dataDirectory));
     puSFProc    .reset(new PUScaleFactors (dataDirectory));
-    leptonSFProc.reset(new POGLeptonScaleFactors (dataDirectory));
+    leptonSFProc.reset(new ActParamScaleFactors(dataDirectory));
     ak4btagSFProc.reset(new JetBTagScaleFactors (dataDirectory));
     sjbtagSFProc.reset(new SubJetBTagScaleFactors (dataDirectory));
     hbbFJSFProc .reset(new HbbFatJetScaleFactors (dataDirectory));
@@ -92,7 +92,6 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_TRIG) && !reader_muon) mkErr("muon","CORR_TRIG");
     if(isCorrOn(CORR_TRIG) && !reader_genpart) mkErr("genParticle","CORR_TRIG");
     if(isCorrOn(CORR_PU)   && !reader_event) mkErr("event","CORR_PU");
-    if(isCorrOn(CORR_LEP) && !reader_jet_chs) mkErr("ak4Jet","CORR_LEP");
     if(isCorrOn(CORR_LEP) && !reader_electron) mkErr("electron","CORR_LEP");
     if(isCorrOn(CORR_LEP) && !reader_muon) mkErr("muon","CORR_LEP");
     if(isCorrOn(CORR_LEP) && !reader_genpart) mkErr("genParticle","CORR_LEP");
@@ -207,7 +206,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         if(isCorrOn(CORR_PU) )
             weight *= puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL);
         if(isCorrOn(CORR_LEP)){
-            leptonSFProc->load(smDecayEvt,selectedLeptons,&jets_chs);
+            leptonSFProc->load(smDecayEvt,selectedLeptons);
             weight *= leptonSFProc->getSF();
         }
         if(isCorrOn(CORR_SJBTAG)){
