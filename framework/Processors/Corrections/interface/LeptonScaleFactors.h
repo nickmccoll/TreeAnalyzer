@@ -26,11 +26,11 @@ public:
             const CorrHelp::CORRTYPE recoT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE idT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE isoT = CorrHelp::NOMINAL
     ) const = 0;
     virtual float getMuonSF(
-            const CorrHelp::CORRTYPE recoT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE idT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE isoT = CorrHelp::NOMINAL
+            const CorrHelp::CORRTYPE recoT = CorrHelp::NONE, const CorrHelp::CORRTYPE idT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE isoT = CorrHelp::NOMINAL
     ) const = 0;
     virtual float getSF(
             const CorrHelp::CORRTYPE elReco = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE elID = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE elISO = CorrHelp::NOMINAL,
-            const CorrHelp::CORRTYPE muReco = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE muID = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE muISO = CorrHelp::NOMINAL
+            const CorrHelp::CORRTYPE muReco = CorrHelp::NONE, const CorrHelp::CORRTYPE muID = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE muISO = CorrHelp::NOMINAL
     ) const;
 
     virtual void load(const SMDecayEvent& genDecays, const std::vector<const Lepton*>& selectedLeptons,
@@ -86,7 +86,7 @@ public:
             const CorrHelp::CORRTYPE recoT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE idT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE isoT = CorrHelp::NOMINAL
     ) const;
     float getMuonSF(
-            const CorrHelp::CORRTYPE recoT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE idT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE isoT = CorrHelp::NOMINAL
+            const CorrHelp::CORRTYPE recoT = CorrHelp::NONE, const CorrHelp::CORRTYPE idT = CorrHelp::NOMINAL, const CorrHelp::CORRTYPE isoT = CorrHelp::NOMINAL
     ) const;
 
     float flatSFUNC_m_reco = 0.00;
