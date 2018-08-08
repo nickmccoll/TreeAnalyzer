@@ -99,7 +99,7 @@ void setDefaultLepSelParams(LepSelParameters& par)        {
     par.el_maxD0   = 0.05;
     par.el_maxSip3D   = 4   ;
     par.el_maxISO  = 0.1 ;
-    par.el_getID   = &Electron::passMedID_noISO;
+    par.el_getID   = &Electron::passTightID_noISO;
     par.el_getISO  = &Electron::miniIso;
 
     par.mu_minPT   = 20  ;
