@@ -120,11 +120,11 @@ public:
         float maxLepPT = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
 
         TString preName = prefix + "_passSMu";
-        makeHTPlots(preName,"el_pt",ht_wlep,maxLepPT);
+        makeHTPlots(preName,"el_pt",ht_chs,maxLepPT);
         bool passECross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
 
         if(passECross)
-            makeHTPlots(preName + "_passElHT_","el_pt",ht_wlep,maxLepPT);
+            makeHTPlots(preName + "_passElHT_","el_pt",ht_chs,maxLepPT);
     }
     void doMuonLeg(const TString& prefix){
         if( !passTrig(HLT_Ele27_WPTight_Gsf) ) return;
@@ -134,11 +134,11 @@ public:
         float maxLepPT = probeMuons.size() ? probeMuons.front()->pt() : 0;
 
         TString preName = prefix + "_passSE";
-        makeHTPlots(preName,"mu_pt",ht_wlep,maxLepPT);
+        makeHTPlots(preName,"mu_pt",ht_chs,maxLepPT);
         bool passMCross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
 
         if(passMCross)
-            makeHTPlots(preName + "_passMuHT_","mu_pt",ht_wlep,maxLepPT);
+            makeHTPlots(preName + "_passMuHT_","mu_pt",ht_chs,maxLepPT);
     }
 
     void doHTLegWithMuonDenom(const TString& prefix){
@@ -148,19 +148,19 @@ public:
         float maxOtherPT = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
 
         TString preName = prefix + "_passSMu";
-        makeLepPlots(preName,"ht","elpt",maxOtherPT,ht_wlep);
-        makeLepPlots(preName,"ht","mupt",maxSamePT,ht_wlep);
+        makeLepPlots(preName,"ht","elpt",maxOtherPT,ht_chs);
+        makeLepPlots(preName,"ht","mupt",maxSamePT,ht_chs);
         bool passMCross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
         bool passECross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
         if(passECross)
-            makeLepPlots(preName + "_passElHT_","ht","elpt",maxOtherPT,ht_wlep);
+            makeLepPlots(preName + "_passElHT_","ht","elpt",maxOtherPT,ht_chs);
         if(passMCross)
-            makeLepPlots(preName + "_passMuHT_","ht","mupt",maxSamePT,ht_wlep);
+            makeLepPlots(preName + "_passMuHT_","ht","mupt",maxSamePT,ht_chs);
 
         if(passECross|| passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30))
-            makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxOtherPT,ht_wlep);
+            makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxOtherPT,ht_chs);
         if(passMCross|| passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30))
-            makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxSamePT,ht_wlep);
+            makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxSamePT,ht_chs);
     }
     void doHTLegWithElDenom(const TString& prefix){
         if( !passTrig(HLT_Ele27_WPTight_Gsf) ) return;
@@ -170,21 +170,21 @@ public:
         float maxOtherPT = probeMuons.size() ? probeMuons.front()->pt() : 0;
 
         TString preName = prefix + "_passSE";
-        makeLepPlots(preName,"ht","mupt",maxOtherPT,ht_wlep);
-        makeLepPlots(preName,"ht","elpt",maxSamePT,ht_wlep);
+        makeLepPlots(preName,"ht","mupt",maxOtherPT,ht_chs);
+        makeLepPlots(preName,"ht","elpt",maxSamePT,ht_chs);
         bool passMCross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
         bool passECross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
 
         if(passECross)
-            makeLepPlots(preName + "_passElHT_","ht","elpt",maxSamePT,ht_wlep);
+            makeLepPlots(preName + "_passElHT_","ht","elpt",maxSamePT,ht_chs);
         if(passMCross)
-            makeLepPlots(preName + "_passMuHT_","ht","mupt",maxOtherPT,ht_wlep);
+            makeLepPlots(preName + "_passMuHT_","ht","mupt",maxOtherPT,ht_chs);
 
         if(passECross|| passTrig(HLT_PFHT800) ||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30))
-            makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxSamePT,ht_wlep);
+            makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxSamePT,ht_chs);
 
         if(passMCross || passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30) )
-            makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxOtherPT,ht_wlep);
+            makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxOtherPT,ht_chs);
     }
 
     void doGrandLeptonWElDenom(const TString& prefix){
@@ -205,23 +205,23 @@ public:
 
 
         //HT side
-        makeLepPlots(preName,"ht","mupt",maxOtherPT,ht_wlep);
-        if(passSMu ) makeLepPlots(preName +"_passSMu_","ht","mupt",maxOtherPT,ht_wlep);
-        if(passSMuoHtMu) makeLepPlots(preName +"_passSMuoHtMu_","ht","mupt",maxOtherPT,ht_wlep);
-        if(passSMuoHtMuoBu) makeLepPlots(preName +"_passSMuoHtMuoBu_","ht","mupt",maxOtherPT,ht_wlep);
+        makeLepPlots(preName,"ht","mupt",maxOtherPT,ht_chs);
+        if(passSMu ) makeLepPlots(preName +"_passSMu_","ht","mupt",maxOtherPT,ht_chs);
+        if(passSMuoHtMu) makeLepPlots(preName +"_passSMuoHtMu_","ht","mupt",maxOtherPT,ht_chs);
+        if(passSMuoHtMuoBu) makeLepPlots(preName +"_passSMuoHtMuoBu_","ht","mupt",maxOtherPT,ht_chs);
 
         //Mu side
-        makeHTPlots(preName,"mu_pt",ht_wlep,maxOtherPT);
-        if(passSMu )        makeHTPlots(preName+"_passSMu_"         ,"mu_pt",ht_wlep,maxOtherPT);
-        if(passSMuoHtMu)    makeHTPlots(preName+"_passSMuoHtMu_"    ,"mu_pt",ht_wlep,maxOtherPT);
-        if(passSMuoHtMuoBu) makeHTPlots(preName+"_passSMuoHtMuoBu_","mu_pt",ht_wlep,maxOtherPT);
+        makeHTPlots(preName,"mu_pt",ht_chs,maxOtherPT);
+        if(passSMu )        makeHTPlots(preName+"_passSMu_"         ,"mu_pt",ht_chs,maxOtherPT);
+        if(passSMuoHtMu)    makeHTPlots(preName+"_passSMuoHtMu_"    ,"mu_pt",ht_chs,maxOtherPT);
+        if(passSMuoHtMuoBu) makeHTPlots(preName+"_passSMuoHtMuoBu_","mu_pt",ht_chs,maxOtherPT);
 
         //2D
         if(maxOtherPT > 0){
-            plotter.getOrMake2DPre(preName,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_wlep,weight);
-            if(passSMu )         plotter.getOrMake2DPre(preName+"_passSMu_"         ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_wlep,weight);
-            if(passSMuoHtMu)     plotter.getOrMake2DPre(preName+"_passSMuoHtMu_"    ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_wlep,weight);
-            if(passSMuoHtMuoBu)  plotter.getOrMake2DPre(preName+"_passSMuoHtMuoBu_","mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_wlep,weight);
+            plotter.getOrMake2DPre(preName,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSMu )         plotter.getOrMake2DPre(preName+"_passSMu_"         ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSMuoHtMu)     plotter.getOrMake2DPre(preName+"_passSMuoHtMu_"    ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSMuoHtMuoBu)  plotter.getOrMake2DPre(preName+"_passSMuoHtMuoBu_","mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
         }
     }
 
@@ -242,23 +242,23 @@ public:
 
 
         //HT side
-        makeLepPlots(preName,"ht","elpt",maxOtherPT,ht_wlep);
-        if(passSEl ) makeLepPlots(preName +"_passSEl_","ht","elpt",maxOtherPT,ht_wlep);
-        if(passSEloHtEl) makeLepPlots(preName +"_passSEloHtEl_","ht","elpt",maxOtherPT,ht_wlep);
-        if(passSEloHtEloBu) makeLepPlots(preName +"_passSEloHtEloBu_","ht","elpt",maxOtherPT,ht_wlep);
+        makeLepPlots(preName,"ht","elpt",maxOtherPT,ht_chs);
+        if(passSEl ) makeLepPlots(preName +"_passSEl_","ht","elpt",maxOtherPT,ht_chs);
+        if(passSEloHtEl) makeLepPlots(preName +"_passSEloHtEl_","ht","elpt",maxOtherPT,ht_chs);
+        if(passSEloHtEloBu) makeLepPlots(preName +"_passSEloHtEloBu_","ht","elpt",maxOtherPT,ht_chs);
 
         //Mu side
-        makeHTPlots(preName,"el_pt",ht_wlep,maxOtherPT);
-        if(passSEl )        makeHTPlots(preName+"_passSEl_"        ,"el_pt",ht_wlep,maxOtherPT);
-        if(passSEloHtEl)    makeHTPlots(preName+"_passSEloHtEl_"   ,"el_pt",ht_wlep,maxOtherPT);
-        if(passSEloHtEloBu) makeHTPlots(preName+"_passSEloHtEloBu_","el_pt",ht_wlep,maxOtherPT);
+        makeHTPlots(preName,"el_pt",ht_chs,maxOtherPT);
+        if(passSEl )        makeHTPlots(preName+"_passSEl_"        ,"el_pt",ht_chs,maxOtherPT);
+        if(passSEloHtEl)    makeHTPlots(preName+"_passSEloHtEl_"   ,"el_pt",ht_chs,maxOtherPT);
+        if(passSEloHtEloBu) makeHTPlots(preName+"_passSEloHtEloBu_","el_pt",ht_chs,maxOtherPT);
 
         //2D
         if(maxOtherPT > 0){
-            plotter.getOrMake2DPre(preName,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_wlep,weight);
-            if(passSEl )        plotter.getOrMake2DPre(preName+"_passSEl_"        ,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_wlep,weight);
-            if(passSEloHtEl)    plotter.getOrMake2DPre(preName+"_passSEloHtEl_"   ,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_wlep,weight);
-            if(passSEloHtEloBu) plotter.getOrMake2DPre(preName+"_passSEloHtEloBu_","el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_wlep,weight);
+            plotter.getOrMake2DPre(preName,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSEl )        plotter.getOrMake2DPre(preName+"_passSEl_"        ,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSEloHtEl)    plotter.getOrMake2DPre(preName+"_passSEloHtEl_"   ,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSEloHtEloBu) plotter.getOrMake2DPre(preName+"_passSEloHtEloBu_","el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
         }
 
     }
@@ -283,55 +283,70 @@ public:
 
 
         //HT side
-        makeLepPlots(preName,"ht","mupt",maxMu,ht_wlep);
-        if(passSMu ) makeLepPlots(preName +"_passSMu_","ht","mupt",maxMu,ht_wlep);
-        if(passSMuoHtMu) makeLepPlots(preName +"_passSMuoHtMu_","ht","mupt",maxMu,ht_wlep);
-        if(passSMuoHtMuoBu) makeLepPlots(preName +"_passSMuoHtMuoBu_","ht","mupt",maxMu,ht_wlep);
+        makeLepPlots(preName,"ht","mupt",maxMu,ht_chs);
+        if(passSMu ) makeLepPlots(preName +"_passSMu_","ht","mupt",maxMu,ht_chs);
+        if(passSMuoHtMu) makeLepPlots(preName +"_passSMuoHtMu_","ht","mupt",maxMu,ht_chs);
+        if(passSMuoHtMuoBu) makeLepPlots(preName +"_passSMuoHtMuoBu_","ht","mupt",maxMu,ht_chs);
 
-        makeLepPlots(preName,"ht","elpt",maxEl,ht_wlep);
-        if(passSEl ) makeLepPlots(preName +"_passSEl_","ht","elpt",maxEl,ht_wlep);
-        if(passSEloHtEl) makeLepPlots(preName +"_passSEloHtEl_","ht","elpt",maxEl,ht_wlep);
-        if(passSEloHtEloBu) makeLepPlots(preName +"_passSEloHtEloBu_","ht","elpt",maxEl,ht_wlep);
+        makeLepPlots(preName,"ht","elpt",maxEl,ht_chs);
+        if(passSEl ) makeLepPlots(preName +"_passSEl_","ht","elpt",maxEl,ht_chs);
+        if(passSEloHtEl) makeLepPlots(preName +"_passSEloHtEl_","ht","elpt",maxEl,ht_chs);
+        if(passSEloHtEloBu) makeLepPlots(preName +"_passSEloHtEloBu_","ht","elpt",maxEl,ht_chs);
 
         //Mu side
-        makeHTPlots(preName,"mu_pt",ht_wlep,maxMu);
-        if(passSMu )        makeHTPlots(preName+"_passSMu_"         ,"mu_pt",ht_wlep,maxMu);
-        if(passSMuoHtMu)    makeHTPlots(preName+"_passSMuoHtMu_"    ,"mu_pt",ht_wlep,maxMu);
-        if(passSMuoHtMuoBu) makeHTPlots(preName+"_passSMuoHtMuoBu_","mu_pt",ht_wlep,maxMu);
+        makeHTPlots(preName,"mu_pt",ht_chs,maxMu);
+        if(passSMu )        makeHTPlots(preName+"_passSMu_"         ,"mu_pt",ht_chs,maxMu);
+        if(passSMuoHtMu)    makeHTPlots(preName+"_passSMuoHtMu_"    ,"mu_pt",ht_chs,maxMu);
+        if(passSMuoHtMuoBu) makeHTPlots(preName+"_passSMuoHtMuoBu_","mu_pt",ht_chs,maxMu);
 
-        makeHTPlots(preName,"el_pt",ht_wlep,maxEl);
-        if(passSEl )        makeHTPlots(preName+"_passSEl_"        ,"el_pt",ht_wlep,maxEl);
-        if(passSEloHtEl)    makeHTPlots(preName+"_passSEloHtEl_"   ,"el_pt",ht_wlep,maxEl);
-        if(passSEloHtEloBu) makeHTPlots(preName+"_passSEloHtEloBu_","el_pt",ht_wlep,maxEl);
+        makeHTPlots(preName,"el_pt",ht_chs,maxEl);
+        if(passSEl )        makeHTPlots(preName+"_passSEl_"        ,"el_pt",ht_chs,maxEl);
+        if(passSEloHtEl)    makeHTPlots(preName+"_passSEloHtEl_"   ,"el_pt",ht_chs,maxEl);
+        if(passSEloHtEloBu) makeHTPlots(preName+"_passSEloHtEloBu_","el_pt",ht_chs,maxEl);
 
         if(maxEl > 0){
-            plotter.getOrMake2DPre(preName,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_wlep,weight);
-            if(passSMu )         plotter.getOrMake2DPre(preName+"_passSMu_"         ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_wlep,weight);
-            if(passSMuoHtMu)     plotter.getOrMake2DPre(preName+"_passSMuoHtMu_"    ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_wlep,weight);
-            if(passSMuoHtMuoBu)  plotter.getOrMake2DPre(preName+"_passSMuoHtMuoBu_","mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_wlep,weight);
+            plotter.getOrMake2DPre(preName,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
+            if(passSMu )         plotter.getOrMake2DPre(preName+"_passSMu_"         ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
+            if(passSMuoHtMu)     plotter.getOrMake2DPre(preName+"_passSMuoHtMu_"    ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
+            if(passSMuoHtMuoBu)  plotter.getOrMake2DPre(preName+"_passSMuoHtMuoBu_","mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
         }
 
         if(maxMu > 0){
-            plotter.getOrMake2DPre(preName,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_wlep,weight);
-            if(passSEl )        plotter.getOrMake2DPre(preName+"_passSEl_"        ,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_wlep,weight);
-            if(passSEloHtEl)    plotter.getOrMake2DPre(preName+"_passSEloHtEl_"   ,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_wlep,weight);
-            if(passSEloHtEloBu) plotter.getOrMake2DPre(preName+"_passSEloHtEloBu_","el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_wlep,weight);
+            plotter.getOrMake2DPre(preName,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_chs,weight);
+            if(passSEl )        plotter.getOrMake2DPre(preName+"_passSEl_"        ,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_chs,weight);
+            if(passSEloHtEl)    plotter.getOrMake2DPre(preName+"_passSEloHtEl_"   ,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_chs,weight);
+            if(passSEloHtEloBu) plotter.getOrMake2DPre(preName+"_passSEloHtEloBu_","el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_chs,weight);
         }
     }
 
 
     void loadVariables() override {
         reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
-        reader_jetwlep =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jetwlep );
+        reader_jet_chs       =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jet_chs );
         reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
         reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
     }
 
     bool runEvent() override {
+
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
+        if(isRealData()) smpName = FillerConstants::DatasetNames[reader_event->dataset];
+
+        plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(0.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_goodVertices) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(1.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_globalTightHalo2016Filter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(2.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_HBHENoiseFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(3.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_HBHENoiseIsoFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(4.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_EcalDeadCellTriggerPrimitiveFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(5.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_eeBadScFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(6.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::AnaTM_badMuons) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(7.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::AnaTM_badChargedHadrons) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(8.0,weight);
+        if(reader_event->goodVtx != 0)  plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(9.0,weight);
+        if(passEventFilters)  plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(10.0,weight);
+
+
         if(!passEventFilters) return false;
 
-        if(isRealData()) smpName = FillerConstants::DatasetNames[reader_event->dataset];
 
         triggerAccepts = reader_event->triggerAccepts;
 

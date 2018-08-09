@@ -227,21 +227,29 @@
   TFile * fMC = new TFile("all_triggerTurnons.root");
   Plotter * pt = new Plotter();
   
-  auto getEff = [&](TFile * f, TString pn, TString prefix,TString sel, TString var, TString trig, float rebin = 0, int nR = 0, double * rebins = 0)->TH1*{
+  auto getEff = [&](TFile * f, std::vector<TString> pn, TString prefix,TString sel, TString var, TString trig, float rebin = 0, int nR = 0, double * rebins = 0)->TH1*{
     TH1 * hd = 0;
-    f->GetObject(TString::Format("%s_%s_%s_%s",pn.Data(),prefix.Data(),sel.Data(),var.Data()),hd);
     TH1 * hn = 0;
-    f->GetObject(TString::Format("%s_%s_%s__%s_%s",pn.Data(),prefix.Data(),trig.Data(),sel.Data(),var.Data()),hn);
-    if(hn == 0){
-      cout << TString::Format("%s_%s_%s__%s_%s",pn.Data(),prefix.Data(),trig.Data(),sel.Data(),var.Data()) << endl;
-      return 0;
+    
+    for(const auto&  n : pn){
+      TH1 * hd1 = 0;
+      f->GetObject(TString::Format("%s_%s_%s_%s",n.Data(),prefix.Data(),sel.Data(),var.Data()),hd1);
+      TH1 * hn1 = 0;
+      f->GetObject(TString::Format("%s_%s_%s__%s_%s",n.Data(),prefix.Data(),trig.Data(),sel.Data(),var.Data()),hn1);
+      if(hn1 == 0){
+        cout << TString::Format("%s_%s_%s__%s_%s",n.Data(),prefix.Data(),trig.Data(),sel.Data(),var.Data()) << endl;
+        return 0;
+      }
+      if(hd1 == 0){
+        cout << TString::Format("%s_%s_%s_%s",n.Data(),prefix.Data(),sel.Data(),var.Data()) << endl;
+        return 0;
+      }
+      if(hd == 0) hd = (TH1*)hd1->Clone();
+      else hd->Add(hd1);
+      if(hn == 0) hn = (TH1*)hn1->Clone();
+      else hn->Add(hn1);
     }
-    if(hd == 0){
-      cout << TString::Format("%s_%s_%s_%s",pn.Data(),prefix.Data(),sel.Data(),var.Data()) << endl;
-      return 0;
-    }
-    hn = (TH1*)hn->Clone();
-    hd = (TH1*)hd->Clone();
+    
 
     if(rebin > 0){
       PlotTools::rebin(hn,rebin);
@@ -256,7 +264,8 @@
     // return PlotTools::getBinomErrors(hn,hd);   
   };
   
-  auto plotTurnons =[&](TString name, TString prefix,TString dataName,TString mcName, const vector<TString>& sels,const vector<TString>& selNames, TString var, TString trig, float rebin = 0, int nR = 0, double * rebins = 0 ){      
+  
+  auto plotTurnons =[&](TString name, TString prefix,std::vector<TString> dataName,std::vector<TString> mcName, const vector<TString>& sels,const vector<TString>& selNames, TString var, TString trig, float rebin = 0, int nR = 0, double * rebins = 0 ){      
       Plotter * p = new Plotter();
       for(unsigned int iS = 0; iS <sels.size(); ++iS){
         TString sel = sels[iS];
@@ -295,12 +304,14 @@
     int nHTBins = 14;
     double htBins[] = {100,150,200,250,300,350,400,450,500,550,600,800,1200,1600,2000};
     
+    std::vector<TString> bkgNames = {"ttbar","diboson","wjets","ttX","singlet","zjets"};
     
-    plotTurnons(TString::Format("turnOn_vary_muon_ht"),"GL_passSE","singlee","ttbar",muSels,muSelNs,"ht","passSMuoHtMuoBu"        ,0,nHTBins,htBins);
-    plotTurnons(TString::Format("turnOn_vary_electron_ht"),"GL_passSMu","singlemu","ttbar",elSels,elSelNs,"ht","passSEloHtEloBu"        ,0,nHTBins,htBins);
+    
+    plotTurnons(TString::Format("turnOn_vary_muon_ht"),"GL_passSE",{"singlee"},bkgNames,muSels,muSelNs,"ht","passSMuoHtMuoBu"        ,0,nHTBins,htBins);
+    plotTurnons(TString::Format("turnOn_vary_electron_ht"),"GL_passSMu",{"singlemu"},bkgNames,elSels,elSelNs,"ht","passSEloHtEloBu"        ,0,nHTBins,htBins);
    
-    plotTurnons(TString::Format("turnOn_vary_ht_muon"),"GL_passSE","singlee","ttbar",htSels,htSels,"mu_pt","passSMuoHtMuoBu"        ,0,nLepBins,lepBins);
-    plotTurnons(TString::Format("turnOn_vary_ht_electron"),"GL_passSMu","singlemu","ttbar",htSels,htSels,"el_pt","passSEloHtEloBu"        ,0,nLepBins,lepBins);
+    plotTurnons(TString::Format("turnOn_vary_ht_muon"),"GL_passSE",{"singlee"},bkgNames,htSels,htSels,"mu_pt","passSMuoHtMuoBu"        ,0,nLepBins,lepBins);
+    plotTurnons(TString::Format("turnOn_vary_ht_electron"),"GL_passSMu",{"singlemu"},bkgNames,htSels,htSels,"el_pt","passSEloHtEloBu"        ,0,nLepBins,lepBins);
     
 
     
@@ -315,21 +326,29 @@
   
   TFile * of = new TFile("triggerSF.root","recreate");
   
-  auto getEff = [&](TFile * f, TString pn, TString prefix,TString sel, TString var, TString trig, float rebin = 0, int nR = 0, double * rebins = 0)->TH1*{
+  auto getEff = [&](TFile * f, std::vector<TString> pn, TString prefix,TString sel, TString var, TString trig, float rebin = 0, int nR = 0, double * rebins = 0)->TH1*{
     TH1 * hd = 0;
-    f->GetObject(TString::Format("%s_%s_%s_%s",pn.Data(),prefix.Data(),sel.Data(),var.Data()),hd);
     TH1 * hn = 0;
-    f->GetObject(TString::Format("%s_%s_%s__%s_%s",pn.Data(),prefix.Data(),trig.Data(),sel.Data(),var.Data()),hn);
-    if(hn == 0){
-      cout << TString::Format("%s_%s_%s__%s_%s",pn.Data(),prefix.Data(),trig.Data(),sel.Data(),var.Data()) << endl;
-      return 0;
+    
+    for(const auto&  n : pn){
+      TH1 * hd1 = 0;
+      f->GetObject(TString::Format("%s_%s_%s_%s",n.Data(),prefix.Data(),sel.Data(),var.Data()),hd1);
+      TH1 * hn1 = 0;
+      f->GetObject(TString::Format("%s_%s_%s__%s_%s",n.Data(),prefix.Data(),trig.Data(),sel.Data(),var.Data()),hn1);
+      if(hn1 == 0){
+        cout << TString::Format("%s_%s_%s__%s_%s",n.Data(),prefix.Data(),trig.Data(),sel.Data(),var.Data()) << endl;
+        return 0;
+      }
+      if(hd1 == 0){
+        cout << TString::Format("%s_%s_%s_%s",n.Data(),prefix.Data(),sel.Data(),var.Data()) << endl;
+        return 0;
+      }
+      if(hd == 0) hd = (TH1*)hd1->Clone();
+      else hd->Add(hd1);
+      if(hn == 0) hn = (TH1*)hn1->Clone();
+      else hn->Add(hn1);
     }
-    if(hd == 0){
-      cout << TString::Format("%s_%s_%s_%s",pn.Data(),prefix.Data(),sel.Data(),var.Data()) << endl;
-      return 0;
-    }
-    hn = (TH1*)hn->Clone();
-    hd = (TH1*)hd->Clone();
+    
 
     if(rebin > 0){
       PlotTools::rebin(hn,rebin);
@@ -340,11 +359,12 @@
     }
     PlotTools::toOverflow(hn);
     PlotTools::toOverflow(hd);
-    hn->Divide(hn,hd,1,1,"b"); return hn; 
+          hn->Divide(hn,hd,1,1,"b"); return hn; 
     // return PlotTools::getBinomErrors(hn,hd);   
   };
   
-  auto plotTurnons =[&](TString oHName, TString name, TString prefix,TString dataName,TString mcName, const TString& sel, TString var, TString trig, float rebin = 0, int nR = 0, double * rebins = 0 ){      
+  
+  auto plotTurnons =[&](TString oHName, TString name, TString prefix,std::vector<TString> dataName,std::vector<TString> mcName, const TString& sel, TString var, TString trig, float rebin = 0, int nR = 0, double * rebins = 0 ){      
       Plotter * p = new Plotter();
         auto * mcEff = getEff(fMC,mcName,prefix,sel,var,trig,rebin,nR,rebins);
         auto * dataEff = getEff(fd,dataName,prefix,sel,var,trig,rebin,nR,rebins);
@@ -378,10 +398,11 @@
     // double lepBins[] = {5,10,15,20,25,30,35,50,75};
     int nHTBins = 28;
     double htBins[] = {100,125,150,175,200,225,250,275,300,325,350,375,400,425,450,475,500,525,550,575,600,700,800,900,1000,1100,1200,1600,2000};
-    
 
-    plotTurnons("muonSF",TString::Format("turnOn_muon_ht"),"GL_passSE","singlee","ttbar","mupt_26","ht","passSMuoHtMuoBu"        ,0,nHTBins,htBins);
-    plotTurnons("electronSF",TString::Format("turnOn_electron_ht"),"GL_passSMu","singlemu","ttbar","elpt_30","ht","passSEloHtEloBu"        ,0,nHTBins,htBins);
+    std::vector<TString> bkgNames = {"ttbar","diboson","wjets","ttX","singlet","zjets"};
+    
+    plotTurnons("muonSF",TString::Format("turnOn_muon_ht"),"GL_passSE",{"singlee"},bkgNames,"mupt_26","ht","passSMuoHtMuoBu"        ,0,nHTBins,htBins);
+    plotTurnons("electronSF",TString::Format("turnOn_electron_ht"),"GL_passSMu",{"singlemu"},bkgNames,"elpt_30","ht","passSEloHtEloBu"        ,0,nHTBins,htBins);
     
     // plotTurnons(TString::Format("turnOn_ht_muon"),"GL_passSE","singlee","ttbar","ht_500","mu_pt","passSMuoHtMuoBu"        ,0,nLepBins,lepBins);
     // plotTurnons(TString::Format("turnOn_ht_electron"),"GL_passSMu","singlemu","ttbar","ht_500","el_pt","passSEloHtEloBu"        ,0,nLepBins,lepBins);
