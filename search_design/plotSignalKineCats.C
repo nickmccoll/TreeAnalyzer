@@ -30,7 +30,7 @@ public:
         reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
         reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
         reader_jetwlep =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jetwlep );
-        reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData());  load(reader_fatjet  );
+        reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);  load(reader_fatjet  );
     }
 
     const Lepton * getMatchedLepton(const GenParticle& genLepton,const std::vector<const Muon *> muons, const std::vector<const Electron*> electrons){
@@ -53,9 +53,11 @@ public:
 
         plotter.getOrMake1D("type",";type; arbitrary units",20,-0.5,19.5 )->Fill(diHiggsEvt.type,weight);
 
-        if(diHiggsEvt.type < DiHiggsEvent::MU) return false;
+        if(diHiggsEvt.type < DiHiggsEvent::TAU_MU) return false;
 
         bool isMuon = diHiggsEvt.w1_d1->absPdgId() == ParticleInfo::p_muminus;
+
+        bool isGenL = isMuon ? (diHiggsEvt.w1_d1->pt() > 26 && diHiggsEvt.w1_d1->absEta()<2.4) : (diHiggsEvt.w1_d1->pt() > 30 && diHiggsEvt.w1_d1->absEta()<2.5);
 
         double ht = 0;
         double maxAK8 = 0;
@@ -103,12 +105,13 @@ public:
         std::vector<const Electron*> IDElectrons;
         std::vector<const Electron*> isoElectrons;
         for(const auto& l : reader_electron->electrons){
-            if(l.pt() < 20 ) continue;
-            if(l.absEta() > 2.4) continue;
+            if(l.pt() < 30 ) continue;
+            if(l.absEta() > 2.5) continue;
             recoElectrons.push_back(&l);
             if(std::fabs(l.dz()) > .1) continue;
             if(std::fabs(l.d0()) > .05) continue;
-            if(!l.passMedID_noISO()) continue;
+            if(std::fabs(l.sip3D()) > 4) continue;
+            if(!l.passTightID_noISO()) continue;
             IDElectrons.push_back(&l);
             if(l.miniIso() > 0.1) continue;
             isoElectrons.push_back(&l);
@@ -117,11 +120,12 @@ public:
         std::vector<const Muon*> IDMuons;
         std::vector<const Muon*> isoMuons;
         for(const auto& l : reader_muon->muons){
-            if(l.pt() < 20 ) continue;
+            if(l.pt() < 26 ) continue;
             if(l.absEta() > 2.4) continue;
             recoMuons.push_back(&l);
             if(std::fabs(l.dz()) > .1) continue;
             if(std::fabs(l.d0()) > .05) continue;
+            if(std::fabs(l.sip3D()) > 4) continue;
             if(!l.passMedID()) continue;
             IDMuons.push_back(&l);
             if(l.miniIso() > 0.2) continue;
@@ -155,7 +159,8 @@ public:
 //            std::cout <<"\n---------------------------------------\n\n";
 //        }
         make3Plots("incl",0);
-        if(diHiggsEvt.w1_d1->pt() > 20 && diHiggsEvt.w1_d1->absEta() < 2.4) make3Plots("genAcc",1);
+        if(!isGenL) return true;
+        make3Plots("genAcc",1);
         if(recoL)  make3Plots("reco",2);
         if(idL)    make3Plots("id",3);
         if(isoL)    make3Plots("iso",4);
