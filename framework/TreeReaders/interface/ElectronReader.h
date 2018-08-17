@@ -6,7 +6,7 @@
 namespace TAna{
 class ElectronReader: public BaseReader {
 public:
-    ElectronReader(std::string branchName, bool fillSCs = false);
+    ElectronReader(std::string branchName, bool fillSCs = false, bool fillReco = false);
 	virtual ~ElectronReader();
 	virtual void setup(TreeReadingWrapper * wrapper);
 	virtual void processVars();
@@ -14,6 +14,7 @@ public:
 private:
 	//settings
 	bool fillSCs;
+	bool fillReco;
 public:
 	//branches from the tree
      std::vector<float>          * pt          = new std::vector<float> ;
@@ -33,6 +34,8 @@ public:
      std::vector<float>			 * lepAct_o_pt = new std::vector<float> ;
      std::vector<float>          * sc_act_o_pt = new std::vector<float> ;
      std::vector<float>          * sc_dr_act   = new std::vector<float> ;
+     std::vector<ASTypes::size8> * reco_flag   = new std::vector<ASTypes::size8> ;
+
      std::vector<float>          * sccol_et    = new std::vector<float> ;
      std::vector<float>          * sccol_eta   = new std::vector<float> ;
      std::vector<float>          * sccol_phi   = new std::vector<float> ;

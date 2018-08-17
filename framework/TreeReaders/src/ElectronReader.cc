@@ -6,8 +6,8 @@
 
 namespace TAna{
 
-ElectronReader::ElectronReader(std::string branchName, bool fillSCs) : BaseReader("ElectronReader",branchName),
-        fillSCs(fillSCs)
+ElectronReader::ElectronReader(std::string branchName, bool fillSCs, bool fillReco) : BaseReader("ElectronReader",branchName),
+        fillSCs(fillSCs),fillReco(fillReco)
 {};
 
 ElectronReader::~ElectronReader(){
@@ -28,6 +28,7 @@ ElectronReader::~ElectronReader(){
     delete lepAct_o_pt;
     delete sc_act_o_pt;
     delete sc_dr_act;
+    delete reco_flag ;
     delete sccol_et  ;
     delete sccol_eta ;
     delete sccol_phi ;
@@ -51,10 +52,11 @@ void ElectronReader::setup(TreeReadingWrapper * wrapper){
     wrapper->setBranchAddressPre(branchName,"lepAct_o_pt",&lepAct_o_pt,false);
     wrapper->setBranchAddressPre(branchName,"sc_act_o_pt",&sc_act_o_pt,false);
     wrapper->setBranchAddressPre(branchName,"sc_dr_act"  ,&sc_dr_act  ,false);
+    if(fillReco) wrapper->setBranchAddressPre(branchName,"reco_flag"  ,&reco_flag  ,false);
     if(fillSCs){
-        wrapper->setBranchAddressPre(branchName,"sccol_et"   ,&sccol_et   ,false);
-        wrapper->setBranchAddressPre(branchName,"sccol_eta"  ,&sccol_eta  ,false);
-        wrapper->setBranchAddressPre(branchName,"sccol_phi"  ,&sccol_phi  ,false);
+        wrapper->setBranchAddressPre(branchName,"sccol_et"   ,&sccol_et );
+        wrapper->setBranchAddressPre(branchName,"sccol_eta"  ,&sccol_eta);
+        wrapper->setBranchAddressPre(branchName,"sccol_phi"  ,&sccol_phi);
     }
 
 }

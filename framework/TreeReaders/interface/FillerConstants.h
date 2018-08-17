@@ -35,6 +35,11 @@ enum ElectronID {ELID_CUT_VETO         = (1 << 0)
                 ,ELID_CUT_NOISO_TIGHT  = (1 << 8)
                 ,ELID_CUT_NOISO_HEEP   = (1 << 9)
 };
+
+enum ElectronRECOStatus {ELRECO_TrckDrv         = (1 << 0)
+                        ,ELRECO_ECALDrv         = (1 << 1)
+};
+
 enum MuonID   { MUID_SOFT   = (1 << 0)
                ,MUID_LOOSE  = (1 << 1)
                ,MUID_MED    = (1 << 2)
