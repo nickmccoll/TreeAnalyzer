@@ -45,46 +45,7 @@ Follow "Workflow Description in 80X"
       xrdcp TnPTree_SingleElectron_2016prompt_RunF.root   root://cmseos.fnal.gov//store/user/lpchh/TagAndProbe/Electron_7_16_18/Moriond17_GainSwitch_newTnP_v5/combined/TnPTree_SingleElectron_2016prompt_RunF.root   &
       xrdcp TnPTree_SingleElectron_2016prompt_RunG.root   root://cmseos.fnal.gov//store/user/lpchh/TagAndProbe/Electron_7_16_18/Moriond17_GainSwitch_newTnP_v5/combined/TnPTree_SingleElectron_2016prompt_RunG.root   &
 
-# SKimming trees
 
-
-      {
-  
-        std::vector<TString> inFiles = {
-      "TnPTree_SingleElectron_2016prompt_RunG.root",
-      "TnPTree_SingleElectron_2016prompt_RunB.root",
-      "TnPTree_SingleElectron_2016prompt_RunE.root",
-      "TnPTree_SingleElectron_2016prompt_RunHv2.root",
-      "TnPTree_SingleElectron_2016prompt_RunD.root",
-      "TnPTree_SingleElectron_2016prompt_RunF.root",
-      "TnPTree_DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8_DYToLL_madgraph.root",
-      "TnPTree_SingleElectron_2016prompt_RunC.root",
-      "TnPTree_DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8.root",
-      "TnPTree_SingleElectron_2016prompt_RunHv3.root"
-      };
-      // TString outDir = "reco_skim";
-      // TString treedir = "tnpEleReco";
-      // TString sel = "tag_Ele_pt > 30 && abs(tag_sc_eta) < 2.17 && tag_Ele_nonTrigMVA >0.96 && sqrt( 2*event_met_pfmet*tag_Ele_pt*(1-cos(event_met_pfphi-tag_Ele_phi))) < 60";
-
-      TString outDir = "id_skim";
-      TString treedir = "tnpEleIDs";
-      TString sel = "tag_Ele_pt > 27 && abs(tag_sc_eta) < 2.17 && el_q*tag_Ele_q < 0";
-
-      for(const auto& iF : inFiles){
-        TFile * fin = new TFile(iF,"read");
-        TTree * tin = 0;
-        fin->GetObject(treedir +"/fitter_tree",tin);
-        if(tin == 0) return;
-        TFile * fout = new TFile(outDir + "/"+iF ,"recreate");
-        TDirectory * cdtof = fout->mkdir(treedir);
-        cdtof->cd();
-        TTree *tout = tin->CopyTree(sel);
-        tout->Write();
-        delete fin;
-        delete fout;
-      }
-  
-      }
     
 # Now analyze the trees
 #download this fork
@@ -100,72 +61,22 @@ ln -s egm_tnp_analysis/libCpp .
 #examples
     https://indico.cern.ch/event/604907/contributions/2452909/attachments/1401631/2139468/Ele_IdSF_Moriond17_25Jan.pdf
     https://indico.cern.ch/event/604907/contributions/2452907/attachments/1401460/2139067/RecoSF_ApprovalMoriond17_25Jan2017.pdf
-  
-  //Eff for reco for signal in signaltriggerkine
-//Compare efficiencies w/ new vs old method
-  
-  
-{
-TFile * nf = new TFile("results/reco_std_func/passingRECO/egammaEffi.txt_EGM2D.root","read");
-TFile * of = new TFile("results/reco_std/passingRECO/egammaEffi.txt_EGM2D.root","read");
-std::vector<TString> hnames = {"EGamma_SF2D","EGamma_EffData2D","EGamma_EffMC2D"};
-std::vector<TString> ht = {"scale factor","data efficiency","MC efficiency"};
 
-for(unsigned int iV = 0; iV < hnames.size();++iV){
-  TH2*hn = 0;
-  TH2*ho = 0;
-  nf->GetObject(hnames[iV],hn);
-  of->GetObject(hnames[iV],ho);
-  
-  auto hn1 = hn->ProjectionX(hnames[iV]+"_hnx");
-  auto ho1 = ho->ProjectionX(hnames[iV]+"_hox");
-  for(unsigned int iB = 1; iB <=hn1->GetNbinsX(); ++iB ) hn1->SetBinError(iB,0);
-  
-  Plotter * p = new Plotter();
-  p->addHist(ho1,"method: template fit");
-  p->addHist(hn1,"method: function fit");
-  if(iV)p->setMinMax(0,1);
-  else p->setMinMax(0.5,1.5);
-  p->setBotMinMax(0.9,1.1);
-  p->setYTitle(ht[iV]);
-  p->setXTitle("supercluster #eta");
-  p->setYTitleBot("template/function");  
-  p->drawSplitRatio(1,"stack",false,false,hnames[iV]);
-  
-  
-  
-  
-}
+# see electronEffPlots.C for scripts
 
-}
+# test on signal:
 
-//Projection
-{
-TFile * nf = new TFile("results/recoISO/passingRECO/egammaEffi.txt_EGM2D.root","read");
-std::vector<TString> hnames = {"EGamma_SF2D","EGamma_EffData2D","EGamma_EffMC2D"};
-std::vector<TString> ht = {"scale factor","data efficiency","MC efficiency"};
+    nohup cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIISummer16MiniAODv2/Radion_hh_hVVhbb_inclusive_narrow_M2000_TuneCUETP8M1_13TeV-madgraph-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/50000/B20383C9-295E-E711-A38B-008CFAFC0416.root" outputFile="testTree_2000.root" isCrab=False sample=signal  &
+    nohup cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIISummer16MiniAODv2/Radion_hh_hVVhbb_inclusive_narrow_M4000_TuneCUETP8M1_13TeV-madgraph-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/70000/5C406E32-E45E-E711-804C-E0071B7A7830.root" outputFile="testTree_4000.root" isCrab=False sample=signal  &
+    nohup cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIISummer16MiniAODv2/Radion_hh_hVVhbb_inclusive_narrow_M1000_TuneCUETP8M1_13TeV-madgraph-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/110000/663F2191-DD5E-E711-9612-0CC47A4D767C.root" outputFile="testTree_1000.root" isCrab=False sample=signal &
+    nohup cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIISummer16MiniAODv2/Radion_hh_hVVhbb_inclusive_narrow_M3000_TuneCUETP8M1_13TeV-madgraph-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/70000/8A905647-365F-E711-821E-7CD30ACE19BA.root" outputFile="testTree_3000.root" isCrab=False sample=signal  &
 
-for(unsigned int iV = 0; iV < hnames.size();++iV){
-  TH2*hn = 0;
-  nf->GetObject(hnames[iV],hn);
-  Plotter * p = new Plotter();
-  for(unsigned int iB = 6; iB <= hn->GetNbinsX(); ++iB){
-    auto h1 = hn->ProjectionY(hnames[iV]+TString::Format("%u",iB),iB,iB);
-    TString title = TString::Format("%.1f < #it{J}_{#it{A}} < %.1f",hn->GetXaxis()->GetBinLowEdge(iB),hn->GetXaxis()->GetBinLowEdge(iB)+hn->GetXaxis()->GetBinWidth(iB));
-    p->addHist(h1,title);
-    
-  }  
 
-  // if(iV)p->setMinMax(0,1);
-  // else p->setMinMax(0.5,1.5);
-  p->setYTitle(ht[iV]);
-  p->setXTitle("#Delta#it{R}_{#it{A}}");
-  p->draw(false,hnames[iV]);
-  // p->drawSplitRatio(1,"stack",false,false,hnames[iV]);
-  
-  
-  
-  
-}
+    rr -b -q 'understandElectronReco.C+("testTree_1000.root",1,"out_radion_hh_bbinc_m1000_0.root")' &
+    rr -b -q 'understandElectronReco.C+("testTree_2000.root",1,"out_radion_hh_bbinc_m2000_0.root")' &
+    rr -b -q 'understandElectronReco.C+("testTree_3000.root",1,"out_radion_hh_bbinc_m3000_0.root")' &
+    rr -b -q 'understandElectronReco.C+("testTree_4000.root",1,"out_radion_hh_bbinc_m4000_0.root")' &
 
-}
+
+
+  
