@@ -19,10 +19,10 @@ void makeDataDistributions(const std::string& name, const std::string& filename,
     sels.emplace_back("full"                ,btagCats[BTAG_LMT].cut+"&&"+hadCuts[HAD_FULL].cut);
     sels.emplace_back("loose_hhMass"        ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+hadCuts[HAD_FULL].cut);
     sels.emplace_back("loose_hbbMass"       ,btagCats[BTAG_LMT].cut+"&&"+hadCuts[HAD_FULL].cut);
-    sels.emplace_back("loose_nAK4Btags"     ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut);
-    sels.emplace_back("loose_wjjTau2o1"     ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+nSJs.cut+"&&"+exA.cut+"&&"+bV.cut);
-    sels.emplace_back("loose_hwwPT_o_hhMass",blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+nSJs.cut+"&&"+"wwDM<125"+"&&"+wjjBC.cut+"&&"+bV.cut);
-    sels.emplace_back("loose_wwDM"          ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+nSJs.cut+"&&"+"(hwwPT/hhMass>0.3)"+"&&"+wjjBC.cut+"&&"+bV.cut);
+    sels.emplace_back("loose_nAK4Btags"     ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut);
+    sels.emplace_back("loose_wjjTau2o1"     ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+preSel.cut+"&&"+exA.cut+"&&"+bV.cut);
+    sels.emplace_back("loose_hwwPT_o_hhMass",blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+preSel.cut+"&&"+"wwDM<125"+"&&"+wjjBC.cut+"&&"+bV.cut);
+    sels.emplace_back("loose_wwDM"          ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+preSel.cut+"&&"+"(hwwPT/hhMass>0.3)"+"&&"+wjjBC.cut+"&&"+bV.cut);
     sels.emplace_back("loose_hbbCSVCat"     ,blindCut.cut +"&&"+ hadCuts[HAD_FULL].cut);
 
 
@@ -155,11 +155,11 @@ void plotSRVariables( int step, int reg,std::string tree, std::string name){
         prefix+="TopCR_";
         hhFilename += "_TopCR";
         blindCut.cut = "(1.0)";
-        hadCuts[HAD_NONE].cut = nSJs.cut;
-        hadCuts[HAD_LB].cut   = nSJs.cut+"&&"+wjjBC.cut;
-        hadCuts[HAD_LT].cut   = nSJs.cut+ "&&"+abV.cut;
-        hadCuts[HAD_LTMB].cut = nSJs.cut ;
-        hadCuts[HAD_FULL].cut = nSJs.cut + "&&"+abV.cut+"&&"+wjjBC.cut;
+        hadCuts[HAD_NONE].cut = preSel.cut;
+        hadCuts[HAD_LB].cut   = preSel.cut+"&&"+wjjBC.cut;
+        hadCuts[HAD_LT].cut   = preSel.cut+ "&&"+abV.cut;
+        hadCuts[HAD_LTMB].cut = preSel.cut ;
+        hadCuts[HAD_FULL].cut = preSel.cut + "&&"+abV.cut+"&&"+wjjBC.cut;
     } else if(reg==REG_QGCR){
         prefix+="QGCR_";
         btagCats = qgBtagCats;

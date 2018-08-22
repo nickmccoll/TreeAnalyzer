@@ -34,7 +34,7 @@ CutStr wjjBC("wjjBC" , "wjjTau2o1<0.75");
 CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&wwDM<125.0");
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr abV  ("abV"   , "nAK4Btags!=0");
-CutStr nSJs ("nSJs"  , "hbbNSJs==2&&wjjNSJs==2");
+CutStr preSel("preSel"  , "passPre==1");
 
 
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{H#rightarrowbb} [GeV]");
@@ -106,11 +106,11 @@ std::vector<CutStr > purCats = {
 
 enum HADCuts  {HAD_NONE,HAD_LB,HAD_LT,HAD_LTMB,HAD_FULL};
 std::vector<CutStr > hadCuts = {
-        CutStr("none",nSJs.cut),
-        CutStr("lb"  ,nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut),
-        CutStr("lt"  ,nSJs.cut+"&&"+exA.cut+"&&"+bV.cut),
-        CutStr("ltmb",nSJs.cut+"&&"+exA.cut),
-        CutStr("full",nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut)
+        CutStr("none",preSel.cut),
+        CutStr("lb"  ,preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut),
+        CutStr("lt"  ,preSel.cut+"&&"+exA.cut+"&&"+bV.cut),
+        CutStr("ltmb",preSel.cut+"&&"+exA.cut),
+        CutStr("full",preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut)
 
 };
 

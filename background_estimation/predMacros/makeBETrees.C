@@ -69,6 +69,7 @@ public:
             i_lep_N       =outTree->add<float>  ("","lep_N"  ,"F",0);
             i_btag_N      =outTree->add<float>  ("","btag_N" ,"F",0);
         }
+        i_passPre     =outTree->add<size8>  ("","passPre"   ,"b",0);
         i_ht          =outTree->add<float>  ("","ht"        ,"F",0);
         i_met         =outTree->add<float>  ("","met"       ,"F",0);
         i_isMuon      =outTree->add<size8>  ("","isMuon"    ,"b",0);
@@ -77,20 +78,18 @@ public:
 
         i_hbbMass     =outTree->add<float>  ("","hbbMass"   ,"F",0);
         i_hbbPT       =outTree->add<float>  ("","hbbPT"     ,"F",0);
-        i_hbbNSJs     =outTree->add<size8>  ("","hbbNSJs"   ,"b",0);
         i_hbbCSVCat   =outTree->add<size8>  ("","hbbCSVCat" ,"b",0);
-        i_hbbBBT      =outTree->add<float>  ("","hbbBBT"    ,"F",0);
-        i_hbbTau2o1   =outTree->add<float>  ("","hbbTau2o1" ,"F",0);
+//        i_hbbBBT      =outTree->add<float>  ("","hbbBBT"    ,"F",0);
+//        i_hbbTau2o1   =outTree->add<float>  ("","hbbTau2o1" ,"F",0);
 
         i_hhMass      =outTree->add<float>  ("","hhMass"    ,"F",0);
         i_wwDM        =outTree->add<float>  ("","wwDM"      ,"F",0);
         i_hwwPT       =outTree->add<float>  ("","hwwPT"     ,"F",0);
-        i_hwwETA      =outTree->add<float>  ("","hwwETA"    ,"F",0);
-        i_wjjCSVCat   =outTree->add<size8>  ("","wjjCSVCat" ,"b",0);
+//        i_hwwETA      =outTree->add<float>  ("","hwwETA"    ,"F",0);
+//        i_wjjCSVCat   =outTree->add<size8>  ("","wjjCSVCat" ,"b",0);
         i_wjjTau2o1   =outTree->add<float>  ("","wjjTau2o1" ,"F",0);
         i_wjjMass     =outTree->add<float>  ("","wjjMass"   ,"F",0);
         i_wjjPT       =outTree->add<float>  ("","wjjPT"     ,"F",0);
-        i_wjjNSJs     =outTree->add<size8>  ("","wjjNSJs"   ,"b",0);
         i_wlnuMass    =outTree->add<float>  ("","wlnuMass"  ,"F",0);
         i_wlnuPT      =outTree->add<float>  ("","wlnuPT"    ,"F",0);
         i_nAK4Btags   =outTree->add<size8>  ("","nAK4Btags" ,"b",0);
@@ -122,12 +121,16 @@ public:
     }
 
     bool runEvent() override {
-        if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
-        if(!passTriggerPreselection) return false;
-        if(!passEventFilters) return false;
-        if(selectedLeptons.size() != 1) return false;
-        if(!hbbCand) return false;
-        if(!wjjCand) return false;
+        bool passPre = true;
+        if(!DefaultSearchRegionAnalyzer::runEvent()) passPre = false;
+        if(!passTriggerPreselection) passPre = false;
+        if(!passEventFilters) passPre = false;
+        if(selectedLeptons.size() != 1) passPre = false;
+        if(!hbbCand)  passPre = false;
+        if(!wjjCand)  passPre = false;
+
+        if(!addUncVariables && !passPre) return false;
+        outTree->fill(i_passPre     ,size8(passPre));
 
 
         if(isRealData()){
@@ -143,38 +146,37 @@ public:
             outTree->fill(i_btag_N      ,float(sjbtagSFProc->getSF({hbbCand})*ak4btagSFProc->getSF(jets_HbbV)));
         }
 
-        float ljchef = -1;
-        if(reader_jet_chs->jets.size()){
-            ljchef = reader_jet_chs->chef->at(reader_jet_chs->jets[0].index());
-        }
-
         outTree->fill(i_ht     ,float(ht_chs));
         outTree->fill(i_met    ,float(reader_event->met.pt()));
+        if(selectedLepton){
+            outTree->fill(i_isMuon      ,size8(selectedLepton->isMuon()));
+            outTree->fill(i_lepPT       ,float(selectedLepton->pt()));
+            outTree->fill(i_lepETA      ,float(selectedLepton->eta()));
+        }
 
-        outTree->fill(i_isMuon      ,size8(selectedLepton->isMuon()));
-        outTree->fill(i_lepPT       ,float(selectedLepton->pt()));
-        outTree->fill(i_lepETA      ,float(selectedLepton->eta()));
         outTree->fill(i_hbbMass     ,float(hbbMass));
-        outTree->fill(i_hbbPT       ,float(hbbCand->pt()));
-        outTree->fill(i_hbbNSJs     ,size8(hbbNSJs));
+        if(hbbCand)
+            outTree->fill(i_hbbPT       ,float(hbbCand->pt()));
         outTree->fill(i_hbbCSVCat   ,size8(hbbCSVCat));
-        outTree->fill(i_hbbBBT       ,float(hbbCand->bbt()));
-        outTree->fill(i_hbbTau2o1   ,float(hbbCand->tau2otau1()));
+//        outTree->fill(i_hbbBBT       ,float(hbbCand->bbt()));
+//        outTree->fill(i_hbbTau2o1   ,float(hbbCand->tau2otau1()));
 
         outTree->fill(i_hhMass      ,float(hh.mass()));
         outTree->fill(i_wlnuMass    ,float(wlnu.mass()));
         outTree->fill(i_wwDM        ,float(wwDM));
         outTree->fill(i_hwwPT       ,float(hWW.pt()));
-        outTree->fill(i_hwwETA      ,float(hWW.eta()));
-        outTree->fill(i_wjjCSVCat   ,size8(wjjCSVCat));
-        outTree->fill(i_wjjTau2o1   ,float(wjjCand->tau2otau1()));
-        outTree->fill(i_wjjMass     ,float(wjjCand->sdMom().mass()));
-        outTree->fill(i_wjjPT       ,float(wjjCand->pt()));
-        outTree->fill(i_wjjNSJs     ,size8(wjjNSJs));
+//        outTree->fill(i_hwwETA      ,float(hWW.eta()));
+//        outTree->fill(i_wjjCSVCat   ,size8(wjjCSVCat));
+        if(wjjCand){
+            outTree->fill(i_wjjTau2o1   ,float(wjjCand->tau2otau1()));
+            outTree->fill(i_wjjMass     ,float(wjjCand->sdMom().mass()));
+            outTree->fill(i_wjjPT       ,float(wjjCand->pt()));
+        }
+
         outTree->fill(i_wlnuPT      ,float(wlnu.pt()));
         outTree->fill(i_nAK4Btags   ,size8(std::min(nMedBTags_HbbV,250)));
 
-        if(!isRealData()){
+        if(!isRealData() && hbbCand){
             const float matchR = 0.8*0.8;
 
             int topDecayType = 0; //NONE b wj wjb wjj wjjb
@@ -273,10 +275,11 @@ public:
     size i_dataset    = 0;
     size i_dataRun    = 0;
     size i_xsec       = 0;
-    size i_trig_N = 0;
-    size i_pu_N   = 0;
-    size i_lep_N  = 0;
-    size i_btag_N = 0;
+    size i_trig_N     = 0;
+    size i_pu_N       = 0;
+    size i_lep_N      = 0;
+    size i_btag_N     = 0;
+    size i_passPre    = 0;
 
     //SR variables
     size i_ht        = 0;
@@ -286,20 +289,18 @@ public:
     size i_lepETA    = 0;
     size i_hbbMass   = 0;
     size i_hbbPT     = 0;
-    size i_hbbNSJs   =0;
     size i_hbbCSVCat = 0;
-    size i_hbbBBT    = 0;
-    size i_hbbTau2o1 = 0;
+//    size i_hbbBBT    = 0;
+//    size i_hbbTau2o1 = 0;
 
     size i_hhMass    = 0;
     size i_wwDM      = 0;
     size i_hwwPT     = 0;
-    size i_hwwETA    = 0;
-    size i_wjjCSVCat = 0;
+//    size i_hwwETA    = 0;
+//    size i_wjjCSVCat = 0;
     size i_wjjTau2o1 = 0;
     size i_wjjMass   = 0;
     size i_wjjPT     = 0;
-    size i_wjjNSJs   =0;
     size i_wlnuMass  = 0;
     size i_wlnuPT    = 0;
     size i_nAK4Btags = 0;
@@ -314,14 +315,14 @@ public:
     size i_w_elRecoUp    = 0;
     size i_w_elIDUp      = 0;
     size i_w_elISOUp     = 0;
-    size i_w_b_realUp   = 0;
+    size i_w_b_realUp    = 0;
     size i_w_b_fakeUp    = 0;
     size i_w_muIDDown    = 0;
     size i_w_muISODown   = 0;
     size i_w_elRecoDown  = 0;
     size i_w_elIDDown    = 0;
     size i_w_elISODown   = 0;
-    size i_w_b_realDown = 0;
+    size i_w_b_realDown  = 0;
     size i_w_b_fakeDown  = 0;
 
     size i_w_scale       = 0;

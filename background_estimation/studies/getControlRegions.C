@@ -40,17 +40,17 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
 
     auto addSels = [&](const std::string& prevcut,const std::string& prefix) {
         if(!isData){
-            sels.emplace_back(prefix+"sr",prevcut + "&&"+btagCats[BTAG_LMT].cut+"&&"+nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut);
+            sels.emplace_back(prefix+"sr",prevcut + "&&"+btagCats[BTAG_LMT].cut+"&&"+preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut);
         }
         //For ttbar cr
-        sels.emplace_back(prefix+"ab"         ,prevcut + "&&"+btagCats[BTAG_LMT].cut+"&&"+nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+"nAK4Btags>0");
-        sels.emplace_back(prefix+"ab_noM"     ,prevcut + "&&"+btagCats[BTAG_LMT].cut+"&&"+nSJs.cut+"&&"+exA.cut+"&&"+"nAK4Btags>0");
-        sels.emplace_back(prefix+"ab_noEx"    ,prevcut + "&&"+btagCats[BTAG_LMT].cut+"&&"+nSJs.cut+"&&"+wjjBC.cut + "&&nAK4Btags>0");
-        sels.emplace_back(prefix+"ab_noM_noEx",prevcut + "&&"+btagCats[BTAG_LMT].cut+"&&"+nSJs.cut+"&&"+"nAK4Btags>0");
+        sels.emplace_back(prefix+"ab"         ,prevcut + "&&"+btagCats[BTAG_LMT].cut+"&&"+preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+"nAK4Btags>0");
+        sels.emplace_back(prefix+"ab_noM"     ,prevcut + "&&"+btagCats[BTAG_LMT].cut+"&&"+preSel.cut+"&&"+exA.cut+"&&"+"nAK4Btags>0");
+        sels.emplace_back(prefix+"ab_noEx"    ,prevcut + "&&"+btagCats[BTAG_LMT].cut+"&&"+preSel.cut+"&&"+wjjBC.cut + "&&nAK4Btags>0");
+        sels.emplace_back(prefix+"ab_noM_noEx",prevcut + "&&"+btagCats[BTAG_LMT].cut+"&&"+preSel.cut+"&&"+"nAK4Btags>0");
         //for wjets cr
 
-        sels.emplace_back(prefix+"hbb1",  prevcut + "&&"+exA.cut+"&&"+nSJs.cut+"&&"+wjjBC.cut+"&&"+bV.cut+"&&hbbCSVCat==1");
-        sels.emplace_back(prefix+"hbb1_noM_noEx"  ,prevcut + "&&"+bV.cut+"&&"+nSJs.cut+"&&hbbCSVCat==1");
+        sels.emplace_back(prefix+"hbb1",  prevcut + "&&"+exA.cut+"&&"+preSel.cut+"&&"+wjjBC.cut+"&&"+bV.cut+"&&hbbCSVCat==1");
+        sels.emplace_back(prefix+"hbb1_noM_noEx"  ,prevcut + "&&"+bV.cut+"&&"+preSel.cut+"&&hbbCSVCat==1");
         sels.emplace_back(prefix+"hbb1_noM_noEx_noNJ"  ,prevcut + "&&"+bV.cut+"&&hbbCSVCat==1");
     };
     addSels("1.0","");

@@ -178,19 +178,11 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         wjjCand     = fjProc->getWjjCand();
         hbbCSVCat   = fjProc->getHbbCSVCat();
         wjjCSVCat   = fjProc->getWjjCSVCat();
-        hbbNSJs     = fjProc->getHbbNSJs();
-        wjjNSJs     = fjProc->getWjjNSJs();
-        passHbbSel  = fjProc->passHbbSel();
-        passWjjSel  = fjProc->passWjjSel();
     } else {
         wjjCand    =  0;
         hbbCand    =  0;
         hbbCSVCat   = BTagging::CSVSJ_INCL;
         wjjCSVCat   = BTagging::CSVSJ_INCL;
-        hbbNSJs     =  0;
-        wjjNSJs     =  0;
-        passWjjSel =  false;
-        passHbbSel =  false;
     }
 
     if(wjjCand){
