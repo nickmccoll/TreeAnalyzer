@@ -46,6 +46,10 @@ bool DiHiggsEvent::isWpair(const GenParticle* f1, const GenParticle* f2, const G
         }
         else {return false;}
     }
+    else if (f1id==22) {
+//    	std::cout << "Found a photon, this is not a W"<< std::endl;
+    	return false;
+    }
     else {
         std::cout << "Function isWpair has failed" << std::endl;
 	ParticleInfo::printGenInfo(g_parts,-1);
