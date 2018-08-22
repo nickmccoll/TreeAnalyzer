@@ -3,28 +3,31 @@
 int main(int argc, char* argv[])
 {
     int treeInt = 0;
+    int randSeed = 0;
     float xSec = 0;
     float numEvent = 0;
 
 
-    if(argc > 2){
+    if(argc > 3){
         std::stringstream convertTreeInt(argv[2]);
         convertTreeInt >> treeInt;
+        std::stringstream convertRandSeed(argv[3]);
+        convertRandSeed >> randSeed;
     }
-    if(argc > 5){
-        TFormula xsec("xsec",argv[4]);
+    if(argc > 6){
+        TFormula xsec("xsec",argv[5]);
         xSec = xsec.Eval(0);
 //        std::stringstream convertxSec(argv[4]);
 //        convertxSec >> xSec;
-        std::stringstream convertnumEvent(argv[5]);
+        std::stringstream convertnumEvent(argv[6]);
         convertnumEvent >> numEvent;
     }
     switch(argc) {
-        case 4:
-            __MACRO__NAME__(argv[1], treeInt, argv[3]);
+        case 5:
+            __MACRO__NAME__(argv[1], treeInt, randSeed, argv[4]);
             return 0;
-        case 6:
-            __MACRO__NAME__(argv[1], treeInt, argv[3],xSec,numEvent);
+        case 7:
+            __MACRO__NAME__(argv[1], treeInt,randSeed, argv[4],xSec,numEvent);
             return 0;
         default:
             std::cout << "Cannot take: "<< (argc -1)<<" arguments!"<<std::endl;

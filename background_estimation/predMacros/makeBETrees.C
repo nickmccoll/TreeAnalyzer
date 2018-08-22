@@ -34,11 +34,11 @@ using namespace CorrHelp;
 class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt) {
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
         addUncVariables = (treeType == TREE_OTHER);
     }
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
         JERAK4PuppiProc ->setCorrType(jerUNC);
         JERAK4CHSProc   ->setCorrType(jerUNC);
         JERAK8PuppiProc ->setCorrType(jerUNC);
@@ -336,15 +336,15 @@ public:
 
 
 
-void doOne(const std::string& fileName, const int treeInt, const std::string& outFileName, float xSec = -1, float numEvent = -1){
-    Analyzer a(fileName,"treeMaker/Events",treeInt);
+void doOne(const std::string& fileName, const int treeInt,int randSeed,  const std::string& outFileName, float xSec = -1, float numEvent = -1){
+    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     if(xSec > 0) a.setSampleInfo(xSec,numEvent);
     a.initializeTreeCopy(outFileName,BaseTreeAnalyzer::COPY_NONE);
     a.analyze();
 }
 
-void doOneVar(const std::string& fileName, const int treeInt, const std::string& outFileName, const CORRTYPE jerType, CORRTYPE jesUNC, CORRTYPE metUNC, float xSec = -1, float numEvent = -1){
-    Analyzer a(fileName,"treeMaker/Events",treeInt,jerType,jesUNC,metUNC);
+void doOneVar(const std::string& fileName, const int treeInt,int randSeed, const std::string& outFileName, const CORRTYPE jerType, CORRTYPE jesUNC, CORRTYPE metUNC, float xSec = -1, float numEvent = -1){
+    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed,jerType,jesUNC,metUNC);
     if(xSec > 0) a.setSampleInfo(xSec,numEvent);
     a.initializeTreeCopy(outFileName,BaseTreeAnalyzer::COPY_NONE);
     a.analyze();
@@ -354,35 +354,31 @@ void doOneVar(const std::string& fileName, const int treeInt, const std::string&
 
 
 
-void makeBETrees(std::string fileName, int treeInt, std::string outFileName){
-    doOne(fileName,treeInt,outFileName);
+void makeBETrees(std::string fileName, int treeInt, int randSeed, std::string outFileName){
+    doOne(fileName,treeInt,randSeed,outFileName);
     if(treeInt==2){
         size_t lastindex = outFileName.find_last_of(".");
         std::string extLessName = outFileName.substr(0, lastindex);
-        doOneVar(fileName,treeInt,extLessName+"_JERUp.root"  ,UP     ,NONE,NONE);
-        doOneVar(fileName,treeInt,extLessName+"_JERDown.root",DOWN   ,NONE,NONE);
-        doOneVar(fileName,treeInt,extLessName+"_JESDOWN.root",NOMINAL,DOWN,NONE);
-        doOneVar(fileName,treeInt,extLessName+"_JESUp.root"  ,NOMINAL,UP  ,NONE);
-        doOneVar(fileName,treeInt,extLessName+"_METDOWN.root",NOMINAL,NONE,DOWN);
-        doOneVar(fileName,treeInt,extLessName+"_METUp.root"  ,NOMINAL,NONE,UP  );
+        doOneVar(fileName,treeInt,randSeed+1,extLessName+"_JERUp.root"  ,UP     ,NONE,NONE);
+        doOneVar(fileName,treeInt,randSeed+2,extLessName+"_JERDown.root",DOWN   ,NONE,NONE);
+        doOneVar(fileName,treeInt,randSeed+3,extLessName+"_JESDOWN.root",NOMINAL,DOWN,NONE);
+        doOneVar(fileName,treeInt,randSeed+4,extLessName+"_JESUp.root"  ,NOMINAL,UP  ,NONE);
+        doOneVar(fileName,treeInt,randSeed+5,extLessName+"_METDOWN.root",NOMINAL,NONE,DOWN);
+        doOneVar(fileName,treeInt,randSeed+6,extLessName+"_METUp.root"  ,NOMINAL,NONE,UP  );
 
     }
 }
-void makeBETrees(std::string fileName, int treeInt, std::string outFileName, float xSec, float numEvent){
-    Analyzer a(fileName,"treeMaker/Events",treeInt);
-    a.setSampleInfo(xSec,numEvent);
-    a.initializeTreeCopy(outFileName,BaseTreeAnalyzer::COPY_NONE);
-    a.analyze();
-    doOne(fileName,treeInt,outFileName,xSec,numEvent);
+void makeBETrees(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec, float numEvent){
+    doOne(fileName,treeInt,randSeed,outFileName,xSec,numEvent);
     if(treeInt==2){
         size_t lastindex = outFileName.find_last_of(".");
         std::string extLessName = outFileName.substr(0, lastindex);
-        doOneVar(fileName,treeInt,extLessName+"_JERUp.root"  ,UP     ,NONE,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,extLessName+"_JERDown.root",DOWN   ,NONE,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,extLessName+"_JESDOWN.root",NOMINAL,DOWN,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,extLessName+"_JESUp.root"  ,NOMINAL,UP  ,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,extLessName+"_METDOWN.root",NOMINAL,NONE,DOWN,xSec,numEvent);
-        doOneVar(fileName,treeInt,extLessName+"_METUp.root"  ,NOMINAL,NONE,UP  ,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+1,extLessName+"_JERUp.root"  ,UP     ,NONE,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+2,extLessName+"_JERDown.root",DOWN   ,NONE,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+3,extLessName+"_JESDOWN.root",NOMINAL,DOWN,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+4,extLessName+"_JESUp.root"  ,NOMINAL,UP  ,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+5,extLessName+"_METDOWN.root",NOMINAL,NONE,DOWN,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+6,extLessName+"_METUp.root"  ,NOMINAL,NONE,UP  ,xSec,numEvent);
     }
 
 }

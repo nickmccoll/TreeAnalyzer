@@ -122,16 +122,16 @@ def prepareSampleJob(libName,outList, name, filelist, nFilesPerJob, treeInt, wei
                 inputF  = os.path.normpath(os.path.join(os.path.join(os.getcwd(), args.jobdir),inputF))
                 outputF = os.path.normpath(os.path.join(os.path.join(os.getcwd(), args.outdir),outputF))
                 if weightJob  :
-                    CMD = "root -l -b -q \'{cfg}+(\"{INF}\",{TreeInt},\"{OUTF}\",{xs},{nE})\'".format( cfg= args.macro,INF=inputF,TreeInt=treeInt,OUTF=outputF,xs=xsec,nE=numE)
+                    CMD = "root -l -b -q \'{cfg}+(\"{INF}\",{TreeInt},{RSEED},\"{OUTF}\",{xs},{nE})\'".format( cfg= args.macro,INF=inputF,TreeInt=treeInt,RSEED=iF,OUTF=outputF,xs=xsec,nE=numE)
                 else :
-                    CMD = "root -l -b -q \'{cfg}+(\"{INF}\",{TreeInt},\"{OUTF}\")\'".format( cfg=args.macro,INF=inputF,TreeInt=treeInt,OUTF=outputF)
+                    CMD = "root -l -b -q \'{cfg}+(\"{INF}\",{TreeInt},{RSEED},\"{OUTF}\")\'".format( cfg=args.macro,INF=inputF,TreeInt=treeInt,RSEED=iF,OUTF=outputF)
                 outList.append(CMD + " &")
             
             else :
                 if weightJob  :
-                    CMD = "./{MCR} {INF} {TreeInt} {OUTF} {xs} {nE}".format( MCR=os.path.basename(libName),INF=inputF,TreeInt=treeInt,OUTF=outputF,xs=xsec,nE=numE)
+                    CMD = "./{MCR} {INF} {TreeInt} {RSEED} {OUTF} {xs} {nE}".format( MCR=os.path.basename(libName),INF=inputF,TreeInt=treeInt,RSEED=iF,OUTF=outputF,xs=xsec,nE=numE)
                 else :
-                    CMD = "./{MCR} {INF} {TreeInt} {OUTF}".format( MCR=os.path.basename(libName),INF=inputF,TreeInt=treeInt,OUTF=outputF)
+                    CMD = "./{MCR} {INF} {TreeInt} {RSEED} {OUTF}".format( MCR=os.path.basename(libName),INF=inputF,TreeInt=treeInt,RSEED=iF,OUTF=outputF)
 
                 jobscript = open("{0}/submit_{1}_{2}".format(args.jobdir,name,iJ), "w")
                 jobscript.write("""
