@@ -27,7 +27,7 @@
 
 namespace TAna {
 //--------------------------------------------------------------------------------------------------
-DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt) : BaseTreeAnalyzer(fileName,treeName,treeInt){
+DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt, size randomSeed) : BaseTreeAnalyzer(fileName,treeName,treeInt, randomSeed){
     TPRegexp r1(".*m(\\d+)_[0-9]*\\..*$");
     auto match = r1.MatchS(fileName);
     const Int_t nrSubStr = match->GetLast()+1;
