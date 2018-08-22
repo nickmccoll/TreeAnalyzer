@@ -20,6 +20,7 @@
 #include "Processors/Corrections/interface/LeptonScaleFactors.h"
 #include "Processors/Corrections/interface/BTagScaleFactors.h"
 #include "Processors/Corrections/interface/FatJetScaleFactors.h"
+#include "Processors/Corrections/interface/JetAndMETCorrections.h"
 #include "TPRegexp.h"
 
 
@@ -43,6 +44,13 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, s
     sjbtagSFProc.reset(new SubJetBTagScaleFactors (dataDirectory));
     hbbFJSFProc .reset(new HbbFatJetScaleFactors (dataDirectory));
     topPTProc   .reset(new TopPTWeighting (dataDirectory));
+
+    JERAK4PuppiProc .reset(new JERCorrector (dataDirectory, "corrections/Summer16_25nsV1_MC_PtResolution_AK4PFPuppi.txt",randGen));;
+    JERAK4CHSProc   .reset(new JERCorrector (dataDirectory, "corrections/Summer16_25nsV1_MC_PtResolution_AK4PFCHS.txt",randGen));;
+    JERAK8PuppiProc .reset(new JERCorrector (dataDirectory, "corrections/Summer16_25nsV1_MC_PtResolution_AK8PFPuppi.txt",randGen));;
+    JESUncProc . reset(new JESUncShifter());
+    METUncProc . reset(new METUncShifter());
+
     setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
 
     turnOnCorr(CORR_XSEC);
@@ -53,6 +61,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, s
     turnOnCorr(CORR_AK4BTAG);
     turnOnCorr(CORR_SDMASS);
     turnOnCorr(CORR_TOPPT);
+    turnOnCorr(CORR_JER);
 }
 //--------------------------------------------------------------------------------------------------
 DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
@@ -99,6 +108,15 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_SJBTAG) && !reader_fatjet) mkErr("ak8PuppiNoLepJet","CORR_SJBTAG");
     if(isCorrOn(CORR_TOPPT) && !reader_event) mkErr("event","CORR_TOPPT");
     if(isCorrOn(CORR_TOPPT) && !reader_genpart) mkErr("genParticle","CORR_TOPPT");
+    if(isCorrOn(CORR_JER) && !reader_fatjet) mkErr("fatjet","CORR_JER");
+    if(isCorrOn(CORR_JER) && !reader_fatjet_noLep) mkErr("fatjet_noLep","CORR_JER");
+    if(isCorrOn(CORR_JER) && !reader_jet) mkErr("jet","CORR_JER");
+    if(isCorrOn(CORR_JER) && !reader_jet_chs) mkErr("jet_chs","CORR_JER");
+
+    if(isCorrOn(CORR_JES) && !reader_fatjet) mkErr("fatjet","CORR_JES");
+    if(isCorrOn(CORR_JES) && !reader_fatjet_noLep) mkErr("fatjet_noLep","CORR_JES");
+    if(isCorrOn(CORR_JES) && !reader_jet) mkErr("jet","CORR_JES");
+    if(isCorrOn(CORR_JES) && !reader_jet_chs) mkErr("jet_chs","CORR_JES");
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
@@ -107,6 +125,26 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     else if (mcProc == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
     else smpName = FillerConstants::MCProcessNames[mcProc];
 
+    //|||||||||||||||||||||||||||||| CORRECT JETS AND MET FIRST ||||||||||||||||||||||||||||||
+    if(!isRealData()){
+        if(isCorrOn(CORR_JES) ){
+            Met dummyMET =reader_event->met;
+            JESUncProc ->processJets(*reader_jet,reader_event->met);
+            JESUncProc ->processJets(*reader_jet_chs,dummyMET);
+            JESUncProc ->processFatJets(reader_fatjet_noLep->jets);
+            JESUncProc ->processFatJets(reader_fatjet->jets);
+        }
+        if(isCorrOn(CORR_JER) ){
+            Met dummyMET =reader_event->met;
+            JERAK4PuppiProc ->processJets(*reader_jet,reader_event->met,reader_jet_chs->genJets,reader_event->rho);
+            JERAK4CHSProc   ->processJets(*reader_jet_chs,dummyMET,reader_jet_chs->genJets,reader_event->rho);
+            JERAK8PuppiProc ->processFatJets(reader_fatjet_noLep->jets,std::vector<GenJet>(),reader_event->rho);
+            JERAK8PuppiProc ->processFatJets(reader_fatjet->jets,reader_fatjet->genJets,reader_event->rho);
+        }
+        if(isCorrOn(CORR_MET) ){
+            METUncProc->process(reader_event->met,*reader_event);
+        }
+    }
 
     //|||||||||||||||||||||||||||||| GEN PARTICLES ||||||||||||||||||||||||||||||
     if(reader_genpart){

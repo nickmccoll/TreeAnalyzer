@@ -26,6 +26,9 @@ class JetBTagScaleFactors;
 class SubJetBTagScaleFactors;
 class HbbFatJetScaleFactors;
 class TopPTWeighting;
+class JERCorrector;
+class JESUncShifter;
+class METUncShifter;
 
 class Jet               ;
 class FatJet            ;
@@ -42,9 +45,12 @@ public:
                      ,CORR_AK4BTAG =(1<<5)
                      ,CORR_SDMASS  =(1<<6)
                      ,CORR_TOPPT   =(1<<7)
+                     ,CORR_JER     =(1<<8)
+                     ,CORR_JES     =(1<<9)
+                     ,CORR_MET     =(1<<10)
     };
 
-    DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt);
+    DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt, size randomSeed =0);
 
     virtual ~DefaultSearchRegionAnalyzer();
 
@@ -129,6 +135,11 @@ public:
     std::unique_ptr<SubJetBTagScaleFactors> sjbtagSFProc ;
     std::unique_ptr<HbbFatJetScaleFactors>  hbbFJSFProc ;
     std::unique_ptr<TopPTWeighting>         topPTProc ;
+    std::unique_ptr<JERCorrector>         JERAK4PuppiProc ;
+    std::unique_ptr<JERCorrector>         JERAK4CHSProc ;
+    std::unique_ptr<JERCorrector>         JERAK8PuppiProc ;
+    std::unique_ptr<JESUncShifter>        JESUncProc ;
+    std::unique_ptr<METUncShifter>        METUncProc;
 };
 }
 #endif
