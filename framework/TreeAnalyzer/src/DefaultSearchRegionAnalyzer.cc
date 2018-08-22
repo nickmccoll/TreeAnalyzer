@@ -197,17 +197,13 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         neutrino    = HiggsSolver::getInvisible(reader_event->met,(selectedLepton->p4() + wjjCand->p4()) );
         wlnu        =  neutrino.p4() + selectedLepton->p4();
         hWW         = wlnu.p4() + wjjCand->p4();
-        wlnuDR      = PhysicsUtilities::deltaR(neutrino,*selectedLepton);
-        wwDM        = PhysicsUtilities::deltaR( wlnu,*wjjCand) * hWW.pt()/125.0;
-        passWlnuDR  = wlnuDR < 3.2;
-        passWWDM    = wwDM < 2.0;
+        wwDM        = PhysicsUtilities::deltaR( wlnu,*wjjCand) * hWW.pt()/2.0;
+        passWWDM    = wwDM < 125.0;
     } else {
         neutrino    =  MomentumF();
         wlnu        =  MomentumF();
         hWW         = MomentumF();
-        wlnuDR      = 0;
         wwDM        = 0;
-        passWlnuDR  = false;
         passWWDM    = false;
     }
 

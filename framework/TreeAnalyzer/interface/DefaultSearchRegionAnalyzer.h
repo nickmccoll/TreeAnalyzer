@@ -114,9 +114,7 @@ public:
     bool                       passWjjSel  = false;
     bool                       passHbbSel  = false;
 
-    float                      wlnuDR      = 0;
     float                      wwDM        = 0;
-    bool                       passWlnuDR  = false;
     bool                       passWWDM    = false;
 
 

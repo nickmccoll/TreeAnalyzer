@@ -31,10 +31,10 @@ CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
 CutStr aQCD ("aQCD"  , "process!=8");
 
 CutStr wjjBC("wjjBC" , "wjjTau2o1<0.75");
-CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&wwDM<2");
+CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&wwDM<125.0");
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr abV  ("abV"   , "nAK4Btags!=0");
-CutStr nSJs ("nSJs"  , "hbbNSJs==2&&wjjNSJs==2&&tightE");
+CutStr nSJs ("nSJs"  , "hbbNSJs==2&&wjjNSJs==2");
 
 
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{H#rightarrowbb} [GeV]");
