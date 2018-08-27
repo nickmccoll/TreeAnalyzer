@@ -161,23 +161,7 @@ public:
             h = rebinner->process(&*h,std::string(h->GetName())+"_rebin",isY);
         }
         if(scale != 1) h->Scale(scale);
-
-        const unsigned int nD = variables.size();
-        RooArgList args;
-        auto doBinning =[&](const std::string& var, const TAxis* ax) {
-            args.add(*w->var(var.c_str()));
-            w->var(var.c_str())->setMin(ax->GetXmin());
-            w->var(var.c_str())->setMax(ax->GetXmax());
-            w->var(var.c_str())->setBins(ax->GetNbins());
-            w->var(var.c_str())->setVal((ax->GetXmin()+ax->GetXmax())/2.);
-        };
-        doBinning(variables[0],h->GetXaxis());
-        if(nD > 1)doBinning(variables[1],h->GetYaxis());
-        if(nD > 2)doBinning(variables[2],h->GetZaxis());
-        if(nD > 3)throw std::invalid_argument("makeCard::importBinnedData() -> Too many observables!");
-        RooDataHist dataHist(name.c_str(),name.c_str(),args,h);
-        w->import(dataHist);
-
+        PDFAdder::addBinnedData(w,h,name,variables);
         iF->Close();
         delete iF;
         if(rebinner) delete h;
