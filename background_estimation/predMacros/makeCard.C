@@ -12,10 +12,10 @@ std::string getSystName (const std::string& prefix, const std::string& proc,cons
     return sn;
 };
 
-void go(const std::string& signalName, const std::string& filename, const std::string& mainDir,  REGION reg, bool simpleSignal) {
+void go(const int insig, const std::string& filename, const std::string& mainDir,  REGION reg, bool simpleSignal) {
     const std::string sigInputDir =  mainDir + (simpleSignal ? "/signalInputsNoCond/" : "/signalInputs/");
     const std::string sfPF =sigInputDir + filename;
-
+    const std::string signalName = signals[insig];
     std::string inputDir = mainDir;
 
     std::string fPF;
@@ -78,27 +78,27 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         //Add Systematics first since the param systs need to have the variables added to the workspace
         //---------------------------------------------------------------------------------------------------
         //luminosity
-        card.addSystematic("CMS_lumi","lnN",{{"radHH",1.026}});
+        card.addSystematic("CMS_lumi","lnN",{{signalName,1.026}});
         //kPDF uncertainty for the signal
-        card.addSystematic("CMS_pdf","lnN",{{"radHH",1.01}});
+        card.addSystematic("CMS_pdf","lnN",{{signalName,1.01}});
         //
         //lepton efficiency
-        card.addSystematic("CMS_eff_"+l,"lnN",{{"radHH",1.1}});
+        card.addSystematic("CMS_eff_"+l,"lnN",{{signalName,1.1}});
         //
         //tau21
         card.addParamSystematic("CMS_tau21_PtDependence",0.0,0.041);
         if(p == purCats[PURE_HP])
-            card.addSystematic(systName("","tau21_eff",""),"lnN",{{"radHH",1+0.14}});
+            card.addSystematic(systName("","tau21_eff",""),"lnN",{{signalName,1+0.14}});
         if(p == purCats[PURE_LP])
-            card.addSystematic(systName("","tau21_eff",""),"lnN",{{"radHH",1-0.33}});
+            card.addSystematic(systName("","tau21_eff",""),"lnN",{{signalName,1-0.33}});
         //Btag
-        card.addSystematic("CMS_btag_fake","lnN",{{"radHH",1+0.02}});
+        card.addSystematic("CMS_btag_fake","lnN",{{signalName,1+0.02}});
         if(p == btagCats[BTAG_L])
-            card.addSystematic("CMS_btag_eff" ,"lnN",{{"radHH",1-0.03}});
+            card.addSystematic("CMS_btag_eff" ,"lnN",{{signalName,1-0.03}});
         if(p == btagCats[BTAG_M])
-            card.addSystematic("CMS_btag_eff" ,"lnN",{{"radHH",1+0.03}});
+            card.addSystematic("CMS_btag_eff" ,"lnN",{{signalName,1+0.03}});
         if(p == btagCats[BTAG_T])
-            card.addSystematic("CMS_btag_eff" ,"lnN",{{"radHH",1+0.06}});
+            card.addSystematic("CMS_btag_eff" ,"lnN",{{signalName,1+0.06}});
 
         //pruned mass scale
         card.addParamSystematic("CMS_scale_j",0.0,0.02);
@@ -137,7 +137,7 @@ void go(const std::string& signalName, const std::string& filename, const std::s
         //---------------------------------------------------------------------------------------------------
         //Signal
         //---------------------------------------------------------------------------------------------------
-        if(signalName=="radHH"){
+//        if(signalName==signalName){
             //Conditional template
             if(!simpleSignal){
                 card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
@@ -150,7 +150,7 @@ void go(const std::string& signalName, const std::string& filename, const std::s
             card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),1,"CMS_tau21_PtDependence",
                     p == purCats[PURE_HP] ? "log("+MOD_MS+"/1000)" : "((0.054/0.041)*(-log("+MOD_MS+"/1000)))"
                             ,MOD_MS);
-        } else throw std::invalid_argument("makeCard::go() -> Bad parsing");
+//        } else throw std::invalid_argument("makeCard::go() -> Bad parsing");
 
         //---------------------------------------------------------------------------------------------------
         //QG
@@ -211,10 +211,10 @@ void go(const std::string& signalName, const std::string& filename, const std::s
 }
 #endif
 
-void makeCard(int inreg = REG_SR, bool condSignal= true, std::string signalString = "radHH"){
-    std::cout <<" <<<<< "<< inreg <<" "<< condSignal <<" "<<signalString<<std::endl;
+void makeCard(int inreg = REG_SR, int insig = RADION,    bool condSignal= true){
+    std::cout <<" <<<<< "<< inreg <<" "<< condSignal <<" "<<signals[insig]<<std::endl;
     REGION reg = REGION(inreg);
     if(reg == REG_QGCR) btagCats = qgBtagCats;
     std::string mainDir = "../../";
-    go(signalString,hhFilename,mainDir,reg,!condSignal);
+    go(insig,hhFilename,mainDir,reg,!condSignal);
 }

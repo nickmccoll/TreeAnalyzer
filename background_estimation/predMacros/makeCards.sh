@@ -1,14 +1,15 @@
 #!/bin/bash
-# . /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/makeCards.sh nonCond_replaceDRforPTRatio 0 0 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/
+# . /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/makeCards.sh nonCond_replaceDRforPTRatio 0 0 0 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/
 catName=$1
 runSR=$2
-condSignal=$3
-macroLoc=$4
+signal=$3
+condSignal=$4
+macroLoc=$5
 
 mkdir ${catName}
 cd ${catName}
 mkdir plots
-RCMD="root -b -q '${macroLoc}/makeCard.C+(${runSR},${condSignal})'"
+RCMD="root -b -q '${macroLoc}/makeCard.C+(${runSR},${signal},${condSignal})'"
 eval $RCMD
 . comp.sh
 cd ..

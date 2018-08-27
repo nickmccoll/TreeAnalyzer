@@ -55,7 +55,7 @@ TCanvas* make2DTests(std::string plotTitle, int mass, const TH2* dH,TH2* pH, con
 
 
 
-void test2DFits(std::string name, std::string filename, std::string fitName,bool binInY, const std::vector<std::string>& sels, std::string outName = "") {
+void test2DFits(std::string name, std::string filename, const std::vector<int>& signalMassBins, std::string fitName,bool binInY, const std::vector<std::string>& sels, std::string outName = "") {
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<double> bins = {30,210,30,115,135,210};
 
@@ -64,7 +64,6 @@ void test2DFits(std::string name, std::string filename, std::string fitName,bool
         fo=new TFile((filename+"_"+name+"_"+s+"_"+fitName+".root").c_str(),"read");
         if(fo == 0) continue;
         TFile *ff = new TFile((filename+"_"+name+"_"+s+"_"+fitName+".json.root").c_str(),"read");
-        if(ff == 0) continue;
         auto addH = [&](const std::string& name,std::vector<TObject*>& list)->bool{
             TH2 * can= 0;
             fo->GetObject(name.c_str(),can);
@@ -221,7 +220,7 @@ void plotEfficiencies(std::string name, std::string filename,std::string fitName
 }
 
 
-std::vector<TObject*> testSignal1DFits(std::string name, std::string filename, std::string varName, std::string fitName, const std::vector<std::string>& sels){
+std::vector<TObject*> testSignal1DFits(std::string name, std::string filename, const std::vector<int>& signalMassBins, std::string varName, std::string fitName, const std::vector<std::string>& sels){
     std::vector<std::string> canNames;
     for(const auto& sB : signalMassBins){ canNames.push_back(std::string("can_m") +int2Str(sB));}
     return test1DFits(name,filename, varName,fitName,sels,canNames);
@@ -246,32 +245,35 @@ public:
 
 
 
-void plotSignalTests(int cat = 0, bool doCond = true, std::string outName = ""){
+void plotSignalTests(int cat = 0,int sig = RADION,  bool doCond = true, std::string outName = ""){
     std:: string inName = doCond ? "signalInputs" : "signalInputsNoCond";
     std::string filename = inName +"/"+hhFilename;
     if(outName.size()) outName += doCond ? std::string("/signal") : std::string("/signalNoCond");
+    std::string name = signals[sig];
+
+
     switch(cat) {
     case 0:
         if(outName.size()) outName += "_yield";
-        plotYields(radionSig,filename,"yield",{"e_L_LP_full","e_M_LP_full","e_T_LP_full","e_L_HP_full","e_M_HP_full","e_T_HP_full","mu_L_LP_full","mu_M_LP_full","mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
-        plotEfficiencies(radionSig,filename,"yield" );
+        plotYields(name,filename,"yield",{"e_L_LP_full","e_M_LP_full","e_T_LP_full","e_L_HP_full","e_M_HP_full","e_T_HP_full","mu_L_LP_full","mu_M_LP_full","mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
+        plotEfficiencies(name,filename,"yield" );
         break;
     case 1:
         if(outName.size()) outName += "_MJJ_fit1stIt";
-        writeables = testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit1stIt",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
+        writeables = testSignal1DFits(name,filename,signalMassBins[sig],MOD_MJ,"MJJ_fit1stIt",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
         break;
     case 2:
         if(outName.size()) outName += "_MJJ_fit";
-        writeables = testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
+        writeables = testSignal1DFits(name,filename,signalMassBins[sig],MOD_MJ,"MJJ_fit",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
         break;
     case 3:
         if(outName.size()) outName += "_MVV_fit";
-        if(doCond) writeables =  testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_I_ltmb","mu_LMT_I_ltmb"});
-        else  writeables =  testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_LP_full","e_LMT_HP_full","mu_LMT_LP_full","mu_LMT_HP_full"});
+        if(doCond) writeables =  testSignal1DFits(name,filename,signalMassBins[sig],MOD_MR,"MVV_fit1stIt",{"e_LMT_I_ltmb","mu_LMT_I_ltmb"});
+        else  writeables =  testSignal1DFits(name,filename,signalMassBins[sig],MOD_MR,"MVV_fit1stIt",{"e_LMT_LP_full","e_LMT_HP_full","mu_LMT_LP_full","mu_LMT_HP_full"});
         break;
     case 4:
         if(outName.size()) outName += "_2D_fit";
-        test2DFits(radionSig,filename,"2D_fit",false,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},outName);
+        test2DFits(name,filename,signalMassBins[sig],"2D_fit",false,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},outName);
         break;
     }
 
