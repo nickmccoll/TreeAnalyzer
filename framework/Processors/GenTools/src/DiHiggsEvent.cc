@@ -24,8 +24,14 @@ int DiHiggsEvent::tau_search(const GenParticle* dau) {
 bool DiHiggsEvent::isWpair(const GenParticle* f1, const GenParticle* f2, const GenParticleCollection& g_parts) {
     int f1id = f1->pdgId();
     int f2id = f2->pdgId();
+
+    // return false if one of the two particles is a photon
+    if (f1id==22 || f2id==22) {
+    	std::cout << "Found photon, not a W pair"<< std::endl;
+    	return false;
+    }
     // if first particle is a lepton and the second is a neutrino of the same flavor, then they are products of a W
-    if (ParticleInfo::isLepton(f1id)) {
+    else if (ParticleInfo::isLepton(f1id)) {
         if (ParticleInfo::isANeutrino(f2id) && (std::abs(f2id) == std::abs(f1id) + 1) && ((f1id < 0) != (f2id < 0))) {
             return true;
         }
@@ -45,10 +51,6 @@ bool DiHiggsEvent::isWpair(const GenParticle* f1, const GenParticle* f2, const G
             return true;
         }
         else {return false;}
-    }
-    else if (f1id==22) {
-//    	std::cout << "Found a photon, this is not a W"<< std::endl;
-    	return false;
     }
     else {
         std::cout << "Function isWpair has failed" << std::endl;
@@ -107,9 +109,9 @@ DiHiggsEvent::WDecay DiHiggsEvent::assign_W(const GenParticle* w, const GenParti
 
     w_obj.id = w_final;
     for (int j=0; j<w_final->numberOfDaughters()-1; j++) {
-	for (int k=0; k<w_final->numberOfDaughters(); k++) {
+	for (int k=1; k<w_final->numberOfDaughters(); k++) {
 	    if (isWpair(w_final->daughter(j), w_final->daughter(k), gen_parts)) {
-	       auto dtup = assign_gp(w_final->daughter(0), w_final->daughter(1));
+	       auto dtup = assign_gp(w_final->daughter(j), w_final->daughter(k));
 	       w_obj.d1 = std::get<0>(dtup);
 	       w_obj.d2 = std::get<1>(dtup);
 	       break;
