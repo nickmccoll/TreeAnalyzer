@@ -7,6 +7,111 @@
 #include "../predTools/FunctionFitter.C"
 #include "../predTools/PDFAdder.h"
 
+void makeSignalPDFSystDists(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,  const std::string inputFile){
+    int nameIDX =  inputFile.find("XXX", 0);
+    std::vector<PlotVar> vars;
+    std::vector<PlotSel> sels;
+    sels.emplace_back(lepCats[LEP_EMU] +"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_FULL],
+            lepCats[LEP_EMU].cut +"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+hadCuts[HAD_FULL].cut+"&&"+hhRange.cut+"&&"+hbbRange.cut);
+    sels.emplace_back("incl","1.0");
+
+    vars.emplace_back("yield",std::string("; yield"),"0.0",1,-1,1.0 );
+
+    for(const auto& sM : signalMassBins){
+        const std::string sigName =name+"_m"+ASTypes::int2Str(sM);
+        const std::string outFileName=filename+"_"+sigName + "_pdfSyst_distributions.root";
+        std::string inputName = inputFile;
+        inputName.replace(nameIDX,3,ASTypes::int2Str(sM));
+        std::vector<PlotSamp> samps = { {sigName,"1.0"}};
+
+        for(unsigned int i = 0; i < 6; ++i){
+            std::string name = sigName+"_s_"+ASTypes::int2Str(i);
+            std::string cut = "w_scale["+ASTypes::int2Str(i)+"]";
+            samps.emplace_back(name,cut,true);
+        }
+        for(unsigned int i = 0; i < 100; ++i){
+            std::string name = sigName+"_p_"+ASTypes::int2Str(i);
+            std::string cut = "w_pdf["+ASTypes::int2Str(i)+"]";
+            samps.emplace_back(name,cut,true);
+        }
+        MakePlots a(inputName,outFileName,samps,sels,vars,"1.0",nomW.cut);
+    }
+    std::string compiledFile =  filename+"_"+name + "_pdfSyst_distributions.root";
+    std::string allFiles = filename+"_"+name+"_m*" + "_pdfSyst_distributions.root";
+
+    gSystem->Exec((std::string("hadd -f ")+ compiledFile + " " + allFiles).c_str());
+    gSystem->Exec((std::string("rm ") + allFiles).c_str());
+}
+void makeSignalNormSystDists(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,  const std::string inputFile){
+    int nameIDX =  inputFile.find("XXX", 0);
+    std::vector<PlotVar> vars;
+    std::vector<PlotSel> sels;
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(h != hadCuts[HAD_FULL]) continue;
+        sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
+                l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
+    }
+    vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
+
+    std::vector<std::pair<std::string,std::string>> sysStrings = {
+            {"muIDUp"    ,"w_muIDUp*xsec*trig_N*pu_N*btag_N"     },
+            {"muISOUp"   ,"w_muISOUp*xsec*trig_N*pu_N*btag_N"    },
+            {"elRecoUp"  ,"w_elRecoUp*xsec*trig_N*pu_N*btag_N"   },
+            {"elIDUp"    ,"w_elIDUp*xsec*trig_N*pu_N*btag_N"     },
+            {"elISOUp"   ,"w_elISOUp*xsec*trig_N*pu_N*btag_N"    },
+            {"b_realUp"  ,"w_b_realUp*xsec*trig_N*pu_N*lep_N"    },
+            {"b_fakeUp"  ,"w_b_fakeUp*xsec*trig_N*pu_N*lep_N"    },
+            {"muIDDown"  ,"w_muIDDown*xsec*trig_N*pu_N*btag_N"   },
+            {"muISODown" ,"w_muISODown*xsec*trig_N*pu_N*btag_N"  },
+            {"elRecoDown","w_elRecoDown*xsec*trig_N*pu_N*btag_N" },
+            {"elIDDown"  ,"w_elIDDown*xsec*trig_N*pu_N*btag_N"   },
+            {"elISODown" ,"w_elISODown*xsec*trig_N*pu_N*btag_N"  },
+            {"b_realDown","w_b_realDown*xsec*trig_N*pu_N*lep_N"  },
+            {"b_fakeDown","w_b_fakeDown*xsec*trig_N*pu_N*lep_N"  }
+    };
+
+    for(const auto& sM : signalMassBins){
+        const std::string sigName =name+"_m"+ASTypes::int2Str(sM);
+        const std::string outFileName=filename+"_"+sigName + "_normSyst_distributions.root";
+        std::string inputName = inputFile;
+        inputName.replace(nameIDX,3,ASTypes::int2Str(sM));
+        std::vector<PlotSamp> samps = { {sigName,nomW.cut}};
+        for(auto& sS : sysStrings){
+            samps.emplace_back(sigName+"_"+sS.first,sS.second);
+        }
+        MakePlots a(inputName,outFileName,samps,sels,vars,hhRange.cut+"&&"+hbbRange.cut,"1.0");
+    }
+    std::string compiledFile =  filename+"_"+name + "_normSyst_distributions.root";
+    std::string allFiles = filename+"_"+name+"_m*" + "_normSyst_distributions.root";
+
+    gSystem->Exec((std::string("hadd -f ")+ compiledFile + " " + allFiles).c_str());
+    gSystem->Exec((std::string("rm ") + allFiles).c_str());
+}
+void makeSignalShapeSystDists(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,  const std::string inputFile, const std::string systName){
+    int nameIDX =  inputFile.find("XXX", 0);
+    std::vector<PlotVar> vars;
+    std::vector<PlotSel> sels;
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(h != hadCuts[HAD_FULL] && h != hadCuts[HAD_LTMB]) continue;
+        sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
+                l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
+    }
+    vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass,hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nInclHHMassBins,minInclHHMass,maxInclHHMass );
+
+    for(const auto& sM : signalMassBins){
+        const std::string sigName =name+"_m"+ASTypes::int2Str(sM);
+        const std::string outFileName=filename+"_"+sigName + "_"+systName+"_distributions.root";
+        std::string inputName = inputFile;
+        inputName.replace(nameIDX,3,ASTypes::int2Str(sM));
+        std::vector<PlotSamp> samps = { {sigName,nomW.cut}};
+        MakePlots a(inputName,outFileName,samps,sels,vars,hhInclRange.cut+"&&"+hbbRange.cut,"1.0");
+    }
+    std::string compiledFile =  filename+"_"+name + "_"+systName+"_distributions.root";
+    std::string allFiles = filename+"_"+name+"_m*" + "_"+systName+"_distributions.root";
+
+    gSystem->Exec((std::string("hadd -f ")+ compiledFile + " " + allFiles).c_str());
+    gSystem->Exec((std::string("rm ") + allFiles).c_str());
+}
 void makeSignalFittingDistributions(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,  const std::string inputFile, const std::string& cut="1.0", bool doIncl = true){
     int nameIDX =  inputFile.find("XXX", 0);
     std::vector<PlotVar> vars;
@@ -188,11 +293,11 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
     }
 }
 
-void makeSignalMVVShapes1D(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins){
-    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
-    const std::string fitName = "MVV_fit1stIt";
+void makeSignalMVVShapes1D(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins, const std::string postfix = ""){
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_"+postfix +"distributions.root");
+    const std::string fitName = postfix + "MVV_fit1stIt";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
-        if(l == lepCats[LEP_EMU] ) continue;
+//        if(l == lepCats[LEP_EMU] ) continue;
         if(b != btagCats[BTAG_LMT] ) continue;
         if(p != purCats[PURE_I] ) continue;
         if(h != hadCuts[HAD_LTMB]) continue;
@@ -626,9 +731,10 @@ void combine2DShapesNoCond(const std::string& name, const std::string& filename,
 
 
 void go(int step,int sig, std::string treeDir) {
-    std::string filename = hhFilename;
-    std::string signalTrees = treeDir + "/out_"+signals[sig].cut+  "_mXXX_0.root";
-    std::string name = signals[sig];
+    const std::string filename = hhFilename;
+    const std::string baseTreeName = treeDir + "/out_"+signals[sig].cut+  "_mXXX_0";
+    const std::string signalTrees = baseTreeName +".root";
+    const std::string name = signals[sig];
     if(step == 0){
         makeSignalFittingDistributions(name,filename,signalMassBins[sig],signalTrees,hhInclRange.cut+"&&"+hbbInclRange.cut,true);
         makeSignalFittingDistributions(name,filename,signalMassBins[sig],signalTrees,hhRange.cut+"&&"+hbbRange.cut,false);
@@ -660,17 +766,34 @@ void go(int step,int sig, std::string treeDir) {
     }
 
     if(step == 3){
+        makeSignalNormSystDists(name,filename,signalMassBins[sig],signalTrees);
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],signalTrees,"NOMSyst");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_METUp.root","METUp");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_JESUp.root","JESUp");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_JERUp.root","JERUp");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_METDown.root","METDown");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_JESDown.root","JESDown");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_JERDown.root","JERDown");
+
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"NOMSyst_");
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"METUP_"  );
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"JESUp_"  );
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"JERUp_"  );
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"METDown_");
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"JESDown_");
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"JERDown_");
+
+
+        makeSignalPDFSystDists(name,filename,signalMassBins[sig],signalTrees);
+
+
+
+
     }
 
+    if(step == 4){
+    }
 
-
-
-    //old stuff
-    //    makeSignal2DShapesFirstIteration(name,filename);
-    //    makeSignalMVVShapes1stIt(name,filename);
-    //    makeSignalMVVShapes2ndIt(name,filename);
-    //    makeSignalMJJShapes1stIt(name,filename);
-    //    makeSignal2DShapesCondMVVFirstIteration(name,filename);
 }
 #endif
 

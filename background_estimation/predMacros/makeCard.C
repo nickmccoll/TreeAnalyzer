@@ -58,7 +58,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         auto signalInputName =[&](const std::string& proc, const std::string& pf) -> std::string {return sfPF + "_"+proc +"_"+cat +"_"+ pf; };
 
         auto systName = [&](const std::string& proc,const std::string& name, const std::string& sel = "-1")->std::string {
-            return getSystName("CMS_" + filename,proc,name, sel == "-1" ? cat : sel  );
+            return getSystName("" + filename,proc,name, sel == "-1" ? cat : sel  );
         };
 
         //Make search variables
@@ -78,35 +78,29 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         //Add Systematics first since the param systs need to have the variables added to the workspace
         //---------------------------------------------------------------------------------------------------
         //luminosity
-        card.addSystematic("CMS_lumi","lnN",{{signalName,1.026}});
-        //kPDF uncertainty for the signal
-        card.addSystematic("CMS_pdf","lnN",{{signalName,1.01}});
-        //
+        card.addSystematic("yield","lnN",{{signalName,1.0354}});//lumi = 2.5 jer = 1,  jes = 1 met = 0.5, pdf= 2
+
         //lepton efficiency
-        card.addSystematic("CMS_eff_"+l,"lnN",{{signalName,1.1}});
+        if(l==lepCats[LEP_E])
+            card.addSystematic("eff_"+l,"lnN",{{signalName,1.065}});
+        else
+            card.addSystematic("eff_"+l,"lnN",{{signalName,1.0576}});
         //
         //tau21
-        card.addParamSystematic("CMS_tau21_PtDependence",0.0,0.041);
+        card.addParamSystematic("tau21_PtDependence",0.0,0.041);
         if(p == purCats[PURE_HP])
             card.addSystematic(systName("","tau21_eff",""),"lnN",{{signalName,1+0.14}});
         if(p == purCats[PURE_LP])
             card.addSystematic(systName("","tau21_eff",""),"lnN",{{signalName,1-0.33}});
         //Btag
-        card.addSystematic("CMS_btag_fake","lnN",{{signalName,1+0.02}});
-        if(p == btagCats[BTAG_L])
-            card.addSystematic("CMS_btag_eff" ,"lnN",{{signalName,1-0.03}});
-        if(p == btagCats[BTAG_M])
-            card.addSystematic("CMS_btag_eff" ,"lnN",{{signalName,1+0.03}});
-        if(p == btagCats[BTAG_T])
-            card.addSystematic("CMS_btag_eff" ,"lnN",{{signalName,1+0.06}});
+        card.addSystematic("btag_fake","lnN",{{signalName,1+0.01}});
+        card.addParamSystematic("btag_eff",0.0,0.1);
 
         //pruned mass scale
-        card.addParamSystematic("CMS_scale_j",0.0,0.02);
-        card.addParamSystematic("CMS_res_j",0.0,0.05);
-        card.addParamSystematic("CMS_scale_prunedj",0.0,0.0094);
-        card.addParamSystematic("CMS_res_prunedj",0.0,0.2);
-        card.addParamSystematic("CMS_scale_MET",0.0,0.02);
-        card.addParamSystematic("CMS_res_MET",0.0,0.01);
+        card.addParamSystematic("hh_scale",0.0,0.0122); // jes 1 jer 0.5 met 0.5
+        card.addParamSystematic("hh_res",0.0,5.02); // jes 2 jer 4 met 0.5
+        card.addParamSystematic("hbb_scale",0.0,0.0094);
+        card.addParamSystematic("hbb_res",0.0,0.2);
         //KDE shape systematics
         card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PTX",b) ,0.0,0.5);
         card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"OPTX",b),0.0,1.0);
@@ -141,14 +135,19 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             //Conditional template
             if(!simpleSignal){
                 card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
-                        {{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},{{"CMS_scale_j",1},{"CMS_scale_MET",1}},{{"CMS_res_j",1},{"CMS_res_MET",1}}, b == btagCats[BTAG_L],MOD_MS);
+                        {{"hbb_scale",1}},{{"hbb_res",1}},{{"hh_scale",1}},{{"hh_res",1}}, b == btagCats[BTAG_L],MOD_MS);
             }else {
                 //Non conditional template
                 card.add2DSignalParametricShapeNoCond(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
-                        {{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},{{"CMS_scale_j",1},{"CMS_scale_MET",1}},{{"CMS_res_j",1},{"CMS_res_MET",1}}, b == btagCats[BTAG_L],MOD_MS);
+                        {{"hbb_scale",1}},{{"hbb_res",1}},{{"hh_scale",1}},{{"hh_res",1}}, b == btagCats[BTAG_L],MOD_MS);
             }
-            card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),1,"CMS_tau21_PtDependence",
-                    p == purCats[PURE_HP] ? "log("+MOD_MS+"/1000)" : "((0.054/0.041)*(-log("+MOD_MS+"/1000)))"
+            std::string tau21Form = "(1.0+tau21_PtDependence*"+ (p == purCats[PURE_HP] ? "log("+MOD_MS+"/1000)" : "((0.054/0.041)*(-log("+MOD_MS+"/1000)))")+")";
+            std::string brealForm = "(1.0+btag_eff*";
+            if(b == btagCats[BTAG_L]) brealForm+= "(0.07-3.34*10^(-4)*"+MOD_MS+"+5.95*10^(-8)*"+MOD_MS+"^(2)))";
+            if(b == btagCats[BTAG_M]) brealForm+="(-1.75+0.27*log("+MOD_MS+")))";
+            if(b == btagCats[BTAG_T]) brealForm+="(-1.21+0.27*log("+MOD_MS+")))";
+            std::string uncForm = tau21Form+"*"+brealForm;
+            card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),1,uncForm,{"tau21_PtDependence","btag_eff"}
                             ,MOD_MS);
 //        } else throw std::invalid_argument("makeCard::go() -> Bad parsing");
 
@@ -179,7 +178,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         PDFAdder::InterpSysts mwKDESysts;
         mwKDESysts.addSyst("PT",{{systName("top","scale"),"1"},{systName("top","lostmw_rel_scale",b),"1"}});
         mwKDESysts.addSyst("OPT",{{systName("top","res"  ),"1"  }});
-        card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,inputName(bkgSels[BKG_MW],"MJJ_SFFit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
+        card.add1DBKGParametricShape(bkgSels[BKG_MW],MOD_MJ,inputName(bkgSels[BKG_MW],"MJJ_SFFit.json"),{{"hbb_scale",1}},{{"hbb_res",1}},MOD_MR,MOD_MJ);
         card.addHistoShapeFromFile(bkgSels[BKG_MW],{MOD_MR}, inputName(bkgSels[BKG_MW],"MVV_template.root"),"histo",mwKDESysts,false,0,MOD_MR,true);
         card.conditionalProduct(bkgSels[BKG_MW],bkgSels[BKG_MW] + "_"+MOD_MJ,MOD_MJ,bkgSels[BKG_MW] + "_"+MOD_MR);
 
@@ -189,7 +188,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         PDFAdder::InterpSysts mtKDESysts;
         mtKDESysts.addSyst("PT",{{systName("top","scale"),"1"},{systName("top","mt_rel_scale",b),"1"}});
         mtKDESysts.addSyst("OPT",{{systName("top","res"  ),"1"  }});
-        card.add1DBKGParametricShape(bkgSels[BKG_MT],MOD_MJ,inputName(bkgSels[BKG_MT],"MJJ_SFFit.json"),{{"CMS_scale_prunedj",1}},{{"CMS_res_prunedj",1}},MOD_MR,MOD_MJ);
+        card.add1DBKGParametricShape(bkgSels[BKG_MT],MOD_MJ,inputName(bkgSels[BKG_MT],"MJJ_SFFit.json"),{{"hbb_scale",1}},{{"hbb_res",1}},MOD_MR,MOD_MJ);
         card.addHistoShapeFromFile(bkgSels[BKG_MT],{MOD_MR}, inputName(bkgSels[BKG_MT],"MVV_template.root"),"histo",mtKDESysts,false,0,MOD_MR,true);
         card.conditionalProduct(bkgSels[BKG_MT],bkgSels[BKG_MT] + "_"+MOD_MJ,MOD_MJ,bkgSels[BKG_MT]+ "_"+MOD_MR);
 

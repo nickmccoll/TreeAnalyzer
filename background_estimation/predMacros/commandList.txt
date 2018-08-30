@@ -8,13 +8,13 @@ rr -b -q 'TreeAnalyzer/background_estimation/predMacros/makeBETrees.C+("/eos/usc
 . /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/runInputs.sh . /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/
  
 #TEST BKG+SIG
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (0,true    ,"baseline")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (1,true    ,"baseline")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (2,true    ,"baseline")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (3,true    ,"baseline")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (4,true    ,"baseline")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (3,false   ,"baseline")'
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (4,false   ,"baseline")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (0,0,true    ,"baseline")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (1,0,true    ,"baseline")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (2,0,true    ,"baseline")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (3,0,true    ,"baseline")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (4,0,true    ,"baseline")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (3,0,false   ,"baseline")'
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSignalTests.C+   (4,0,false   ,"baseline")'
 
 rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+ (2,true,0,"baseline")'
 rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotNonResBkgTests.C+ (3,true,0,"baseline")'
@@ -65,18 +65,18 @@ nohup combine -m 2500 -M AsymptoticLimits -v 2 --run expected  combinedCard.txt 
 nohup combine -m 1000 -M AsymptoticLimits -v 2 --run expected  combinedCard.txt &
 
 
-nohup combine -m 1000  -M AsymptoticLimits combinedCard.txt &
-nohup combine -m 900   -M AsymptoticLimits combinedCard.txt &
-nohup combine -m 1400  -M AsymptoticLimits combinedCard.txt &
+nohup combine -m 1000  -M AsymptoticLimits --run expected -v 2 combinedCard.txt &
+nohup combine -m 900   -M AsymptoticLimits --run expected -v 2 combinedCard.txt &
+nohup combine -m 1400  -M AsymptoticLimits --run expected -v 2 combinedCard.txt &
 
-nohup combine -m 2000  -M AsymptoticLimits combinedCard.txt &
-nohup combine -m 1600  -M AsymptoticLimits combinedCard.txt &
-nohup combine -m 1800  -M AsymptoticLimits combinedCard.txt &
+nohup combine -m 2000  -M AsymptoticLimits --run expected -v 2 combinedCard.txt &
+nohup combine -m 1600  -M AsymptoticLimits --run expected -v 2 combinedCard.txt &
+nohup combine -m 1800  -M AsymptoticLimits --run expected -v 2 combinedCard.txt &
 
-nohup combine -m 1200  -M AsymptoticLimits combinedCard.txt &
-nohup combine -m 2500  -M AsymptoticLimits combinedCard.txt &
-nohup combine -m 3000  -M AsymptoticLimits combinedCard.txt &
-nohup combine -m 800   -M AsymptoticLimits combinedCard.txt &
+nohup combine -m 1200  -M AsymptoticLimits --run expected -v 2 combinedCard.txt &
+nohup combine -m 2500  -M AsymptoticLimits --run expected -v 2 combinedCard.txt &
+nohup combine -m 3000  -M AsymptoticLimits --run expected -v 2 combinedCard.txt &
+nohup combine -m 800   -M AsymptoticLimits --run expected -v 2 combinedCard.txt &
 
 #Stat tests
 text2workspace.py combinedCard.txt -o combined.root
