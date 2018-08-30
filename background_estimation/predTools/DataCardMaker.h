@@ -112,13 +112,17 @@ public:
                 scale_X,resolution_X,scale_Y,resolution_Y,exponential_X,pVar);
     }
 
-    void addParametricYieldWithUncertainty(const std::string& name,const unsigned int ID,const std::string& jsonFile, const double constant, const std::string& uncName,const std::string& uncFormula, const std::string& pVar="MS"){
+    void addParametricYieldWithUncertainty(const std::string& name,const unsigned int ID,const std::string& jsonFile, const double constant, const std::string& uncFormula, const  std::vector<std::string>& uncPList, const std::string& pVar="MS"){
         CJSON json( jsonFile);
         const std::string PDFName = name+"_"+tag;
         const std::string PDFNorm = PDFName+"_norm";
-        std::string expr = std::string("(")+ json.getP("yield") +")*"+lumiV+"*("+ASTypes::flt2Str(constant)+"+"+uncName+"*"+uncFormula+")";
-
-        RooFormulaVar varF(PDFNorm.c_str(),PDFNorm.c_str(),expr.c_str(),RooArgList(*w->var(pVar.c_str()),*w->var(lumiV.c_str()),*w->var(uncName.c_str())));
+        std::string expr = std::string("(")+ json.getP("yield") +")*"+lumiV+"*"+ASTypes::flt2Str(constant);
+        RooArgList args(*w->var(pVar.c_str()),*w->var(lumiV.c_str()));
+        if(uncFormula.size()){
+            expr += "*(" + uncFormula+")";
+            for(const auto& p: uncPList) args.add(*w->var(p.c_str()));
+        }
+        RooFormulaVar varF(PDFNorm.c_str(),PDFNorm.c_str(),expr.c_str(),args);
         w->import(varF);
         contributions.emplace_back(name,PDFName,ID,1.0);
     }
