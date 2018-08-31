@@ -98,7 +98,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
 
         //pruned mass scale
         card.addParamSystematic("hh_scale",0.0,0.0122); // jes 1 jer 0.5 met 0.5
-        card.addParamSystematic("hh_res",0.0,5.02); // jes 2 jer 4 met 0.5
+        card.addParamSystematic("hh_res",0.0,0.045); // jes 2 jer 4 met 0.5
         card.addParamSystematic("hbb_scale",0.0,0.0094);
         card.addParamSystematic("hbb_res",0.0,0.2);
         //KDE shape systematics
