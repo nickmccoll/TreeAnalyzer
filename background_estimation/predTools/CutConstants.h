@@ -31,10 +31,10 @@ CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
 CutStr aQCD ("aQCD"  , "process!=8");
 
 CutStr wjjBC("wjjBC" , "wjjTau2o1<0.75");
-CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&wwDM<2");
+CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&wwDM<125.0");
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr abV  ("abV"   , "nAK4Btags!=0");
-CutStr nSJs ("nSJs"  , "hbbNSJs==2&&wjjNSJs==2&&tightE");
+CutStr preSel("preSel"  , "passPre==1");
 
 
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{H#rightarrowbb} [GeV]");
@@ -106,18 +106,25 @@ std::vector<CutStr > purCats = {
 
 enum HADCuts  {HAD_NONE,HAD_LB,HAD_LT,HAD_LTMB,HAD_FULL};
 std::vector<CutStr > hadCuts = {
-        CutStr("none",nSJs.cut),
-        CutStr("lb"  ,nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut),
-        CutStr("lt"  ,nSJs.cut+"&&"+exA.cut+"&&"+bV.cut),
-        CutStr("ltmb",nSJs.cut+"&&"+exA.cut),
-        CutStr("full",nSJs.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut)
+        CutStr("none",preSel.cut),
+        CutStr("lb"  ,preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut),
+        CutStr("lt"  ,preSel.cut+"&&"+exA.cut+"&&"+bV.cut),
+        CutStr("ltmb",preSel.cut+"&&"+exA.cut),
+        CutStr("full",preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut)
 
 };
 
 std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,1750,2000,2500,3000,3500,4000};
 
-CutStr radionSig("radHH","radHH");
-std::vector<int> signalMassBins = {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500};
+enum SIGNALS  {RADION,BLKGRAV};
+std::vector<CutStr > signals = {
+        CutStr("radHH"     ,"radion_hh_bbinc","radion"),
+        CutStr("blkHH"     ,"blkgrv_hh_bbinc","bulk graviton")
+};
+std::vector<std::vector<int> > signalMassBins = {
+        {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
+        {600 ,650 ,700 ,800 ,900 ,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500}
+};
 
 //Constants for models when building limits
 std::string MOD_MJ("MJ");

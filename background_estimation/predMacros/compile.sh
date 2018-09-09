@@ -48,3 +48,4 @@ hadd ${outputdir}/data_e-2016d-23sep16.root     ${inputdir}/out_data_met-2016g-2
 hadd ${outputdir}/data_e-2016c-23sep16.root     ${inputdir}/out_data_met-2016h-pr-v2*.root  	
 hadd ${outputdir}/data_e-2016b-23sep16.root     ${inputdir}/out_data_met-2016h-pr-v3*.root  	
 cp ${inputdir}/out_radion*.root  ${outputdir}/
+cp ${inputdir}/out_blkgrv*.root  ${outputdir}/

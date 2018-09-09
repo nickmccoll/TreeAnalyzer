@@ -47,9 +47,15 @@ struct PlotVar{
     double maxY = -1;
 };
 
+struct PlotSamp{
+    std::string name ="";
+    std::string sel ="";
+    bool isVec = false;
+    PlotSamp(const std::string& name,const std::string& sel, bool isVec = false) :
+        name(name), sel(sel), isVec(isVec){}
+};
 
 //Sample title, sample cut
-typedef std::pair<std::string,std::string> PlotSamp;
 typedef std::pair<std::string,std::string> PlotSel;
 
 
@@ -63,7 +69,7 @@ public:
         tree.getTree()->SetBranchStatus("*",1);
         sampSels.resize(samps.size());
         for(unsigned int iS = 0; iS < samps.size(); ++iS){
-            sampSels[iS].reset(new TTreeFormula(TString::Format("sampSel_%u",iS), samps[iS].second.c_str(),tree.getTree()));
+            sampSels[iS].reset(new TTreeFormula(TString::Format("sampSel_%u",iS), samps[iS].sel.c_str(),tree.getTree()));
         }
         selSels.resize(sels.size());
         for(unsigned int iS = 0; iS < sels.size(); ++iS){
@@ -94,13 +100,14 @@ public:
         if(bw==0) return false;
 
         for(unsigned int iS = 0; iS < samps.size(); ++iS){
+            if(samps[iS].isVec) sampSels[iS]->GetNdata();
             double s   = sampSels[iS]->EvalInstance();
             if(s == 0) continue;
 
             for(unsigned int iSe = 0; iSe < sels.size(); ++iSe){
                 double sel   = selSels[iSe]->EvalInstance();
                 if(sel == 0) continue;
-                std::string thisPre = prefix + samps[iS].first + std::string("_") +sels[iSe].first;
+                std::string thisPre = prefix + samps[iS].name + std::string("_") +sels[iSe].first;
 
                 for(unsigned int iV = 0; iV < vars.size(); ++iV){
                     double v   = varSels[iV]->EvalInstance();

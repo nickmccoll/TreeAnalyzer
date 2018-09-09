@@ -112,13 +112,17 @@ public:
                 scale_X,resolution_X,scale_Y,resolution_Y,exponential_X,pVar);
     }
 
-    void addParametricYieldWithUncertainty(const std::string& name,const unsigned int ID,const std::string& jsonFile, const double constant, const std::string& uncName,const std::string& uncFormula, const std::string& pVar="MS"){
+    void addParametricYieldWithUncertainty(const std::string& name,const unsigned int ID,const std::string& jsonFile, const double constant, const std::string& uncFormula, const  std::vector<std::string>& uncPList, const std::string& pVar="MS"){
         CJSON json( jsonFile);
         const std::string PDFName = name+"_"+tag;
         const std::string PDFNorm = PDFName+"_norm";
-        std::string expr = std::string("(")+ json.getP("yield") +")*"+lumiV+"*("+ASTypes::flt2Str(constant)+"+"+uncName+"*"+uncFormula+")";
-
-        RooFormulaVar varF(PDFNorm.c_str(),PDFNorm.c_str(),expr.c_str(),RooArgList(*w->var(pVar.c_str()),*w->var(lumiV.c_str()),*w->var(uncName.c_str())));
+        std::string expr = std::string("(")+ json.getP("yield") +")*"+lumiV+"*"+ASTypes::flt2Str(constant);
+        RooArgList args(*w->var(pVar.c_str()),*w->var(lumiV.c_str()));
+        if(uncFormula.size()){
+            expr += "*(" + uncFormula+")";
+            for(const auto& p: uncPList) args.add(*w->var(p.c_str()));
+        }
+        RooFormulaVar varF(PDFNorm.c_str(),PDFNorm.c_str(),expr.c_str(),args);
         w->import(varF);
         contributions.emplace_back(name,PDFName,ID,1.0);
     }
@@ -161,23 +165,7 @@ public:
             h = rebinner->process(&*h,std::string(h->GetName())+"_rebin",isY);
         }
         if(scale != 1) h->Scale(scale);
-
-        const unsigned int nD = variables.size();
-        RooArgList args;
-        auto doBinning =[&](const std::string& var, const TAxis* ax) {
-            args.add(*w->var(var.c_str()));
-            w->var(var.c_str())->setMin(ax->GetXmin());
-            w->var(var.c_str())->setMax(ax->GetXmax());
-            w->var(var.c_str())->setBins(ax->GetNbins());
-            w->var(var.c_str())->setVal((ax->GetXmin()+ax->GetXmax())/2.);
-        };
-        doBinning(variables[0],h->GetXaxis());
-        if(nD > 1)doBinning(variables[1],h->GetYaxis());
-        if(nD > 2)doBinning(variables[2],h->GetZaxis());
-        if(nD > 3)throw std::invalid_argument("makeCard::importBinnedData() -> Too many observables!");
-        RooDataHist dataHist(name.c_str(),name.c_str(),args,h);
-        w->import(dataHist);
-
+        PDFAdder::addBinnedData(w,h,name,variables);
         iF->Close();
         delete iF;
         if(rebinner) delete h;

@@ -12,16 +12,16 @@ mkdir ${outputdir}/../bkgInputsTopCR
 mkdir ${outputdir}/../bkgInputsQGCR
 mkdir ${outputdir}/../signalInputs
 mkdir ${outputdir}/../signalInputsNoCond
+mkdir ${outputdir}/../supportInputs
 scp ${OUTSRV}${inputdir}/* ${outputdir}/
 mkdir ${outputdir}/mcPieces
 mkdir ${outputdir}/dataPieces
 mv ${outputdir}/data*.root ${outputdir}/dataPieces/
 mv ${outputdir}/*.root ${outputdir}/mcPieces/
 mv ${outputdir}/mcPieces/out*radion*.root ${outputdir}/
+mv ${outputdir}/mcPieces/out*blkgrv*.root ${outputdirputdir}/
 hadd ${outputdir}/betrees_data.root ${outputdir}/dataPieces/*.root
 hadd ${outputdir}/betrees_mc.root ${outputdir}/mcPieces/*.root
-RCMD="root -b -q '${skimLoc}(\"${outputdir}/betrees_mc.root\",\"${outputdir}/betrees\")'"
-eval $RCMD
 
 mkdir ${outputdir}/bkgCompLMT
 mkdir ${outputdir}/bkgCompAB

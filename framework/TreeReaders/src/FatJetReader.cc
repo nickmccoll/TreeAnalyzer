@@ -86,7 +86,7 @@ void FatJetReader::setup(TreeReadingWrapper * wrapper){
     wrapper->setBranchAddressPre(branchName,"sj1_toRawFact"    , &sj1_toRawFact       ,true);
     wrapper->setBranchAddressPre(branchName,"sj1_csv"          , &sj1_csv          ,true);
     if(!realData) {
-//        wrapper->setBranchAddressPre(branchName,"sj1_JECUnc"   , &sj1_JECUnc ,true);
+        wrapper->setBranchAddressPre(branchName,"sj1_JECUnc"   , &sj1_JECUnc ,true);
         wrapper->setBranchAddressPre(branchName,"sj1_hadronFlavor" , &sj1_hadronFlavor ,true);
         wrapper->setBranchAddressPre(branchName,"sj1_partonFlavor" , &sj1_partonFlavor ,true);
     }
@@ -97,7 +97,7 @@ void FatJetReader::setup(TreeReadingWrapper * wrapper){
     wrapper->setBranchAddressPre(branchName,"sj2_toRawFact"    , &sj2_toRawFact       ,true);
     wrapper->setBranchAddressPre(branchName,"sj2_csv"          , &sj2_csv          ,true);
     if(!realData) {
-//        wrapper->setBranchAddressPre(branchName,"sj2_JECUnc"       , &sj2_JECUnc ,true);
+        wrapper->setBranchAddressPre(branchName,"sj2_JECUnc"       , &sj2_JECUnc ,true);
         wrapper->setBranchAddressPre(branchName,"sj2_hadronFlavor" , &sj2_hadronFlavor ,true);
         wrapper->setBranchAddressPre(branchName,"sj2_partonFlavor" , &sj2_partonFlavor ,true);
     }
@@ -153,7 +153,7 @@ void FatJetReader::processVars() {
            if(!realData){
                hadronFlv = hadronFlavor->at(iO);
                partonFlv = partonFlavor->at(iO);
-//               jecUnc    = JECUnc->at(iO);
+               jecUnc    = JECUnc->at(iO);
            }
             SubJet jet(ASTypes::CylLorentzVectorF(pt->at(iO),eta->at(iO),phi->at(iO),mass->at(iO)),-1,
                     toRaw->at(iO), csv->at(iO),hadronFlv,partonFlv,jecUnc);

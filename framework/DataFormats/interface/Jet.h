@@ -28,7 +28,7 @@ public :
         : IndexedMomentumF(mom, idx),_toRaw(toRaw), _csv(csv), _hadronFlv(hadronFlv)
           ,_partonFlv(partonFlv) ,_JECUnc(JECUnc) {}
     ~BaseRecoJet() {}
-
+    void setRawFactor(float nrw) {_toRaw=nrw;}
     float toRawFactor() const {return _toRaw;}
     float csv() const {return _csv;}
     int  hadronFlv() const {return _hadronFlv;}

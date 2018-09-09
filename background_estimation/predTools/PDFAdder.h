@@ -454,6 +454,25 @@ void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF, con
 }
 
 
+void addBinnedData(RooWorkspace* w, const TH1* iH, const std::string& name, const std::vector<std::string>& variables ){
+    const unsigned int nD = variables.size();
+    RooArgList args;
+    auto doBinning =[&](const std::string& var, const TAxis* ax) {
+        args.add(*w->var(var.c_str()));
+        w->var(var.c_str())->setMin(ax->GetXmin());
+        w->var(var.c_str())->setMax(ax->GetXmax());
+        w->var(var.c_str())->setBins(ax->GetNbins());
+        w->var(var.c_str())->setVal((ax->GetXmin()+ax->GetXmax())/2.);
+    };
+    doBinning(variables[0],iH->GetXaxis());
+    if(nD > 1)doBinning(variables[1],iH->GetYaxis());
+    if(nD > 2)doBinning(variables[2],iH->GetZaxis());
+    if(nD > 3)throw std::invalid_argument("makeCard::importBinnedData() -> Too many observables!");
+    RooDataHist dataHist(name.c_str(),name.c_str(),args,iH);
+    w->import(dataHist);
+}
+
+
 
 
 };

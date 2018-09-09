@@ -55,7 +55,7 @@ TCanvas* make2DTests(std::string plotTitle, int mass, const TH2* dH,TH2* pH, con
 
 
 
-void test2DFits(std::string name, std::string filename, std::string fitName,bool binInY, const std::vector<std::string>& sels, std::string outName = "") {
+void test2DFits(std::string name, std::string filename, const std::vector<int>& signalMassBins, std::string fitName,bool binInY, const std::vector<std::string>& sels, std::string outName = "") {
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<double> bins = {30,210,30,115,135,210};
 
@@ -64,7 +64,6 @@ void test2DFits(std::string name, std::string filename, std::string fitName,bool
         fo=new TFile((filename+"_"+name+"_"+s+"_"+fitName+".root").c_str(),"read");
         if(fo == 0) continue;
         TFile *ff = new TFile((filename+"_"+name+"_"+s+"_"+fitName+".json.root").c_str(),"read");
-        if(ff == 0) continue;
         auto addH = [&](const std::string& name,std::vector<TObject*>& list)->bool{
             TH2 * can= 0;
             fo->GetObject(name.c_str(),can);
@@ -220,8 +219,331 @@ void plotEfficiencies(std::string name, std::string filename,std::string fitName
 
 }
 
+void plotNormSysts(std::string name, std::string filename,const std::vector<int>& signalMassBins,std::vector<std::string> systs) {
+    const std::string inName =  filename+"_"+name + "_normSyst_distributions.root";
+    TFile * f = new TFile(inName.c_str(), "read");
+    std::vector<std::string> sels;
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+    sels.push_back(lepCats[LEP_E]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+    sels.push_back(lepCats[LEP_MU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_L]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_M]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_T]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+//    for(auto& l : lepCats)for(auto& b : btagCats)for(auto& p : purCats)for(auto& h : hadCuts){
+//        if(l == lepCats[LEP_EMU]) continue;
+//        if(b == btagCats[BTAG_LMT]) continue;
+//        if(p == purCats[PURE_I]) continue;
+//        if(h != hadCuts[HAD_FULL]) continue;
+//        sels.push_back( l+"_"+b+"_"+p+"_"+h);
+//    }
+    for(auto& sys : systs){
+        gROOT->SetBatch(true);
+        std::vector<TObject*>plots;
+        for(auto& sel : sels){
+            TGraph * gu = new TGraph;
+            TGraph * gd = new TGraph;
+            TGraph * ga = new TGraph;
+            int nP = 0;
+            std::vector<float> vals;
+            for(auto& sM : signalMassBins){
+                const std::string sigName =name+"_m"+ASTypes::int2Str(sM);
+                TH1 * hN = 0;
+                f->GetObject((sigName+"_"+sel+"_"+hhMCS).c_str(),hN);
+                TH1 * hU = 0;
+                f->GetObject((sigName+"_"+sys+"Up"+"_"+sel+"_"+hhMCS).c_str(),hU);
+                TH1 * hD = 0;
+                f->GetObject((sigName+"_"+sys+"Down"+"_"+sel+"_"+hhMCS).c_str(),hD);
+                if(hN ==0||hU==0||hD==0)continue;
+                float nU = hU->Integral();
+                float nN = hN->Integral();
+                float nD = hD->Integral();
+                gu->SetPoint(nP,float(sM),nU/nN-1.0);
+                gd->SetPoint(nP,float(sM),nD/nN-1.0);
+                ga->SetPoint(nP,float(sM),(nU-nD)/(2*nN));
+                vals.push_back(nU/nN-1.0);
+                vals.push_back(nD/nN-1.0);
+                vals.push_back((nU-nD)/(2*nN));
+                nP++;
+            }
+            Plotter * p = new Plotter;
+            p->addGraph(gu, (sys+": Up").c_str());
+            p->addGraph(gd, (sys+": Down").c_str());
+            p->addGraph(ga, (sys+": Avg").c_str());
+            p->setYTitle(sel);
+            std::sort(vals.begin(),vals.end(),[](const float a, const float b){return a < b;} );
+            if(vals.size()){
+                float min = vals[0] < 0 ? vals[0]*1.2 : vals[0]*0.8;
+                float max = vals.back() < 0 ? vals.back()*0.8 : vals.back()*1.2;
+                p->setMinMax( min,max );
+            }
 
-std::vector<TObject*> testSignal1DFits(std::string name, std::string filename, std::string varName, std::string fitName, const std::vector<std::string>& sels){
+            auto c = p->draw(false,sys+"_"+sel);
+            plots.push_back(c);
+        }
+        gROOT->SetBatch(false);
+        auto c = Drawing::drawAll(plots,sys);
+        c->SetName(sys.c_str());
+        c->SetTitle(sys.c_str());
+        writeables.push_back(c);
+    }
+}
+
+void plotPDFSysts(std::string name, std::string filename,const std::vector<int>& signalMassBins) {
+    const std::string inName =  filename+"_"+name + "_pdfSyst_distributions.root";
+    TFile * f = new TFile(inName.c_str(), "read");
+
+
+    std::vector<std::string> sels;
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+
+        gROOT->SetBatch(true);
+        std::vector<TObject*>plots;
+        for(auto& sel : sels){
+            TGraph * gn = new TGraph;
+            TGraph * gsu = new TGraph;
+            TGraph * gsd = new TGraph;
+            TGraph * gpu = new TGraph;
+            TGraph * gpd = new TGraph;
+            TGraph * gtu = new TGraph;
+            TGraph * gtd = new TGraph;
+            int nP = 0;
+            for(auto& sM : signalMassBins){
+                const std::string sigName =name+"_m"+ASTypes::int2Str(sM);
+
+
+            TH1 * hIN = 0;
+            f->GetObject((sigName+"_incl_yield").c_str(),hIN);
+            TH1 * hN = 0;
+            f->GetObject((sigName+"_"+sel+"_yield").c_str(),hN);
+            if(hIN ==0) continue;
+            if(hN ==0) continue;
+            double nomAcc = hN->GetBinContent(1)/hIN->GetBinContent(1);
+
+
+            std::vector<float> scaleAccs;
+            for(unsigned int i = 0; i < 6; ++i){
+                TH1 * hINS = 0;
+                f->GetObject((sigName+"_s_"+ ASTypes::int2Str(i) +"_incl_yield").c_str(),hINS);
+                TH1 * hNS = 0;
+                f->GetObject((sigName+"_s_"+ ASTypes::int2Str(i)+"_"+sel+"_yield").c_str(),hNS);
+//                std::cout <<sigName+"_s_"+sel+"_yield " << hINS <<" "<< hNS <<std::endl;
+                double acc = hNS->GetBinContent(1)/hINS->GetBinContent(1);
+//                double diff = std::fabs(acc-nomAcc)/nomAcc;
+                scaleAccs.push_back(acc);
+//                if(diff > maxDiff) maxDiff = diff;
+            }
+            gn->SetPoint(nP,float(sM),nomAcc);
+            std::sort(scaleAccs.begin(),scaleAccs.end(),[](float a, float b){return a<b;});
+            gsu->SetPoint(nP,float(sM),scaleAccs.back() /nomAcc -1.0 );
+            gsd->SetPoint(nP,float(sM),scaleAccs.front()/nomAcc-1.0);
+
+            double x = 0;
+            double x2 = 0;
+            for(unsigned int i = 0; i < 100; ++i){
+                TH1 * hINS = 0;
+                f->GetObject((sigName+"_p_"+ ASTypes::int2Str(i) +"_incl_yield").c_str(),hINS);
+                TH1 * hNS = 0;
+                f->GetObject((sigName+"_p_"+ ASTypes::int2Str(i)+"_"+sel+"_yield").c_str(),hNS);
+                double acc = hNS->GetBinContent(1)/hINS->GetBinContent(1);
+                x += acc;
+                x2 += acc*acc;
+            }
+            double mean = x/100.;
+            double sqmean = x2/100.;
+            double stdDev = std::sqrt(sqmean-mean*mean);
+            gpu->SetPoint(nP,float(sM),(mean+stdDev)/nomAcc-1.0);
+            gpd->SetPoint(nP,float(sM),(mean-stdDev)/nomAcc-1.0);
+
+            gtu->SetPoint(nP,float(sM),std::sqrt((mean+stdDev)*(mean+stdDev)+scaleAccs.back() *scaleAccs.back() )/nomAcc);
+            gtd->SetPoint(nP,float(sM),std::sqrt((mean-stdDev)*(mean-stdDev)+scaleAccs.front()*scaleAccs.front())/nomAcc);
+
+            nP++;
+            }
+            Plotter * p = new Plotter;
+//            p->addGraph(gn,"nom");
+            p->addGraph(gsd,"scale: Down");
+            p->addGraph(gsu, "scale: Up");
+            p->addGraph(gpd,"pdf: Down");
+            p->addGraph(gpu, "pdf: Up");
+
+            p->addGraph(gtd,"tot: Down");
+            p->addGraph(gtu, "tot: Up");
+
+            p->setMinMax(-0.5,0.5);
+            p->setYTitle(sel);
+
+            auto c = p->draw(false,sel);
+            plots.push_back(c);
+        }
+        gROOT->SetBatch(false);
+        auto c = Drawing::drawAll(plots,"PDFSyst");
+        c->SetName("PDFSyst");
+        c->SetTitle("PDFSyst");
+        writeables.push_back(c);
+}
+
+
+
+void plotShapeSystNorms(std::string name, std::string filename,const std::vector<int>& signalMassBins,std::vector<std::string> systs) {
+    const std::string inName =  filename+"_"+name + "_NOMSyst_distributions.root";
+    TFile * fn = new TFile(inName.c_str(), "read");
+    std::vector<TFile*> systUpFs;
+    std::vector<TFile*> systDownFs;
+    for(unsigned int iS = 0; iS < systs.size(); ++iS ){
+        systUpFs.push_back(new TFile((filename+"_"+name + "_"+systs[iS]+"Up_distributions.root").c_str()));
+        systDownFs.push_back(new TFile((filename+"_"+name + "_"+systs[iS]+"Down_distributions.root").c_str()));
+    }
+    std::vector<std::string> sels;
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+    sels.push_back(lepCats[LEP_E]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+    sels.push_back(lepCats[LEP_MU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_L]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_M]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_T]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+
+
+    for(unsigned int iS = 0; iS < systs.size(); ++iS ){
+        auto sys = systs[iS];
+        gROOT->SetBatch(true);
+        std::vector<TObject*>plots;
+        for(auto& sel : sels){
+            TGraph * gu = new TGraph;
+            TGraph * gd = new TGraph;
+            TGraph * ga = new TGraph;
+            int nP = 0;
+            std::vector<float> vals;
+            for(auto& sM : signalMassBins){
+                const std::string sigName =name+"_m"+ASTypes::int2Str(sM);
+                TH2 * hN = 0;
+                fn->GetObject((sigName+"_"+sel+"_"+hbbMCS+"_"+hhMCS).c_str(),hN);
+                TH2 * hU = 0;
+                systUpFs[iS]->GetObject((sigName+"_"+sel+"_"+hbbMCS+"_"+hhMCS).c_str(),hU);
+                TH2 * hD = 0;
+                systDownFs[iS]->GetObject((sigName+"_"+sel+"_"+hbbMCS+"_"+hhMCS).c_str(),hD);
+                std::cout <<hN <<" "<< hU <<" "<< hD << std::endl;
+                if(hN ==0||hU==0||hD==0)continue;
+
+                int lbx, lby, hbx, hby;
+                lbx = hN->GetXaxis()->FindFixBin(minHbbMass);
+                hbx = hN->GetXaxis()->FindFixBin(maxHbbMass);
+                lby = hN->GetYaxis()->FindFixBin(minHHMass);
+                hby = hN->GetYaxis()->FindFixBin(maxHHMass);
+                std::cout << lbx <<" "<<hbx <<" "<<lby <<" "<< hby <<" "<< hN->Integral(lbx,hbx,lby,hby) <<std::endl;
+                float nU = hU->Integral(lbx,hbx,lby,hby);
+                float nN = hN->Integral(lbx,hbx,lby,hby);
+                float nD = hD->Integral(lbx,hbx,lby,hby);
+                gu->SetPoint(nP,float(sM),nU/nN-1.0);
+                gd->SetPoint(nP,float(sM),nD/nN-1.0);
+                ga->SetPoint(nP,float(sM),(nU-nD)/(2*nN));
+                vals.push_back(nU/nN-1.0);
+                vals.push_back(nD/nN-1.0);
+                vals.push_back((nU-nD)/(2*nN));
+                nP++;
+            }
+            Plotter * p = new Plotter;
+            p->addGraph(gu, (sys+": Up").c_str());
+            p->addGraph(gd, (sys+": Down").c_str());
+            p->addGraph(ga, (sys+": Avg").c_str());
+            p->setYTitle(sel);
+            std::sort(vals.begin(),vals.end(),[](const float a, const float b){return a < b;} );
+            if(vals.size()){
+                float min = vals[0] < 0 ? vals[0]*1.2 : vals[0]*0.8;
+                float max = vals.back() < 0 ? vals.back()*0.8 : vals.back()*1.2;
+                p->setMinMax( min,max );
+            }
+
+            auto c = p->draw(false,sys+"_"+sel);
+            plots.push_back(c);
+        }
+        gROOT->SetBatch(false);
+        auto c = Drawing::drawAll(plots,sys);
+        c->SetName(sys.c_str());
+        c->SetTitle(sys.c_str());
+        writeables.push_back(c);
+    }
+}
+
+void plotShapeSystParams(std::string name, std::string filename,const std::vector<int>& signalMassBins,std::vector<std::string> systs) {
+    const std::string inName =  filename+"_"+name + "_NOMSyst_distributions.root";
+    TFile * fn = new TFile(inName.c_str(), "read");
+    std::vector<TFile*> systUpFs;
+    std::vector<TFile*> systDownFs;
+    for(unsigned int iS = 0; iS < systs.size(); ++iS ){
+        systUpFs.push_back(new TFile((filename+"_"+name + "_"+systs[iS]+"Up_distributions.root").c_str()));
+        systDownFs.push_back(new TFile((filename+"_"+name + "_"+systs[iS]+"Down_distributions.root").c_str()));
+    }
+    std::vector<std::string> sels;
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]);
+//    sels.push_back(lepCats[LEP_E]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]);/
+//    sels.push_back(lepCats[LEP_MU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]);
+    std::vector<std::string> params = {"meanMR","sigmaMR"};
+
+    for(unsigned int iS = 0; iS < systs.size(); ++iS ){
+        auto sys = systs[iS];
+        gROOT->SetBatch(true);
+        std::vector<TObject*>plots;
+        for(auto& sel : sels){
+
+            TFile* fU = new TFile((filename+"_"+name + "_"+sel+ "_"+systs[iS]+"Up_MVV_fit1stIt.root").c_str());
+            TFile* fD = new TFile((filename+"_"+name + "_"+sel+ "_"+systs[iS]+"Down_MVV_fit1stIt.root").c_str());
+            TFile* fN = new TFile((filename+"_"+name + "_"+sel+ "_"+"NOMSyst_MVV_fit1stIt.root").c_str());
+            if(fU ==0||fD==0||fN==0)continue;
+            for(auto& par : params){
+            TGraph *iGU =   0;
+            fU->GetObject(par.c_str(),iGU);
+            TGraph *iGD =   0;
+            fD->GetObject(par.c_str(),iGD);
+            TGraph *iGN =   0;
+            fN->GetObject(par.c_str(),iGN);
+            if(iGU ==0||iGD==0||iGN==0)continue;
+
+            TGraph * gu = new TGraph;
+            TGraph * gd = new TGraph;
+            TGraph * ga = new TGraph;
+            int nP = 0;
+            std::vector<float> vals;
+            for(auto& sM : signalMassBins){
+                if(sM < 1000) continue;
+                if(sM > 3500) continue;
+                float nU = iGU->Eval(sM);
+                float nN = iGN->Eval(sM);
+                float nD = iGD->Eval(sM);
+                gu->SetPoint(nP,float(sM),nU/nN-1.0);
+                gd->SetPoint(nP,float(sM),nD/nN-1.0);
+                ga->SetPoint(nP,float(sM),(nU-nD)/(2*nN));
+                vals.push_back(nU/nN-1.0);
+                vals.push_back(nD/nN-1.0);
+                vals.push_back((nU-nD)/(2*nN));
+                nP++;
+            }
+            Plotter * p = new Plotter;
+            p->addGraph(gu, (sys+" "+par+": Up").c_str());
+            p->addGraph(gd, (sys+" "+par+": Down").c_str());
+            auto gr = p->addGraph(ga, (sys+" "+par+": Avg").c_str());
+            p->setYTitle(sel);
+            std::sort(vals.begin(),vals.end(),[](const float a, const float b){return a < b;} );
+            if(vals.size()){
+                float min = vals[0] < 0 ? vals[0]*1.2 : vals[0]*0.8;
+                float max = vals.back() < 0 ? vals.back()*0.8 : vals.back()*1.2;
+                p->setMinMax( min,max );
+            }
+
+            auto c = p->draw(false,sys+"_"+sel+"_"+par);
+            std::cout<<std::endl <<"FIT: " <<sys+"_"+sel+"_"+par<<std::endl;
+            gr->Fit("pol0");
+            plots.push_back(c);
+        }
+        }
+        gROOT->SetBatch(false);
+        auto c = Drawing::drawAll(plots,sys+"Par");
+        c->SetName((sys+"Par").c_str());
+        c->SetTitle((sys+"Par").c_str());
+        writeables.push_back(c);
+    }
+}
+
+
+std::vector<TObject*> testSignal1DFits(std::string name, std::string filename, const std::vector<int>& signalMassBins, std::string varName, std::string fitName, const std::vector<std::string>& sels){
     std::vector<std::string> canNames;
     for(const auto& sB : signalMassBins){ canNames.push_back(std::string("can_m") +int2Str(sB));}
     return test1DFits(name,filename, varName,fitName,sels,canNames);
@@ -246,33 +568,46 @@ public:
 
 
 
-void plotSignalTests(int cat = 0, bool doCond = true, std::string outName = ""){
+void plotSignalTests(int cat = 0,int sig = RADION,  bool doCond = true, std::string outName = ""){
     std:: string inName = doCond ? "signalInputs" : "signalInputsNoCond";
     std::string filename = inName +"/"+hhFilename;
-    if(outName.size()) outName += doCond ? std::string("/signal") : std::string("/signalNoCond");
+    std::string name = signals[sig];
+    if(outName.size()) outName += doCond ? std::string("/") + name : std::string("/NoCond")+name;
+
+
+
+
     switch(cat) {
     case 0:
         if(outName.size()) outName += "_yield";
-        plotYields(radionSig,filename,"yield",{"e_L_LP_full","e_M_LP_full","e_T_LP_full","e_L_HP_full","e_M_HP_full","e_T_HP_full","mu_L_LP_full","mu_M_LP_full","mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
-        plotEfficiencies(radionSig,filename,"yield" );
+        plotYields(name,filename,"yield",{"e_L_LP_full","e_M_LP_full","e_T_LP_full","e_L_HP_full","e_M_HP_full","e_T_HP_full","mu_L_LP_full","mu_M_LP_full","mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
+        plotEfficiencies(name,filename,"yield" );
         break;
     case 1:
         if(outName.size()) outName += "_MJJ_fit1stIt";
-        writeables = testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit1stIt",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
+        writeables = testSignal1DFits(name,filename,signalMassBins[sig],MOD_MJ,"MJJ_fit1stIt",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
         break;
     case 2:
         if(outName.size()) outName += "_MJJ_fit";
-        writeables = testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
+        writeables = testSignal1DFits(name,filename,signalMassBins[sig],MOD_MJ,"MJJ_fit",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
         break;
     case 3:
         if(outName.size()) outName += "_MVV_fit";
-        if(doCond) writeables =  testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_I_ltmb","mu_LMT_I_ltmb"});
-        else  writeables =  testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_LP_full","e_LMT_HP_full","mu_LMT_LP_full","mu_LMT_HP_full"});
+        if(doCond) writeables =  testSignal1DFits(name,filename,signalMassBins[sig],MOD_MR,"MVV_fit1stIt",{"e_LMT_I_ltmb","mu_LMT_I_ltmb"});
+        else  writeables =  testSignal1DFits(name,filename,signalMassBins[sig],MOD_MR,"MVV_fit1stIt",{"e_LMT_LP_full","e_LMT_HP_full","mu_LMT_LP_full","mu_LMT_HP_full"});
         break;
     case 4:
         if(outName.size()) outName += "_2D_fit";
-        test2DFits(radionSig,filename,"2D_fit",false,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},outName);
+        test2DFits(name,filename,signalMassBins[sig],"2D_fit",false,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},outName);
         break;
+    case 5:
+        if(outName.size()) outName += "_normSyst";
+        plotPDFSysts(name,filename,signalMassBins[sig]);
+        plotNormSysts(name,filename,signalMassBins[sig],{"muID","muISO","elReco","elID","elISO","b_real","b_fake"});
+        plotShapeSystNorms(name,filename,signalMassBins[sig],{"MET","JER","JES"});
+        plotShapeSystParams(name,filename,signalMassBins[sig],{"MET","JER","JES"});
+        break;
+
     }
 
     Dummy d(outName);

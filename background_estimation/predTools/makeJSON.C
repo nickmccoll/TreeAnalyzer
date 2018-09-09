@@ -177,6 +177,7 @@ CJSON makeJSON(const std::string& outFileName,std::string& arguments){
     auto v     = p.addString("var","x var name ",false,"XX");
     auto minX  = p.addFloat("minX","minimum x",true);
     auto maxX  = p.addFloat("maxX","maximum x",true);
+    auto fopt  = p.addString("fopt","fit option",false,"");
     p.parse(arguments);
 
     ParamNames params;
@@ -217,7 +218,7 @@ CJSON makeJSON(const std::string& outFileName,std::string& arguments){
             func->SetParLimits(2,0,10000);
         }
         if(func==0) throw std::invalid_argument("MakeJSON::MakeJSON() -> Bad parsing");
-        g->Fit(func,"","",*minX,*maxX);
+        g->Fit(func,fopt->c_str(),"",*minX,*maxX);
         g->Write(p.first.c_str());
         func->Write((p.first+"_func").c_str());
         outJSON.addEntry(p.first,returnFString(&*func,*v));

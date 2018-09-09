@@ -5,8 +5,114 @@
 #include "../predTools/makePlots.C"
 #include "../predTools/InputsHelper.h"
 #include "../predTools/FunctionFitter.C"
+#include "../predTools/PDFAdder.h"
 
-void makeSignalFittingDistributions(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut="1.0", bool doIncl = true){
+void makeSignalPDFSystDists(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,  const std::string inputFile){
+    int nameIDX =  inputFile.find("XXX", 0);
+    std::vector<PlotVar> vars;
+    std::vector<PlotSel> sels;
+    sels.emplace_back(lepCats[LEP_EMU] +"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_FULL],
+            lepCats[LEP_EMU].cut +"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+hadCuts[HAD_FULL].cut+"&&"+hhRange.cut+"&&"+hbbRange.cut);
+    sels.emplace_back("incl","1.0");
+
+    vars.emplace_back("yield",std::string("; yield"),"0.0",1,-1,1.0 );
+
+    for(const auto& sM : signalMassBins){
+        const std::string sigName =name+"_m"+ASTypes::int2Str(sM);
+        const std::string outFileName=filename+"_"+sigName + "_pdfSyst_distributions.root";
+        std::string inputName = inputFile;
+        inputName.replace(nameIDX,3,ASTypes::int2Str(sM));
+        std::vector<PlotSamp> samps = { {sigName,"1.0"}};
+
+        for(unsigned int i = 0; i < 6; ++i){
+            std::string name = sigName+"_s_"+ASTypes::int2Str(i);
+            std::string cut = "w_scale["+ASTypes::int2Str(i)+"]";
+            samps.emplace_back(name,cut,true);
+        }
+        for(unsigned int i = 0; i < 100; ++i){
+            std::string name = sigName+"_p_"+ASTypes::int2Str(i);
+            std::string cut = "w_pdf["+ASTypes::int2Str(i)+"]";
+            samps.emplace_back(name,cut,true);
+        }
+        MakePlots a(inputName,outFileName,samps,sels,vars,"1.0",nomW.cut);
+    }
+    std::string compiledFile =  filename+"_"+name + "_pdfSyst_distributions.root";
+    std::string allFiles = filename+"_"+name+"_m*" + "_pdfSyst_distributions.root";
+
+    gSystem->Exec((std::string("hadd -f ")+ compiledFile + " " + allFiles).c_str());
+    gSystem->Exec((std::string("rm ") + allFiles).c_str());
+}
+void makeSignalNormSystDists(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,  const std::string inputFile){
+    int nameIDX =  inputFile.find("XXX", 0);
+    std::vector<PlotVar> vars;
+    std::vector<PlotSel> sels;
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(h != hadCuts[HAD_FULL]) continue;
+        sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
+                l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
+    }
+    vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
+
+    std::vector<std::pair<std::string,std::string>> sysStrings = {
+            {"muIDUp"    ,"w_muIDUp*xsec*trig_N*pu_N*btag_N"     },
+            {"muISOUp"   ,"w_muISOUp*xsec*trig_N*pu_N*btag_N"    },
+            {"elRecoUp"  ,"w_elRecoUp*xsec*trig_N*pu_N*btag_N"   },
+            {"elIDUp"    ,"w_elIDUp*xsec*trig_N*pu_N*btag_N"     },
+            {"elISOUp"   ,"w_elISOUp*xsec*trig_N*pu_N*btag_N"    },
+            {"b_realUp"  ,"w_b_realUp*xsec*trig_N*pu_N*lep_N"    },
+            {"b_fakeUp"  ,"w_b_fakeUp*xsec*trig_N*pu_N*lep_N"    },
+            {"muIDDown"  ,"w_muIDDown*xsec*trig_N*pu_N*btag_N"   },
+            {"muISODown" ,"w_muISODown*xsec*trig_N*pu_N*btag_N"  },
+            {"elRecoDown","w_elRecoDown*xsec*trig_N*pu_N*btag_N" },
+            {"elIDDown"  ,"w_elIDDown*xsec*trig_N*pu_N*btag_N"   },
+            {"elISODown" ,"w_elISODown*xsec*trig_N*pu_N*btag_N"  },
+            {"b_realDown","w_b_realDown*xsec*trig_N*pu_N*lep_N"  },
+            {"b_fakeDown","w_b_fakeDown*xsec*trig_N*pu_N*lep_N"  }
+    };
+
+    for(const auto& sM : signalMassBins){
+        const std::string sigName =name+"_m"+ASTypes::int2Str(sM);
+        const std::string outFileName=filename+"_"+sigName + "_normSyst_distributions.root";
+        std::string inputName = inputFile;
+        inputName.replace(nameIDX,3,ASTypes::int2Str(sM));
+        std::vector<PlotSamp> samps = { {sigName,nomW.cut}};
+        for(auto& sS : sysStrings){
+            samps.emplace_back(sigName+"_"+sS.first,sS.second);
+        }
+        MakePlots a(inputName,outFileName,samps,sels,vars,hhRange.cut+"&&"+hbbRange.cut,"1.0");
+    }
+    std::string compiledFile =  filename+"_"+name + "_normSyst_distributions.root";
+    std::string allFiles = filename+"_"+name+"_m*" + "_normSyst_distributions.root";
+
+    gSystem->Exec((std::string("hadd -f ")+ compiledFile + " " + allFiles).c_str());
+    gSystem->Exec((std::string("rm ") + allFiles).c_str());
+}
+void makeSignalShapeSystDists(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,  const std::string inputFile, const std::string systName){
+    int nameIDX =  inputFile.find("XXX", 0);
+    std::vector<PlotVar> vars;
+    std::vector<PlotSel> sels;
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(h != hadCuts[HAD_FULL] && h != hadCuts[HAD_LTMB]) continue;
+        sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
+                l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
+    }
+    vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass,hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nInclHHMassBins,minInclHHMass,maxInclHHMass );
+
+    for(const auto& sM : signalMassBins){
+        const std::string sigName =name+"_m"+ASTypes::int2Str(sM);
+        const std::string outFileName=filename+"_"+sigName + "_"+systName+"_distributions.root";
+        std::string inputName = inputFile;
+        inputName.replace(nameIDX,3,ASTypes::int2Str(sM));
+        std::vector<PlotSamp> samps = { {sigName,nomW.cut}};
+        MakePlots a(inputName,outFileName,samps,sels,vars,hhInclRange.cut+"&&"+hbbRange.cut,"1.0");
+    }
+    std::string compiledFile =  filename+"_"+name + "_"+systName+"_distributions.root";
+    std::string allFiles = filename+"_"+name+"_m*" + "_"+systName+"_distributions.root";
+
+    gSystem->Exec((std::string("hadd -f ")+ compiledFile + " " + allFiles).c_str());
+    gSystem->Exec((std::string("rm ") + allFiles).c_str());
+}
+void makeSignalFittingDistributions(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,  const std::string inputFile, const std::string& cut="1.0", bool doIncl = true){
     int nameIDX =  inputFile.find("XXX", 0);
     std::vector<PlotVar> vars;
     std::vector<PlotSel> sels;
@@ -35,7 +141,7 @@ void makeSignalFittingDistributions(const std::string& name, const std::string& 
     gSystem->Exec((std::string("hadd -f ")+ compiledFile + " " + allFiles).c_str());
     gSystem->Exec((std::string("rm ") + allFiles).c_str());
 }
-void makeSignalYields(const std::string& name, const std::string& filename, const double BR= 2*0.5824*(.2137+.002619)){
+void makeSignalYields(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,   const double BR= 2*0.5824*(.2137+.002619)){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         FunctionParameterPlotter plotter;
@@ -80,7 +186,7 @@ const std::string fitCond    =vnMR("maxS")+":pol0,"+vnMR("mean_p1")+":pol2,"+vnM
 const std::string fitCondMVV =vnMJ("maxS")+":pol0,"+vnMJ("mean_p1")+":pol2,"+vnMJ("sigma_p1")+":pol1";
 
 
-void makeSignal1DShapes(const std::string& name, const std::string& filename, const std::string& catName, const std::string& fitName, bool fitMJJ, CJSON* prevJSON, TFile* iF, bool doExpo, bool restrictX = true){
+void makeSignal1DShapes(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,   const std::string& catName, const std::string& fitName, bool fitMJJ, CJSON* prevJSON, TFile* iF, bool doExpo, bool restrictX = true){
     FunctionParameterPlotter plotter;
     std::vector<std::unique_ptr<FunctionFitter>> fitters;
     const std::string modStr = fitMJJ ? MOD_MJ : MOD_MR;
@@ -147,7 +253,7 @@ void makeSignal1DShapes(const std::string& name, const std::string& filename, co
 }
 
 
-void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filename){
+void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins){
     //    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root"); //Changing to cond on MR
     const std::string fitName = "MJJ_fit1stIt";
@@ -157,14 +263,14 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
         if(h != hadCuts[HAD_LTMB]) continue;
         bool doExpo = b == btagCats[BTAG_L];
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
-        makeSignal1DShapes(name,filename,catName,fitName,true,0,iF,doExpo);
+        makeSignal1DShapes(name,filename,signalMassBins,catName,fitName,true,0,iF,doExpo);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MS +" ";
         argsP1 += doExpo ? " -minX 700 -maxX 3800 " :" -minX 700 -maxX 3800 ";
         MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" -g "+  ( doExpo  ?  fitMJJExpo : fitMJJStd ));
     }
 }
-void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filename){
+void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins){
     //    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root"); //Changing to cond on MR
     const std::string fitName = "MJJ_fit";
@@ -177,7 +283,7 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
         CJSON oldJSON(     filename+"_"+name+"_"+catName+"_MJJ_fit1stIt.json");
         oldJSON.fillFunctions(MOD_MS);
-        makeSignal1DShapes(name,filename,catName,fitName,true,&oldJSON,iF,doExpo);
+        makeSignal1DShapes(name,filename,signalMassBins,catName,fitName,true,&oldJSON,iF,doExpo);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+ " -minX 700 -maxX 3800 "+" -var "+MOD_MS +" ";
         CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" -g "+  ( doExpo  ?  fitMJJExpo : fitMJJStd ));
@@ -187,23 +293,23 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
     }
 }
 
-void makeSignalMVVShapes1D(const std::string& name, const std::string& filename){
-    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
-    const std::string fitName = "MVV_fit1stIt";
+void makeSignalMVVShapes1D(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins, const std::string postfix = ""){
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_"+postfix +"distributions.root");
+    const std::string fitName = postfix + "MVV_fit1stIt";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
-        if(l == lepCats[LEP_EMU] ) continue;
+//        if(l == lepCats[LEP_EMU] ) continue;
         if(b != btagCats[BTAG_LMT] ) continue;
         if(p != purCats[PURE_I] ) continue;
         if(h != hadCuts[HAD_LTMB]) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
-        makeSignal1DShapes(name,filename,catName,fitName,false,0,iF,false,true);
+        makeSignal1DShapes(name,filename,signalMassBins,catName,fitName,false,0,iF,false,true);
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MS +" ";
         argsP1 += " -minX 700 -maxX 3800 ";
         MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" -g "+ fitMVV);
     }
 }
 
-void makeSignalMVVShapes1stIt(const std::string& name, const std::string& filename){
+void makeSignalMVVShapes1stIt(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
     const std::string fitName = "MVV_fit1stIt";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
@@ -212,14 +318,14 @@ void makeSignalMVVShapes1stIt(const std::string& name, const std::string& filena
 //        if(p != purCats[PURE_I] ) continue;
         if(!(h == hadCuts[HAD_LTMB] || h == hadCuts[HAD_FULL])  ) continue;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
-        makeSignal1DShapes(name,filename,catName,fitName,false,0,iF,false,false);
+        makeSignal1DShapes(name,filename,signalMassBins,catName,fitName,false,0,iF,false,false);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MS +" ";
         argsP1 += " -minX 700 -maxX 3800 ";
         MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" -g "+ fitMVV);
     }
 }
-void makeSignalMVVShapes2ndIt(const std::string& name, const std::string& filename){
+void makeSignalMVVShapes2ndIt(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
     const std::string fitName = "MVV_fit";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
@@ -230,7 +336,7 @@ void makeSignalMVVShapes2ndIt(const std::string& name, const std::string& filena
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
         CJSON oldJSON(     filename+"_"+name+"_"+catName+"_MVV_fit1stIt.json");
         oldJSON.fillFunctions(MOD_MS);
-        makeSignal1DShapes(name,filename,catName,fitName,false,&oldJSON,iF,false,false);
+        makeSignal1DShapes(name,filename,signalMassBins,catName,fitName,false,&oldJSON,iF,false,false);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+" -var "+MOD_MS +" ";
         argsP1 +=  " -minX 700 -maxX 3800 ";
@@ -243,7 +349,7 @@ void makeSignalMVVShapes2ndIt(const std::string& name, const std::string& filena
     }
 }
 
-void makeSignal2DShapes(const std::string& name, const std::string& filename,const std::string& catName, std::string& fitName, CJSON* mjjJSON,CJSON* mvvJSON, bool fixMVVinTerms, bool doExpo, TFile* iF, const bool cond = true){
+void makeSignal2DShapes(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins, const std::string& catName, std::string& fitName, CJSON* mjjJSON,CJSON* mvvJSON, bool fixMVVinTerms, bool doExpo, TFile* iF, const bool cond = true){
     FunctionParameterPlotter plotter;
     std::vector<std::unique_ptr<FunctionFitter>> fitters;
 
@@ -347,7 +453,7 @@ void makeSignal2DShapes(const std::string& name, const std::string& filename,con
     plotter.write(filename+"_"+name+"_"+catName+"_"+fitName+".root");
 }
 
-void makeSignal2DShapesCondMVV(const std::string& name, const std::string& filename, std::string& catName, std::string& fitName, CJSON* mjjJSON,CJSON* mvvJSON, bool fixCorrTerms, bool doExpo, TFile* iF){
+void makeSignal2DShapesCondMVV(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins, std::string& catName, std::string& fitName, CJSON* mjjJSON,CJSON* mvvJSON, bool fixCorrTerms, bool doExpo, TFile* iF){
     FunctionParameterPlotter plotter;
     std::vector<std::unique_ptr<FunctionFitter>> fitters;
 
@@ -502,7 +608,7 @@ void makeSignal2DShapesCondMVV(const std::string& name, const std::string& filen
 //    }
 //}
 
-void makeSignal2DShapesSecondIteration(const std::string& name, const std::string& filename){
+void makeSignal2DShapesSecondIteration(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins){
     std::string fitName = "2D_fit";
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
@@ -520,7 +626,7 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
         mjjJSON.fillFunctions(MOD_MS);
         CJSON mvvJSON(     filename+"_"+name+"_"+mvvCatName+"_MVV_fit1stIt.json");
         mvvJSON.fillFunctions(MOD_MS);
-        makeSignal2DShapes(name,filename,catName,fitName,&mjjJSON,&mvvJSON,false,doExpo,iF);
+        makeSignal2DShapes(name,filename,signalMassBins,catName,fitName,&mjjJSON,&mvvJSON,false,doExpo,iF);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+ " -minX 700 -maxX 3800 -var "+MOD_MS+" ";
         std::string jsonArgs = argsP1 +" -g "+ (doExpo ? fitMJJExpo : fitMJJStd ) + ","+fitMVV+","+fitCond;
@@ -539,7 +645,57 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
 }
 
 
-void combine2DShapesNoCond(const std::string& name, const std::string& filename){
+void copySignalShapes(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins, const std::string inputName, bool doCond ){
+    std::string fitName = "2D_fit";
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
+
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        if(l == lepCats[LEP_EMU] ) continue;
+        if( b == btagCats[BTAG_LMT] ) continue;
+        if(p == purCats[PURE_I]) continue;
+        if(h != hadCuts[HAD_FULL] ) continue;
+        bool doExpo = b == btagCats[BTAG_L];
+        const std::string catName = l +"_"+b+"_"+p +"_"+h;
+        const std::string inputJSONName = filename+"_"+inputName+"_"+catName+"_"+fitName+".json";
+        TFile * oF = new TFile((filename+"_"+name+"_"+catName+"_"+fitName+".root").c_str(),"recreate");
+
+        RooWorkspace * w = new RooWorkspace("w");
+        w->factory((MOD_MJ + "["+ASTypes::flt2Str(100)+","+ASTypes::flt2Str(0)+","+ASTypes::flt2Str(1000)+"]").c_str());
+        w->factory((MOD_MR + "["+ASTypes::flt2Str(1000)+","+ASTypes::flt2Str(0)+","+ASTypes::flt2Str(10000)+"]").c_str());
+        w->factory((MOD_MS + "["+ASTypes::flt2Str(2000)+","+ASTypes::flt2Str(0)+","+ASTypes::flt2Str(10000)+"]").c_str());
+        if(doCond){
+            PDFAdder::add2DCB(w,name,"PF",MOD_MJ,MOD_MR,inputJSONName,{},{},{},{},doExpo,MOD_MS);
+        } else {
+            PDFAdder::add2DCBNoCond(w,name,"PF",MOD_MJ,MOD_MR,inputJSONName,{},{},{},{},doExpo,MOD_MS);
+        }
+        for(unsigned int iS = 0; iS < signalMassBins.size(); ++iS){
+            std::string hName   = name+"_m"+ASTypes::int2Str(signalMassBins[iS])+"_"+catName;
+            std::string ptName  = std::string("m") + ASTypes::flt2Str(signalMassBins[iS]);
+            auto hbb_hh_H = TObjectHelper::getObject<TH2>(iF,hName+"_"+hbbMCS+"_"+hhMCS,false,false);
+            if(hbb_hh_H ==0) continue;
+            const std::string outDataName = "data_"+ptName;
+            const std::string outPDFName = "pdf_"+ptName;
+            PDFAdder::addBinnedData(w,&*hbb_hh_H,outDataName,{MOD_MJ,MOD_MR});
+            w->var(MOD_MS.c_str())->setVal(signalMassBins[iS]);
+            auto wrt = [&] (TH1* in){
+                in->GetYaxis()->SetTitle(hhMCS.title.c_str());
+                in->GetXaxis()->SetTitle(hbbMCS.title.c_str());
+                oF->cd();
+                in->Write();
+            };
+            wrt(w->pdf((name+"_PF").c_str())->createHistogram(outPDFName.c_str(), *w->var(MOD_MJ.c_str()),RooFit::YVar(*w->var(MOD_MR.c_str()))));
+            wrt(w->data(outDataName.c_str())->createHistogram(outDataName.c_str(), *w->var(MOD_MJ.c_str()),RooFit::YVar(*w->var(MOD_MR.c_str()))));
+        }
+
+        oF->Close();
+        CJSON inputJSON(inputJSONName );
+        inputJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
+    }
+    iF->Close();
+}
+
+
+void combine2DShapesNoCond(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins){
     std::string fitName = "2D_fit";
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
@@ -557,7 +713,7 @@ void combine2DShapesNoCond(const std::string& name, const std::string& filename)
         mjjJSON.fillFunctions(MOD_MS);
         CJSON mvvJSON(     filename+"_"+name+"_"+mvvCatName+"_MVV_fit1stIt.json");
         mvvJSON.fillFunctions(MOD_MS);
-        makeSignal2DShapes(name,filename,catName,fitName,&mjjJSON,&mvvJSON,false,doExpo,iF,false);
+        makeSignal2DShapes(name,filename,signalMassBins,catName,fitName,&mjjJSON,&mvvJSON,false,doExpo,iF,false);
 
         std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root "+ " -minX 700 -maxX 3800 -var "+MOD_MS+" ";
         std::string jsonArgs = argsP1 +" -g "+ (doExpo ? fitMJJExpo : fitMJJStd ) + ","+fitMVV;
@@ -574,46 +730,73 @@ void combine2DShapesNoCond(const std::string& name, const std::string& filename)
 
 
 
-void go(int step,std::string treeDir) {
-    std::string filename = hhFilename;
-    std::string signalTrees = treeDir + "/out_radion_hh_bbinc_mXXX_0.root";
-    std::string name = radionSig;
+void go(int step,int sig, std::string treeDir) {
+    const std::string filename = hhFilename;
+    const std::string baseTreeName = treeDir + "/out_"+signals[sig].cut+  "_mXXX_0";
+    const std::string signalTrees = baseTreeName +".root";
+    const std::string name = signals[sig];
     if(step == 0){
-        makeSignalFittingDistributions(name,filename,signalTrees,hhInclRange.cut+"&&"+hbbInclRange.cut,true);
-        makeSignalFittingDistributions(name,filename,signalTrees,hhRange.cut+"&&"+hbbRange.cut,false);
-        makeSignalYields(name,filename);
+        makeSignalFittingDistributions(name,filename,signalMassBins[sig],signalTrees,hhInclRange.cut+"&&"+hbbInclRange.cut,true);
+        makeSignalFittingDistributions(name,filename,signalMassBins[sig],signalTrees,hhRange.cut+"&&"+hbbRange.cut,false);
+        makeSignalYields(name,filename,signalMassBins[sig]);
     }
 
     if(step == 1){
-        makeSignalMJJShapes1stIt(name,filename);
-        makeSignalMJJShapes2ndIt(name,filename);
-        makeSignalMVVShapes1D(name,filename);
-        makeSignal2DShapesSecondIteration(name,filename);
+        if(sig == RADION){
+            makeSignalMJJShapes1stIt(name,filename,signalMassBins[sig]);
+            makeSignalMJJShapes2ndIt(name,filename,signalMassBins[sig]);
+            makeSignalMVVShapes1D(name,filename,signalMassBins[sig]);
+            makeSignal2DShapesSecondIteration(name,filename,signalMassBins[sig]);
+        }
+        else
+            copySignalShapes(name,filename,signalMassBins[sig],signals[RADION],true);
     }
 
     if(step == 2){
-        makeSignalMJJShapes1stIt(name,filename);
-        makeSignalMJJShapes2ndIt(name,filename);
-        makeSignalMVVShapes1stIt(name,filename);
-//        makeSignalMVVShapes2ndIt(name,filename);
-        combine2DShapesNoCond(name,filename);
+        if(sig == RADION){
+            makeSignalMJJShapes1stIt(name,filename,signalMassBins[sig]);
+            makeSignalMJJShapes2ndIt(name,filename,signalMassBins[sig]);
+            makeSignalMVVShapes1stIt(name,filename,signalMassBins[sig]);
+    //        makeSignalMVVShapes2ndIt(name,filename,signalMassBins[sig]);
+            combine2DShapesNoCond(name,filename,signalMassBins[sig]);
+        }
+        else
+            copySignalShapes(name,filename,signalMassBins[sig],signals[RADION],false);
+
     }
 
     if(step == 3){
+        makeSignalNormSystDists(name,filename,signalMassBins[sig],signalTrees);
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],signalTrees,"NOMSyst");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_METUp.root","METUp");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_JESUp.root","JESUp");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_JERUp.root","JERUp");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_METDown.root","METDown");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_JESDown.root","JESDown");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_JERDown.root","JERDown");
+
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"NOMSyst_");
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"METUP_"  );
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"JESUp_"  );
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"JERUp_"  );
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"METDown_");
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"JESDown_");
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"JERDown_");
+
+
+        makeSignalPDFSystDists(name,filename,signalMassBins[sig],signalTrees);
+
+
+
+
     }
 
+    if(step == 4){
+    }
 
-
-
-    //old stuff
-    //    makeSignal2DShapesFirstIteration(name,filename);
-    //    makeSignalMVVShapes1stIt(name,filename);
-    //    makeSignalMVVShapes2ndIt(name,filename);
-    //    makeSignalMJJShapes1stIt(name,filename);
-    //    makeSignal2DShapesCondMVVFirstIteration(name,filename);
 }
 #endif
 
-void makeSignalInputs(int step = 0,std::string treeDir = "../trees/"){
-    go(step,treeDir);
+void makeSignalInputs(int step = 0,int sigToDo = RADION,std::string treeDir = "../trees/"){
+    go(step,sigToDo,treeDir);
 }
