@@ -94,12 +94,11 @@ std::vector<CutStr > qgBtagCats = {
         CutStr("LMT","hbbCSVCat==1","no b-tagging"),
         CutStr("L"  ,"hbbCSVCat==1","no b-tagging")
 };
-
 CutStr inclBtagCat("I","hbbCSVCat>=0");
 
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
-        CutStr("I","1.0"),
+        CutStr("I","1.0","low or high purity"),
         CutStr("LP" ,"wjjTau2o1>=0.55","low purity"),
         CutStr("HP"  ,"wjjTau2o1<0.55","high purity")
 };
@@ -113,6 +112,41 @@ std::vector<CutStr > hadCuts = {
         CutStr("full",preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut)
 
 };
+
+std::string getCategoryLabel(const LEPCats lep, const BTAGCats btag, const PURCats pur ){
+    return lepCats[lep].title+": "+btagCats[btag].title+", "+purCats[pur].title;
+}
+
+
+
+std::string getCategoryLabel(const std::string& inStr){
+
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(inStr);
+    while (std::getline(tokenStream, token, '_'))
+    {tokens.push_back(token);}
+    std::string title = "";
+    auto getTitle = [&](const std::string in, const std::vector<CutStr >& opts ) -> std::string{
+        for(const auto& c : opts) if(in == c ) return c.title;
+        return "";
+    };
+    std::string lep,btag,pur;
+    if(tokens.size()){lep = getTitle(tokens[0],lepCats);}
+    if(tokens.size()>1){btag = getTitle(tokens[1],btagCats);}
+    if(tokens.size()>2){pur = getTitle(tokens[2],purCats);}
+    if(lep.size()){
+        title += lep;
+        if(btag.size() || pur.size()) title+=": ";
+    }
+    if(btag.size()){
+        title += btag;
+        if(pur.size())
+            title += ", ";
+    }
+    title += pur;
+    return title;
+}
 
 std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,1750,2000,2500,3000,3500,4000};
 

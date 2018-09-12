@@ -111,11 +111,11 @@ void testQCDSF(std::string name, std::string filename, const std::vector<std::st
 
 
 
-std::vector<TObject*> testRatioFits(std::string name, std::string filename,  std::string fitName, const std::vector<std::string>& sels) {
+void testRatioFits(std::string name, std::string filename,  std::string fitName, const std::vector<std::string>& sels,std::vector<TObject*>& writeables) {
     Plotter * p = new Plotter; //stupid CINT bugfix.....
-    std::vector<TObject*> writeables;
-    std::vector<TObject*> paramPads;
 
+    std::vector<TObject*> paramPads;
+//    gROOT->SetBatch(true);
     for(const auto& s : sels){
         TFile *ff = new TFile((filename+"_"+name+"_"+s+"_"+fitName+".json.root").c_str(),"read");
         auto addGraph = [&](const std::string& name,std::vector<TObject*>& list){
@@ -124,27 +124,32 @@ std::vector<TObject*> testRatioFits(std::string name, std::string filename,  std
                 ff->GetObject((name).c_str(),can);
             }
             if(!can) return;
-            can->GetYaxis()->SetTitle(s.c_str());
+            TCanvas * c = new TCanvas();
+            can->GetYaxis()->SetTitle(getCategoryLabel(s).c_str());
             can->GetXaxis()->SetTitle(hhMCS.title.c_str());
-            list.push_back(can);
+            can->GetYaxis()->SetRangeUser(0.05,5);
+            can->Draw();
+            c->SetLogy();
+            c->Update();
+            list.push_back(c);
         };
 
 
         addGraph("RATIO", paramPads);
     }
+//    gROOT->SetBatch(false);
 
 
 
     auto * c1 =Drawing::drawAll(paramPads,"ratio_params");
+    c1->SetTitle("ratio_params");
     writeables.push_back(c1);
-    return writeables;
 }
 
 
-std::vector<TObject*> testRatioUncs(std::string name, std::string filename,  std::string fitName, const std::vector<std::pair<std::string,std::string> >& targets, //target,model
-        float normUnc, float scaleUnc, float resUnc) {
+void testRatioUncs(std::string name, std::string filename,  std::string fitName, const std::vector<std::pair<std::string,std::string> >& targets, //target,model
+        float normUnc, float scaleUnc, float resUnc, std::vector<TObject*>& writeable) {
     Plotter * p = new Plotter; //stupid CINT bugfix.....
-    std::vector<TObject*> writeables;
     std::vector<TObject*> paramPads;
 
     for(const auto& s : targets){
@@ -190,7 +195,6 @@ std::vector<TObject*> testRatioUncs(std::string name, std::string filename,  std
     }
     //    auto * c1 =Drawing::drawAll(paramPads,"ratio_params");
     //    writeables.push_back(c1);
-    return writeables;
 }
 
 class Dummy {
@@ -242,17 +246,18 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, std::
     case 0:
         if(doTW) return;
         if(outName.size()) outName += "_QCDRatio";
-        writeables = testRatioFits(mod,filename,"QCDSF",{"emu_I_I_ltmb","e_I_LP_ltmb","mu_I_LP_ltmb","e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"});
+//        writeables = testRatioFits(mod,filename,"QCDSF",{"emu_I_I_ltmb","e_I_LP_ltmb","mu_I_LP_ltmb","e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"});
+            testRatioFits(mod,filename,"QCDSF",{"e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"},writeables);
         if(reg == REG_QGCR){
-            writeables = testRatioUncs(mod,filename,"QCDSF",{ {"emu_LMT_I_ltmb","emu_I_I_ltmb"},
+            testRatioUncs(mod,filename,"QCDSF",{ {"emu_LMT_I_ltmb","emu_I_I_ltmb"},
                     {"e_L_LP_full","e_I_LP_full"},{"e_L_HP_full","e_I_HP_full"},{"mu_L_LP_full","mu_I_LP_full"},
-                    {"mu_L_HP_full","mu_I_HP_full"}},1,1,1);
+                    {"mu_L_HP_full","mu_I_HP_full"}},1,1,1,writeables);
         } else {
-            writeables = testRatioUncs(mod,filename,"QCDSF",{ {"emu_LMT_I_ltmb","emu_I_I_ltmb"},
+            testRatioUncs(mod,filename,"QCDSF",{ {"emu_LMT_I_ltmb","emu_I_I_ltmb"},
                     {"e_L_LP_full","e_I_LP_full"},{"e_M_LP_full","e_I_LP_full"},{"e_T_LP_full","e_I_LP_full"},
                     {"e_L_HP_full","e_I_HP_full"},{"e_M_HP_full","e_I_HP_full"},{"e_T_HP_full","e_I_HP_full"},
                     {"mu_L_LP_full","mu_I_LP_full"},{"mu_M_LP_full","mu_I_LP_full"},{"mu_T_LP_full","mu_I_LP_full"},
-                    {"mu_L_HP_full","mu_I_HP_full"},{"mu_M_HP_full","mu_I_HP_full"},{"mu_T_HP_full","mu_I_HP_full"}},1,1,1);
+                    {"mu_L_HP_full","mu_I_HP_full"},{"mu_M_HP_full","mu_I_HP_full"},{"mu_T_HP_full","mu_I_HP_full"}},1,1,1,writeables);
         }
         break;
     case 1:
