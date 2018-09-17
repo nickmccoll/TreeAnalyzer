@@ -676,13 +676,11 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  std::string limitBaseName 
     if(reg == REG_TOPCR){
         inName =  "bkgInputsTopCR";
         hhFilename +="_TopCR";
-        limitBaseName +="_TopCR";
         outName=limitBaseName+"/plots/TopCR_";
     }
     else if(reg == REG_QGCR){
         inName =  "bkgInputsQGCR";
         hhFilename +="_QGCR";
-        limitBaseName +="_QGCR";
         outName=limitBaseName+"/plots/QGCR_";
         btagCats = qgBtagCats;
 

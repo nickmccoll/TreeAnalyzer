@@ -94,7 +94,7 @@ text2workspace.py combinedCard.txt -o combined.root
 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 7 &
 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 8 &
 
-
+ 
 ######do bias test...what we have for now
 #prefit...dont do anymore
 python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0600585 -m 1000 -l prefit -f 0    -s 0 -o 0 -c "combine" &

@@ -267,7 +267,11 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
         vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
     }
     std::vector<PlotSamp> samps = { {name,"1.0"}};
-    if(samples.size()) samps= samples;
+    if(samples.size()){
+        samps.clear();
+        for(const auto& s: samples)
+            samps.emplace_back(s.first,s.second);
+    }
     std::vector<PlotSel> sels;
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         std::string baseSel = std::string("(")+l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut+")";
