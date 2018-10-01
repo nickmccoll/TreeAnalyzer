@@ -10,6 +10,7 @@ using namespace CutConstants;
 
 CutStr blindCut = CutStr("blindCut",std::string("(")+hbbMCS.cut+"<100||"+hbbMCS.cut+">150)");
 std::vector<PlotVar> vars;
+std::vector<std::string> varUnits;
 std::vector<PlotSamp> samps;
 
 
@@ -34,20 +35,18 @@ void makeDataDistributions(const std::string& name, const std::string& filename,
 void compilePlots(const std::string& prefix, const std::string& mcFile, const std::string& dataFile,  const std::vector<std::string> signalFiles,  const std::vector<std::string> signalNames){
     TFile * fd = new TFile((dataFile).c_str(),"READ");
     TFile * fm = new TFile((mcFile  ).c_str(),"READ");
-    std::vector<TFile*> sFs;
-    for(const auto& f :signalFiles)
-        sFs.push_back(new TFile((f).c_str(),"READ"));
-
 
     for(unsigned int iV = 1; iV <= vars.size(); ++iV){
         Plotter * p = new Plotter;
 
         for(unsigned int iS = 0; iS < signalFiles.size(); ++iS){
-            TFile * f = sFs[iS];
+            TFile * f = new TFile((signalFiles[iS]).c_str(),"READ");
             TH1 * hm = 0;
             f->GetObject((std::string("all_loose_")+vars[iV].varName+"_"+vars[iV].varName).c_str(),hm);
             if(hm == 0) continue;
-            p->addHistLine(hm,signalNames[iS]);
+            //Scale so that we get 1pb normalization
+            hm->Scale(2*0.5824*(.2137+.002619));
+//            p->addHistLine(hm,signalNames[iS]);
         }
 
         TH1 * hd = 0;
@@ -55,25 +54,55 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
         if(hd == 0) continue;
         p->addHist(hd,"data",kBlack);
 
-
-//
         for(unsigned int iP = 0; iP < processes.size(); ++iP){
             TH1 * hm = 0;
             fm->GetObject((processes[iP]+"_loose_"+vars[iV].varName+"_"+vars[iV].varName).c_str(),hm);
             if(hm == 0) continue;
             p->addStackHist(hm,processes[iP].title);
         }
-        if(iV == 2) {
-            p->rebin(4);
-            p->setMinMax(0.1,10000);
-        }
-        if(iV== 7) p->setMinMax(20,1000000);
 
-        if(iV == 4) p->setLegendPos(0.1588629,0.5895652,0.4397993,0.9043478);
-        else p->setLegendPos(0.6555184,0.5530435,0.9364548,0.8678261);
+
+        switch(iV){
+            case 1:
+                p->setMinMax(0,400);
+                break;
+            case 2:
+                p->rebin(4);
+                p->setMinMax(0.1,35000);
+                break;
+            case 3:
+                p->setMinMax(0,6000);
+                break;
+            case 5:
+                p->setMinMax(0,600);
+                break;
+            case 6:
+                p->setMinMax(0,800);
+                break;
+            case 7:
+                p->setMinMax(20,1000000);
+                break;
+        }
+
+
+        p->setLegendPos(0.1425,0.7275,0.6,.89);
+
         p->setCMSLumi();
-        p->setYTitle("N. of events / bin width");
-        auto * c = p->draw(false,prefix+vars[iV].varName+"_srvardists.pdf");
+        p->setCMSLumiExtraText("Preliminary");
+//        p->addLegendEntry(7,0,"X #sigma x #it{B} = 1 pb","");
+//        p->addText("All categories",0.15,0.88,0.03);
+//        p->addText("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=1 pb",0.15,0.71,0.03);
+        p->setLegendNColumns(2);
+
+        std::string ytitle = "N. of events";
+        if(varUnits[iV]!="-1"){
+            ytitle += " / " + ASTypes::flt2Str(p->getTotStack()->GetBinWidth(1)) + " " + varUnits[iV];
+
+        }
+        p->setBotMinMax(0.1,1.9);
+        p->setYTitle(ytitle);
+//        auto * c = p->draw(false,prefix+vars[iV].varName+"_srvardists.pdf");
+        auto * c = p->drawSplitRatio(-1,"stack",false,false,prefix+vars[iV].varName+"_srvardists.pdf");
         p->yAxis()->SetTitleOffset(1.55);
         p->xAxis()->SetTitleOffset(1.0);
         if(iV == 7){
@@ -84,12 +113,15 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             p->xAxis()->SetBinLabel(5,"One medium, one loose");
             p->xAxis()->SetBinLabel(6,"Two medium");
             p->xAxis()->SetTitle(" ");
-            c->SetLogy();
+//            c->SetLogy();
+            c->GetPad(1)->SetLogy();
 
 
         }
         if(iV == 2){
-            c->SetLogy();
+//            c->SetLogy();
+            c->GetPad(1)->SetLogy();
+
         }
         c->Update();
         c->Print((prefix+vars[iV].varName+"_srvardists.pdf").c_str());
@@ -178,22 +210,31 @@ void plotSRVariables( int step, int reg,std::string tree, std::string name){
     vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,36,minHbbMass,maxHbbMass);
     vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
     vars.emplace_back("nAK4Btags" ,"; N. of AK4 jet b tags","nAK4Btags",4,-0.5,3.5);
-    vars.emplace_back("wjjTau2o1" ,"; #tau_{2}/#tau_{1}","wjjTau2o1",50,0,1);
+    vars.emplace_back("wjjTau2o1" ,"; W#rightarrowq#bar{q} #tau_{2}/#tau_{1}","wjjTau2o1",50,0,1);
     vars.emplace_back("hwwPT_o_hhMass" ,"; #it{p}_{T}/#it{m}","hwwPT/hhMass",50,0,1);
     vars.emplace_back("wwDM","; #it{m}_{D} [GeV]","wwDM",50,0,500);
     vars.emplace_back("hbbCSVCat","; hbbCSVCat","(hbbCSVCat-1)",6,-0.5,5.5);
 
+    varUnits.emplace_back("GeV");
+    varUnits.emplace_back("GeV");
+    varUnits.emplace_back("GeV");
+    varUnits.emplace_back("-1");
+    varUnits.emplace_back("");
+    varUnits.emplace_back("");
+    varUnits.emplace_back("GeV");
+    varUnits.emplace_back("-1");
+
 
     samps.emplace_back("all","1.0");
     if(!isData){
-        samps.emplace_back(processes[TTBAR],processes[TTBAR].cut);
+        samps.emplace_back(processes[TTBAR],std::string("(0.76*(")+processes[TTBAR].cut+"))");
         samps.emplace_back(processes[WJETS],processes[WJETS].cut);
         samps.emplace_back(processes[QCD],processes[QCD].cut);
         samps.emplace_back(processes[OTHER],processes[OTHER].cut);
         samps.emplace_back(bkgSels[BKG_QG],bkgSels[BKG_QG].cut);
-        samps.emplace_back(bkgSels[BKG_LOSTTW],bkgSels[BKG_LOSTTW].cut);
-        samps.emplace_back(bkgSels[BKG_MW],bkgSels[BKG_MW].cut);
-        samps.emplace_back(bkgSels[BKG_MT],bkgSels[BKG_MT].cut);
+        samps.emplace_back(bkgSels[BKG_LOSTTW],std::string("(0.76*(")+bkgSels[BKG_LOSTTW].cut+"))");
+        samps.emplace_back(bkgSels[BKG_MW],std::string("(0.76*(")+bkgSels[BKG_MW].cut+"))");
+        samps.emplace_back(bkgSels[BKG_MT],std::string("(0.76*(")+bkgSels[BKG_MT].cut+"))");
     }
 
 
@@ -202,7 +243,7 @@ void plotSRVariables( int step, int reg,std::string tree, std::string name){
     }
     if(step==1){
         compilePlots(prefix,out+"_mc_srVarDistributions.root",out+"_data_srVarDistributions.root",
-                {out+"_m1000_srVarDistributions.root",out+"_m2500_srVarDistributions.root"}, {"#it{m}_{X}=1 TeV","#it{m}_{X}=2.5 TeV"});
+                {out+"_m1000_srVarDistributions.root",out+"_m2500_srVarDistributions.root"}, {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"});
     }
     if(step==2) categoryPlots(prefix,out+"_mc_srVarDistributions.root");
 }

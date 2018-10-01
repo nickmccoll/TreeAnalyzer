@@ -20,8 +20,8 @@ enum PROC  {TTBAR,WJETS,QCD,OTHER};
 std::vector<CutStr > processes = {
         CutStr("ttbar"     ,"process==2","t#bar{t}"),
         CutStr("wjets"     ,"process==3","W+jets"),
-        CutStr("qcd"       ,"process==8","multijets"),
-        CutStr("other"     ,"(process>1&&!(process==2||process==3||process==8))","other")
+        CutStr("qcd"       ,"process==8","multijet"),
+        CutStr("other"     ,"(process>1&&!(process==2||process==3||process==8))","other SM")
 };
 
 enum REGION  {REG_SR, REG_TOPCR, REG_QGCR};
@@ -77,30 +77,30 @@ std::vector<CutStr > bkgSels = {
 
 enum LEPCats  {LEP_EMU, LEP_E, LEP_MU};
 std::vector<CutStr> lepCats = {
-        CutStr("emu","isMuon>=0","electron or muon"),
-        CutStr("e"  ,"isMuon==0","electron"),
-        CutStr("mu" ,"isMuon==1","muon")
+        CutStr("emu","isMuon>=0","e#mu"),
+        CutStr("e"  ,"isMuon==0","e"),
+        CutStr("mu" ,"isMuon==1","#mu")
 };
 
 enum BTAGCats  {BTAG_LMT, BTAG_L, BTAG_M, BTAG_T};
 std::vector<CutStr > btagCats = {
-        CutStr("LMT","hbbCSVCat>=4","loose, medium or tight b-tagging"),
-        CutStr("L"  ,"hbbCSVCat==4","loose b-tagging"),
-        CutStr("M"  ,"hbbCSVCat==5","medium b-tagging"),
-        CutStr("T"  ,"hbbCSVCat==6","tight b-tagging")
+        CutStr("LMT","hbbCSVCat>=4","bLMT"),
+        CutStr("L"  ,"hbbCSVCat==4","bL"),
+        CutStr("M"  ,"hbbCSVCat==5","bM"),
+        CutStr("T"  ,"hbbCSVCat==6","bT")
 };
 
 std::vector<CutStr > qgBtagCats = {
-        CutStr("LMT","hbbCSVCat==1","no b-tagging"),
-        CutStr("L"  ,"hbbCSVCat==1","no b-tagging")
+        CutStr("LMT","hbbCSVCat==1",""),
+        CutStr("L"  ,"hbbCSVCat==1","")
 };
 CutStr inclBtagCat("I","hbbCSVCat>=0");
 
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
-        CutStr("I","1.0","low or high purity"),
-        CutStr("LP" ,"wjjTau2o1>=0.55","low purity"),
-        CutStr("HP"  ,"wjjTau2o1<0.55","high purity")
+        CutStr("I","1.0","WI"),
+        CutStr("LP" ,"wjjTau2o1>=0.55","WL"),
+        CutStr("HP"  ,"wjjTau2o1<0.55","WH")
 };
 
 enum HADCuts  {HAD_NONE,HAD_LB,HAD_LT,HAD_LTMB,HAD_FULL};
