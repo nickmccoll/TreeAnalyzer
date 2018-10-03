@@ -1,5 +1,8 @@
 #Make
 rr -b -q 'TreeAnalyzer/background_estimation/predMacros/makeBETrees.C+("/eos/uscms/store/user/lpchh/HHWWbb_trees/3_28_18_complete/TTJets_SingleLeptFromT_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/crab_tbar-t1l-madgraph/180330_001301/0000/tbar-t1l-madgraph_1.root",1,"test.root")'
+
+rr -b -q 'TreeAnalyzer/background_estimation/predMacros/makeBETrees.C+("/eos/uscms/store/user/lpchh/HHWWbb_trees/8_6_18_complete/Radion_hh_hVVhbb_inclusive_narrow_M1000_TuneCUETP8M1_13TeV-madgraph-pythia8/crab_radion_hh_bbinc_m1000/180808_182457/0000/radion_hh_bbinc_m1000_1.root",2,1,"test.root")'
+
 ./running/runBatchJobs.py  -m TreeAnalyzer/background_estimation/predMacros/makeBETrees.C -b -w -i procdatasets.conf  -j jobs/4_30_beTreees -o out 
 
 #PREP
@@ -77,6 +80,17 @@ nohup combine -m 1200  -M AsymptoticLimits --run expected -v 2 combinedCard.txt 
 nohup combine -m 2500  -M AsymptoticLimits --run expected -v 2 combinedCard.txt &
 nohup combine -m 3000  -M AsymptoticLimits --run expected -v 2 combinedCard.txt &
 nohup combine -m 800   -M AsymptoticLimits --run expected -v 2 combinedCard.txt &
+
+
+nohup combine -m 1600  -M AsymptoticLimits -v 2 combinedCard.txt &
+nohup combine -m 2500  -M AsymptoticLimits -v 2 combinedCard.txt &
+nohup combine -m 3000  -M AsymptoticLimits -v 2 combinedCard.txt &
+
+
+nohup combine -m 1600  -M HybridNew --LHCmode LHC-limits -v 2 combinedCard.txt &
+nohup combine -m 2500  -M HybridNew --LHCmode LHC-limits -v 2 combinedCard.txt &
+nohup combine -m 3000  -M HybridNew --LHCmode LHC-limits -v 2 combinedCard.txt &
+
 
 #Stat tests
 text2workspace.py combinedCard.txt -o combined.root
