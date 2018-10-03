@@ -61,13 +61,15 @@ void makeSignalNormSystDists(const std::string& name, const std::string& filenam
             {"elISOUp"   ,"w_elISOUp*xsec*trig_N*pu_N*btag_N"    },
             {"b_realUp"  ,"w_b_realUp*xsec*trig_N*pu_N*lep_N"    },
             {"b_fakeUp"  ,"w_b_fakeUp*xsec*trig_N*pu_N*lep_N"    },
+            {"puUp"      ,"w_puUp*xsec*trig_N*btag_N*lep_N"    },
             {"muIDDown"  ,"w_muIDDown*xsec*trig_N*pu_N*btag_N"   },
             {"muISODown" ,"w_muISODown*xsec*trig_N*pu_N*btag_N"  },
             {"elRecoDown","w_elRecoDown*xsec*trig_N*pu_N*btag_N" },
             {"elIDDown"  ,"w_elIDDown*xsec*trig_N*pu_N*btag_N"   },
             {"elISODown" ,"w_elISODown*xsec*trig_N*pu_N*btag_N"  },
             {"b_realDown","w_b_realDown*xsec*trig_N*pu_N*lep_N"  },
-            {"b_fakeDown","w_b_fakeDown*xsec*trig_N*pu_N*lep_N"  }
+            {"b_fakeDown","w_b_fakeDown*xsec*trig_N*pu_N*lep_N"  },
+            {"puDown"    ,"w_puDown*xsec*trig_N*btag_N*lep_N"    }
     };
 
     for(const auto& sM : signalMassBins){

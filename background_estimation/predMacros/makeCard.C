@@ -78,7 +78,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         //Add Systematics first since the param systs need to have the variables added to the workspace
         //---------------------------------------------------------------------------------------------------
         //luminosity
-        card.addSystematic("yield","lnN",{{signalName,1.0354}});//lumi = 2.5 jer = 1,  jes = 1 met = 0.5, pdf= 2
+        card.addSystematic("yield","lnN",{{signalName,1.0371}});//lumi = 2.5 jer = 1,  jes = 1 met = 0.5, pdf= 2, PU = 0.5, btagfake=1
 
         //lepton efficiency
         if(l==lepCats[LEP_E])
@@ -93,7 +93,6 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         if(p == purCats[PURE_LP])
             card.addSystematic(systName("","tau21_eff",""),"lnN",{{signalName,1-0.33}});
         //Btag
-        card.addSystematic("btag_fake","lnN",{{signalName,1+0.01}});
         card.addParamSystematic("btag_eff",0.0,0.1);
 
         //pruned mass scale

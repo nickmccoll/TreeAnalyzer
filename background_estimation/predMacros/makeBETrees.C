@@ -107,6 +107,7 @@ public:
             i_w_elISOUp       = outTree->add<float>("","w_elISOUp","F",0);
             i_w_b_realUp     = outTree->add<float>("","w_b_realUp","F",0);
             i_w_b_fakeUp      = outTree->add<float>("","w_b_fakeUp","F",0);
+            i_w_puUp          = outTree->add<float>("","w_puUp","F",0);
             i_w_muIDDown      = outTree->add<float>("","w_muIDDown","F",0);
             i_w_muISODown     = outTree->add<float>("","w_muISODown","F",0);
             i_w_elRecoDown    = outTree->add<float>("","w_elRecoDown","F",0);
@@ -114,6 +115,7 @@ public:
             i_w_elISODown     = outTree->add<float>("","w_elISODown","F",0);
             i_w_b_realDown   = outTree->add<float>("","w_b_realDown","F",0);
             i_w_b_fakeDown    = outTree->add<float>("","w_b_fakeDown","F",0);
+            i_w_puDown        = outTree->add<float>("","w_puDown","F",0);
             i_w_scale        = outTree->addMulti<float>("","w_scale",0);
             i_w_pdf          = outTree->addMulti<float>("","w_pdf",0);
         }
@@ -241,6 +243,7 @@ public:
             outTree->fill(i_w_elISOUp    ,float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,UP)*nomMu));
             outTree->fill(i_w_b_realUp   ,float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,UP)* sjbtagSFProc->getSF({hbbCand},NOMINAL,UP)));
             outTree->fill(i_w_b_fakeUp   ,float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL)* sjbtagSFProc->getSF({hbbCand},UP,NOMINAL)));
+            outTree->fill(i_w_puUp       ,float(puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::UP)));
 
             outTree->fill(i_w_muIDDown   ,float(leptonSFProc->getMuonSF(NONE,DOWN,NOMINAL)*nomEl));
             outTree->fill(i_w_muISODown  ,float(leptonSFProc->getMuonSF(NONE,NOMINAL,DOWN)*nomEl));
@@ -249,6 +252,7 @@ public:
             outTree->fill(i_w_elISODown  ,float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,DOWN)*nomMu));
             outTree->fill(i_w_b_realDown ,float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN)* sjbtagSFProc->getSF({hbbCand},NOMINAL,DOWN)));
             outTree->fill(i_w_b_fakeDown ,float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF({hbbCand},DOWN,NOMINAL)));
+            outTree->fill(i_w_puDown     ,float(puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::DOWN)));
 
 
             for(unsigned int i = 1; i < 9; ++i){
@@ -317,6 +321,7 @@ public:
     size i_w_elISOUp     = 0;
     size i_w_b_realUp    = 0;
     size i_w_b_fakeUp    = 0;
+    size i_w_puUp        = 0;
     size i_w_muIDDown    = 0;
     size i_w_muISODown   = 0;
     size i_w_elRecoDown  = 0;
@@ -324,6 +329,7 @@ public:
     size i_w_elISODown   = 0;
     size i_w_b_realDown  = 0;
     size i_w_b_fakeDown  = 0;
+    size i_w_puDown      = 0;
 
     size i_w_scale       = 0;
     size i_w_pdf         = 0;

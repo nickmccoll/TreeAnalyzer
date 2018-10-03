@@ -603,7 +603,7 @@ void plotSignalTests(int cat = 0,int sig = RADION,  bool doCond = true, std::str
     case 5:
         if(outName.size()) outName += "_normSyst";
         plotPDFSysts(name,filename,signalMassBins[sig]);
-        plotNormSysts(name,filename,signalMassBins[sig],{"muID","muISO","elReco","elID","elISO","b_real","b_fake"});
+        plotNormSysts(name,filename,signalMassBins[sig],{"muID","muISO","elReco","elID","elISO","b_real","b_fake","pu"});
         plotShapeSystNorms(name,filename,signalMassBins[sig],{"MET","JER","JES"});
         plotShapeSystParams(name,filename,signalMassBins[sig],{"MET","JER","JES"});
         break;
