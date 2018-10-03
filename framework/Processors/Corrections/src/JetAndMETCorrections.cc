@@ -35,7 +35,7 @@ float JERCorrector::getSF(const CorrHelp::CORRTYPE cT, const float absETA) const
 //--------------------------------------------------------------------------------------------------
 void JERCorrector::processJets(JetReader& jetreader,Met& met,const GenJetCollection& genjets, const float rho){
     if(cT == CORRTYPE::NONE) return;
-    JME::JetParameters parameters;
+    JMEStand::JetParameters parameters;
     parameters.setRho(std::min(40.0f,rho));
     std::vector<const GenJet*> gjptrs; gjptrs.reserve(genjets.size());
 //    std::cout << "START! "<< rho <<std::endl;
@@ -69,7 +69,7 @@ void JERCorrector::processJets(JetReader& jetreader,Met& met,const GenJetCollect
 //--------------------------------------------------------------------------------------------------
 void JERCorrector::processFatJets(FatJetCollection& jets,const GenFatJetCollection& genjets, const float rho) {
     if(cT == CORRTYPE::NONE) return;
-    JME::JetParameters parameters;
+    JMEStand::JetParameters parameters;
     parameters.setRho(std::min(40.0f,rho));
     std::vector<const GenJet*> gjptrs; gjptrs.reserve(genjets.size());
     for(auto& gj: genjets) gjptrs.push_back(&gj);
@@ -84,7 +84,7 @@ void JERCorrector::processFatJets(FatJetCollection& jets,const GenFatJetCollecti
 }
 
 //--------------------------------------------------------------------------------------------------
-float JERCorrector::correctJet(Jet* jet, const std::vector<const GenJet*> genjets, JME::JetParameters& params){
+float JERCorrector::correctJet(Jet* jet, const std::vector<const GenJet*> genjets, JMEStand::JetParameters& params){
     const float jres = resObj.evaluateFormula(*resObj.getRecord(params),params);
     const float resSF = getSF(cT,jet->absEta());
 

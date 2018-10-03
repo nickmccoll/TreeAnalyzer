@@ -33,7 +33,7 @@ T clip(const T& n, const T& lower, const T& upper) {
     return std::max(lower, std::min(n, upper));
 }
 
-namespace JME {
+namespace JMEStand {
     template <typename T, typename U>
     struct bimap {
         typedef std::unordered_map<T, U> left_type;
@@ -75,8 +75,8 @@ namespace JME {
 // Hash function for Binning enum class
 namespace std {
     template<>
-    struct hash<JME::Binning> {
-        typedef JME::Binning argument_type;
+    struct hash<JMEStand::Binning> {
+        typedef JMEStand::Binning argument_type;
         typedef std::size_t result_type;
 
         hash<uint8_t> int_hash;
@@ -87,7 +87,7 @@ namespace std {
     };
 };
 
-namespace JME {
+namespace JMEStand {
 
     class JetParameters {
         public:

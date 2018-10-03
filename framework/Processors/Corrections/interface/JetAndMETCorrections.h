@@ -25,9 +25,9 @@ public:
 
     float getSF(const CorrHelp::CORRTYPE cT, const float absETA) const ;
 private:
-    float correctJet(Jet* jet,const std::vector<const GenJet*> genjets, JME::JetParameters& params);
+    float correctJet(Jet* jet,const std::vector<const GenJet*> genjets, JMEStand::JetParameters& params);
     CorrHelp::CORRTYPE cT;
-    JME::JetResolutionObject resObj;
+    JMEStand::JetResolutionObject resObj;
     std::shared_ptr<TRandom3> rndGen;
 };
 

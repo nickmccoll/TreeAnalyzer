@@ -28,7 +28,7 @@ namespace edm {
 #include <iomanip>
 #include <algorithm>
 
-namespace JME {
+namespace JMEStand {
 
     std::string getDefinitionLine(const std::string& line) {
         size_t first = line.find ('{');
