@@ -162,7 +162,7 @@ public:
                     }
                     hP->Scale(hM->Integral()/hP->Integral());
                     hP->SetDirectory(0);
-                    hP->Scale(2*0.5824*(.2137+.002619));
+                    hP->Scale(2*0.5824*(.2137+.002619)*0.1);
                     sHists.push_back(hP);
 
                 }

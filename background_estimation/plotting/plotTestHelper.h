@@ -86,6 +86,7 @@ std::vector<TObject*> test1DKern(std::string name, std::string filename,std::str
             p->setUnderflow(false);
             p->setOverflow(false);
             p->setBotMinMax(0,2);
+            p->addText(getCategoryLabel(s).c_str(),0.17,0.84,0.04);
             if(strFind(var,"VV")) p->setXTitle(hhMCS.title);
             if(rebin > 0) p->rebin(rebin);
             if(withRatio){
@@ -391,17 +392,19 @@ std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filenam
         p->setXTitle( (binInY ? hbbMCS : hhMCS) .title.c_str());
         p->setYTitle("N. of events");
         p->setCMSLumi();
-        auto * c = p->draw(false,(s + ": "+flt2Str(bins[iB]) +"-"+flt2Str(bins[iB+1])).c_str());
+        p->addText(getCategoryLabel(s).c_str(),0.17,0.84,0.04);
+
+//        auto * c = p->draw(false,(s + ": "+flt2Str(bins[iB]) +"-"+flt2Str(bins[iB+1])).c_str());
 //           c->SetLogy();
 //           c->Update();
 
-//         p->setBotMinMax(0,2);
-//         p->setYTitleBot("N/N(template)");
-//         auto * c = p->drawSplitRatio(-1,"stack",false,false,(s + "_"+flt2Str(bins[iB]) +"_"+flt2Str(bins[iB+1])).c_str());
-//         writeables.push_back(c);
+         p->setBotMinMax(0,2);
+         p->setYTitleBot("N/N(template)");
+         auto * c = p->drawSplitRatio(-1,"stack",false,false,(s + "_"+flt2Str(bins[iB]) +"_"+flt2Str(bins[iB+1])).c_str());
+         writeables.push_back(c);
 
-        // c->GetPad(1)->SetLogy();
-        // c->GetPad(1)->Update();
+//         c->GetPad(1)->SetLogy();
+         c->GetPad(1)->Update();
   }
   }
   return writeables;

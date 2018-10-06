@@ -46,7 +46,7 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             if(hm == 0) continue;
             //Scale so that we get 1pb normalization
             hm->Scale(2*0.5824*(.2137+.002619));
-//            p->addHistLine(hm,signalNames[iS]);
+            p->addHistLine(hm,signalNames[iS]);
         }
 
         TH1 * hd = 0;
@@ -85,13 +85,13 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
         }
 
 
-        p->setLegendPos(0.1425,0.7275,0.6,.89);
+        p->setLegendPos(0.1425,0.7375,0.6,.8725);
 
         p->setCMSLumi();
         p->setCMSLumiExtraText("Preliminary");
 //        p->addLegendEntry(7,0,"X #sigma x #it{B} = 1 pb","");
-//        p->addText("All categories",0.15,0.88,0.03);
-//        p->addText("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=1 pb",0.15,0.71,0.03);
+        p->addText("All categories",0.15,0.88,0.03);
+        p->addText("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=1 pb",0.15,0.71,0.03);
         p->setLegendNColumns(2);
 
         std::string ytitle = "N. of events";
@@ -99,10 +99,9 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             ytitle += " / " + ASTypes::flt2Str(p->getTotStack()->GetBinWidth(1)) + " " + varUnits[iV];
 
         }
-        p->setBotMinMax(0.1,1.9);
+
         p->setYTitle(ytitle);
-//        auto * c = p->draw(false,prefix+vars[iV].varName+"_srvardists.pdf");
-        auto * c = p->drawSplitRatio(-1,"stack",false,false,prefix+vars[iV].varName+"_srvardists.pdf");
+        auto * c = p->draw(false,prefix+vars[iV].varName+"_srvardists.pdf");
         p->yAxis()->SetTitleOffset(1.55);
         p->xAxis()->SetTitleOffset(1.0);
         if(iV == 7){
@@ -113,15 +112,12 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             p->xAxis()->SetBinLabel(5,"One medium, one loose");
             p->xAxis()->SetBinLabel(6,"Two medium");
             p->xAxis()->SetTitle(" ");
-//            c->SetLogy();
-            c->GetPad(1)->SetLogy();
+            c->SetLogy();
 
 
         }
         if(iV == 2){
-//            c->SetLogy();
-            c->GetPad(1)->SetLogy();
-
+            c->SetLogy();
         }
         c->Update();
         c->Print((prefix+vars[iV].varName+"_srvardists.pdf").c_str());

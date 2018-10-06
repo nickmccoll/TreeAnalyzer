@@ -37,6 +37,7 @@ void testHHPDFFits(std::string name, std::string filename, const std::vector<std
         p->rebin(8);
         p->setXTitle(hhMCS.title);
         p->setYTitle("N. of events");
+        p->addText(getCategoryLabel(s).c_str(),0.15,0.88,0.03);
 
         p->setBotMinMax(0,2);
         // auto * c = p->drawSplitRatio(0,"stack",false,false,s);

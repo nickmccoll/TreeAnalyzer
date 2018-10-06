@@ -55,7 +55,7 @@ TCanvas* make2DTests(std::string plotTitle, int mass, const TH2* dH,TH2* pH, con
 
 
 
-void test2DFits(std::string name, std::string filename, const std::vector<int>& signalMassBins, std::string fitName,bool binInY, const std::vector<std::string>& sels, std::string outName = "") {
+void test2DFits(std::string name, std::string filename, const std::vector<int>& signalMassBins, std::string fitName,bool binInY, const std::vector<std::string>& sels) {
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<double> bins = {30,210,30,115,135,210};
 
@@ -158,8 +158,10 @@ void plotYields(std::string name, std::string filename,std::string fitName, cons
             }
             if(!can) fo->GetObject(name.c_str(),can);
             if(!can) return;
-            can->GetYaxis()->SetTitle(s.c_str());
+            can->GetYaxis()->SetTitle(getCategoryLabel(s).c_str());
             can->GetXaxis()->SetTitle(sigMCS.title.c_str());
+
+
             list.push_back(can);
         };
 
@@ -598,7 +600,9 @@ void plotSignalTests(int cat = 0,int sig = RADION,  bool doCond = true, std::str
         break;
     case 4:
         if(outName.size()) outName += "_2D_fit";
-        test2DFits(name,filename,signalMassBins[sig],"2D_fit",false,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"},outName);
+        test2DFits(name,filename,signalMassBins[sig],"2D_fit",false,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"});
+        //run below for an
+//        test2DFits(name,filename,{1600},"2D_fit",false,{"mu_M_LP_full"}); outName +=+"_forAN";
         break;
     case 5:
         if(outName.size()) outName += "_normSyst";
