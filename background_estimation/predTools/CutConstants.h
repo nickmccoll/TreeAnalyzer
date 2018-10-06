@@ -105,16 +105,16 @@ std::vector<CutStr > purCats = {
 
 enum HADCuts  {HAD_NONE,HAD_LB,HAD_LT,HAD_LTMB,HAD_FULL};
 std::vector<CutStr > hadCuts = {
-        CutStr("none",preSel.cut),
-        CutStr("lb"  ,preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut),
-        CutStr("lt"  ,preSel.cut+"&&"+exA.cut+"&&"+bV.cut),
-        CutStr("ltmb",preSel.cut+"&&"+exA.cut),
-        CutStr("full",preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut)
+        CutStr("none",preSel.cut,"-ExB -#it{m}_{D} -#it{p/m} -#tau_{0.75}"),
+        CutStr("lb"  ,preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut,"-ExB"),
+        CutStr("lt"  ,preSel.cut+"&&"+exA.cut+"&&"+bV.cut,"-#tau_{0.75}"),
+        CutStr("ltmb",preSel.cut+"&&"+exA.cut,"-ExB -#tau_{0.75}"),
+        CutStr("full",preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut,"")
 
 };
 
 std::string getCategoryLabel(const LEPCats lep, const BTAGCats btag, const PURCats pur ){
-    return lepCats[lep].title+": "+btagCats[btag].title+", "+purCats[pur].title;
+    return lepCats[lep].title+", "+btagCats[btag].title+", "+purCats[pur].title;
 }
 
 
@@ -131,20 +131,30 @@ std::string getCategoryLabel(const std::string& inStr){
         for(const auto& c : opts) if(in == c ) return c.title;
         return "";
     };
-    std::string lep,btag,pur;
+    std::string lep,btag,pur,ex;
     if(tokens.size()){lep = getTitle(tokens[0],lepCats);}
     if(tokens.size()>1){btag = getTitle(tokens[1],btagCats);}
     if(tokens.size()>2){pur = getTitle(tokens[2],purCats);}
+    if(tokens.size()>3){ex = getTitle(tokens[3],hadCuts);}
     if(lep.size()){
         title += lep;
-        if(btag.size() || pur.size()) title+=": ";
+        if(btag.size() || pur.size()) title+=", ";
     }
     if(btag.size()){
         title += btag;
         if(pur.size())
             title += ", ";
     }
-    title += pur;
+    if(pur.size()){
+        title += pur;
+        if(title == lepCats[LEP_EMU].title + ", "+btagCats[BTAG_LMT].title + ", "+purCats[PURE_I].title )
+            title = "All categories";
+        if(ex.size())
+            title += ", ";
+    }
+
+
+    title += ex;
     return title;
 }
 
