@@ -20,8 +20,8 @@ enum PROC  {TTBAR,WJETS,QCD,OTHER};
 std::vector<CutStr > processes = {
         CutStr("ttbar"     ,"process==2","t#bar{t}"),
         CutStr("wjets"     ,"process==3","W+jets"),
-        CutStr("qcd"       ,"process==8","multijet"),
-        CutStr("other"     ,"(process>1&&!(process==2||process==3||process==8))","other SM")
+        CutStr("qcd"       ,"process==8","Multijet"),
+        CutStr("other"     ,"(process>1&&!(process==2||process==3||process==8))","Other SM")
 };
 
 enum REGION  {REG_SR, REG_TOPCR, REG_QGCR};
@@ -37,7 +37,7 @@ CutStr abV  ("abV"   , "nAK4Btags!=0");
 CutStr preSel("preSel"  , "passPre==1");
 
 
-CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{H#rightarrowbb} [GeV]");
+CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
 CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
 
 unsigned int nHbbMassBins   =90;
@@ -69,8 +69,8 @@ CutStr hbbInclBinning ("hbbInclBinning" ,ASTypes::int2Str(nInclHbbMassBins)+","+
 
 enum BKGModels  {BKG_QG, BKG_LOSTTW, BKG_MW, BKG_MT};
 std::vector<CutStr > bkgSels = {
-        CutStr("qg"    ,"hbbWQuark==0","q/g bkg."),
-        CutStr("losttw","hbbWQuark>0&&hbbWQuark<=3","lost t/W bkg."),
+        CutStr("qg"    ,"hbbWQuark==0","Q/G bkg."),
+        CutStr("losttw","hbbWQuark>0&&hbbWQuark<=3","Lost t/W bkg."),
         CutStr("mw"     ,"hbbWQuark==4","m_{W} bkg."),
         CutStr("mt"     ,"hbbWQuark==5","m_{t} bkg.")
 };
@@ -98,14 +98,14 @@ CutStr inclBtagCat("I","hbbCSVCat>=0");
 
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
-        CutStr("I","1.0","WI"),
-        CutStr("LP" ,"wjjTau2o1>=0.55","WL"),
-        CutStr("HP"  ,"wjjTau2o1<0.55","WH")
+        CutStr("I","1.0","LHP"),
+        CutStr("LP" ,"wjjTau2o1>=0.55","LP"),
+        CutStr("HP"  ,"wjjTau2o1<0.55","HP")
 };
 
 enum HADCuts  {HAD_NONE,HAD_LB,HAD_LT,HAD_LTMB,HAD_FULL};
 std::vector<CutStr > hadCuts = {
-        CutStr("none",preSel.cut,"-ExB -#it{m}_{D} -#it{p/m} -#tau_{0.75}"),
+        CutStr("none",preSel.cut,"-ExB -#it{m}_{D} -#it{p}_{T}/#it{m} -#tau_{0.75}"),
         CutStr("lb"  ,preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut,"-ExB"),
         CutStr("lt"  ,preSel.cut+"&&"+exA.cut+"&&"+bV.cut,"-#tau_{0.75}"),
         CutStr("ltmb",preSel.cut+"&&"+exA.cut,"-ExB -#tau_{0.75}"),

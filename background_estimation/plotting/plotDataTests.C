@@ -160,11 +160,19 @@ public:
                         sHists.push_back(0);
                         continue;
                     }
+                    //have to do this...bounds are different in the signal
                     hP->Scale(hM->Integral()/hP->Integral());
-                    hP->SetDirectory(0);
-                    hP->Scale(2*0.5824*(.2137+.002619)*0.1);
-                    sHists.push_back(hP);
-
+                    hP->Scale(2*0.5824*(.2137+.002619)*.2);
+                    TH2 * hpNew = new TH2F(TString(hP->GetName()) + "_new",hP->GetTitle(),nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
+                    hpNew->SetDirectory(0);
+                    for( int iX = 1; iX <= hpNew->GetNbinsX(); ++iX ){
+                        int nX = hP->GetXaxis()->FindFixBin(hpNew->GetXaxis()->GetBinCenter(iX));
+                        for( int iY = 1; iY <= hpNew->GetNbinsY(); ++iY ){
+                            int nY = hP->GetYaxis()->FindFixBin(hpNew->GetYaxis()->GetBinCenter(iY));
+                            hpNew->SetBinContent(iX,iY,hP->GetBinContent(nX,nY));
+                        }
+                    }
+                    sHists.push_back(hpNew);
                 }
             }
             signalHists.push_back(sHists);
@@ -284,7 +292,7 @@ public:
 
         //add data
         if(cont.data2D){
-            auto h = processH2(cont.data2D,"data");
+            auto h = processH2(cont.data2D,"Data");
             //blinding
             if(prefs.blindRange.first < prefs.blindRange.second){
                 for(int iB = 1; iB <= h->GetNbinsX(); ++iB){
@@ -325,8 +333,13 @@ public:
                 double y = cont.tot->GetBinContent(iB);
                 double m,eL,eH;
                 getErrorBands(iB,m,eL,eH);
-                cont.toyErr->SetPoint(iB-1,x,y);
-                cont.toyErr->SetPointError(iB-1,0,0,std::max(m -eL,0.),std::max(eH-m,0.));
+                auto setPt = [&](const int bin, float x){
+                    cont.toyErr->SetPoint(bin,x,y);
+                    cont.toyErr->SetPointError(bin,cont.tot->GetBinWidth(iB)/2.,cont.tot->GetBinWidth(iB)/2.,std::max(m -eL,0.),std::max(eH-m,0.));
+                };
+                if(iB == 1) setPt(iB-1,x-cont.tot->GetBinWidth(iB)/2.);
+                setPt(iB,x);
+                if(iB == cont.tot->GetNbinsX() ) setPt(iB+1,x+cont.tot->GetBinWidth(iB)/2.);
             }
             for(auto * t :toyProj) {t->SetDirectory(0); delete t;}
         }
@@ -378,7 +391,9 @@ public:
                     cont.toyErr->SetFillStyle(3352);
                     gStyle->SetHatchesLineWidth(1);
                     gStyle->SetHatchesSpacing(.5);
-                    p->addGraph(cont.toyErr,"fit unc.",fillColor,1,1,20,1,false,true,false,"3");
+//                    p->addGraph(cont.toyErr,"fit unc.",fillColor,1,1,20,1,false,true,false,"3");
+
+                    p->addGraph(cont.toyErr,"Fit unc.",fillColor,1,1,20,1,false,true,false,"2");
                 }
                 if(cont.add)p->addHistLine(cont.add,modTitles[prefs.addType],kBlue);
 
@@ -386,7 +401,7 @@ public:
                     if(cont.sig[iSig]) p->addHistLine(cont.sig[iSig],prefs.signalTitles[iSig],StyleInfo::getLineColor(iSig+1));
                 }
 
-                if(cont.data) p->addHist(cont.data,"data",kBlack,1,2,20,0.5,true,true,true);
+                if(cont.data) p->addHist(cont.data,"Data",kBlack,1,2,20,0.5,true,true,true);
                 for(unsigned int iH = 0; iH < cont.bkg.size(); ++iH){
                     if(cont.bkg[iH]) p->addStackHist(cont.bkg[iH],bkgSels[iH].title.c_str());
                 }
@@ -406,7 +421,7 @@ public:
                 p->setLegendNColumns(2);
                 p->setLegendPos(0.175,0.6675,0.55,.8725);
                 if(prefs.signals.size())
-                p->addText("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=1 pb",0.18,0.64,0.035);
+                p->addText("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=0.1 pb",0.18,0.64,0.035);
 
 
                 if(prefs.doLog) p->setMinMax(0.1,1000 );
@@ -427,6 +442,7 @@ public:
                         auto prim = c->GetPad(2)->GetPrimitive((s+"_"+prefs.signals[iSig]+"_0" ).c_str());
                         if(prim) prim->Delete();
                     }
+
 
                     c->GetPad(1)->Update();
                     writeables.push_back(c);
@@ -515,13 +531,13 @@ public:
         for(unsigned int iB = 0; iB < dataTSs.size(); ++iB){
             if(dataTSs[iB] == 0) continue;
             Plotter * p = new Plotter;
-            p->addGraph(toyTSs[iB],"toy data");
-            p->addHist(dataTSs[iB],"data",-1,1,4,20,1,true,false);
+            p->addGraph(toyTSs[iB],"Toy data");
+            p->addHist(dataTSs[iB],"Data",-1,1,4,20,1,true,false);
             p->setXTitle(" ");
             p->setYTitle("test statistic");
             auto c = p->draw(false,(prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]) +"_testStat");
             for(unsigned int iS = 0; iS < prefs.sels.size();++iS){
-                p->xAxis()->SetBinLabel(iS+1,prefs.sels[iS].c_str());
+                p->xAxis()->SetBinLabel(iS+1,getCategoryLabel(prefs.sels[iS]).c_str());
             }
             p->xAxis()->SetTitle(" ");
             c->Update();
@@ -724,7 +740,7 @@ void doUncPlots(std::vector<TObject*>& writeables, const std::string& limitBaseN
         nuisances->SetLeftMargin(0.06742323);
         nuisances->SetRightMargin(0.01535381);
         nuisances->SetTopMargin(0.04210526);
-        nuisances->SetBottomMargin(0.4147368);
+        nuisances->SetBottomMargin(0.25);
         nuisances->Draw();
         nuisances->SetWindowSize(1500,500);
         auto leg = (TLegend*)nuisances->FindObject("TPave");
@@ -788,6 +804,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         outName=limitBaseName+"/plots/QGCR_";
         btagCats = qgBtagCats;
 
+
     }
     std::string filename = inName +"/"+hhFilename;
     std::string postFitFilename = limitBaseName +"/postFit.root";
@@ -823,12 +840,17 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.addType = MOD_PRE;
         if(inreg == REG_SR){
             hhPlot.bins = {30,100,100,150,210};
+            hhPlot.minTop =0.2;
+            hhPlot.maxTop =3000;
         } else {
             hhPlot.bins = {30,210};
+            hhPlot.minTop =0.2;
+            hhPlot.maxTop =10000;
         }
         hhPlot.binInY = false;
         hhPlot.sels =  srList;
         hhPlot.titles = srListTitles;
+        hhPlot.doLog = true;
 
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
@@ -837,6 +859,9 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         DataPlotPrefs hbbPlot = hhPlot;
         hbbPlot.bins = {700,4000};
         hbbPlot.binInY = true;
+        hbbPlot.doLog = false;
+        hbbPlot.minTop =400;
+        hbbPlot.maxTop =400;
         if(inreg == REG_SR) hbbPlot.blindRange ={100,150};
         auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename);
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
@@ -864,8 +889,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         if(inreg == REG_SR){
             //            hbbTest.bins = {30,100,100,150,210};
         } else {
-            //            hhTest.bins = {30,210,30,100,150,210};
-            hbbTest.bins = {700,4000};
+//                        hhTest.bins = {30,210,30,100,150,210};
+//            hbbTest.bins = {700,4000};
             auto writeables2 = doStatTest(hbbTest,filename,postFitFilename,outName + "statTest");
             writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         }
@@ -887,7 +912,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
     }
 
     if(step== 6){ //postfit CR for Paper
-        if(reg ==REG_SR) return;
+        if(reg == REG_SR) return;
         if(outName.size())         outName += "postfitPaper_dataComp";
         DataPlotPrefs hhPlot;
         //Horrible
@@ -915,7 +940,6 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hbbPlot.doLog = false;
         hbbPlot.minTop =0;
         hbbPlot.maxTop =reg==REG_TOPCR ?  400 :700;
-        if(inreg == REG_SR) hbbPlot.blindRange ={100,150};
         auto writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root");
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         Dummy d(outName);
@@ -925,7 +949,6 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         if(reg != REG_TOPCR) return;
         if(outName.size())         outName += "postfitPaper_dataCompSR";
         DataPlotPrefs hhPlot;
-
         hhPlot.modelType = MOD_POST;
             hhPlot.bins = {30,210};
         hhPlot.binInY = false;
@@ -933,9 +956,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.titles = srListTitles;
         hhPlot.signals = {"1000","2500"};
         hhPlot.signalTitles = {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"};
-
         hhPlot.minTop =0.2;
-        hhPlot.maxTop =10000;
+        hhPlot.maxTop =3000;
 
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
@@ -947,7 +969,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hbbPlot.doLog = false;
         hbbPlot.minTop =400;
         hbbPlot.maxTop =400;
-        if(inreg == REG_SR) hbbPlot.blindRange ={100,150};
+//        if(inreg == REG_SR) hbbPlot.blindRange ={100,150};
         auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename);
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         Dummy d(outName);

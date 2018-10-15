@@ -57,12 +57,13 @@ rr  '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimat
 
 
 #Note search region variable plots
-rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,2,"trees/betrees_mc.root","mc")' &
-rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,2,"trees/betrees_data.root","data")' &
-rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,2,"trees/out_radion_hh_bbinc_m1000_0.root","m1000")' &
-rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,2,"trees/out_radion_hh_bbinc_m2500_0.root","m2500")' &
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+         (1,2,"","")' 
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+         (2,2,"","")' 
+
+rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,0,"trees/betrees_mc.root","mc")' &
+rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,0,"trees/betrees_data.root","data")' &
+rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,0,"trees/out_radion_hh_bbinc_m1000_0.root","m1000")' &
+rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,0,"trees/out_radion_hh_bbinc_m2500_0.root","m2500")' &
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+         (1,0,"","")' 
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+         (2,1,"","")' 
 
 #limits
 . /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/makeCards.sh nonCond_ePTRatio0p4_wQCD_sepQGemu 0 0 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/
@@ -108,7 +109,8 @@ text2workspace.py combinedCard.txt -o combined.root
 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 6 &
 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 7 &
 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 8 &
-
+hadd  higgsCombineTest.GoodnessOfFit.toys.root  higgsCombineTest.GoodnessOfFit.mH2000.*.root
+ 
  
 ######do bias test...what we have for now
 #prefit...dont do anymore
@@ -123,6 +125,8 @@ python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTes
 python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTest.py -i combinedCard.txt -N 5 -r 0.3002925 -m 1000 -l postfit_t5 -f 1  -s 0 -o 1 -c "/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine" &
 python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTest.py -i combinedCard.txt -N 5 -r 0.1196285 -m 1600 -l postfit_t5 -f 1  -s 0 -o 1 -c "/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine" &
 python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTest.py -i combinedCard.txt -N 5 -r 0.0708005 -m 2500 -l postfit_t5 -f 1  -s 0 -o 1 -c "/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine" &
+
+
 sOut "higgsCombinepostfit_*_forBias.MultiDimFit.*.root" /uscms/home/nmccoll/nobackup/2011-04-15-susyra2/rel_HbbWW/work/combineWork/c_baseline2_data/
 # post fit...if you  you want to skip the previous step and run locally just -s 0 -o 0
 python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0600585 -m 1000 -l postfit -f 1    -s 1 -o 0 -c "combine" &

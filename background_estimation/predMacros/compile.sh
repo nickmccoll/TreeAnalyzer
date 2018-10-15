@@ -47,5 +47,8 @@ hadd ${outputdir}/data_e-2016e-23sep16.root     ${inputdir}/out_data_met-2016f-2
 hadd ${outputdir}/data_e-2016d-23sep16.root     ${inputdir}/out_data_met-2016g-23sep16*.root	
 hadd ${outputdir}/data_e-2016c-23sep16.root     ${inputdir}/out_data_met-2016h-pr-v2*.root  	
 hadd ${outputdir}/data_e-2016b-23sep16.root     ${inputdir}/out_data_met-2016h-pr-v3*.root  	
+hadd ${outputdir}/t_tchan-powheg.root          ${inputdir}/out_t-tchan*.root ${inputdir}/out_tbar-tchan*.root
+hadd ${outputdir}/th-madgraph.root              ${inputdir}/out_thq-madgraph*.root ${inputdir}/out_thw-madgraph*.root  	
+hadd ${outputdir}/tth-powheg.root               ${inputdir}/out_tth-*bb-powhe*.root  	
 cp ${inputdir}/out_radion*.root  ${outputdir}/
 cp ${inputdir}/out_blkgrv*.root  ${outputdir}/

@@ -6,9 +6,19 @@ using namespace ASTypes;
 
 std::string getSystName (const std::string& prefix, const std::string& proc,const std::string& name, const std::string& sel){
     std::string sn = prefix;
-    if(proc.size() )sn += "_"+proc;
-    if(name.size() )sn += "_"+name;
-    if(sel.size() )sn += "_"+sel;
+
+    if(proc.size() ){
+        if(sn.size()) sn+="_";
+        sn += proc;
+    }
+    if(name.size() ){
+        if(sn.size()) sn+="_";
+        sn += name;
+    }
+    if(sel.size() ){
+        if(sn.size()) sn+="_";
+        sn += sel;
+    }
     return sn;
 };
 
@@ -58,7 +68,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         auto signalInputName =[&](const std::string& proc, const std::string& pf) -> std::string {return sfPF + "_"+proc +"_"+cat +"_"+ pf; };
 
         auto systName = [&](const std::string& proc,const std::string& name, const std::string& sel = "-1")->std::string {
-            return getSystName("" + filename,proc,name, sel == "-1" ? cat : sel  );
+            return getSystName("",proc,name, sel == "-1" ? l +"_"+b+"_"+p : sel  );
         };
 
         //Make search variables
@@ -78,13 +88,13 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         //Add Systematics first since the param systs need to have the variables added to the workspace
         //---------------------------------------------------------------------------------------------------
         //luminosity
-        card.addSystematic("yield","lnN",{{signalName,1.0371}});//lumi = 2.5 jer = 1,  jes = 1 met = 0.5, pdf= 2, PU = 0.5, btagfake=1
+        card.addSystematic("yield","lnN",{{signalName,1.0391}});//lumi = 2.5 pdf= 2, PU = 0.5, btagfake=1
 
         //lepton efficiency
         if(l==lepCats[LEP_E])
-            card.addSystematic("eff_"+l,"lnN",{{signalName,1.065}});
+            card.addSystematic("eff_"+l,"lnN",{{signalName,1.0602}}); //2% trigger / 5.5% for reco  / 1.4% ID / ISO 0.2%
         else
-            card.addSystematic("eff_"+l,"lnN",{{signalName,1.0576}});
+            card.addSystematic("eff_"+l,"lnN",{{signalName,1.0566}}); //2% trigger / ID 1%  /  ISO 5.2%
         //
         //tau21
         card.addParamSystematic("tau21_PtDependence",0.0,0.041);
@@ -96,8 +106,13 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         card.addParamSystematic("btag_eff",0.0,0.1);
 
         //pruned mass scale
-        card.addParamSystematic("hh_scale",0.0,0.0122); // jes 1 jer 0.5 met 0.5
-        card.addParamSystematic("hh_res",0.0,0.045); // jes 2 jer 4 met 0.5
+
+//        card.addParamSystematic("hh_scale",0.0,0.0122); // jes 1 jer 0.5 met 0.5
+//        card.addParamSystematic("hh_res",0.0,0.045); // jes 2 jer 4 met 0.5
+        card.addParamSystematic("unclust",0.0,0.01);
+        card.addParamSystematic("jes",0.0,0.01);
+        card.addParamSystematic("jer",0.0,0.01);
+
         card.addParamSystematic("hbb_scale",0.0,0.0094);
         card.addParamSystematic("hbb_res",0.0,0.2);
         //KDE shape systematics
@@ -133,20 +148,24 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
 //        if(signalName==signalName){
             //Conditional template
             if(!simpleSignal){
+//                card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
+//                        {{"hbb_scale",1}},{{"hbb_res",1}},{{"unlc",1}},{{"hh_res",1}}, b == btagCats[BTAG_L],MOD_MS);
                 card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
-                        {{"hbb_scale",1}},{{"hbb_res",1}},{{"hh_scale",1}},{{"hh_res",1}}, b == btagCats[BTAG_L],MOD_MS);
+                        {{"hbb_scale",1}},{{"hbb_res",1}},{{"unclust",0.5},{"jes",1},{"jer",0.5}},{{"unclust",0.5},{"jes",2},{"jer",5}}, b == btagCats[BTAG_L],MOD_MS);
             }else {
                 //Non conditional template
                 card.add2DSignalParametricShapeNoCond(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
-                        {{"hbb_scale",1}},{{"hbb_res",1}},{{"hh_scale",1}},{{"hh_res",1}}, b == btagCats[BTAG_L],MOD_MS);
+                        {{"hbb_scale",1}},{{"hbb_res",1}},{{"unclust",0.5},{"jes",1},{"jer",0.5}},{{"unclust",0.5},{"jes",2},{"jer",5}}, b == btagCats[BTAG_L],MOD_MS);
             }
             std::string tau21Form = "(1.0+tau21_PtDependence*"+ (p == purCats[PURE_HP] ? "log("+MOD_MS+"/1000)" : "((0.054/0.041)*(-log("+MOD_MS+"/1000)))")+")";
             std::string brealForm = "(1.0+btag_eff*";
-            if(b == btagCats[BTAG_L]) brealForm+= "(0.07-3.34*10^(-4)*"+MOD_MS+"+5.95*10^(-8)*"+MOD_MS+"^(2)))";
-            if(b == btagCats[BTAG_M]) brealForm+="(-1.75+0.27*log("+MOD_MS+")))";
-            if(b == btagCats[BTAG_T]) brealForm+="(-1.21+0.27*log("+MOD_MS+")))";
-            std::string uncForm = tau21Form+"*"+brealForm;
-            card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),1,uncForm,{"tau21_PtDependence","btag_eff"}
+            if(b == btagCats[BTAG_L]) brealForm+= "(0.22-4.7*10^(-4)*"+MOD_MS+"+9.4*10^(-8)*"+MOD_MS+"^(2)))";
+            if(b == btagCats[BTAG_M]) brealForm+="(-0.27+3.3*10^(-4)*"+MOD_MS+"-3.7*10^(-8)*"+MOD_MS+"^(2)))";
+            if(b == btagCats[BTAG_T]) brealForm+="(0.22+3.8*10^(-4)*"+MOD_MS+"-4.9*10^(-8)*"+MOD_MS+"^(2)))";
+            std::string jetForm = "(1.0+unclust)*(1.0+jer)*(1.0+0.5*jes)";
+            std::string uncForm = tau21Form+"*"+brealForm+"*"+jetForm;
+            double tau21Corr = p == purCats[PURE_HP]  ? 1.03 : 0.95;
+            card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),tau21Corr,uncForm,{"tau21_PtDependence","btag_eff","unclust","jer","jes"}
                             ,MOD_MS);
 //        } else throw std::invalid_argument("makeCard::go() -> Bad parsing");
 

@@ -32,7 +32,10 @@ std::vector<std::string> getSRListTitles(REGION reg){
         if(b == bcats[BTAG_LMT]) continue;
         if(p == purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_FULL]) continue;
-        sels.emplace_back(l.title +", "+b.title+", "+p.title);
+        if(reg==REG_QGCR)
+            sels.emplace_back(l.title +", "+p.title);
+        else
+            sels.emplace_back(l.title +", "+b.title+", "+p.title);
     }
     return sels;
 }

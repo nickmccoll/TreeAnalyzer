@@ -38,14 +38,14 @@ for(unsigned int iP = 0; iP < l->GetSize(); ++iP){
     auto * p  =   l->At(iP);
     std::string nm = p->ClassName();
     if(nm.find("TH1D") == std::string::npos) continue;
-    ((TH1*)(p))->GetXaxis()->SetTitle("#it{m}_{H#rightarrowbb} [GeV]");
+    ((TH1*)(p))->GetXaxis()->SetTitle("#it{m}_{b#bar{b}} [GeV]");
     ((TH1*)(p))->GetYaxis()->SetTitle("N. of events");    
 }
 c->cd();
 TLatex latex;
 latex.SetNDC();
 latex.SetTextSize(0.03);
-latex.DrawLatex(0.15,0.88,"e#mu, bM, WI, -ExB -#it{m}_{D} -#it{p/m} -#tau_{0.75} 1<#it{m}_{HH}<1.1 TeV]");
+latex.DrawLatex(0.15,0.88,"e#mu, bM, WI, -ExB -#it{m}_{D} -#it{p}_{T}/#it{m} -#tau_{0.75} 1<#it{m}_{HH}<1.1 TeV]");
 c->Draw();
 c->Print("baseline/mt_examplefit.pdf");
 }  
@@ -60,16 +60,16 @@ for(unsigned int iP = 0; iP < l->GetSize(); ++iP){
     auto * p  =   l->At(iP);
     std::string nm = p->ClassName();
     if(nm.find("TH1D") == std::string::npos) continue;
-    ((TH1*)(p))->GetXaxis()->SetTitle("#it{m}_{H#rightarrowbb} [GeV]");
+    ((TH1*)(p))->GetXaxis()->SetTitle("#it{m}_{b#bar{b}} [GeV]");
     ((TH1*)(p))->GetYaxis()->SetTitle("N. of events");    
 }
 c->cd();
 TLatex latex;
 latex.SetNDC();
 latex.SetTextSize(0.03);
-latex.DrawLatex(0.15,0.88,"All categories, -ExB -#it{m}_{D} -#it{p/m} -#tau_{0.75} [1<#it{m}_{HH}<1.1 TeV]");
+latex.DrawLatex(0.15,0.88,"All categories, -ExB -#it{m}_{D} -#it{p}_{T}/#it{m} -#tau_{0.75} [1<#it{m}_{HH}<1.1 TeV]");
 c->Draw();
-c->Print("baseline/mw_examplefit.pdf");
+c->Print("addTTH/mw_examplefit.pdf");
 }  
 
   
@@ -82,16 +82,16 @@ for(unsigned int iP = 0; iP < l->GetSize(); ++iP){
     auto * p  =   l->At(iP);
     std::string nm = p->ClassName();
     if(nm.find("TH1D") == std::string::npos) continue;
-    ((TH1*)(p))->GetXaxis()->SetTitle("#it{m}_{H#rightarrowbb} [GeV]");
+    ((TH1*)(p))->GetXaxis()->SetTitle("#it{m}_{b#bar{b}} [GeV]");
     ((TH1*)(p))->GetYaxis()->SetTitle("arbitrary units");    
 }
 c->cd();
 TLatex latex;
 latex.SetNDC();
 latex.SetTextSize(0.03);
-latex.DrawLatex(0.15,0.88,"e#mu, bM, WI, -ExB -#tau_{0.75} [1.6 TeV X]");
+latex.DrawLatex(0.15,0.88,"e#mu, bM, LHP, -ExB -#tau_{0.75} [1.6 TeV X]");
 c->Draw();
-c->Print("baseline/mhbbFitExample.pdf");
+c->Print("addTTH/mhbbFitExample.pdf");
 }  
 
 ///must uncomment line in makeSignalInputs to get "forAN" vers
@@ -104,23 +104,23 @@ for(unsigned int iP = 0; iP < l->GetSize(); ++iP){
     auto * p  =   l->At(iP);
     std::string nm = p->ClassName();
     if(nm.find("TH1D") == std::string::npos) continue;
-    ((TH1*)(p))->GetXaxis()->SetTitle("#it{m}_{H#rightarrowbb} [GeV]");
+    ((TH1*)(p))->GetXaxis()->SetTitle("#it{m}_{b#bar{b}} [GeV]");
     ((TH1*)(p))->GetYaxis()->SetTitle("arbitrary units");    
 }
 c->cd();
 TLatex latex;
 latex.SetNDC();
 latex.SetTextSize(0.03);
-latex.DrawLatex(0.15,0.88,"#mu, bM, WL [1.6 TeV X]");
+latex.DrawLatex(0.15,0.88,"#mu, bM, LP [1.6 TeV X]");
 c->Draw();
-c->Print("baseline/mhhFitExample.pdf");
+c->Print("addTTH/mhhFitExample.pdf");
 }  
 
 {
   TFile * f = new TFile("signalInputs/HHlnujj_radHH_mu_M_LP_full_2D_fit.root");
   TH2* c=0;
   f->GetObject("pdf_m1600__MJ_MR",c);
-  c->GetXaxis()->SetTitle("#it{m}_{H#rightarrowbb} [GeV]");
+  c->GetXaxis()->SetTitle("#it{m}_{b#bar{b}} [GeV]");
   c->GetYaxis()->SetTitle("#it{m}_{HH} [GeV]");    
   TCanvas * can = new TCanvas();
   c->Draw("COLZ");
@@ -128,8 +128,8 @@ c->Print("baseline/mhhFitExample.pdf");
   latex.SetNDC();
   latex.SetTextSize(0.03);
   latex.SetTextColor(kWhite);
-  latex.DrawLatex(0.15,0.88,"#mu, bM, WL [1.6 TeV X]");
+  latex.DrawLatex(0.15,0.88,"#mu, bM, LP [1.6 TeV X]");
   can->Draw();
-  can->Print("baseline/sig_corr2DEx.pdf");
+  can->Print("addTTH/sig_corr2DEx.pdf");
 }
   

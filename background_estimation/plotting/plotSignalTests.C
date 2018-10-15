@@ -403,7 +403,7 @@ void plotShapeSystNorms(std::string name, std::string filename,const std::vector
     sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_M]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
     sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_T]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
 
-
+    TF1 *f1 = new TF1("f1","pol0",750,3600);
     for(unsigned int iS = 0; iS < systs.size(); ++iS ){
         auto sys = systs[iS];
         gROOT->SetBatch(true);
@@ -422,7 +422,6 @@ void plotShapeSystNorms(std::string name, std::string filename,const std::vector
                 systUpFs[iS]->GetObject((sigName+"_"+sel+"_"+hbbMCS+"_"+hhMCS).c_str(),hU);
                 TH2 * hD = 0;
                 systDownFs[iS]->GetObject((sigName+"_"+sel+"_"+hbbMCS+"_"+hhMCS).c_str(),hD);
-                std::cout <<hN <<" "<< hU <<" "<< hD << std::endl;
                 if(hN ==0||hU==0||hD==0)continue;
 
                 int lbx, lby, hbx, hby;
@@ -445,7 +444,7 @@ void plotShapeSystNorms(std::string name, std::string filename,const std::vector
             Plotter * p = new Plotter;
             p->addGraph(gu, (sys+": Up").c_str());
             p->addGraph(gd, (sys+": Down").c_str());
-            p->addGraph(ga, (sys+": Avg").c_str());
+            auto ng = p->addGraph(ga, (sys+": Avg").c_str());
             p->setYTitle(sel);
             std::sort(vals.begin(),vals.end(),[](const float a, const float b){return a < b;} );
             if(vals.size()){
@@ -455,6 +454,9 @@ void plotShapeSystNorms(std::string name, std::string filename,const std::vector
             }
 
             auto c = p->draw(false,sys+"_"+sel);
+            c->cd();
+            ng->Fit(f1,"","",750,3600);
+            f1->Draw("SAME");
             plots.push_back(c);
         }
         gROOT->SetBatch(false);

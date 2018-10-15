@@ -10,7 +10,7 @@ parser = optparse.OptionParser()
 
 parser.add_option("-s","--step",dest="step",type=float,help="step for mass points",default=100.0)
 parser.add_option("-m","--min",dest="min",type=float,help="minimum Mass point",default=800.0)
-parser.add_option("-M","--max",dest="max",type=float,help="maximum Mass point",default=3000.0)
+parser.add_option("-M","--max",dest="max",type=float,help="maximum Mass point",default=3500.0)
 parser.add_option("-o","--options",dest="options",help="Combine Options",default='-M AsymptoticLimits')
 parser.add_option("-q","--queue",dest="queue",help="Batch Queue",default='1nw')
 parser.add_option("-r","--randomSeeds",dest="randomize",type=int, help="randomize seeds",default=0)

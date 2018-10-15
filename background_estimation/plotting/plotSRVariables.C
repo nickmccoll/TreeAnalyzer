@@ -52,7 +52,7 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
         TH1 * hd = 0;
         fd->GetObject((std::string("all_loose_")+vars[iV].varName+"_"+vars[iV].varName).c_str(),hd);
         if(hd == 0) continue;
-        p->addHist(hd,"data",kBlack);
+        p->addHist(hd,"Data",kBlack);
 
         for(unsigned int iP = 0; iP < processes.size(); ++iP){
             TH1 * hm = 0;
@@ -206,7 +206,7 @@ void plotSRVariables( int step, int reg,std::string tree, std::string name){
     vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,36,minHbbMass,maxHbbMass);
     vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
     vars.emplace_back("nAK4Btags" ,"; N. of AK4 jet b tags","nAK4Btags",4,-0.5,3.5);
-    vars.emplace_back("wjjTau2o1" ,"; W#rightarrowq#bar{q} #tau_{2}/#tau_{1}","wjjTau2o1",50,0,1);
+    vars.emplace_back("wjjTau2o1" ,"; q#bar{q} #tau_{2}/#tau_{1}","wjjTau2o1",50,0,1);
     vars.emplace_back("hwwPT_o_hhMass" ,"; #it{p}_{T}/#it{m}","hwwPT/hhMass",50,0,1);
     vars.emplace_back("wwDM","; #it{m}_{D} [GeV]","wwDM",50,0,500);
     vars.emplace_back("hbbCSVCat","; hbbCSVCat","(hbbCSVCat-1)",6,-0.5,5.5);
@@ -223,7 +223,7 @@ void plotSRVariables( int step, int reg,std::string tree, std::string name){
 
     samps.emplace_back("all","1.0");
     if(!isData){
-        samps.emplace_back(processes[TTBAR],std::string("(0.76*(")+processes[TTBAR].cut+"))");
+        samps.emplace_back(processes[TTBAR],std::string("(0.72*(")+processes[TTBAR].cut+"))");
         samps.emplace_back(processes[WJETS],processes[WJETS].cut);
         samps.emplace_back(processes[QCD],processes[QCD].cut);
         samps.emplace_back(processes[OTHER],processes[OTHER].cut);

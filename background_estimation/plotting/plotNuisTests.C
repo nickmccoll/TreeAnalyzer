@@ -124,7 +124,7 @@ void getNuisHists(const std::string& rootFile, const std::string& outDir){
     const std::string h = hadCuts[HAD_FULL];
     const std::string cat = l +"_"+b+"_"+p +"_"+h;
     auto systName = [&](const std::string& proc,const std::string& name, const std::string& sel = "-1")->std::string {
-        return getSystName("CMS_HHlnujj",proc,name, sel == "-1" ? cat : sel  );
+        return getSystName("HHlnujj",proc,name, sel == "-1" ? cat : sel  );
     };
 
 
@@ -142,12 +142,12 @@ void getNuisHists(const std::string& rootFile, const std::string& outDir){
     });
     go(bkgSels[BKG_MT],
             {
-                    "CMS_scale_prunedj","CMS_res_prunedj",
+                    "hbb_scale","hbb_res",
                     systName("top","res"  ) ,systName("top","scale") ,systName("top","mt_rel_scale",b)
     });
     go(bkgSels[BKG_MW],
             {
-                    "CMS_scale_prunedj","CMS_res_prunedj",
+                    "hbb_scale","hbb_res",
                     systName("top","res"  ) ,systName("top","scale") ,systName("top","mt_rel_scale",b),systName("top","lostmw_rel_scale",b)
     });
 
@@ -173,21 +173,21 @@ void makeNuisPlots(const std::string& baseDir, std::vector<TObject*>& writeables
     const std::string cat = l +"_"+b+"_"+p +"_"+h;
 
     auto systName = [&](const std::string& proc,const std::string& name, const std::string& sel = "-1")->std::string {
-        return getSystName("CMS_HHlnujj",proc,name, sel == "-1" ? cat : sel  );
+        return getSystName("HHlnujj",proc,name, sel == "-1" ? cat : sel  );
     };
 
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_QG]+"_nuisHists.root",bkgSels[BKG_QG],cat,"mhbb",{ {"#it{m}_{H#rightarrowbb} scale" ,systName(bkgSels[BKG_QG]    ,"PTX",b)},{"#it{m}_{H#rightarrowbb} res." ,systName(bkgSels[BKG_QG]    ,"OPTX",b)}    },true));
+    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_QG]+"_nuisHists.root",bkgSels[BKG_QG],cat,"mhbb",{ {"#it{m}_{b#bar{b}} scale" ,systName(bkgSels[BKG_QG]    ,"PTX",b)},{"#it{m}_{b#bar{b}} res." ,systName(bkgSels[BKG_QG]    ,"OPTX",b)}    },true));
     writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_QG]+"_nuisHists.root",bkgSels[BKG_QG],cat,"mhh",{ {"#it{m}_{HH} scale" ,systName(bkgSels[BKG_QG]    ,"PTY")},{"#it{m}_{HH} res." ,systName(bkgSels[BKG_QG]    ,"OPTY")}    },false));
 
 
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_LOSTTW]+"_nuisHists.root",bkgSels[BKG_LOSTTW],cat,"mhbb",{ {"#it{m}_{H#rightarrowbb} scale" ,systName(bkgSels[BKG_LOSTTW]    ,"PTX",b)},{"#it{m}_{H#rightarrowbb} res." ,systName(bkgSels[BKG_LOSTTW]    ,"OPTX",b)}    },true));
+    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_LOSTTW]+"_nuisHists.root",bkgSels[BKG_LOSTTW],cat,"mhbb",{ {"#it{m}_{b#bar{b}}} scale" ,systName(bkgSels[BKG_LOSTTW]    ,"PTX",b)},{"#it{m}_{b#bar{b}} res." ,systName(bkgSels[BKG_LOSTTW]    ,"OPTX",b)}    },true));
     writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_LOSTTW]+"_nuisHists.root",bkgSels[BKG_LOSTTW],cat,"mhh",{{"top res." ,systName("top","res"  )}, {"top scale" ,systName("top","scale")}, {"rel. top scale" ,systName("top","lostmw_rel_scale",b)}    },false));
 
 
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_nuisHists.root",bkgSels[BKG_MW],cat,"mhbb",{{"soft-drop scale","CMS_scale_prunedj"},{"soft-drop res.","CMS_res_prunedj"}},true));
+    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_nuisHists.root",bkgSels[BKG_MW],cat,"mhbb",{{"b#bar{b} jet soft-drop scale","hbb_scale"},{"b#bar{b} jet soft-drop res.","hbb_res"}},true));
     writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_nuisHists.root",bkgSels[BKG_MW],cat,"mhh",{{"top res." ,systName("top","res"  )}, {"top scale" ,systName("top","scale")}, {"rel. top scale" ,systName("top","lostmw_rel_scale",b)}    },false));
 
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhbb",{{"soft-drop scale","CMS_scale_prunedj"},{"soft-drop res.","CMS_res_prunedj"}},true));
+    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhbb",{{"b#bar{b} jet soft-drop scale","hbb_scale"},{"b#bar{b} jet soft-drop res.","hbb_res"}},true));
     writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhh",{{"top res." ,systName("top","res"  )}, {"top scale" ,systName("top","scale")}, {"rel. top scale" ,systName("top","mt_rel_scale",b)}    },false));
 
 
