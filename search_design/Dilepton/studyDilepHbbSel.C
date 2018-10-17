@@ -37,6 +37,67 @@ public:
     	plotter.getOrMake1DPre(sn,"evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
     }
 
+    bool findHbbCand(const Lepton* lep1, const Lepton* lep2, int genidx) {
+    	// lambda function to determine if a FJ is LMT b-tagged (has at least one subjet that passes medium CSV WP)
+    	auto isBtag = [&] (const FatJet* fj) {
+    		bool hasBtag = false;
+    		for (const auto& sj : fj->subJets()) {
+    			if (sj.csv() > 0.8484) hasBtag = true;
+    		}
+    		return hasBtag;
+    	};
+        // only consider the top two fatjets in pt, provided they are above 200 GeV, then take furthest
+    	double minDPhi = 2.0;
+    	double minPt = 200;
+    	int idx = -1;
+    	//
+        const MomentumF recodilepton = lep1->p4() + lep2->p4();
+        std::vector<const FatJet*> fatjets;
+        for (const auto& fj : reader_fatjet->jets) {
+        	if (fj.pt() > minPt) fatjets.push_back(&fj);
+        }
+        std::sort(fatjets.begin(),fatjets.end(), PhysicsUtilities::greaterPTDeref<FatJet>());
+
+        if (fatjets.size() == 0) return false;
+        else if (fatjets.size() == 1) {
+        	bool separatedFJ = abs(PhysicsUtilities::deltaPhi(*fatjets[0],recodilepton)) > 2.0 && PhysicsUtilities::deltaR(*fatjets[0],*lep1) > 0.8
+        			&& PhysicsUtilities::deltaR(*fatjets[0],*lep2) > 0.8;
+        	if (separatedFJ && isBtag(fatjets[0])) idx = fatjets[0]->index();
+
+        } else {
+            double fj_dr = 0;
+            for (int k=0; k<2; k++) {
+            	bool separatedFJ = abs(PhysicsUtilities::deltaPhi(*fatjets[k],recodilepton)) > 2.0 && PhysicsUtilities::deltaR(*fatjets[k],*lep1) > 0.8
+                	    && PhysicsUtilities::deltaR(*fatjets[k],*lep2) > 0.8;
+
+                if (separatedFJ && isBtag(fatjets[k])) {
+                    if (PhysicsUtilities::deltaR(*fatjets[k],recodilepton) > fj_dr) {
+                	    fj_dr = PhysicsUtilities::deltaR(*fatjets[k],recodilepton);
+                	    idx = fatjets[k]->index();
+                	}
+                }
+            }
+        }
+        if (idx == -1) return false;
+
+        printf("idx = %d\n\n",idx);
+        if (idx != genidx) {
+        	ParticleInfo::printGenInfo(reader_genpart->genParticles,-1);
+        	for (const auto& fj : reader_fatjet->jets) {
+        		printf("fatjet %d: (E= %f pT=   %f eta= %f phi=  %f)",fj.index(),fj.E(),fj.pt(),fj.eta(),fj.phi());
+        		printf(" ----> dR = %f    dPhi = %f: subJet CSV: ",PhysicsUtilities::deltaR(fj,recodilepton), PhysicsUtilities::deltaPhi(fj,recodilepton));
+        		for (const auto& sj : fj.subJets()) {
+        			printf("%f, ",sj.csv());
+        		}
+        		printf("\n\n");
+        	}
+    		printf("recodilepton: (E= %f pT=   %f eta= %f phi=  %f)\n\n",recodilepton.E(),recodilepton.pt(),recodilepton.eta(),recodilepton.phi());
+//    		printf("recohww: (E= %f pT=   %f eta= %f phi=  %f)\n\n",recohww.E(),recohww.pt(),recohww.eta(),recohww.phi());
+    		return false;
+        }
+        return true;
+    }
+
     bool runEvent() override {
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
         if(reader_event->process >= FillerConstants::ZJETS && reader_event->process <= FillerConstants::TTX )
@@ -69,64 +130,34 @@ public:
         // GEN ACCEPTANCE: impose some Hbb selection on the gen object and the gen b quarks
         if (diHiggsEvt.hbb->pt() < 200 || diHiggsEvt.hbb->absEta() > 2.4) return false;
         if (diHiggsEvt.b1->pt() < 20 || diHiggsEvt.b2->pt() < 20 || diHiggsEvt.b1->absEta() > 2.4 || diHiggsEvt.b2->absEta() > 2.4) return false;
+//        if (genlep1->pt() < genlep1->absPdgId() == 13 ? 26 : 30) return false;
 
         plotSpectra(sn+"_genacc");
+        if (!reader_fatjet) return false;
 
         // find a match in the RECO FJ collection to the GEN Hbb -> save index of the matched FJ
         double minDR = 99;
-        int idx = -1;
+        int genidx = -1;
         if (reader_fatjet) {
 			for (const auto& fj : reader_fatjet->jets) {
 				double dr = PhysicsUtilities::deltaR(*diHiggsEvt.hbb, fj);
 				if (dr < minDR) {
 					minDR = dr;
-					idx = fj.index();
+					genidx = fj.index();
 				}
 			}
         }
         if (minDR > 0.8) return false;
-        if (reader_fatjet->jets[idx].pt() < 200) return false;
-        std::cout<<"idx = "<<idx<<std::endl;
+        if (reader_fatjet->jets[genidx].pt() < 200) return false;
+        std::cout<<"genidx = "<<genidx<<std::endl;
         plotSpectra(sn+"_FJmatch");
 
-        // make Hbb selection based on distance from dilepton system -> save index of selected FJ
-        const MomentumF recodilepton = selectedLepton->p4() + selectedLeptons[1]->p4();
-        const MomentumF recohww = HiggsSolver::getInvisible(reader_event->met,recodilepton);
-        std::vector<int> indices;
-        printf("indices = ");
-        for (const auto& fj : reader_fatjet->jets) {
-            if (abs(PhysicsUtilities::deltaPhi(fj,recodilepton)) > 2.0 && PhysicsUtilities::deltaR(fj,*selectedLepton) > 0.8
-                && PhysicsUtilities::deltaR(fj,*selectedLeptons[1]) > 0.8) {
-            	indices.push_back(fj.index());
-            	printf("%d, ",fj.index());
-            }
-        }
-        printf("\n");
-        int idx2 = -1;
-        double maxpt = 200;
-        if (indices.size() == 0) return false;
-        else if (indices.size() > 1) {
-        	for (int k : indices) {
-        		if (reader_fatjet->jets[k].pt() > maxpt) {
-//        			printf("fj %d pt = %f; max is %f\n",k,reader_fatjet->jets[k].pt(),maxpt);
-        			maxpt = reader_fatjet->jets[k].pt();
-        			idx2 = k;
-//        			printf("idx2 is %d\n",idx2);
-        		}
-        	}
-        }
-        else idx2 = indices[0];
-        // if the two indices match, then it is a good selection
-        printf("idx2 = %d\n\n",idx2);
-        if (idx == idx2) plotSpectra(sn+"_HbbSel");
-        else {
-        	ParticleInfo::printGenInfo(reader_genpart->genParticles,-1);
-        	for (const auto& fj : reader_fatjet->jets) {
-        		printf("fatjet %d: (E= %f pT=   %f eta= %f phi=  %f)",fj.index(),fj.E(),fj.pt(),fj.eta(),fj.phi());
-        		printf(" ----> dR = %f    dPhi = %f\n\n",PhysicsUtilities::deltaR(fj,recodilepton), PhysicsUtilities::deltaPhi(fj,recodilepton));
-        	}
-    		printf("recodilepton: (E= %f pT=   %f eta= %f phi=  %f)\n\n",recodilepton.E(),recodilepton.pt(),recodilepton.eta(),recodilepton.phi());
-    		printf("recohww: (E= %f pT=   %f eta= %f phi=  %f)\n\n",recohww.E(),recohww.pt(),recohww.eta(),recohww.phi());
+        // get the index of the selected FatJet given the two selectedLeptons
+        bool goodHbbCand = findHbbCand(selectedLepton,selectedLeptons[1],genidx);
+        if (goodHbbCand) {
+        	plotSpectra(sn+"_HbbSel");
+        	double genlep2_pt = diHiggsEvt.w1_d1->pt() > diHiggsEvt.w2_d1->pt() ? diHiggsEvt.w2_d1->pt() : diHiggsEvt.w1_d1->pt();
+        	plotter.getOrMake1DPre(sn+"_HbbSel","gen2_pt",";p_{T}",40,0,400)->Fill(genlep2_pt,weight);
         }
         return true;
     }

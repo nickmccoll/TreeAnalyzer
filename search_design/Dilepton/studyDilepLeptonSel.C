@@ -36,15 +36,25 @@ public:
     };
 
     void plotAcc(TString sn) {
-		plotter.getOrMake1DPre(sn+"_ept15_mupt15","evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
+		plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
     }
 
     void plotSpectra(TString sn, const Lepton* recolep1, const Lepton* recolep2) {
-    	const MomentumF dilepMOM = recolep1->p4() + recolep2->p4();
+    	MomentumF dilepMOM = recolep1->p4() + recolep2->p4();
+    	MomentumF recoHww = dilepMOM.p4() + reader_event->met.p4();
     	double dR_ll = PhysicsUtilities::deltaR(*recolep1,*recolep2);
+    	double dPhi_ll = PhysicsUtilities::deltaPhi(*recolep1,*recolep2);
 
-    	plotter.getOrMake1DPre(sn+"_ept15_mupt15","Mll",";m_{ll}",100,0,150)->Fill(dilepMOM.mass(),weight);
-    	plotter.getOrMake1DPre(sn+"_ept15_mupt15","dR_ll",";#DeltaR_{ll}",50,0,5)->Fill(dR_ll,weight);
+    	plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","Mll",";m_{ll}",100,0,200)->Fill(dilepMOM.mass(),weight);
+    	plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","Mww",";m_{WW}",100,0,200)->Fill(recoHww.mass(),weight);
+    	plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","dR_ll",";#DeltaR_{ll}",50,0,5)->Fill(dR_ll,weight);
+    	plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","dPhi_ll",";#Delta#Phi_{ll}",50,-3.14,3.14)->Fill(dPhi_ll,weight);
+    	plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","pt2",";p_{T}",40,0,200)->Fill(recolep2->pt(),weight);
+
+    	if (reader_event->process == FillerConstants::SIGNAL) {
+        	double genlep2_pt = diHiggsEvt.w1_d1->pt() > diHiggsEvt.w2_d1->pt() ? diHiggsEvt.w2_d1->pt() : diHiggsEvt.w1_d1->pt();
+        	plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","genpt2",";p_{T}",40,0,200)->Fill(genlep2_pt,weight);
+    	}
     }
 
     void printDebugInfo(TString sn, const GenParticle* genlep1, const GenParticle* genlep2, int idx1, int idx2, std::vector<const Lepton*> leps) {
@@ -55,6 +65,51 @@ public:
     		printf("lepton %d (%i): (E= %f pT=   %f eta= %f phi=  %f)\n",lep->index(),lep->isMuon() ? (-1)*lep->q()*13:(-1)*lep->q()*11,lep->E(),lep->pt(),lep->eta(),lep->phi());
     	}
 		printf("\n");
+    }
+
+    bool findHbbCand(const Lepton* lep1, const Lepton* lep2) {
+    	// lambda function to determine if a FJ is LMT b-tagged (has at least one subjet that passes medium CSV WP)
+    	auto isBtag = [&] (const FatJet* fj) {
+    		bool hasBtag = false;
+    		for (const auto& sj : fj->subJets()) {
+    			if (sj.csv() > 0.8484) hasBtag = true;
+    		}
+    		return hasBtag;
+    	};
+        // only consider the top two fatjets in pt, provided they are above 200 GeV, then take furthest
+    	double minDPhi = 2.0;
+    	double minPt = 200;
+    	int idx = -1;
+    	//
+        const MomentumF recodilepton = lep1->p4() + lep2->p4();
+        std::vector<const FatJet*> fatjets;
+        for (const auto& fj : reader_fatjet->jets) {
+        	if (fj.pt() > minPt) fatjets.push_back(&fj);
+        }
+        std::sort(fatjets.begin(),fatjets.end(), PhysicsUtilities::greaterPTDeref<FatJet>());
+
+        if (fatjets.size() == 0) return false;
+        else if (fatjets.size() == 1) {
+        	bool separatedFJ = abs(PhysicsUtilities::deltaPhi(*fatjets[0],recodilepton)) > 2.0 && PhysicsUtilities::deltaR(*fatjets[0],*lep1) > 0.8
+        			&& PhysicsUtilities::deltaR(*fatjets[0],*lep2) > 0.8;
+        	if (separatedFJ && isBtag(fatjets[0])) idx = fatjets[0]->index();
+
+        } else {
+            double fj_dr = 0;
+            for (int k=0; k<2; k++) {
+            	bool separatedFJ = abs(PhysicsUtilities::deltaPhi(*fatjets[k],recodilepton)) > 2.0 && PhysicsUtilities::deltaR(*fatjets[k],*lep1) > 0.8
+                	    && PhysicsUtilities::deltaR(*fatjets[k],*lep2) > 0.8;
+
+                if (separatedFJ && isBtag(fatjets[k])) {
+                    if (PhysicsUtilities::deltaR(*fatjets[k],recodilepton) > fj_dr) {
+                	    fj_dr = PhysicsUtilities::deltaR(*fatjets[k],recodilepton);
+                	    idx = fatjets[k]->index();
+                	}
+                }
+            }
+        }
+        if (idx == -1) return false;
+        return true;
     }
 
     bool matchDileptons(TString sn, const GenParticle* gen1, const GenParticle* gen2, const Lepton* reco1, const Lepton* reco2, std::vector<const Lepton*> leps) {
@@ -110,14 +165,22 @@ public:
 
     	// selection on leptons
     	float minPt1_mu = 26;
-    	float minPt2_mu = 15;
+    	float minPt2_mu = 10;
     	float minPt1_e = 30;
-    	float minPt2_e = 15;
+    	float minPt2_e = 10;
+
     	float maxEta_e = 2.5;
     	float maxEta_mu = 2.4;
+
     	float minDileptonMass = 0;
     	float maxDileptonMass = 999;
     	float maxDileptonDR = 99;
+
+    	TString mu_ID = "medium";
+    	TString e_ID = "medium";
+
+    	float maxIso_mu = 0.2;
+    	float maxIso_e = 0.1;
 
     	// get reco leptons that pass the maxEta cut and minPt cut
     	const auto muons = PhysicsUtilities::selObjsMom(reader_muon->muons,minPt2_mu,maxEta_mu);
@@ -125,8 +188,12 @@ public:
 
     	// collect the muons and electrons together and then sort the leptons by pt
     	std::vector<const Lepton*> leps;
-    	for (const auto* mu : muons) leps.push_back(mu);
-    	for (const auto* e : electrons) leps.push_back(e);
+    	for (const auto* mu : muons) {
+    		if (passID(mu,mu_ID,e_ID) && passISO(mu,maxIso_mu,maxIso_e)) leps.push_back(mu);
+    	}
+    	for (const auto* e : electrons) {
+    		if (passID(e,mu_ID,e_ID) && passISO(e,maxIso_mu,maxIso_e)) leps.push_back(e);
+    	}
         std::sort(leps.begin(),leps.end(), PhysicsUtilities::greaterPTDeref<Lepton>());
 
         LepInfo.filteredLeps = leps;
@@ -147,6 +214,7 @@ public:
         for (unsigned long k=1; k<leps.size(); k++){
         	if (leps[k]->q() == leps[0]->q()) continue; // disregard same-sign leptons
         	if (PhysicsUtilities::deltaR2(*leps[0],*leps[k]) > maxDileptonDR*maxDileptonDR) continue; // cut on dR_ll
+
         	// require that the dilepton mass be within some window
         	const MomentumF dileptonMOM = leps[0]->p4() + leps[k]->p4();
         	if (dileptonMOM.mass() < minDileptonMass || dileptonMOM.mass() > maxDileptonMass) continue;
@@ -162,11 +230,48 @@ public:
         }
     }
 
+    bool passID(const Lepton* lep, TString cat_mu, TString cat_e) {
+    	int idx = lep->index();
+    	if (lep->isMuon()) {
+    		if (cat_mu == "loose") {
+    			if (!reader_muon->muons[idx].passLooseID()) return false;
+    		} else if (cat_mu == "medium") {
+    			if (!reader_muon->muons[idx].passMed16ID()) return false;
+    		} else if (cat_mu == "tight") {
+    			if (!reader_muon->muons[idx].passTightID()) return false;
+    		} else {
+    			printf("Error with ID cat provided");
+    		}
+    	} else if (lep->isElectron()) {
+    		if (cat_e == "loose") {
+    			if (!reader_electron->electrons[idx].passLooseID_noISO()) return false;
+    		} else if (cat_e == "medium") {
+    			if (!reader_electron->electrons[idx].passMedID_noISO()) return false;
+    		} else if (cat_e == "tight") {
+    			if (!reader_electron->electrons[idx].passTightID_noISO()) return false;
+    		} else {
+    			printf("Error with ID cat provided");
+    		}
+    	} else {
+    		printf("lep in id not muon or electron\n");
+    	}
+    	return true;
+    }
+
+    bool passISO(const Lepton* lep, float maxMiniIso_mu, float maxMiniIso_e) {
+    	if (lep->isMuon()) {
+    		if (lep->miniIso() > maxMiniIso_mu) return false;
+    	} else if (lep->isElectron()) {
+    		if (lep->miniIso() > maxMiniIso_e) return false;
+    	} else {
+    		printf("lep in iso not muon or electron\n");
+    	}
+    	return true;
+    }
+
     bool runEvent() override {
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
         if(ht_chs < 400) return false;
-        if(reader_event->process >= FillerConstants::ZJETS && reader_event->process <= FillerConstants::TTX )
-            smpName = "other";
         TString sn = smpName;
 
         // SIGNAL
@@ -199,6 +304,10 @@ public:
 
         	// Check if the selected RecoLeps match with the ones associated to the GenParticles
         	if (!matchDileptons(sn,genlep1, genlep2, selectedLeps[0], selectedLeps[1], LepInfo.filteredLeps)) return false;
+
+        	// Check if a valid Hbb candidate is found in the event
+        	if (!findHbbCand(selectedLeps[0], selectedLeps[1])) return false;
+
         	plotAcc(sn+"_lepmatch");
         	plotSpectra(sn,selectedLeps[0],selectedLeps[1]);
         }
@@ -213,6 +322,9 @@ public:
         	if (selectedLeps.size() < 2) return false;
         	if (selectedLeps.size() > 2) printf("WARNING: Selected more than 2 leps\n");
 
+        	// Check if a valid Hbb candidate is found in the event
+        	if (!findHbbCand(selectedLeps[0], selectedLeps[1])) return false;
+
             plotAcc(sn+"_passLepSel");
             if (selectedLeps[0]->isMuon() && selectedLeps[1]->isMuon()) sn += "_mumu";
             else if (selectedLeps[0]->isElectron() && selectedLeps[1]->isElectron()) sn += "_ee";
@@ -226,23 +338,23 @@ public:
     void write(TString fileName){
     	plotter.write(fileName);
 		if (reader_event->process == FillerConstants::SIGNAL) {
-		    float ee_num = plotter.getOrMake1DPre(TString::Format("m%i_ee_lepmatch_ept15_mupt15",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
-			float ee_den = plotter.getOrMake1DPre(TString::Format("m%i_ee_baseline_ept15_mupt15",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
-			float emu_num = plotter.getOrMake1DPre(TString::Format("m%i_emu_lepmatch_ept15_mupt15",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
-			float emu_den = plotter.getOrMake1DPre(TString::Format("m%i_emu_baseline_ept15_mupt15",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
-			float mumu_num = plotter.getOrMake1DPre(TString::Format("m%i_mumu_lepmatch_ept15_mupt15",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
-			float mumu_den = plotter.getOrMake1DPre(TString::Format("m%i_mumu_baseline_ept15_mupt15",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
+		    float ee_num = plotter.getOrMake1DPre(TString::Format("m%i_ee_lepmatch_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
+			float ee_den = plotter.getOrMake1DPre(TString::Format("m%i_ee_baseline_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
+			float emu_num = plotter.getOrMake1DPre(TString::Format("m%i_emu_lepmatch_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
+			float emu_den = plotter.getOrMake1DPre(TString::Format("m%i_emu_baseline_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
+			float mumu_num = plotter.getOrMake1DPre(TString::Format("m%i_mumu_lepmatch_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
+			float mumu_den = plotter.getOrMake1DPre(TString::Format("m%i_mumu_baseline_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
 
 			printf("\nMass = %d GeV\n",signal_mass);
 			printf("emu eff = %f\n",emu_num/emu_den);
 			printf("ee eff = %f\n",ee_num/ee_den);
 			printf("mumu eff = %f\n",mumu_num/mumu_den);
     	} else {
-		    float ee_num = plotter.getOrMake1DPre(smpName+"_ee_passLepSel_ept15_mupt15","evts",";M_{X}",50,600,4600)->GetEntries();
-			float emu_num = plotter.getOrMake1DPre(smpName+"_emu_passLepSel_ept15_mupt15","evts",";M_{X}",50,600,4600)->GetEntries();
-			float mumu_num = plotter.getOrMake1DPre(smpName+"_mumu_passLepSel_ept15_mupt15","evts",";M_{X}",50,600,4600)->GetEntries();
-			float num = plotter.getOrMake1DPre(smpName+"_passLepSel_ept15_mupt15","evts",";M_{X}",50,600,4600)->GetEntries();
-			float den = plotter.getOrMake1DPre(smpName+"_baseline_ept15_mupt15","evts",";M_{X}",50,600,4600)->GetEntries();
+		    float ee_num = plotter.getOrMake1DPre(smpName+"_ee_passLepSel_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","evts",";M_{X}",50,600,4600)->GetEntries();
+			float emu_num = plotter.getOrMake1DPre(smpName+"_emu_passLepSel_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","evts",";M_{X}",50,600,4600)->GetEntries();
+			float mumu_num = plotter.getOrMake1DPre(smpName+"_mumu_passLepSel_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","evts",";M_{X}",50,600,4600)->GetEntries();
+			float num = plotter.getOrMake1DPre(smpName+"_passLepSel_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","evts",";M_{X}",50,600,4600)->GetEntries();
+			float den = plotter.getOrMake1DPre(smpName+"_baseline_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","evts",";M_{X}",50,600,4600)->GetEntries();
 
 			std::cout<< smpName <<std::endl;
 			printf("eff = %f\n",num/den);
