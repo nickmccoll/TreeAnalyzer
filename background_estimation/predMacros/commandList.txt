@@ -92,7 +92,12 @@ nohup combine -m 3000  -M AsymptoticLimits -v 2 combinedCard.txt &
 combineTool.py -d combinedCard.root -m 2500  -M HybridNew --LHCmode LHC-limits -v 2 --singlePoint 0.002:0.05:0.001 -T 100 --clsAcc 0 --iterations 2 --fork 2    --saveToys --saveHybridResult  --job-mode crab3 --task-name grid-test  --custom-crab cuscrab.py 
 combine -d combinedCard.root -m 2500  -M HybridNew --LHCmode LHC-limits -v 2 --readHybridResults --grid=higgsCombine.Test.HybridNew.mH2500.123456.root  --expectedFromGrid=0.8399999
 
-
+#impacts
+text2workspace.py combinedCard.txt -m 2000 -o forImpact.root
+combineTool.py -M Impacts -d forImpact.root -m 2000 --rMax 0.06 --doInitialFit --robustFit 1
+nohup combineTool.py -M Impacts -d forImpact.root -m 2000 --rMax 0.06 --robustFit 1 --doFits --parallel 20 &
+combineTool.py -M Impacts -d forImpact.root -m 2000 -o impacts.json
+plotImpacts.py -i impacts.json -o impacts
 
 #Stat tests
 text2workspace.py combinedCard.txt -o combined.root
@@ -109,10 +114,24 @@ text2workspace.py combinedCard.txt -o combined.root
 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 6 &
 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 7 &
 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 8 &
-hadd  higgsCombineTest.GoodnessOfFit.toys.root  higgsCombineTest.GoodnessOfFit.mH2000.*.root
+hadd  higgsCombineTest.GoodnessOfFit.mH2000.toys.root  higgsCombineTest.GoodnessOfFit.mH2000.*.root
  
  
 ######do bias test...what we have for now
+
+
+# post fit...if you  you want to skip the previous step and run locally just -s 0 -o 0
+python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0600585 -m 1000 -l postfit -f 1    -s 1 -o 0 -c "combine" &
+python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0239257 -m 1600 -l postfit -f 1    -s 1 -o 0 -c "combine" &
+python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0141601 -m 2500 -l postfit -f 1    -s 1 -o 0 -c "combine" &
+python doBiasTest.py -i combinedCard.txt -N 5 -r 0.120117  -m 1000 -l  postfit_t2 -f 1 -s 1 -o 0 -c "combine" &
+python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0478514 -m 1600 -l postfit_t2 -f 1 -s 1 -o 0 -c "combine" &
+python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0283202 -m 2500 -l postfit_t2 -f 1 -s 1 -o 0 -c "combine" & 
+python doBiasTest.py -i combinedCard.txt -N 5 -r 0.3002925 -m 1000 -l postfit_t5 -f 1 -s 1 -o 0 -c "combine" &
+python doBiasTest.py -i combinedCard.txt -N 5 -r 0.1196285 -m 1600 -l postfit_t5 -f 1 -s 1 -o 0 -c "combine" &
+python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0708005 -m 2500 -l postfit_t5 -f 1 -s 1 -o 0 -c "combine" & 
+
+
 #prefit...dont do anymore
 python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0600585 -m 1000 -l prefit -f 0    -s 0 -o 0 -c "combine" &
 # initial fits....needed to be sent to LPC for some reason
@@ -129,15 +148,15 @@ python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTes
 
 sOut "higgsCombinepostfit_*_forBias.MultiDimFit.*.root" /uscms/home/nmccoll/nobackup/2011-04-15-susyra2/rel_HbbWW/work/combineWork/c_baseline2_data/
 # post fit...if you  you want to skip the previous step and run locally just -s 0 -o 0
-python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0600585 -m 1000 -l postfit -f 1    -s 1 -o 0 -c "combine" &
-python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0239257 -m 1600 -l postfit -f 1    -s 1 -o 0 -c "combine" &
-python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0141601 -m 2500 -l postfit -f 1    -s 1 -o 0 -c "combine" &
-python doBiasTest.py -i combinedCard.txt -N 5 -r 0.120117  -m 1000 -l  postfit_t2 -f 1 -s 1 -o 0 -c "combine" &
-python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0478514 -m 1600 -l postfit_t2 -f 1 -s 1 -o 0 -c "combine" &
-python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0283202 -m 2500 -l postfit_t2 -f 1 -s 1 -o 0 -c "combine" & 
-python doBiasTest.py -i combinedCard.txt -N 5 -r 0.3002925 -m 1000 -l postfit_t5 -f 1 -s 1 -o 0 -c "combine" &
-python doBiasTest.py -i combinedCard.txt -N 5 -r 0.1196285 -m 1600 -l postfit_t5 -f 1 -s 1 -o 0 -c "combine" &
-python doBiasTest.py -i combinedCard.txt -N 5 -r 0.0708005 -m 2500 -l postfit_t5 -f 1 -s 1 -o 0 -c "combine" & 
+python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTest.py -i combinedCard.txt -N 5 -r 0.0600585 -m 1000 -l postfit -f 1     -s 0 -o 0 -c "~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine" &
+python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTest.py -i combinedCard.txt -N 5 -r 0.0239257 -m 1600 -l postfit -f 1     -s 0 -o 0 -c "~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine" &
+python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTest.py -i combinedCard.txt -N 5 -r 0.0141601 -m 2500 -l postfit -f 1     -s 0 -o 0 -c "~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine" &
+python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTest.py -i combinedCard.txt -N 5 -r 0.120117  -m 1000 -l  postfit_t2 -f 1 -s 0 -o 0 -c "~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine" &
+python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTest.py -i combinedCard.txt -N 5 -r 0.0478514 -m 1600 -l postfit_t2 -f 1  -s 0 -o 0 -c "~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine" &
+python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTest.py -i combinedCard.txt -N 5 -r 0.0283202 -m 2500 -l postfit_t2 -f 1  -s 0 -o 0 -c "~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine" & 
+python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTest.py -i combinedCard.txt -N 5 -r 0.3002925 -m 1000 -l postfit_t5 -f 1  -s 0 -o 0 -c "~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine" &
+python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTest.py -i combinedCard.txt -N 5 -r 0.1196285 -m 1600 -l postfit_t5 -f 1  -s 0 -o 0 -c "~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine" &
+python ~/GitRepositories/TreeAnalyzer/background_estimation/predMacros/doBiasTest.py -i combinedCard.txt -N 5 -r 0.0708005 -m 2500 -l postfit_t5 -f 1  -s 0 -o 0 -c "~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine" & 
 
 #process
 scp  "cmslpc26.fnal.gov:/uscms/home/nmccoll/nobackup/2011-04-15-susyra2/rel_HbbWW/work/combineWork/c_baseline2_data/fitDiagnostics*_*_*.root" .

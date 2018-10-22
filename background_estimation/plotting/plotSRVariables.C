@@ -52,7 +52,7 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
         TH1 * hd = 0;
         fd->GetObject((std::string("all_loose_")+vars[iV].varName+"_"+vars[iV].varName).c_str(),hd);
         if(hd == 0) continue;
-        p->addHist(hd,"Data",kBlack);
+        p->addHist(hd,"Data",kBlack,1,2,20,0.5,true,true,true);
 
         for(unsigned int iP = 0; iP < processes.size(); ++iP){
             TH1 * hm = 0;

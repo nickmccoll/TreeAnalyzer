@@ -722,44 +722,255 @@ void doBiasTest(std::vector<TObject*>& writeables, const std::string& limitBaseN
 
 }
 
-void doUncPlots(std::vector<TObject*>& writeables, const std::string& limitBaseName){
-    TFile * fd = new TFile((limitBaseName+"/plots.root").c_str(),"read");
+
+
+TCanvas * makeUncPlot(const std::vector<std::string>& uncs, const std::string& label,const std::string& title, const RooFitResult * fit_s_res,const RooFitResult * fit_b_res, const RooArgSet* prefit){
+    TH1 * fit_s_uncsize = 0;
+    TH1 * fit_b_uncsize = 0;
+    TGraphAsymmErrors * fit_s_uncs = 0;
+    TGraphAsymmErrors * fit_b_uncs = 0;
+    const RooArgList * fit_s = 0;
+    const RooArgList * fit_b = 0;
+    int nP=0;
+    TH1 * prefit_uncsize = new TH1F((label+"_prefit").c_str(),"",uncs.size(),0,uncs.size());
+    if(fit_s_res){
+        fit_s_uncsize = new TH1F((label+"_fit_s_uncsize").c_str(),"",uncs.size(),0,uncs.size());
+        fit_s_uncs = new TGraphAsymmErrors;
+        fit_s = &fit_s_res->floatParsFinal();
+    }
+    if(fit_b_res){
+        fit_b_uncsize = new TH1F((label+"_fit_b_uncsize").c_str(),"",uncs.size(),0,uncs.size());
+        fit_b_uncs = new TGraphAsymmErrors;
+        fit_b = &fit_b_res->floatParsFinal();
+    }
+
+    for(const auto& unc:uncs){
+        const RooRealVar * nuis_p = ((const RooRealVar*)prefit->find(unc.c_str()));
+        const RooRealVar * nuis_s = fit_s ? ((const RooRealVar*)fit_s->find(unc.c_str())) : 0;
+        const RooRealVar * nuis_b = fit_b ? ((const RooRealVar*)fit_b->find(unc.c_str())) : 0;
+        if(nuis_p==0) continue;
+
+        auto fillPt = [&](TH1 * h, TGraphAsymmErrors* g, const RooRealVar *  v ){
+            float SF = 1./nuis_p->getError();
+            float x  = SF*(v ? v->getVal() : 0 );
+            float eu = SF*(v ? v->getErrorHi() : 0);
+            float ed = SF*(v ? v->getErrorLo() : 0);
+            float e =  SF*(v ? v->getError() : 0);
+            if(ed == 0) ed = eu;
+            if(g) g->SetPoint(nP,nP+0.5,x);
+            if(g) g->SetPointError(nP,0,0,std::fabs(ed),eu);
+            if(g) g->GetXaxis()->SetBinLabel(nP+1,unc.c_str());
+            if(h) h->SetBinContent(nP+1,x);
+            if(h) h->SetBinError(nP+1,e);
+            if(h) h->GetXaxis()->SetBinLabel(nP+1,unc.c_str());
+
+        };
+        if(fit_b) fillPt(fit_b_uncsize,fit_b_uncs,nuis_b);
+        if(fit_s) fillPt(fit_s_uncsize,fit_s_uncs,nuis_s);
+        fillPt(prefit_uncsize,0,nuis_p);
+        nP++;
+    }
+
+    double topScale = (1/.5);
+
+    TCanvas * c =new TCanvas(label.c_str(),label.c_str());
+    TPad *pad1 = new TPad("pad1", "pad1", 0, 0.5, 1, 1.0);
+    pad1->SetNumber(1);
+    pad1->SetBottomMargin(.025); // Upper and lower plot are joined
+    pad1->SetTopMargin(.1);
+    pad1->SetLeftMargin(.14);
+    pad1->Draw();             // Draw the upper pad: pad1
+    pad1->cd();               // pad1 becomes the current pad
+
+    auto * leg = new TLegend(0.65,0.7,0.93,0.89);
+    leg->SetHeader(title.c_str(),"C");
+    leg->SetFillColor(0)                           ;
+    leg->SetTextFont(42)                           ;
+    leg->SetBorderSize(1);
+    leg->SetNColumns(2);
+
+
+    TH1 * h_fit_e_s = fit_s ? (TH1*)fit_s_uncsize->Clone() : 0;
+    TH1 * h_fit_e_b = fit_b ? (TH1*)fit_b_uncsize->Clone() : 0;
+
+    prefit_uncsize->SetLineWidth(4)                   ;
+    prefit_uncsize->SetTitle("Nuisance Paramaeters")  ;
+    prefit_uncsize->SetLineColor(kBlack)         ;
+    prefit_uncsize->SetFillColor(kGray)          ;
+    prefit_uncsize->SetMaximum(1.9)                     ;
+    prefit_uncsize->SetMinimum(-1.9)                    ;
+    prefit_uncsize->SetMarkerSize(0.0)           ;
+
+    prefit_uncsize->Draw("E2")                        ;
+    prefit_uncsize->Draw("HIST same")                  ;
+    prefit_uncsize->GetYaxis()->SetTitle("#theta");
+
+    prefit_uncsize->GetXaxis()->SetLabelOffset(2);
+    prefit_uncsize->GetYaxis()->SetLabelSize(prefit_uncsize->GetYaxis()->GetLabelSize()*topScale );
+    prefit_uncsize->GetYaxis()->SetTitleOffset(.33/.66*prefit_uncsize->GetYaxis()->GetTitleOffset());
+    prefit_uncsize->GetYaxis()->SetTitleSize(prefit_uncsize->GetYaxis()->GetTitleSize()*topScale);
+    leg->AddEntry(prefit_uncsize,"Prefit","FL")       ;
+
+    if(fit_b){
+        fit_b_uncs->SetLineColor(kBlue)     ;
+        fit_b_uncs->SetMarkerColor(kBlue)   ;
+        fit_b_uncs->SetMarkerStyle(20)           ;
+        fit_b_uncs->SetMarkerSize(1.0)           ;
+        fit_b_uncs->SetLineWidth(2)              ;
+        fit_b_uncs->Draw("EPsame") ;
+        leg->AddEntry(fit_b_uncs,"B-only fit","EPL")     ;
+    }
+    if(fit_s){
+        fit_s_uncs->SetLineColor(kRed)      ;
+        fit_s_uncs->SetMarkerColor(kRed)    ;
+        fit_s_uncs->SetMarkerStyle(20)           ;
+        fit_s_uncs->SetMarkerSize(1.0)           ;
+        fit_s_uncs->SetLineWidth(2)              ;
+        fit_s_uncs->Draw("EPsame") ;
+        leg->AddEntry(fit_s_uncs,"S+B fit"   ,"EPL")     ;
+    }
+
+
+    pad1->SetGridx()      ;
+    pad1->RedrawAxis()    ;
+    pad1->RedrawAxis("g") ;
+    leg->Draw()    ;
+
+    c->cd();
+    TPad *pad2 = new TPad("pad2", "pad2", 0, 0, 1, 0.5);
+    pad2->SetNumber(2);
+    pad2->SetTopMargin(.005);
+    pad2->SetLeftMargin(.14);
+    pad2->SetBottomMargin(.6);
+    pad2->Draw();             // Draw the upper pad: pad1
+    pad2->cd();               // pad1 becomes the current pad
+
+    for(int iB = 1; iB <= prefit_uncsize->GetNbinsX(); ++iB){
+        if(fit_s){
+            h_fit_e_s->SetBinContent(iB,fit_s_uncsize->GetBinError(iB)/prefit_uncsize->GetBinError(iB)) ;
+            h_fit_e_s->SetBinError(iB,0)                                                      ;
+        }
+        if(fit_b){
+            h_fit_e_b->SetBinContent(iB,fit_b_uncsize->GetBinError(iB)/prefit_uncsize->GetBinError(iB)) ;
+            h_fit_e_b->SetBinError(iB,0)                                                      ;
+        }
+    }
+
+    if(fit_b){                                                                               ;
+        h_fit_e_b->SetLineColor(kBlue)                                               ;
+        h_fit_e_b->GetYaxis()->SetTitle("#sigma_{#theta}/(#sigma_{#theta} prefit)")        ;
+        h_fit_e_b->SetTitle("Nuisance Parameter Uncertainty Reduction")                   ;
+        h_fit_e_b->SetMaximum(1.1)                                                        ;
+        h_fit_e_b->SetMinimum(0)                                                          ;
+        h_fit_e_b->SetLineWidth(4)                   ;
+        h_fit_e_b->Draw("hist")                                                            ;
+    }
+    if(fit_s){
+        h_fit_e_s->SetLineWidth(4)                   ;
+        h_fit_e_s->SetLineColor(kRed)   ;
+        h_fit_e_s->Draw("histsame")           ;
+    }
+    pad2->SetGridx()      ;
+    pad2->RedrawAxis();
+    pad2->RedrawAxis("g");
+
+    float botScale = (1/.5);
+    TAxis * yAxis=0;
+    TAxis * xAxis=0;
+    if(fit_b){
+        yAxis = h_fit_e_b->GetYaxis();
+        xAxis = h_fit_e_b->GetXaxis();
+    } else     if(fit_s){
+        yAxis = h_fit_e_s->GetYaxis();
+        xAxis = h_fit_e_s->GetXaxis();
+    }
+    if(yAxis){
+        yAxis->SetTitleSize(botScale*yAxis->GetTitleSize());
+        xAxis->SetTitleSize(botScale*xAxis->GetTitleSize());
+        yAxis->SetLabelSize(botScale*yAxis->GetLabelSize());
+        xAxis->SetLabelSize(botScale*xAxis->GetLabelSize());
+        yAxis->SetTitleOffset(.33/.66*yAxis->GetTitleOffset());
+        xAxis->LabelsOption("v");
+    }
+
+    return c;
+}
+
+void doUncPlots(std::vector<TObject*>& writeables, const std::string& limitBaseName, REGION reg, bool doS = false){
+
+    TFile * fd = new TFile((limitBaseName+"/fitDiagnostics.root").c_str(),"read");
     if(!fd){
         std::cout <<"No plots file!"<<std::endl;
         return;
     }
+    RooFitResult * fit_s =0;
+    RooFitResult * fit_b =0;
+    RooArgSet* prefit = 0;
+    fd->GetObject("nuisances_prefit",prefit);
+    if(doS) fd->GetObject("fit_s",fit_s);
+    fd->GetObject("fit_b",fit_b);
 
 
-    auto procCan =[&](const std::string& canN){
-        TCanvas * nuisances = 0;
-        fd->GetObject(canN.c_str(),nuisances);
-        if(!nuisances){
-            std::cout <<"No nuisances!"<<std::endl;
-            return;
+    auto addBN = [&](std::vector<std::string>& ns, const std::string& proc,const std::string& name ){
+        for(const auto& b :btagCats){
+            if(b == btagCats[BTAG_LMT]) continue;
+            std::string sn = proc +"_"+name+"_"+b;
+            ns.push_back(sn);
         }
-        nuisances->SetLeftMargin(0.06742323);
-        nuisances->SetRightMargin(0.01535381);
-        nuisances->SetTopMargin(0.04210526);
-        nuisances->SetBottomMargin(0.25);
-        nuisances->Draw();
-        nuisances->SetWindowSize(1500,500);
-        auto leg = (TLegend*)nuisances->FindObject("TPave");
-        leg->SetX1NDC(0.5447263);
-        leg->SetY1NDC(0.7936842);
-        leg->SetX2NDC(0.8351135);
-        leg->SetY2NDC(0.9347368);
-        leg->Draw();
-        writeables.push_back(nuisances);
     };
-    procCan("nuisances");
-    procCan("post_fit_errs");
+    auto addAllN = [&](std::vector<std::string>& ns, const std::string& proc,const std::string& name ){
+        for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats){
+            if(l == lepCats[LEP_EMU] ) continue;
+            if(b == btagCats[BTAG_LMT]) continue;
+            if(p == purCats[PURE_I] ) continue;
+            std::string sn = proc +"_"+name+"_"+l +"_"+b+"_"+p;
+            ns.push_back(sn);
+
+        }
+    };
+
+    std::vector<std::string> sigNs = {"yield","eff_mu","eff_e","tau21_PtDependence","tau21_eff","btag_eff","unclust","jes","jer","hbb_scale","hbb_res"};
+    std::vector<std::string> hbbNs = {"hbb_scale","hbb_res"};
+    addBN(hbbNs,bkgSels[BKG_QG],"PTX");
+    addBN(hbbNs,bkgSels[BKG_QG],"OPTX");
+    addBN(hbbNs,bkgSels[BKG_LOSTTW],"PTX");
+    addBN(hbbNs,bkgSels[BKG_LOSTTW],"OPTX");
+
+    std::vector<std::string> QGhhNs;
+    addAllN(QGhhNs,bkgSels[BKG_QG],"PTY");
+    addAllN(QGhhNs,bkgSels[BKG_QG],"OPTY");
+
+    std::vector<std::string> tophhNs;
+    addAllN(tophhNs,"top","res");
+    addAllN(tophhNs,"top","scale");
+
+    std::vector<std::string> topNormNs;
+    addAllN(topNormNs,"top","norm");
+    addBN(topNormNs,"top","mt_rel_scale");
+    addBN(topNormNs,"top","lostmw_rel_scale");
+    if(reg == REG_QGCR){
+        addBN(topNormNs,"top","tFrac");
+        addBN(topNormNs,"top","lostFrac");
+    } else {
+        addBN(topNormNs,"top","wFrac");
+        addBN(topNormNs,"top","lostFrac");
+    }
+
+    std::vector<std::string> qgNormNs;
+    addAllN(qgNormNs,bkgSels[BKG_QG],"norm");
 
 
-    fd->Close();
-    return;
 
-
+    writeables.push_back(makeUncPlot(qgNormNs,"qgNormNs","Q/G bkg. norm.",fit_s,fit_b,prefit));
+    writeables.push_back(makeUncPlot(topNormNs,"topNormNs","Top bkg. norm.",fit_s,fit_b,prefit));
+    writeables.push_back(makeUncPlot(QGhhNs,"QGhhNs","Q/G bkg. #it{m}_{HH}",fit_s,fit_b,prefit));
+    writeables.push_back(makeUncPlot(tophhNs,"tophhNs","Top bkg. #it{m}_{HH}",fit_s,fit_b,prefit));
+    writeables.push_back(makeUncPlot(hbbNs,"hbbNs","Bkg. #it{m}_{b#bar{b}}",fit_s,fit_b,prefit));
+    writeables.push_back(makeUncPlot(sigNs,"sigNs","Signal",fit_s,fit_b,prefit));
 }
+
+
+
 
 void runPostFit(const std::string& inName, const std::string& outName, double fixR=0){
     PostFitter fitter(inName,fixR);
@@ -902,7 +1113,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
     if(step==4){ //summary plots
         if(outName.size())         outName += "summaryPlots";
         doGlobChi2(writeables,limitBaseName);
-        doUncPlots(writeables,limitBaseName);
+        doUncPlots(writeables,limitBaseName,reg,reg!=REG_SR);
         Dummy d(outName);
     }
     if(step==5){ //bias test
