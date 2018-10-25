@@ -36,7 +36,7 @@ public:
     };
 
     void plotAcc(TString sn) {
-		plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
+		plotter.getOrMake1DPre(sn,"evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
     }
 
     void plotSpectra(TString sn, const Lepton* recolep1, const Lepton* recolep2) {
@@ -45,15 +45,59 @@ public:
     	double dR_ll = PhysicsUtilities::deltaR(*recolep1,*recolep2);
     	double dPhi_ll = PhysicsUtilities::deltaPhi(*recolep1,*recolep2);
 
-    	plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","Mll",";m_{ll}",100,0,200)->Fill(dilepMOM.mass(),weight);
-    	plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","Mww",";m_{WW}",100,0,200)->Fill(recoHww.mass(),weight);
-    	plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","dR_ll",";#DeltaR_{ll}",50,0,5)->Fill(dR_ll,weight);
-    	plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","dPhi_ll",";#Delta#Phi_{ll}",50,-3.14,3.14)->Fill(dPhi_ll,weight);
-    	plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","pt2",";p_{T}",40,0,200)->Fill(recolep2->pt(),weight);
+    	plotter.getOrMake1DPre(sn,"Mll",";m_{ll}",100,0,200)->Fill(dilepMOM.mass(),weight);
+    	plotter.getOrMake1DPre(sn,"Mww",";m_{WW}",100,0,200)->Fill(recoHww.mass(),weight);
+    	plotter.getOrMake1DPre(sn,"dR_ll",";#DeltaR_{ll}",50,0,5)->Fill(dR_ll,weight);
+    	plotter.getOrMake1DPre(sn,"dPhi_ll",";#Delta#Phi_{ll}",50,-3.14,3.14)->Fill(dPhi_ll,weight);
+    	plotter.getOrMake1DPre(sn,"pt1",";p_{T} lep1",100,0,1000)->Fill(recolep1->pt(),weight);
+    	plotter.getOrMake1DPre(sn,"pt2",";p_{T} lep2",100,0,1000)->Fill(recolep2->pt(),weight);
 
-    	if (reader_event->process == FillerConstants::SIGNAL) {
+/*    	if (reader_event->process == FillerConstants::SIGNAL) {
         	double genlep2_pt = diHiggsEvt.w1_d1->pt() > diHiggsEvt.w2_d1->pt() ? diHiggsEvt.w2_d1->pt() : diHiggsEvt.w1_d1->pt();
-        	plotter.getOrMake1DPre(sn+"_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02","genpt2",";p_{T}",40,0,200)->Fill(genlep2_pt,weight);
+        	plotter.getOrMake1DPre(sn,"genpt2",";p_{T}",40,0,200)->Fill(genlep2_pt,weight);
+    	}
+    	*/
+    }
+
+    void addPlots(TString sn, const Lepton* recolep1, const Lepton* recolep2) {
+    	sn += "_ept10_mupt10";
+    	plotAcc(sn);
+    	plotSpectra(sn,recolep1,recolep2);
+
+    	TString id_abbv, iso_abbv;
+    	std::vector<double> iso_vals = {0.1, 0.2, 0.3};
+    	std::vector<TString> ids = {"loose","medium","tight","high"};
+
+    	for (const auto& id : ids) {
+    		if (id=="loose") id_abbv = "L";
+    		else if (id=="medium") id_abbv = "M";
+    		else if (id=="tight") id_abbv = "T";
+    		else id_abbv = "H";
+
+    		if (passID(recolep1,id,id) && passID(recolep2,id,id)) {
+    			plotAcc(sn+"_eID_"+id_abbv+"_muID_"+id_abbv);
+    			plotSpectra(sn+"_eID_"+id_abbv+"_muID_"+id_abbv,recolep1,recolep2);
+
+        		for (const auto& iso : iso_vals) {
+/*        			std::cout<<iso<<std::endl;
+        			std::cout<< (iso == 0.1) << std::endl;
+        			std::cout<<(iso==0.2)<<std::endl;
+        			std::cout<<(iso==0.3)<<std::endl;
+*/
+        			if (iso == 0.1) iso_abbv = "01";
+        			else if (iso == 0.2) iso_abbv = "02";
+        			else iso_abbv = "03";
+
+        			if (passISO(recolep1,iso,iso,0) && passISO(recolep2,iso,iso,0)) {
+            			plotAcc(sn+"_eID_"+id_abbv+"_muID_"+id_abbv+"_eMISO_"+iso_abbv+"_muMISO_"+iso_abbv);
+            			plotSpectra(sn+"_eID_"+id_abbv+"_muID_"+id_abbv+"_eMISO_"+iso_abbv+"_muMISO_"+iso_abbv,recolep1,recolep2);
+        			}
+        			if (passISO(recolep1,iso,iso,1) && passISO(recolep2,iso,iso,1)) {
+            			plotAcc(sn+"_eID_"+id_abbv+"_muID_"+id_abbv+"_eRISO_"+iso_abbv+"_muRISO_"+iso_abbv);
+            			plotSpectra(sn+"_eID_"+id_abbv+"_muID_"+id_abbv+"_eRISO_"+iso_abbv+"_muRISO_"+iso_abbv,recolep1,recolep2);
+        			}
+        		}
+    		}
     	}
     }
 
@@ -173,14 +217,8 @@ public:
     	float maxEta_mu = 2.4;
 
     	float minDileptonMass = 0;
-    	float maxDileptonMass = 999;
+    	float maxDileptonMass = 9999;
     	float maxDileptonDR = 99;
-
-    	TString mu_ID = "medium";
-    	TString e_ID = "medium";
-
-    	float maxIso_mu = 0.2;
-    	float maxIso_e = 0.1;
 
     	// get reco leptons that pass the maxEta cut and minPt cut
     	const auto muons = PhysicsUtilities::selObjsMom(reader_muon->muons,minPt2_mu,maxEta_mu);
@@ -188,12 +226,8 @@ public:
 
     	// collect the muons and electrons together and then sort the leptons by pt
     	std::vector<const Lepton*> leps;
-    	for (const auto* mu : muons) {
-    		if (passID(mu,mu_ID,e_ID) && passISO(mu,maxIso_mu,maxIso_e)) leps.push_back(mu);
-    	}
-    	for (const auto* e : electrons) {
-    		if (passID(e,mu_ID,e_ID) && passISO(e,maxIso_mu,maxIso_e)) leps.push_back(e);
-    	}
+    	for (const auto* mu : muons) leps.push_back(mu);
+    	for (const auto* e : electrons) leps.push_back(e);
         std::sort(leps.begin(),leps.end(), PhysicsUtilities::greaterPTDeref<Lepton>());
 
         LepInfo.filteredLeps = leps;
@@ -231,24 +265,27 @@ public:
     }
 
     bool passID(const Lepton* lep, TString cat_mu, TString cat_e) {
-    	int idx = lep->index();
     	if (lep->isMuon()) {
     		if (cat_mu == "loose") {
-    			if (!reader_muon->muons[idx].passLooseID()) return false;
+    			if (!((const Muon*)lep)->passLooseID()) return false;
     		} else if (cat_mu == "medium") {
-    			if (!reader_muon->muons[idx].passMed16ID()) return false;
+    			if (!((const Muon*)lep)->passMed16ID()) return false;
     		} else if (cat_mu == "tight") {
-    			if (!reader_muon->muons[idx].passTightID()) return false;
+    			if (!((const Muon*)lep)->passTightID()) return false;
+    		} else if (cat_mu == "high") {
+    			if (!((const Muon*)lep)->passHighPT()) return false;
     		} else {
     			printf("Error with ID cat provided");
     		}
     	} else if (lep->isElectron()) {
     		if (cat_e == "loose") {
-    			if (!reader_electron->electrons[idx].passLooseID_noISO()) return false;
+    			if (!((const Electron*)lep)->passLooseID_noISO()) return false;
     		} else if (cat_e == "medium") {
-    			if (!reader_electron->electrons[idx].passMedID_noISO()) return false;
+    			if (!((const Electron*)lep)->passMedID_noISO()) return false;
     		} else if (cat_e == "tight") {
-    			if (!reader_electron->electrons[idx].passTightID_noISO()) return false;
+    			if (!((const Electron*)lep)->passTightID_noISO()) return false;
+    		} else if (cat_e == "high") {
+    			if (!((const Electron*)lep)->passHEEPID_noISO()) return false;
     		} else {
     			printf("Error with ID cat provided");
     		}
@@ -258,14 +295,24 @@ public:
     	return true;
     }
 
-    bool passISO(const Lepton* lep, float maxMiniIso_mu, float maxMiniIso_e) {
-    	if (lep->isMuon()) {
-    		if (lep->miniIso() > maxMiniIso_mu) return false;
-    	} else if (lep->isElectron()) {
-    		if (lep->miniIso() > maxMiniIso_e) return false;
-    	} else {
-    		printf("lep in iso not muon or electron\n");
-    	}
+    bool passISO(const Lepton* lep, float maxIso_mu, float maxIso_e, int iso_type) {
+    	if (iso_type == 0) {
+    	    if (lep->isMuon()) {
+    		    if (lep->miniIso() > maxIso_mu) return false;
+    	    } else if (lep->isElectron()) {
+    	    	if (lep->miniIso() > maxIso_e) return false;
+    	    } else {
+    		    printf("lep in iso not muon or electron\n");
+    	    }
+    	} else if (iso_type == 1) {
+    	    if (lep->isMuon()) {
+    		    if (((const Muon*)lep)->dbRelISO() > maxIso_mu) return false;
+    	    } else if (lep->isElectron()) {
+    	    	if (((const Electron*)lep)->eaRelISO() > maxIso_e) return false;
+    	    } else {
+    		    printf("lep in iso not muon or electron\n");
+    	    }
+    	} else std::cout << "Error choosing isolation type" << std::endl;
     	return true;
     }
 
@@ -309,7 +356,7 @@ public:
         	if (!findHbbCand(selectedLeps[0], selectedLeps[1])) return false;
 
         	plotAcc(sn+"_lepmatch");
-        	plotSpectra(sn,selectedLeps[0],selectedLeps[1]);
+        	addPlots(sn,selectedLeps[0],selectedLeps[1]);
         }
         // BKG
         if (reader_event->process != FillerConstants::SIGNAL) {
@@ -330,14 +377,14 @@ public:
             else if (selectedLeps[0]->isElectron() && selectedLeps[1]->isElectron()) sn += "_ee";
             else sn += "_emu";
             plotAcc(sn+"_passLepSel");
-        	plotSpectra(sn,selectedLeps[0],selectedLeps[1]);
+        	addPlots(sn,selectedLeps[0],selectedLeps[1]);
         }
         return true;
     }
 
     void write(TString fileName){
     	plotter.write(fileName);
-		if (reader_event->process == FillerConstants::SIGNAL) {
+/*		if (reader_event->process == FillerConstants::SIGNAL) {
 		    float ee_num = plotter.getOrMake1DPre(TString::Format("m%i_ee_lepmatch_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
 			float ee_den = plotter.getOrMake1DPre(TString::Format("m%i_ee_baseline_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
 			float emu_num = plotter.getOrMake1DPre(TString::Format("m%i_emu_lepmatch_ept10_mupt10_eID_L_muID_L_eISO_01_muISO_02",signal_mass),"evts",";M_{X}",50,600,4600)->GetEntries();
@@ -362,6 +409,7 @@ public:
 			printf("ee eff = %f\n",ee_num/den);
 			printf("mumu eff = %f\n",mumu_num/den);
     	}
+    	*/
     }
     HistGetter plotter;
 };
