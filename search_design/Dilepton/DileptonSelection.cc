@@ -225,7 +225,7 @@ public:
         proc.lepSelParams.el_getID = &Electron::passVetoID_noISO;
         proc.lepSelParams.mu_getID = &Muon::passSoftID;
 
-        sn += "_ept10_mupt10_";
+        TString kinsel = "_ept10_mupt10_";
         TString stdiso = "_miniIso_e01_mu02_";
 
         static const std::vector<TString> ids = {"L","M","T","H"};
@@ -242,8 +242,13 @@ public:
         	}
         }
         if (lep1 && lep2) {
+        	TString chan;
             if (isSignal) {
             	if (!matchDileptons(matchLep1,matchLep2,lep1,lep2)) return;
+            } else {
+            	if (lep1->isMuon() && lep2->isMuon()) chan = "_mumu";
+            	else if (lep1->isElectron() && lep2->isElectron()) chan = "_ee";
+            	else chan = "_emu";
             }
     		bool passStdId1 = lep1->isMuon() ? ((const Muon*)lep1)->passMed16ID() : ((const Electron*)lep1)->passTightID_noISO();
     		bool passStdId2 = lep2->isMuon() ? ((const Muon*)lep2)->passMed16ID() : ((const Electron*)lep2)->passTightID_noISO();
@@ -258,7 +263,7 @@ public:
         			else if (id==2) goodId1 = lep1->isMuon() ? ((const Muon*)lep1)->passTightID() : ((const Electron*)lep1)->passTightID_noISO();
         			else if (id==3) goodId1 = lep1->isMuon() ? ((const Muon*)lep1)->passHighPT() : ((const Electron*)lep1)->passHEEPID_noISO();
 
-        			if (goodId1) plotter.getOrMake1DPre(sn+"ID_eT_muM"+stdiso,"_evts_lep1_"+ids[id],";M_{X}",50,600,4600)->Fill(signal_mass,weight);
+        			if (goodId1) plotter.getOrMake1DPre(sn+chan+kinsel+"ID_eT_muM"+stdiso,"_evts_lep1_"+ids[id],";M_{X}",50,600,4600)->Fill(signal_mass,weight);
         		}
         		if (passStdId1 && passStdIso1 && passStdIso2) {
         			bool goodId2 = false;
@@ -267,7 +272,7 @@ public:
         			else if (id==2) goodId2 = lep2->isMuon() ? ((const Muon*)lep2)->passTightID() : ((const Electron*)lep2)->passTightID_noISO();
         			else if (id==3) goodId2 = lep2->isMuon() ? ((const Muon*)lep2)->passHighPT() : ((const Electron*)lep2)->passHEEPID_noISO();
 
-        			if (goodId2) plotter.getOrMake1DPre(sn+"ID_eT_muM"+stdiso,"_evts_lep2_"+ids[id],";M_{X}",50,600,4600)->Fill(signal_mass,weight);
+        			if (goodId2) plotter.getOrMake1DPre(sn+chan+kinsel+"ID_eT_muM"+stdiso,"_evts_lep2_"+ids[id],";M_{X}",50,600,4600)->Fill(signal_mass,weight);
         		}
         	}
         	// ISO
@@ -275,10 +280,10 @@ public:
     			TString isoname = TString::Format("%.1f",iso);
     			isoname.ReplaceAll(".","");
         		if (passStdIso2 && passStdId1 && passStdId2) {
-        			if (lep1->miniIso() < iso) plotter.getOrMake1DPre(sn+"ID_eT_muM"+stdiso,"_evts_lep1_"+isoname,";M_{X}",50,600,4600)->Fill(signal_mass,weight);
+        			if (lep1->miniIso() < iso) plotter.getOrMake1DPre(sn+chan+kinsel+"ID_eT_muM"+stdiso,"_evts_lep1_"+isoname,";M_{X}",50,600,4600)->Fill(signal_mass,weight);
         		}
         		if (passStdIso1 && passStdId1 && passStdId2) {
-        			if (lep2->miniIso() < iso) plotter.getOrMake1DPre(sn+"ID_eT_muM"+stdiso,"_evts_lep2_"+isoname,";M_{X}",50,600,4600)->Fill(signal_mass,weight);
+        			if (lep2->miniIso() < iso) plotter.getOrMake1DPre(sn+chan+kinsel+"ID_eT_muM"+stdiso,"_evts_lep2_"+isoname,";M_{X}",50,600,4600)->Fill(signal_mass,weight);
         		}
         	}
         }
