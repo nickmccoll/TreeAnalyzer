@@ -125,7 +125,7 @@ public:
         DefaultLeptonSelections::setDefaultLeptonProcessor(proc);
         proc.lepSelParams.mu_minPT = 10;
         proc.lepSelParams.el_minPT = 10;
-        sn += "_ept10_mupt10_ID_eT_muM_";
+        TString constID = "_ept10_mupt10_ID_eT_muM_";
 
         static const std::vector<float>                     isoWPs = {0.1,0.2,0.3};
         static const std::vector<LepSelHelpers::muFunFloat> muIsoTypes = {&Muon::miniIso,&Muon::dbRelISO};
@@ -158,8 +158,14 @@ public:
                 	const FatJet* hbbjet = findHbbCand(lep1,lep2);
                 	if (!hbbjet) continue;
 
-                	plotter.getOrMake1DPre(sn+name,"evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
-                    plotSpectra(sn+name,lep1,lep2,hbbjet);
+            		TString chan;
+            		if (!isSignal) {
+            			if (lep1->isMuon() && lep2->isMuon()) chan = "_mumu";
+            			else if (lep1->isElectron() && lep2->isElectron()) chan = "_ee";
+            			else chan = "_emu";
+            		}
+                	plotter.getOrMake1DPre(sn+chan+constID+name,"evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
+                    plotSpectra(sn+chan+constID+name,lep1,lep2,hbbjet);
         		}
         	}
         }
@@ -169,12 +175,12 @@ public:
         DefaultLeptonSelections::setDefaultLeptonProcessor(proc);
         proc.lepSelParams.mu_minPT = 10;
         proc.lepSelParams.el_minPT = 10;
-        sn += "_ept10_mupt10_";
+        TString kinsel = "_ept10_mupt10_";
         TString suf = "_miniIso_e01_mu02_";
 
-        static const std::vector<LepSelHelpers::muFunBool> muIdTypes = {&Muon::passLooseID,&Muon::passMed16ID,&Muon::passTightID};
+        static const std::vector<LepSelHelpers::muFunBool> muIdTypes = {&Muon::passLooseID,&Muon::passMed16ID,&Muon::passTightID,&Muon::passHighPT};
         static const std::vector<LepSelHelpers::elFunBool> elIdTypes = {&Electron::passLooseID_noISO,&Electron::passMedID_noISO,
-        																&Electron::passTightID_noISO};
+        																&Electron::passTightID_noISO,&Electron::passHEEPID_noISO};
         static const std::vector<TString> ids = {"L","M","T","H"};
 
         for (unsigned long j=0; j<muIdTypes.size(); j++) {
@@ -198,8 +204,14 @@ public:
         		const FatJet* hbbjet = findHbbCand(lep1,lep2);
         		if (!hbbjet) continue;
 
-        		plotter.getOrMake1DPre(sn+name+suf,"evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
-        		plotSpectra(sn+name+suf,lep1,lep2,hbbjet);
+        		TString chan;
+        		if (!isSignal) {
+        			if (lep1->isMuon() && lep2->isMuon()) chan = "_mumu";
+        			else if (lep1->isElectron() && lep2->isElectron()) chan = "_ee";
+        			else chan = "_emu";
+        		}
+        		plotter.getOrMake1DPre(sn+chan+kinsel+name+suf,"evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
+        		plotSpectra(sn+chan+kinsel+name+suf,lep1,lep2,hbbjet);
         	}
         }
     }
