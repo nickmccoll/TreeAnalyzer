@@ -53,6 +53,7 @@ public:
 : finalstate(finalstate),category(category),period(period),luminosity(luminosity),physics(physics),lumiV(physics+"_"+period+"_lumi"),tag(physics +"_"+ finalstate+"_"+category+"_"+period)
 {
         rootFile = new TFile((std::string("datacardInputs_")+tag+".root").c_str(),"RECREATE");
+        rootFile->SetCompressionAlgorithm(1);
         rootFile->cd();
         w = new RooWorkspace("w","w");
         w->factory((lumiV+"["+ASTypes::flt2Str(luminosity)+"]").c_str());

@@ -58,12 +58,12 @@ rr  '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimat
 
 #Note search region variable plots
 
-rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,0,"trees/betrees_mc.root","mc")' &
-rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,0,"trees/betrees_data.root","data")' &
-rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,0,"trees/out_radion_hh_bbinc_m1000_0.root","m1000")' &
-rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,0,"trees/out_radion_hh_bbinc_m2500_0.root","m2500")' &
+rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,2,"trees/betrees_mc.root","mc")' &
+rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,2,"trees/betrees_data.root","data")' &
+rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,2,"trees/out_radion_hh_bbinc_m1000_0.root","m1000")' &
+rr -b -q '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+   (0,2,"trees/out_radion_hh_bbinc_m2500_0.root","m2500")' &
 rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+         (1,0,"","")' 
-rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+         (2,1,"","")' 
+rr '/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/plotting/plotSRVariables.C+         (2,0,"","")' 
 
 #limits
 . /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/makeCards.sh nonCond_ePTRatio0p4_wQCD_sepQGemu 0 0 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/
@@ -93,10 +93,10 @@ combineTool.py -d combinedCard.root -m 2500  -M HybridNew --LHCmode LHC-limits -
 combine -d combinedCard.root -m 2500  -M HybridNew --LHCmode LHC-limits -v 2 --readHybridResults --grid=higgsCombine.Test.HybridNew.mH2500.123456.root  --expectedFromGrid=0.8399999
 
 #impacts
-text2workspace.py combinedCard.txt -m 2000 -o forImpact.root
-combineTool.py -M Impacts -d forImpact.root -m 2000 --rMax 0.06 --doInitialFit --robustFit 1
-nohup combineTool.py -M Impacts -d forImpact.root -m 2000 --rMax 0.06 --robustFit 1 --doFits --parallel 20 &
-combineTool.py -M Impacts -d forImpact.root -m 2000 -o impacts.json
+text2workspace.py combinedCard.txt -m 1000 -o forImpact.root
+combineTool.py -M Impacts -d forImpact.root -m 1000 --rMax 0.2 --doInitialFit --robustFit 1
+nohup combineTool.py -M Impacts -d forImpact.root -m 1000 --rMax 0.2 --robustFit 1 --doFits --parallel 20 &
+combineTool.py -M Impacts -d forImpact.root -m 1000  --rMax 0.2  -o impacts.json
 plotImpacts.py -i impacts.json -o impacts
 
 #Stat tests

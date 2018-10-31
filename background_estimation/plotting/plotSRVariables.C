@@ -7,7 +7,6 @@
 #include "HistoPlotting/include/StyleInfo.h"
 
 using namespace CutConstants;
-
 CutStr blindCut = CutStr("blindCut",std::string("(")+hbbMCS.cut+"<100||"+hbbMCS.cut+">150)");
 std::vector<PlotVar> vars;
 std::vector<std::string> varUnits;
@@ -91,7 +90,7 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
         p->setCMSLumiExtraText("Preliminary");
 //        p->addLegendEntry(7,0,"X #sigma x #it{B} = 1 pb","");
         p->addText("All categories",0.15,0.88,0.03);
-        p->addText("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=1 pb",0.15,0.71,0.03);
+        if(signalNames.size())p->addText("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=1 pb",0.15,0.71,0.03);
         p->setLegendNColumns(2);
 
         std::string ytitle = "N. of events";
@@ -238,8 +237,15 @@ void plotSRVariables( int step, int reg,std::string tree, std::string name){
         makeDataDistributions(name,out,tree,cut ,isData);
     }
     if(step==1){
-        compilePlots(prefix,out+"_mc_srVarDistributions.root",out+"_data_srVarDistributions.root",
-                {out+"_m1000_srVarDistributions.root",out+"_m2500_srVarDistributions.root"}, {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"});
+
+        if(reg==REG_SR){
+            compilePlots(prefix,out+"_mc_srVarDistributions.root",out+"_data_srVarDistributions.root",
+                    {out+"_m1000_srVarDistributions.root",out+"_m2500_srVarDistributions.root"}, {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"});
+        } else{
+            compilePlots(prefix,out+"_mc_srVarDistributions.root",out+"_data_srVarDistributions.root",{},{});
+
+        }
+
     }
     if(step==2) categoryPlots(prefix,out+"_mc_srVarDistributions.root");
 }
