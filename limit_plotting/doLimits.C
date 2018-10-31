@@ -5,6 +5,7 @@
 #include "TTree.h"
 #include "TGraph.h"
 #include "TGraphAsymmErrors.h"
+#include "TGraphErrors.h"
 #include "TCanvas.h"
 #include "TFrame.h"
 #include "TLegend.h"
@@ -15,7 +16,7 @@
 using namespace CutConstants;
 
 const float minX = 700;
-const float maxX = 3100;
+const float maxX = 3600;
 const float minY = 0.5;
 const float maxY = 10000;
 const bool doLog = true;
@@ -26,6 +27,141 @@ std::vector<std::string> fileLabel = {"radion","blkgrav"};
 std::string lumiText = "35.9 fb^{-1} (13 TeV)";
 const bool prelim = true;
 const float limitScale = 1000;
+
+//https://github.com/CrossSectionsLHC/WED
+
+std::vector<std::pair<float,float>> radionXSec = {
+        {800  ,   1.36e+02},
+        {850  ,   1.13e+02},
+        {900  ,   9.34e+01},
+        {950  ,   7.82e+01},
+        {1000 ,   6.55e+01},
+        {1050 ,   5.60e+01},
+        {1100 ,   4.78e+01},
+        {1150 ,   4.09e+01},
+        {1200 ,   3.49e+01},
+        {1250 ,   2.98e+01},
+        {1300 ,   2.55e+01},
+        {1350 ,   2.18e+01},
+        {1400 ,   1.86e+01},
+        {1450 ,   1.59e+01},
+        {1500 ,   1.36e+01},
+        {1550 ,   1.19e+01},
+        {1600 ,   1.03e+01},
+        {1650 ,   9.02e+00},
+        {1700 ,   7.86e+00},
+        {1750 ,   6.86e+00},
+        {1800 ,   5.98e+00},
+        {1850 ,   5.26e+00},
+        {1900 ,   4.62e+00},
+        {1950 ,   4.06e+00},
+        {2000 ,   3.57e+00},
+        {2050 ,   3.17e+00},
+        {2100 ,   2.81e+00},
+        {2150 ,   2.49e+00},
+        {2200 ,   2.21e+00},
+        {2250 ,   1.96e+00},
+        {2300 ,   1.74e+00},
+        {2350 ,   1.54e+00},
+        {2400 ,   1.37e+00},
+        {2450 ,   1.21e+00},
+        {2500 ,   1.08e+00},
+        {2550 ,   9.60e-01},
+        {2600 ,   8.57e-01},
+        {2650 ,   7.65e-01},
+        {2700 ,   6.83e-01},
+        {2750 ,   6.10e-01},
+        {2800 ,   5.45e-01},
+        {2850 ,   4.86e-01},
+        {2900 ,   4.34e-01},
+        {2950 ,   3.88e-01},
+        {3000 ,   3.46e-01},
+        {3050 ,   3.11e-01},
+        {3100 ,   2.79e-01},
+        {3150 ,   2.50e-01},
+        {3200 ,   2.25e-01},
+        {3250 ,   2.02e-01},
+        {3300 ,   1.81e-01},
+        {3350 ,   1.62e-01},
+        {3400 ,   1.46e-01},
+        {3450 ,   1.31e-01},
+        {3500 ,   1.17e-01}
+};
+
+std::vector<std::pair<float,float>> bgXsec = {
+{800     ,1.64e+01},
+{850     ,1.20e+01},
+{900     ,8.82e+00},
+{950     ,6.71e+00},
+{1000    ,5.10e+00},
+{1050    ,4.05e+00},
+{1100    ,3.22e+00},
+{1150    ,2.56e+00},
+{1200    ,2.04e+00},
+{1250    ,1.62e+00},
+{1300    ,1.29e+00},
+{1350    ,1.03e+00},
+{1400    ,8.15e-01},
+{1450    ,6.48e-01},
+{1500    ,5.15e-01},
+{1550    ,4.26e-01},
+{1600    ,3.52e-01},
+{1650    ,2.91e-01},
+{1700    ,2.41e-01},
+{1750    ,1.99e-01},
+{1800    ,1.65e-01},
+{1850    ,1.38e-01},
+{1900    ,1.16e-01},
+{1950    ,9.72e-02},
+{2000    ,8.16e-02},
+{2050    ,6.96e-02},
+{2100    ,5.95e-02},
+{2150    ,5.08e-02},
+{2200    ,4.34e-02},
+{2250    ,3.70e-02},
+{2300    ,3.16e-02},
+{2350    ,2.70e-02},
+{2400    ,2.31e-02},
+{2450    ,1.97e-02},
+{2500    ,1.68e-02},
+{2550    ,1.46e-02},
+{2600    ,1.26e-02},
+{2650    ,1.09e-02},
+{2700    ,9.44e-03},
+{2750    ,8.17e-03},
+{2800    ,7.07e-03},
+{2850    ,6.12e-03},
+{2900    ,5.30e-03},
+{2950    ,4.59e-03},
+{3000    ,3.97e-03},
+{3050    ,3.47e-03},
+{3100    ,3.04e-03},
+{3150    ,2.65e-03},
+{3200    ,2.32e-03},
+{3250    ,2.03e-03},
+{3300    ,1.77e-03},
+{3350    ,1.55e-03},
+{3400    ,1.36e-03},
+{3450    ,1.19e-03},
+{3500    ,1.04e-03}
+};
+
+
+TGraph * getSignalCrossSection(int sig) {
+TGraph * gr = new TGraph();
+
+const auto& sigXSec = sig == RADION ? radionXSec : bgXsec;
+
+int pt = 0;
+for(const auto & xsec : sigXSec){
+    gr->SetPoint(pt,xsec.first, xsec.second);
+    pt++;
+}
+
+
+
+return gr;
+}
 
 
 
@@ -111,6 +247,13 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
     frame->GetYaxis()->SetTitleSize(0.05);
     frame->GetYaxis()->SetTitleOffset(1.15);
 
+    auto sigXSec = getSignalCrossSection(sig);
+    sigXSec->SetLineWidth(3);
+    sigXSec->SetLineColor(kRed);
+//    bandExp->SetLineStyle(7);
+    sigXSec->SetMarkerStyle(0);
+    sigXSec->SetMarkerColor(kRed);
+
 
     auto bandExp = (TGraphAsymmErrors*)band68->Clone();
     bandExp->SetLineWidth(3);
@@ -125,9 +268,10 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
     bandObs->SetLineColor(kBlack);
     bandObs->SetMarkerStyle(20);
 
-    auto leg = new TLegend(0.60,0.66,0.93,0.83,"","NDC");
+    auto leg = new TLegend(0.58,0.66,0.91,0.83,"","NDC");
     leg->SetBorderSize(0);
 
+    leg->AddEntry(sigXSec, sig == RADION ? "Radion (#Lambda_{R}=3 TeV)" : "Bulk graviton (#tilde{k}=0.3)");
     if(!blind)leg->AddEntry(bandObs, "Observed");
     leg->AddEntry(bandExp, "Median expected","L");
     leg->AddEntry(band68, "68% expected","F");
@@ -138,6 +282,7 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
     frame->Draw();
     band95->Draw("3same");
     band68->Draw("3same");
+    sigXSec->Draw("LX");
     bandExp->Draw("LX");
     if(!blind) bandObs->Draw("PLsame");
     leg->Draw();
@@ -150,8 +295,8 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
         latex->DrawLatex(x,y,txt.c_str());
     };
 
-    addText(partLabels[sig],0.03,0.61,0.88);
-    addText("95% CL upper limits",0.03,0.61,0.84);
+    addText(partLabels[sig],0.03,0.59,0.88);
+    addText("95% CL upper limits",0.03,0.59,0.84);
 
 
 
