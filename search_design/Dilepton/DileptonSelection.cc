@@ -112,18 +112,6 @@ public:
         if (idx < 0) return 0;
         return &reader_fatjet->jets[idx];
     }
-    bool matchDileptons(const Lepton* matchReco1, const Lepton* matchReco2, const Lepton* recoCand1, const Lepton* recoCand2) {
-    	// check if the two selected reco leptons are matches to the DR-matched leptons (degeneracy = 2)
-    	if (matchReco1 && matchReco2 && recoCand1 && recoCand2) {
-			if (matchReco1->isMuon() == recoCand1->isMuon() && matchReco2->isMuon() == recoCand2->isMuon()) {
-				if (matchReco1->index() == recoCand1->index() && matchReco2->index() == recoCand2->index()) return true;
-			}
-			if (matchReco1->isMuon() == recoCand2->isMuon() && matchReco2->isMuon() == recoCand1->isMuon()) {
-				if (matchReco1->index() == recoCand2->index() && matchReco2->index() == recoCand1->index()) return true;
-			}
-    	}
-    	return false;
-    }
 	TString getDilepChan(const Lepton* lep1, const Lepton* lep2) {
 		if (lep1->isMuon() && lep2->isMuon()) return "_mumu_";
 		else if (lep1->isElectron() && lep2->isElectron()) return "_ee_";
@@ -135,7 +123,11 @@ public:
         	if (passSel(lep,0.1,0.05,4.0,"M","M",9999,9999)) leps.push_back(lep);
         }
         if (leps.size() < 2) return;
-        if (leps.size() > 2) {printf("More than 2 reco leps pass Sel minus ISO\n"); return;}
+        if (leps.size() > 2) {
+        	printf("More than 2 reco leps pass Sel minus ISO\n");
+        	plotter.getOrMake1DPre(sn+"_testISO_gt2RECOleps","evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
+        	return;
+        }
         if (leps.front()->isMuon() ? leps.front()->pt() < 26 : leps.front()->pt() < 30) return;
 
         const FatJet* hbbjet = findHbbCand(leps.front(),leps[1]);
@@ -146,6 +138,7 @@ public:
 
         TString constID = "ID_eM_muM_";
         TString pref = getDilepChan(leps.front(),leps[1]) + "pt2_10_";
+        plotter.getOrMake1DPre(sn+pref+constID+"Iso_I","evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
         for (unsigned long type=0; type<isoTypeName.size(); type++) {
             if (type == 0) {
                 for (const auto& iso : isoWPs) {
@@ -154,11 +147,11 @@ public:
                     bool passIso1 = (leps.front()->miniIso() < iso);
                     bool passIso2 = (leps[1]->miniIso() < iso);
                     if (passIso1 && passIso2) {
-                    plotter.getOrMake1DPre(sn+pref+constID+name,"evts",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
+                    plotter.getOrMake1DPre(sn+pref+constID+name,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
                     plotSpectra(sn+pref+constID+name,leps.front(),leps[1],hbbjet);
                     }
-                    if (passIso1) plotter.getOrMake1DPre(sn+pref+constID+name,"evts_lep1",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
-                    if (passIso2) plotter.getOrMake1DPre(sn+pref+constID+name,"evts_lep2",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
+                    if (passIso1) plotter.getOrMake1DPre(sn+pref+constID+name,"evts_lep1",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
+                    if (passIso2) plotter.getOrMake1DPre(sn+pref+constID+name,"evts_lep2",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
                 }
             } else if (type == 1) {
                 for (const auto& iso : isoWPs) {
@@ -170,8 +163,8 @@ public:
                         plotter.getOrMake1DPre(sn+pref+constID+name,"evts",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
                         plotSpectra(sn+pref+constID+name,leps.front(),leps[1],hbbjet);
                     }
-                    if (passIso1) plotter.getOrMake1DPre(sn+pref+constID+name,"evts_lep1",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
-                    if (passIso2) plotter.getOrMake1DPre(sn+pref+constID+name,"evts_lep2",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
+                    if (passIso1) plotter.getOrMake1DPre(sn+pref+constID+name,"evts_lep1",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
+                    if (passIso2) plotter.getOrMake1DPre(sn+pref+constID+name,"evts_lep2",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
                 }
             }
         }
@@ -229,12 +222,18 @@ public:
         	if (passSel(lep,0.1,0.05,4.0,"I","I",0.1,0.2)) leps.push_back(lep);
         }
         if (leps.size() < 2) return;
-        if (leps.size() > 2) {printf("More than 2 reco leps pass Sel minus ID\n"); return;}
+        if (leps.size() > 2) {
+        	printf("More than 2 reco leps pass Sel minus ID\n");
+        	plotter.getOrMake1DPre(sn+"_testID_gt2RECOleps","evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
+        	return;
+        }
         if (leps.front()->isMuon() ? leps.front()->pt() < 26 : leps.front()->pt() < 30) return;
     	const FatJet* hbbjet = findHbbCand(leps[0],leps[1]);
         if (!hbbjet) return;
 
+    	TString pref = getDilepChan(leps[0],leps[1]) + "pt2_10_";
         TString constISO = "miniIso_e01_mu02";
+        plotter.getOrMake1DPre(sn+pref+"ID_I_"+constISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
         for (unsigned long id=0; id<ids.size(); id++) {
         	bool passId1 = false;
         	bool passId2 = false;;
@@ -253,13 +252,12 @@ public:
         	} else printf("check your IDs vector\n");
 
         	TString name = "ID_"+ids[id]+"_";
-        	TString pref = getDilepChan(leps[0],leps[1]) + "pt2_10_";
         	if (passId1 && passId2) {
-        	    plotter.getOrMake1DPre(sn+pref+name+constISO,"evts",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
+        	    plotter.getOrMake1DPre(sn+pref+name+constISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
         	    plotSpectra(sn+pref+name+constISO,leps.front(),leps[1],hbbjet);
         	}
-        	if (passId1) plotter.getOrMake1DPre(sn+pref+name+constISO,"evts_lep1",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
-        	if (passId2) plotter.getOrMake1DPre(sn+pref+name+constISO,"evts_lep2",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
+        	if (passId1) plotter.getOrMake1DPre(sn+pref+name+constISO,"evts_lep1",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
+        	if (passId2) plotter.getOrMake1DPre(sn+pref+name+constISO,"evts_lep2",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
         }
     }
     void testID_Sig(TString sn, const Lepton* recoLep1, const Lepton* recoLep2, const FatJet* hbbjet) {
@@ -323,6 +321,7 @@ public:
 				if (!hbbjet) return;
 
 				TString pref = getDilepChan(lepCandsDZ.front(),lepCandsDZ[1]) + "pt2_10_";
+				plotter.getOrMake1DPre(sn+pref+"IP_dz_I"+constIDISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
 				for (const auto& dz : vec_dz) {
 					bool passDZ1 = lepCandsDZ.front()->dz() < dz;
 					bool passDZ2 = lepCandsDZ[1]->dz() < dz;
@@ -330,14 +329,17 @@ public:
 					TString name = TString::Format("IP_dz_%.2f_",dz);
 					name.ReplaceAll(".","");
 					if (passDZ1 && passDZ2) {
-						plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
+						plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
 						plotSpectra(sn+pref+name+constIDISO,lepCandsDZ.front(),lepCandsDZ[1],hbbjet);
 					}
-					if (passDZ1) plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts_lep1",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
-					if (passDZ2) plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts_lep2",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
+					if (passDZ1) plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts_lep1",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
+					if (passDZ2) plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts_lep2",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
 				}
 			}
-        } else if (lepCandsDZ.size() > 2) printf("More than 2 RECO leps pass Sel minus DZ\n");
+        } else if (lepCandsDZ.size() > 2) {
+        	printf("More than 2 RECO leps pass Sel minus DZ\n");
+        	plotter.getOrMake1DPre(sn+"_testDZ_gt2RECOleps","evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
+        }
 
         if (lepCandsD0.size() == 2) {
         	if (lepCandsD0.front()->isMuon() ? lepCandsD0.front()->pt() > 26 : lepCandsD0.front()->pt() > 30) {
@@ -345,6 +347,7 @@ public:
 				if (!hbbjet) return;
 
 				TString pref = getDilepChan(lepCandsD0.front(),lepCandsD0[1]) + "pt2_10_";
+				plotter.getOrMake1DPre(sn+pref+"IP_d0_I"+constIDISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
 				for (const auto& d0 : vec_d0) {
 					bool passD01 = lepCandsDZ.front()->d0() < d0;
 					bool passD02 = lepCandsDZ[1]->d0() < d0;
@@ -352,14 +355,17 @@ public:
 					TString name = TString::Format("IP_d0_%.2f_",d0);
 					name.ReplaceAll(".","");
 					if (passD01 && passD02) {
-						plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
+						plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
 						plotSpectra(sn+pref+name+constIDISO,lepCandsD0.front(),lepCandsD0[1],hbbjet);
 					}
-					if (passD01) plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts_lep1",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
-					if (passD02) plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts_lep2",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
+					if (passD01) plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts_lep1",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
+					if (passD02) plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts_lep2",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
 				}
         	}
-        } else if (lepCandsD0.size() > 2) printf("More than 2 RECO leps pass Sel minus D0\n");
+        } else if (lepCandsD0.size() > 2) {
+        	printf("More than 2 RECO leps pass Sel minus D0\n");
+        	plotter.getOrMake1DPre(sn+"_testD0_gt2RECOleps","evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
+        }
 
         if (lepCandsSIP.size() == 2) {
         	if (lepCandsSIP.front()->isMuon() ? lepCandsSIP.front()->pt() > 26 : lepCandsSIP.front()->pt() > 30) {
@@ -367,6 +373,7 @@ public:
 				if (!hbbjet) return;
 
 				TString pref = getDilepChan(lepCandsSIP.front(),lepCandsSIP[1]) + "pt2_10_";
+				plotter.getOrMake1DPre(sn+pref+"IP_SIP_I"+constIDISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
 				for (const auto& sip : vec_SIP) {
 					bool passSIP1 = lepCandsSIP.front()->sip3D() < sip;
 					bool passSIP2 = lepCandsSIP[1]->sip3D() < sip;
@@ -374,14 +381,17 @@ public:
 					TString name = TString::Format("IP_SIP_%.0f_",sip);
 					name.ReplaceAll(".","");
 					if (passSIP1 && passSIP2) {
-						plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts",";T_{T}",50,600,4600)->Fill(ht_chs,weight);
+						plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts",";T_{T}",100,600,4600)->Fill(ht_chs,weight);
 						plotSpectra(sn+pref+name+constIDISO,lepCandsSIP.front(),lepCandsSIP[1],hbbjet);
 					}
-					if (passSIP1) plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts_lep1",";T_{T}",50,600,4600)->Fill(ht_chs,weight);
-					if (passSIP2) plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts_lep2",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
+					if (passSIP1) plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts_lep1",";T_{T}",100,400,4600)->Fill(ht_chs,weight);
+					if (passSIP2) plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts_lep2",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
 				}
         	}
-        } else if (lepCandsSIP.size() > 2) printf("More than 2 RECO leps pass Sel minus SIP\n");
+        } else if (lepCandsSIP.size() > 2) {
+        	printf("More than 2 RECO leps pass Sel minus SIP\n");
+        	plotter.getOrMake1DPre(sn+"_testSIP_gt2RECOleps","evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
+        }
     }
 
     void testIP_Sig(TString sn, const Lepton* recoLep1, const Lepton* recoLep2, const FatJet* hbbjet) {
