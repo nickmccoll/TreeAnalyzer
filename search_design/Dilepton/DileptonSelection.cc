@@ -160,7 +160,7 @@ public:
                     bool passIso1 = leps.front()->isMuon() ? (((const Muon*)leps.front())->dbRelISO() < iso) : (((const Electron*)leps.front())->eaRelISO() < iso);
                     bool passIso2 = leps[1]->isMuon() ? (((const Muon*)leps[1])->dbRelISO() < iso) : (((const Electron*)leps[1])->eaRelISO() < iso);
                     if (passIso1 && passIso2) {
-                        plotter.getOrMake1DPre(sn+pref+constID+name,"evts",";H_{T}",50,600,4600)->Fill(ht_chs,weight);
+                        plotter.getOrMake1DPre(sn+pref+constID+name,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
                         plotSpectra(sn+pref+constID+name,leps.front(),leps[1],hbbjet);
                     }
                     if (passIso1) plotter.getOrMake1DPre(sn+pref+constID+name,"evts_lep1",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
@@ -381,7 +381,7 @@ public:
 					TString name = TString::Format("IP_SIP_%.0f_",sip);
 					name.ReplaceAll(".","");
 					if (passSIP1 && passSIP2) {
-						plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts",";T_{T}",100,600,4600)->Fill(ht_chs,weight);
+						plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts",";T_{T}",100,400,4600)->Fill(ht_chs,weight);
 						plotSpectra(sn+pref+name+constIDISO,lepCandsSIP.front(),lepCandsSIP[1],hbbjet);
 					}
 					if (passSIP1) plotter.getOrMake1DPre(sn+pref+name+constIDISO,"evts_lep1",";T_{T}",100,400,4600)->Fill(ht_chs,weight);
@@ -591,7 +591,7 @@ public:
         }
         // BKG
         if (reader_event->process != FillerConstants::SIGNAL) {
-        	plotter.getOrMake1DPre(sn+"_baseline_","evts",";M_{X}",50,600,4600)->Fill(ht_chs,weight);
+        	plotter.getOrMake1DPre(sn+"_baseline_","evts",";M_{X}",100,400,4600)->Fill(ht_chs,weight);
             const auto muons = PhysicsUtilities::selObjsMom(reader_muon->muons,10,2.4);
             const auto electrons = PhysicsUtilities::selObjsMom(reader_electron->electrons,10,2.5);
 //printf("debug0\n");
