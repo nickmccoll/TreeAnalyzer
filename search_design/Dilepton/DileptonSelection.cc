@@ -300,7 +300,7 @@ public:
     		if (passSel(lep,999,999,999,"M","M",0.1,0.2)) leps.push_back(lep);
     	}
     	if (leps.size() < 2) return;
-    	TString constIDISO = "ID_eM_muM_miniIS0_e01_mu02";
+    	TString constIDISO = "ID_eM_muM_miniIso_e01_mu02";
 
     	// N-1 plots for each parameter in IP selection
         static const std::vector<double> vec_dz = {0.01,0.05,0.1,0.2,0.3};
@@ -321,7 +321,7 @@ public:
 				if (!hbbjet) return;
 
 				TString pref = getDilepChan(lepCandsDZ.front(),lepCandsDZ[1]) + "pt2_10_";
-				plotter.getOrMake1DPre(sn+pref+"IP_dz_I"+constIDISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
+				plotter.getOrMake1DPre(sn+pref+"IP_dz_I_"+constIDISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
 				for (const auto& dz : vec_dz) {
 					bool passDZ1 = lepCandsDZ.front()->dz() < dz;
 					bool passDZ2 = lepCandsDZ[1]->dz() < dz;
@@ -347,7 +347,7 @@ public:
 				if (!hbbjet) return;
 
 				TString pref = getDilepChan(lepCandsD0.front(),lepCandsD0[1]) + "pt2_10_";
-				plotter.getOrMake1DPre(sn+pref+"IP_d0_I"+constIDISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
+				plotter.getOrMake1DPre(sn+pref+"IP_d0_I_"+constIDISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
 				for (const auto& d0 : vec_d0) {
 					bool passD01 = lepCandsDZ.front()->d0() < d0;
 					bool passD02 = lepCandsDZ[1]->d0() < d0;
@@ -373,7 +373,7 @@ public:
 				if (!hbbjet) return;
 
 				TString pref = getDilepChan(lepCandsSIP.front(),lepCandsSIP[1]) + "pt2_10_";
-				plotter.getOrMake1DPre(sn+pref+"IP_SIP_I"+constIDISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
+				plotter.getOrMake1DPre(sn+pref+"IP_SIP_I_"+constIDISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
 				for (const auto& sip : vec_SIP) {
 					bool passSIP1 = lepCandsSIP.front()->sip3D() < sip;
 					bool passSIP2 = lepCandsSIP[1]->sip3D() < sip;
