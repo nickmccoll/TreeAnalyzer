@@ -413,15 +413,25 @@ public:
                     binWidth = h->GetBinWidth(1);
                     break;
                 }
+
+                double xV =0.45;
+                double yV =0.63;
+
                 p->setXTitle( (prefs.binInY ? hbbMCS : hhMCS) .title.c_str());
                 p->setYTitle((std::string("N. of events / ") + flt2Str(binWidth) +" GeV").c_str() );
-                p->setCMSLumi();
-                p->setCMSLumiExtraText("Preliminary");
-                p->addText(st,0.18,0.84,0.04);
+                p->setCMSLumi(10);
+//                p->setCMSLumiExtraText("Preliminary");
+                p->addText(st,xV+0.0075,yV+0.2075,0.045);
                 p->setLegendNColumns(2);
-                p->setLegendPos(0.175,0.6675,0.55,.8725);
-                if(prefs.signals.size())
-                p->addText("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=0.1 pb",0.18,0.64,0.035);
+
+                if(prefs.signals.size()){
+                    p->setLegendPos(xV,yV,xV+0.457,yV+0.245);
+                    p->addText("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=0.1 pb",xV+0.0075,yV-0.04,0.042);
+                }
+
+                else {
+                    p->setLegendPos(xV,yV,xV+0.445,yV+0.245);
+                }
 
 
                 if(prefs.doLog) p->setMinMax(0.1,1000 );
@@ -569,7 +579,7 @@ std::vector<TObject*> doStatTest(const DataPlotPrefs& dataPlot, const std::strin
 }
 
 void doGlobChi2(std::vector<TObject*>& writeables, const std::string& limitBaseName, const double mH = 2000, const std::string& toyN = "toys"){
-    TFile * fd = new TFile((limitBaseName+"/higgsCombineTest.GoodnessOfFit.mH"+ASTypes::flt2Str(2000)+".root").c_str(),"read");
+    TFile * fd = new TFile((limitBaseName+"/higgsCombineTest.GoodnessOfFit.mH"+ASTypes::flt2Str(1000)+".root").c_str(),"read");
     if(!fd){
         std::cout <<"No data file!"<<std::endl;
     }
@@ -584,7 +594,7 @@ void doGlobChi2(std::vector<TObject*>& writeables, const std::string& limitBaseN
     double dataLimit = dl;
     fd->Close();
 
-    TFile * ft = new TFile((limitBaseName+"/higgsCombineTest.GoodnessOfFit.mH"+ASTypes::flt2Str(2000)+"."+toyN+".root").c_str(),"read");
+    TFile * ft = new TFile((limitBaseName+"/higgsCombineTest.GoodnessOfFit.mH"+ASTypes::flt2Str(1000)+"."+toyN+".root").c_str(),"read");
     if(!ft) return ;
     TTree * toyTree = 0;
     ft->GetObject("limit",toyTree);
@@ -1044,15 +1054,33 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
     }
 
     if(step== 2){ //postfit for AN
-        if(outName.size())         outName += "postfit_dataComp";
+
+        bool blind=false;
+        bool doRebin = true;
+
+        if(outName.size())         {
+            outName += "postfit_dataComp";
+            if(inreg == REG_SR && !blind)
+                outName += "_unblind";
+            if(doRebin)
+                outName += "_rebinned";
+        }
 
         DataPlotPrefs hhPlot;
         hhPlot.modelType = MOD_POST;
         hhPlot.addType = MOD_PRE;
+        if(doRebin) hhPlot.rebinFactor = 4;
         if(inreg == REG_SR){
-            hhPlot.bins = {30,100,100,150,210};
+            if(blind) hhPlot.bins = {30,100,100,150,210};
+            else {
+                hhPlot.bins = {30,210};
+                hhPlot.signals = {"1000","2500"};
+                hhPlot.signalTitles = {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"};
+            }
             hhPlot.minTop =0.2;
             hhPlot.maxTop =3000;
+            if(doRebin) hhPlot.maxTop =10000;
+
         } else {
             hhPlot.bins = {30,210};
             hhPlot.minTop =0.2;
@@ -1069,11 +1097,12 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         writeables = doDataPlot(hhPlot,filename,postFitFilename);
         DataPlotPrefs hbbPlot = hhPlot;
         hbbPlot.bins = {700,4000};
+        if(doRebin) hbbPlot.rebinFactor = 3;
         hbbPlot.binInY = true;
         hbbPlot.doLog = false;
         hbbPlot.minTop =400;
         hbbPlot.maxTop =400;
-        if(inreg == REG_SR) hbbPlot.blindRange ={100,150};
+        if(inreg == REG_SR && blind) hbbPlot.blindRange ={100,150};
         auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename);
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         Dummy d(outName);
@@ -1113,7 +1142,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
     if(step==4){ //summary plots
         if(outName.size())         outName += "summaryPlots";
         doGlobChi2(writeables,limitBaseName);
-        doUncPlots(writeables,limitBaseName,reg,reg!=REG_SR);
+//        doUncPlots(writeables,limitBaseName,reg,reg!=REG_SR);
+        doUncPlots(writeables,limitBaseName,reg,true);
         Dummy d(outName);
     }
     if(step==5){ //bias test
@@ -1123,7 +1153,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
     }
 
     if(step== 6){ //postfit CR for Paper
-        if(reg == REG_SR) return;
+//        if(reg == REG_SR) return;
         if(outName.size())         outName += "postfitPaper_dataComp";
         DataPlotPrefs hhPlot;
         //Horrible
@@ -1133,31 +1163,33 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
 
 
         hhPlot.modelType = MOD_POST;
-            hhPlot.bins = {30,210};
+        hhPlot.bins = {30,210};
         hhPlot.binInY = false;
         hhPlot.sels =  srList;
         hhPlot.titles = srListTitles;
 
         hhPlot.minTop =0.5;
-        hhPlot.maxTop =30000;
-
+        hhPlot.maxTop =40000;
+        hhPlot.rebinFactor=4;
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
         hhPlot.doLog = true;
+        hhPlot.rebinFactor = 4;
         writeables = doDataPlot(hhPlot,filename,limitBaseName +"/postFit_comp.root");
         DataPlotPrefs hbbPlot = hhPlot;
-        hbbPlot.bins = {700,4000};
         hbbPlot.binInY = true;
+        hbbPlot.bins = {700,4000};
         hbbPlot.doLog = false;
         hbbPlot.minTop =0;
-        hbbPlot.maxTop =reg==REG_TOPCR ?  400 :700;
+        hbbPlot.maxTop =reg==REG_TOPCR ?  1000 :2000;
+        hbbPlot.rebinFactor = 3;
         auto writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root");
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         Dummy d(outName);
     }
 
     if(step== 7){ //postfit SR for Paper
-        if(reg != REG_TOPCR) return;
+//        if(reg != REG_TOPCR) return;
         if(outName.size())         outName += "postfitPaper_dataCompSR";
         DataPlotPrefs hhPlot;
         hhPlot.modelType = MOD_POST;
@@ -1168,7 +1200,10 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.signals = {"1000","2500"};
         hhPlot.signalTitles = {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"};
         hhPlot.minTop =0.2;
-        hhPlot.maxTop =3000;
+        hhPlot.maxTop =2000;
+        hhPlot.rebinFactor = 4;
+        hhPlot.signals = {"1000","2500"};
+        hhPlot.signalTitles = {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"};
 
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
@@ -1180,6 +1215,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hbbPlot.doLog = false;
         hbbPlot.minTop =400;
         hbbPlot.maxTop =400;
+        hbbPlot.rebinFactor = 3;
 //        if(inreg == REG_SR) hbbPlot.blindRange ={100,150};
         auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename);
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );

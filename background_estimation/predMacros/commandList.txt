@@ -99,21 +99,40 @@ nohup combineTool.py -M Impacts -d forImpact.root -m 1000 --rMax 0.2 --robustFit
 combineTool.py -M Impacts -d forImpact.root -m 1000  --rMax 0.2  -o impacts.json
 plotImpacts.py -i impacts.json -o impacts
 
+
+#impacts initial
+combineTool.py -M Impacts -d forImpact.root -m 2400 --rMax 0.06 --doInitialFit --robustFit 1 
+combineTool.py -M Impacts -d forImpact.root -m 1000 --rMax 0.2 --doInitialFit --robustFit 1
+combineTool.py -M Impacts -d forImpact.root -m 1000 --rMax 0.2 --doInitialFit --robustFit 1 --toysFrequentist -t -1
+combineTool.py -M Impacts -d forImpact.root -m 1000 --rMax 0.42 --rMin 0.047 --doInitialFit --robustFit 1  --toysFrequentist -t -1 --expectSignal=0.14  
+
+#impacts secondary (for grid)
+combineTool.py -M Impacts -d forImpact.root -m 1000 --rMax 0.2  --doFit --robustFit 1 --toysFrequentist -t -1  --job-mode crab3 --task-name grid-test  --custom-crab cuscrab.py 
+combineTool.py -M Impacts -d forImpact.root -m 1000 --rMax 0.42 --rMin 0.047 --expectSignal=0.14 --doFit --robustFit 1 --toysFrequentist -t -1  --job-mode crab3 --task-name grid-test  --custom-crab cuscrab.py 
+#impacts secondary (for interactive)
+combineTool.py -M Impacts -d forImpact.root -m 2400 --rMax 0.06  --robustFit 1 --doFits --parallel 20  1 
+combineTool.py -M Impacts -d forImpact.root -m 1000 --rMax 0.2  --robustFit  1 --doFits --parallel 20  1
+
+#cuscrab.py contents:
+def custom_crab(config):
+        config.Site.storageSite = 'T3_US_FNALLPC'
+
+
 #Stat tests
 text2workspace.py combinedCard.txt -o combined.root
-~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M MaxLikelihoodFit -m 2000 combined.root  
+~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M MaxLikelihoodFit -m 1000 combined.root  
  python ~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/test/diffNuisances.py -g plots.root fitDiagnostics.root 
  
-/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq
-/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 
-/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 1 &
-/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 2 &
-/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 3 &
-/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 4 &
-/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 5 &
-/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 6 &
-/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 7 &
-/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 2000 --toysFreq -t 100 -s 8 &
+/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq
+/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 
+/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 1 &
+/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 2 &
+/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 3 &
+/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 4 &
+/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 5 &
+/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 6 &
+/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 7 &
+/Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M GoodnessOfFit combinedCard.txt --algo saturated --fixedSignalStrength 0  -m 1000 --toysFreq -t 100 -s 8 &
 hadd  higgsCombineTest.GoodnessOfFit.mH2000.toys.root  higgsCombineTest.GoodnessOfFit.mH2000.*.root
  
  

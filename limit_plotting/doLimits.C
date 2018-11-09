@@ -25,7 +25,7 @@ std::string titleY = "#sigma#bf{#it{#Beta}}(X #rightarrow HH) [fb]";
 std::vector<std::string> partLabels = {"Spin-0 X","Spin-2 X"};
 std::vector<std::string> fileLabel = {"radion","blkgrav"};
 std::string lumiText = "35.9 fb^{-1} (13 TeV)";
-const bool prelim = true;
+const bool prelim = false;
 const float limitScale = 1000;
 
 //https://github.com/CrossSectionsLHC/WED
@@ -235,6 +235,10 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
         if(!blind) bandObs->SetPoint(iM,mh,obs[iM].second);
         band68->SetPointError(iM,0.0,0.0,exp[iM].second-m1Sigma[iM].second,p1Sigma[iM].second-exp[iM].second);
         band95->SetPointError(iM,0.0,0.0,exp[iM].second-m2Sigma[iM].second,p2Sigma[iM].second-exp[iM].second);
+        if(!blind){
+            std::cout << mh <<"\t"<< obs[iM].second<<"\n";
+        }
+
     }
 
     auto c = new TCanvas();

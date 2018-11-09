@@ -7,7 +7,8 @@
 #include "HistoPlotting/include/StyleInfo.h"
 
 using namespace CutConstants;
-CutStr blindCut = CutStr("blindCut",std::string("(")+hbbMCS.cut+"<100||"+hbbMCS.cut+">150)");
+//CutStr blindCut = CutStr("blindCut",std::string("(")+hbbMCS.cut+"<100||"+hbbMCS.cut+">150)");
+CutStr blindCut = CutStr("blindCut",std::string("(1.0)"));
 std::vector<PlotVar> vars;
 std::vector<std::string> varUnits;
 std::vector<PlotSamp> samps;
@@ -45,7 +46,7 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             if(hm == 0) continue;
             //Scale so that we get 1pb normalization
             hm->Scale(2*0.5824*(.2137+.002619));
-            p->addHistLine(hm,signalNames[iS]);
+            p->addHistLine(hm,signalNames[iS],StyleInfo::getLineColor(iS+1));
         }
 
         TH1 * hd = 0;
@@ -63,34 +64,40 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
 
         switch(iV){
             case 1:
-                p->setMinMax(0,400);
+                p->rebin(3);
+                p->setMinMax(0,450);
                 break;
             case 2:
                 p->rebin(4);
-                p->setMinMax(0.1,35000);
+                p->setMinMax(0.1,10000);
                 break;
             case 3:
-                p->setMinMax(0,6000);
+                p->setMinMax(0,9000);
+                break;
+            case 4:
+                p->setMinMax(0,800);
                 break;
             case 5:
-                p->setMinMax(0,600);
+                p->setMinMax(0,900);
                 break;
             case 6:
-                p->setMinMax(0,800);
+                p->setMinMax(0,900);
                 break;
             case 7:
                 p->setMinMax(20,1000000);
                 break;
         }
 
+        double xV = 0.47;
+        double yV = 0.74;
 
-        p->setLegendPos(0.1425,0.7375,0.6,.8725);
 
-        p->setCMSLumi();
-        p->setCMSLumiExtraText("Preliminary");
+        p->setLegendPos(xV,yV,xV+0.4575,yV+0.135);
+        p->setCMSLumi(10);
+//        p->setCMSLumiExtraText("Preliminary");
 //        p->addLegendEntry(7,0,"X #sigma x #it{B} = 1 pb","");
-        p->addText("All categories",0.15,0.88,0.03);
-        if(signalNames.size())p->addText("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=1 pb",0.15,0.71,0.03);
+        p->addText("All categories",xV+0.0075,yV+0.1425,0.03);
+        if(signalNames.size())p->addText("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=1 pb",xV+0.0075,yV-0.0265,0.03);
         p->setLegendNColumns(2);
 
         std::string ytitle = "N. of events";
@@ -202,7 +209,7 @@ void plotSRVariables( int step, int reg,std::string tree, std::string name){
     if(isData) cut += "&&"+blindCut.cut;
 
     vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass,hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
-    vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,36,minHbbMass,maxHbbMass);
+    vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass);
     vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
     vars.emplace_back("nAK4Btags" ,"; N. of AK4 jet b tags","nAK4Btags",4,-0.5,3.5);
     vars.emplace_back("wjjTau2o1" ,"; q#bar{q} #tau_{2}/#tau_{1}","wjjTau2o1",50,0,1);
