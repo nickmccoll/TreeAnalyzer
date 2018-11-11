@@ -174,11 +174,11 @@ public:
     	static const std::vector<double> isoWPs = {0.1,0.2,0.3};
         static const std::vector<TString> isoTypeName = {"miniIso","relIso"};
     	// require the RECO leps to pass the current (single-lep channel) ID WPs
-    	bool passID1 = recoLep1->isMuon() ? ((const Muon*)recoLep1)->passMed16ID() : ((const Electron*)recoLep1)->passTightID_noISO();
-    	bool passID2 = recoLep2->isMuon() ? ((const Muon*)recoLep2)->passMed16ID() : ((const Electron*)recoLep2)->passTightID_noISO();
+    	bool passID1 = recoLep1->isMuon() ? ((const Muon*)recoLep1)->passMed16ID() : ((const Electron*)recoLep1)->passMedID_noISO();
+    	bool passID2 = recoLep2->isMuon() ? ((const Muon*)recoLep2)->passMed16ID() : ((const Electron*)recoLep2)->passMedID_noISO();
     	if (!(passID1 && passID2)) return;
 
-    	TString constID = "ID_eT_muM_";
+    	TString constID = "ID_eM_muM_";
         for (unsigned long type=0; type<isoTypeName.size(); type++) {
             if (type == 0) {
             	for (const auto& iso : isoWPs) {
