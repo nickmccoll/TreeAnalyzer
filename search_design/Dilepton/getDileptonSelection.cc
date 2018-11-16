@@ -356,7 +356,7 @@ public:
 				const FatJet* hbbjet = findHbbCand(lepCandsD0.front(),lepCandsD0[1]);
 				if (!hbbjet) return;
 
-				TString pref = getDilepChan(lepCandsD0.front(),lepCandsD0[1]) + "pt2_10_";
+				TString pref = getDilepChan(lepCandsD0.front(),lepCandsD0[1]);
 				plotter.getOrMake1DPre(sn+pref+"IP_d0_I_"+constIDISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
 				for (const auto& d0 : vec_d0) {
 					bool passD01 = lepCandsDZ.front()->d0() < d0;
@@ -382,7 +382,7 @@ public:
 				const FatJet* hbbjet = findHbbCand(lepCandsSIP.front(),lepCandsSIP[1]);
 				if (!hbbjet) return;
 
-				TString pref = getDilepChan(lepCandsSIP.front(),lepCandsSIP[1]) + "pt2_10_";
+				TString pref = getDilepChan(lepCandsSIP.front(),lepCandsSIP[1]);
 				plotter.getOrMake1DPre(sn+pref+"IP_SIP_I_"+constIDISO,"evts",";H_{T}",100,400,4600)->Fill(ht_chs,weight);
 				for (const auto& sip : vec_SIP) {
 					bool passSIP1 = lepCandsSIP.front()->sip3D() < sip;
@@ -631,12 +631,12 @@ public:
 
 #endif
 
-void DileptonSelection(std::string fileName, int treeInt, int randSeed, std::string outFileName){
+void getDileptonSelection(std::string fileName, int treeInt, int randSeed, std::string outFileName){
     Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     a.analyze();
     a.write(outFileName);
 }
-void DileptonSelection(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec, float numEvent){
+void getDileptonSelection(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec, float numEvent){
     Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     a.setSampleInfo(xSec,numEvent);
     a.analyze();
