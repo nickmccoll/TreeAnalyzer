@@ -54,14 +54,14 @@ DileptonSearchRegionAnalyzer::DileptonSearchRegionAnalyzer(std::string fileName,
     setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
 
     turnOnCorr(CORR_XSEC);
-    turnOnCorr(CORR_TRIG);
+//    turnOnCorr(CORR_TRIG);
     turnOnCorr(CORR_PU  );
     turnOnCorr(CORR_LEP );
     turnOnCorr(CORR_SJBTAG);
     turnOnCorr(CORR_AK4BTAG);
     turnOnCorr(CORR_SDMASS);
     turnOnCorr(CORR_TOPPT);
-    turnOnCorr(CORR_JER);
+//    turnOnCorr(CORR_JER);
 }
 //--------------------------------------------------------------------------------------------------
 DileptonSearchRegionAnalyzer::~DileptonSearchRegionAnalyzer(){}
@@ -134,6 +134,7 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
             JESUncProc ->processFatJets(reader_fatjet_noLep->jets);
             JESUncProc ->processFatJets(reader_fatjet->jets);
         }
+
         if(isCorrOn(CORR_JER) ){
             Met dummyMET =reader_event->met;
             JERAK4PuppiProc ->processJets(*reader_jet,reader_event->met,reader_jet_chs->genJets,reader_event->rho);
@@ -158,12 +159,10 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
         ht_chs = JetKinematics::ht(jets_chs);
     }
 
-
     //|||||||||||||||||||||||||||||| LEPTONS ||||||||||||||||||||||||||||||
     if(reader_electron && reader_muon){
         selectedDileptons = dileptonProc->getLeptons(*reader_event,*reader_muon,*reader_electron);
     }
-
 
     //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
     passEventFilters= EventSelection::passEventFilters(*reader_event);
@@ -223,7 +222,6 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
         if(isCorrOn(CORR_TOPPT)){
             weight *= topPTProc->getCorrection(mcProc,smDecayEvt);
         }
-
     }
     return true;
 }

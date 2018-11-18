@@ -26,7 +26,7 @@ bool DilepSelHelpers::isGoodElectron(const Electron* lep, const float minPT, con
     if(maxDZ > 0 && std::fabs(lep->dz()) >= maxDZ) return false;
     if(maxD0 > 0 && std::fabs(lep->d0()) >= maxD0) return false;
     if(maxSIP3D > 0 && lep->sip3D() >= maxSIP3D) return false;
-    if(maxISO >0 && (lep->*getISO)()  >= maxISO) return false;
+    if(maxISO > 0 && (lep->*getISO)()  >= maxISO) return false;
     if((lep->*getID1)()  == false && (lep->*getID2)() == false) return false;
     return true;
 }
@@ -44,12 +44,12 @@ bool DilepSelHelpers::isGoodElectron(const Electron* lep, const DilepSelParamete
 }
 //_____________________________________________________________________________
 bool DileptonProcessor::isGoodMuon(const EventReader& reader_event, const Muon * lep) const {
-   const bool useDataAF =  reader_event.realData && !(reader_event.dataRun == FillerConstants::RUN2016G || reader_event.dataRun == FillerConstants::RUN2016H);
-   return   DilepSelHelpers::isGoodMuon(lep,  useDataAF? lepSelParams_dataABCDEF : lepSelParams    );
+   const bool useDataAF = reader_event.realData && !(reader_event.dataRun == FillerConstants::RUN2016G || reader_event.dataRun == FillerConstants::RUN2016H);
+   return DilepSelHelpers::isGoodMuon(lep, useDataAF? lepSelParams_dataABCDEF : lepSelParams);
 }
 //_____________________________________________________________________________
 bool DileptonProcessor::isGoodElectron(const Electron * lep) const {
-    return  DilepSelHelpers::isGoodElectron(lep,lepSelParams);
+    return DilepSelHelpers::isGoodElectron(lep,lepSelParams);
 }
 //_____________________________________________________________________________
 bool DileptonProcessor::isGoodLepton(const EventReader& reader_event, const Lepton * lep) const {
@@ -59,7 +59,7 @@ bool DileptonProcessor::isGoodLepton(const EventReader& reader_event, const Lept
 std::vector<const Muon*> DileptonProcessor::getMuons(const EventReader& reader_event, const MuonReader& reader_muon) const {
     std::vector<const Muon*> leps;
     bool useDataAF =  reader_event.realData && !(reader_event.dataRun == FillerConstants::RUN2016G || reader_event.dataRun == FillerConstants::RUN2016H);
-    for(const auto& lep :reader_muon.muons){
+    for(const auto& lep : reader_muon.muons){
         if(DilepSelHelpers::isGoodMuon(&lep, useDataAF ? lepSelParams_dataABCDEF : lepSelParams)) leps.push_back(&lep);
     }
     std::sort(leps.begin(),leps.end(), PhysicsUtilities::greaterPTDeref<Muon>());
@@ -68,7 +68,7 @@ std::vector<const Muon*> DileptonProcessor::getMuons(const EventReader& reader_e
 //_____________________________________________________________________________
 std::vector<const Electron*> DileptonProcessor::getElectrons(const ElectronReader& reader_electron) const {
     std::vector<const Electron*> leps;
-    for(const auto& lep :reader_electron.electrons){
+    for(const auto& lep : reader_electron.electrons){
         if(DilepSelHelpers::isGoodElectron(&lep,lepSelParams)) leps.push_back(&lep);
     }
     std::sort(leps.begin(),leps.end(), PhysicsUtilities::greaterPTDeref<Electron>());
@@ -79,7 +79,7 @@ std::vector<const Lepton*> DileptonProcessor::getLeptons(const EventReader& read
     std::vector<const Lepton*>  leps;
 
     auto electrons = getElectrons(reader_electron);
-    auto muons     = getMuons    (reader_event, reader_muon);
+    auto muons = getMuons(reader_event, reader_muon);
     leps.reserve(electrons.size() + muons.size());
     for(const auto* l : electrons) leps.push_back(l);
     for(const auto* l : muons) leps.push_back(l);
