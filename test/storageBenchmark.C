@@ -4,7 +4,11 @@
 #include "TRandom3.h"
 #include "TFile.h"
 #include "TTree.h"
+#include <iostream>
 
+#include "TTreeReader.h"
+#include "TTreeReaderValue.h"
+#include "TTreeReaderArray.h"
 
 TStopwatch timer;
 UInt_t nEvents = 100000;
@@ -391,6 +395,224 @@ void storeArrayWVectorBr(){
 
 }
 
+void readVectorAsArray(){
+    UInt_t   nJets;
+    float col1  [500];
+    float col2  [500];
+    float col3  [500];
+    float col4  [500];
+    float col6  [500];
+    float col7  [500];
+    float col8  [500];
+    float col9  [500];
+    float col10 [500];
+    float col11 [500];
+    float col12 [500];
+    float col13 [500];
+    float col14 [500];
+    float col15 [500];
+
+
+
+    TFile *f = new TFile("storeArrayWVectorBr.root","read","");
+    TTree *t = 0;
+    f->GetObject("t",t);
+
+    t->SetBranchAddress("nJets",&nJets);
+    t->SetBranchAddress("col1" ,col1  );
+    t->SetBranchAddress("col2" ,col2  );
+    t->SetBranchAddress("col3" ,col3  );
+    t->SetBranchAddress("col4" ,col4  );
+    t->SetBranchAddress("col6" ,col6  );
+    t->SetBranchAddress("col7" ,col7  );
+    t->SetBranchAddress("col8" ,col8  );
+    t->SetBranchAddress("col9" ,col9  );
+    t->SetBranchAddress("col10",col10 );
+    t->SetBranchAddress("col11",col11 );
+    t->SetBranchAddress("col12",col12 );
+    t->SetBranchAddress("col13",col13 );
+    t->SetBranchAddress("col14",col14 );
+    t->SetBranchAddress("col15",col15 );
+
+    Long64_t ievent = 0;
+
+
+    while(t->GetEvent(ievent)){
+
+        std::cout<< ievent <<" : ";
+        for(unsigned int iJ = 0; iJ < nJets;++iJ)
+            std::cout <<col1[iJ]<<",";
+        std::cout<<std::endl;
+
+        ievent++;
+
+    }
+    f->Close();
+
+}
+
+
+void readVectorAsTTreeReader(){
+
+
+    TFile *f = new TFile("storeArrayWVectorBr.root","read","");
+    TTreeReader t("t", f);
+
+    TTreeReaderValue<UInt_t> nJets(t,"nJets");
+    TTreeReaderArray<float> col1 (t,"col1" );
+    TTreeReaderArray<float> col2 (t,"col2" );
+    TTreeReaderArray<float> col3 (t,"col3" );
+    TTreeReaderArray<float> col4 (t,"col4" );
+    TTreeReaderArray<float> col6 (t,"col6" );
+    TTreeReaderArray<float> col7 (t,"col7" );
+    TTreeReaderArray<float> col8 (t,"col8" );
+    TTreeReaderArray<float> col9 (t,"col9" );
+    TTreeReaderArray<float> col10(t,"col10");
+    TTreeReaderArray<float> col11(t,"col11");
+    TTreeReaderArray<float> col12(t,"col12");
+    TTreeReaderArray<float> col13(t,"col13");
+    TTreeReaderArray<float> col14(t,"col14");
+    TTreeReaderArray<float> col15(t,"col15");
+
+    Long64_t ievent = 0;
+
+
+    while (t.Next()) {
+        std::cout<< ievent <<" : ";
+        for(unsigned int iJ = 0; iJ < *nJets;++iJ)
+            std::cout <<col1[iJ]<<",";
+        std::cout<<std::endl;
+
+        ievent++;
+    }
+
+
+    f->Close();
+
+}
+
+template<typename T>
+class ReaderData{
+public:
+    void set(TTreeReader& reader,const char* branchname){
+        if(data){
+            delete data;
+            data=0;
+        }
+        data = new TTreeReaderValue<T> (reader,branchname);
+    }
+    T* operator->() { return data->operator(); }
+    T& operator*() {  return data->operator*(); }
+    TTreeReaderValue<T> * data =0;
+};
+
+template<typename T>
+class ReaderDataArray{
+public:
+    void set(TTreeReader& reader,const char* branchname){
+        if(data){
+            delete data;
+            data=0;
+        }
+        data = new TTreeReaderArray<T> (reader,branchname);
+    }
+
+    T* operator->() {  return data->operator(); }
+    T& operator*() {return data->operator*(); }
+
+
+    T &At(std::size_t idx) { return data->At(idx); }
+    const T &At(std::size_t idx) const {   return data->At(idx); }
+    T &operator[](std::size_t idx) { return (*data)[idx]; }
+    const T &operator[](std::size_t idx) const { return (*data)[idx];  }
+    std::size_t size() const {
+        return data->GetSize();
+    }
+
+
+    using iterator = typename TTreeReaderArray<T>::template Iterator_t<TTreeReaderArray<T>>;
+    using const_iterator = typename TTreeReaderArray<T>::template Iterator_t<const TTreeReaderArray<T>>;
+
+    iterator begin() { return data->begin(); }
+    iterator end() {  return data->end(); }
+    const_iterator begin() const {  return data->begin(); }
+    const_iterator end() const { return data->end(); }
+    const_iterator cbegin() const { return data->cbegin(); }
+    const_iterator cend() const  { return data->cend(); }
+
+    TTreeReaderArray<T> * data =0;
+};
+
+void readVectorAsTTreeReaderWithCopies(){
+
+
+    TFile *f = new TFile("storeArrayWVectorBr.root","read","");
+    TTreeReader t("t", f);
+
+    ReaderData<UInt_t> nJets;
+    ReaderDataArray<float> col1  ;
+    ReaderDataArray<float> col2  ;
+    ReaderDataArray<float> col3  ;
+    ReaderDataArray<float> col4  ;
+    ReaderDataArray<float> col6  ;
+    ReaderDataArray<float> col7  ;
+    ReaderDataArray<float> col8  ;
+    ReaderDataArray<float> col9  ;
+    ReaderDataArray<float> col10 ;
+    ReaderDataArray<float> col11 ;
+    ReaderDataArray<float> col12 ;
+    ReaderDataArray<float> col13 ;
+    ReaderDataArray<float> col14 ;
+    ReaderDataArray<float> col15 ;
+//    t.GetTree()->SetBranchStatus("*",0);
+    if(true){
+        nJets .set(t,"nJets");
+        col1  .set(t,"col1" );
+        col2  .set(t,"col2" );
+        col3  .set(t,"col3" );
+        col4  .set(t,"col4" );
+        col6  .set(t,"col6" );
+        col7  .set(t,"col7" );
+        col8  .set(t,"col8" );
+        col9  .set(t,"col9" );
+        col10 .set(t,"col10");
+        col11 .set(t,"col11");
+        col12 .set(t,"col12");
+        col13 .set(t,"col13");
+        col14 .set(t,"col14");
+        col15 .set(t,"col15");
+    }
+
+
+    Long64_t ievent = 0;
+//    std::cout << t.GetTree()->GetBranchStatus("nJets")<<" "<< t.GetTree()->GetBranchStatus("col1")<<std::endl;
+//    t.GetTree()->SetBranchStatus("nJets",1);
+//    t.GetTree()->SetBranchStatus("col1",1);
+
+    auto setEventRange=[&](unsigned int startEvent = 0, unsigned int numEvents = -1){
+        if(numEvents >0 )
+            t.SetEntriesRange(startEvent, startEvent  + numEvents );
+        else
+            t.SetEntriesRange(startEvent, startEvent-1 );
+    };
+
+    setEventRange(0,-1);
+    while (t.Next()) {
+//        std::cout << t.GetCurrentEntry()<<std::endl;
+        std::cout<< ievent <<" : ";
+        for(const auto& c : col1 ) std::cout <<c<<",";
+        std::cout<<std::endl;
+
+
+        ievent++;
+    }
+
+
+    f->Close();
+
+}
+
+
 void go(int test){
     switch (test){
     case 0:
@@ -412,6 +634,21 @@ void go(int test){
     case 3:
         timer.Start();
         storeArrayWVectorBr();
+        timer.Stop();
+        break;
+    case 4:
+        timer.Start();
+        readVectorAsArray();
+        timer.Stop();
+        break;
+    case 5:
+        timer.Start();
+        readVectorAsTTreeReader();
+        timer.Stop();
+        break;
+    case 6:
+        timer.Start();
+        readVectorAsTTreeReaderWithCopies();
         timer.Stop();
         break;
 
