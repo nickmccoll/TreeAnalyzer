@@ -13,10 +13,17 @@ void removePass(storage& passList, const type passed ) { passList &= ~passed;}
 template <class storage, class type>
 bool doesPass(const storage passList, const type checkPassed ) {return  checkPassed & passList;};
 
-
-enum DataRun   {NODATARUN, RUN2016A,RUN2016B,RUN2016C,RUN2016D,RUN2016E,RUN2016F,RUN2016G,RUN2016H};
+enum DataEra   {NOERA, ERA_2016,ERA_2017,ERA_2018};
+const std::vector<std::string> DataEraNames = { "none","2016","2017","2018"};
+enum DataRun   {NODATARUN, RUN2016A,RUN2016B,RUN2016C,RUN2016D,RUN2016E,RUN2016F,RUN2016G,RUN2016H,
+                           RUN2017A,RUN2017B,RUN2017C,RUN2017D,RUN2017E,RUN2017F,RUN2017G,RUN2017H,
+                           RUN2018A,RUN2018B,RUN2018C,RUN2018D,RUN2018E};
+const std::vector<std::string> DataRunNames =
+    {"none"," Run2016A","Run2016B","Run2016C","Run2016D","Run2016E","Run2016F","Run2016G","Run2016H",
+        "Run2017A","Run2017B","Run2017C","Run2017D","Run2017E","Run2017F","Run2017G","Run2017H",
+        "Run2018A","Run2018B","Run2018C","Run2018D","Run2018E"};
 enum Dataset   {NODATASET, SINGLEE,SINGLEMU, JETHT,MET};
-const std::vector<std::string> DatasetNames = { "none","singlee","singlemu","jetht","met"};
+const std::vector<std::string> DatasetNames = { "none","data_e","data_mu","data_jetht","data_met"};
 enum MCProcess {NOPROCESS, SIGNAL,TTBAR,WJETS,ZJETS,SINGLET,DIBOSON,TTX,QCD,HX};
 const std::vector<std::string> MCProcessNames = { "none","signal","ttbar","wjets","zjets","singlet","diboson","ttX","qcd","hx"};
 
@@ -48,49 +55,68 @@ enum MuonID   { MUID_SOFT   = (1 << 0)
                ,MUID_MED16  = (1 << 5)
 };
 
+//From
+//https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2
+//https://github.com/cms-sw/cmssw/blob/master/PhysicsTools/PatAlgos/python/slimming/metFilterPaths_cff.py
 enum METFilters{
-     Flag_goodVertices                      = (1 << 0)
-    ,Flag_globalTightHalo2016Filter         = (1 << 1)
-    ,Flag_HBHENoiseFilter                   = (1 << 2)
-    ,Flag_HBHENoiseIsoFilter                = (1 << 3)
-    ,Flag_EcalDeadCellTriggerPrimitiveFilter= (1 << 4)
-    ,Flag_eeBadScFilter                     = (1 << 5)
-    ,Flag_CSCTightHaloFilter                = (1 << 6)
-    ,Flag_CSCTightHalo2015Filter            = (1 << 7)
-    ,Flag_trackingFailureFilter             = (1 << 8)
-    ,Flag_trkPOGFilters                     = (1 << 9)
-    ,Flag_ecalLaserCorrFilter               = (1 << 10)
-    ,Flag_hcalLaserEventFilter              = (1 << 11)
-    ,Flag_badMuons                          = (1 << 12)
-    ,Flag_duplicateMuons                    = (1 << 13)
-     //Ones we add ourselves
-     //bad muon filters
-    ,AnaTM_badMuons                         = (1 << 14)
-    ,AnaTM_badChargedHadrons                = (1 << 15)
-    //ECAL slew rate
-    ,AnaTM_dupECALClusters                  = (1 << 16)  //true if duplicates are present..bad
-    ,AnaTM_hitsNotReplaced                  = (1 << 17)  //true of not empty...bad
+    Flag_HBHENoiseFilter                     = (1 <<0)
+    ,Flag_HBHENoiseIsoFilter                 = (1 <<1)
+    ,Flag_CSCTightHaloFilter                 = (1 <<2)
+    ,Flag_CSCTightHaloTrkMuUnvetoFilter      = (1 <<3)
+    ,Flag_CSCTightHalo2015Filter             = (1 <<4)
+    ,Flag_globalTightHalo2016Filter          = (1 <<5)
+    ,Flag_globalSuperTightHalo2016Filter     = (1 <<6)
+    ,Flag_HcalStripHaloFilter                = (1 <<7)
+    ,Flag_hcalLaserEventFilter               = (1 <<8)
+    ,Flag_EcalDeadCellTriggerPrimitiveFilter = (1 <<9)
+    ,Flag_EcalDeadCellBoundaryEnergyFilter   = (1 <<10)
+    ,Flag_ecalBadCalibFilter                 = (1 <<11)
+    ,Flag_goodVertices                       = (1 <<12)
+    ,Flag_eeBadScFilter                      = (1 <<13)
+    ,Flag_ecalLaserCorrFilter                = (1 <<14)
+    ,Flag_trkPOGFilters                      = (1 <<15)
+    ,Flag_chargedHadronTrackResolutionFilter = (1 <<15)
+    ,Flag_muonBadTrackFilter                 = (1 <<17)
+    ,Flag_BadChargedCandidateFilter          = (1 <<18)
+    ,Flag_BadPFMuonFilter                    = (1 <<19)
+    ,Flag_BadChargedCandidateSummer16Filter  = (1 <<20)
+    ,Flag_BadPFMuonSummer16Filter            = (1 <<21)
+    ,Flag_trkPOG_manystripclus53X            = (1 <<22)
+    ,Flag_trkPOG_toomanystripclus53X         = (1 <<23)
+    ,Flag_trkPOG_logErrorTooManyClusters     = (1 <<24)
+    ,Flag_METFilters                         = (1 <<25)
 };
 const std::vector<std::string> metFilterStrings = {
-        "Flag_goodVertices",
-        "Flag_globalTightHalo2016Filter",
         "Flag_HBHENoiseFilter",
         "Flag_HBHENoiseIsoFilter",
-        "Flag_EcalDeadCellTriggerPrimitiveFilter",
-        "Flag_eeBadScFilter",
         "Flag_CSCTightHaloFilter",
+        "Flag_CSCTightHaloTrkMuUnvetoFilter",
         "Flag_CSCTightHalo2015Filter",
-        "Flag_trackingFailureFilter",
-        "Flag_trkPOGFilters",
-        "Flag_ecalLaserCorrFilter",
+        "Flag_globalTightHalo2016Filter",
+        "Flag_globalSuperTightHalo2016Filter",
+        "Flag_HcalStripHaloFilter",
         "Flag_hcalLaserEventFilter",
-        "Flag_badMuons",
-        "Flag_duplicateMuons",
-        "AnaTM_badMuons",
-        "AnaTM_badChargedHadrons",
-        "AnaTM_dupECALClusters",
-        "AnaTM_hitsNotReplaced"
+        "Flag_EcalDeadCellTriggerPrimitiveFilter",
+        "Flag_EcalDeadCellBoundaryEnergyFilter",
+        "Flag_ecalBadCalibFilter",
+        "Flag_goodVertices",
+        "Flag_eeBadScFilter",
+        "Flag_ecalLaserCorrFilter",
+        "Flag_trkPOGFilters",
+        "Flag_chargedHadronTrackResolutionFilter",
+        "Flag_muonBadTrackFilter",
+        "Flag_BadChargedCandidateFilter",
+        "Flag_BadPFMuonFilter",
+        "Flag_BadChargedCandidateSummer16Filter",
+        "Flag_BadPFMuonSummer16Filter",
+        "Flag_trkPOG_manystripclus53X",
+        "Flag_trkPOG_toomanystripclus53X",
+        "Flag_trkPOG_logErrorTooManyClusters",
+        "Flag_METFilters"
 };
+
+
+
 
 
 
