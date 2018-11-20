@@ -359,23 +359,7 @@ void doOneVar(const std::string& fileName, const int treeInt,int randSeed, const
 
 #endif
 
-
-
-void makeBETrees(std::string fileName, int treeInt, int randSeed, std::string outFileName){
-    doOne(fileName,treeInt,randSeed,outFileName);
-    if(treeInt==2){
-        size_t lastindex = outFileName.find_last_of(".");
-        std::string extLessName = outFileName.substr(0, lastindex);
-        doOneVar(fileName,treeInt,randSeed+1,extLessName+"_JERUp.root"  ,UP     ,NONE,NONE);
-        doOneVar(fileName,treeInt,randSeed+2,extLessName+"_JERDown.root",DOWN   ,NONE,NONE);
-        doOneVar(fileName,treeInt,randSeed+3,extLessName+"_JESDOWN.root",NOMINAL,DOWN,NONE);
-        doOneVar(fileName,treeInt,randSeed+4,extLessName+"_JESUp.root"  ,NOMINAL,UP  ,NONE);
-        doOneVar(fileName,treeInt,randSeed+5,extLessName+"_METDOWN.root",NOMINAL,NONE,DOWN);
-        doOneVar(fileName,treeInt,randSeed+6,extLessName+"_METUp.root"  ,NOMINAL,NONE,UP  );
-
-    }
-}
-void makeBETrees(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec, float numEvent){
+void makeBETrees(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec=-1, float numEvent=-1){
     doOne(fileName,treeInt,randSeed,outFileName,xSec,numEvent);
     if(treeInt==2){
         size_t lastindex = outFileName.find_last_of(".");

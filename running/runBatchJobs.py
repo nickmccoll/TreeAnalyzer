@@ -9,7 +9,6 @@ import cmd
 parser = argparse.ArgumentParser(description='Prepare and submit ntupling jobs')
 parser.add_argument("-m", "--macro",         dest="macro", default="runSomething.C", help="file to be run. [Default: runSomething.C]")
 parser.add_argument("-b", "--runBatch",      dest="runBatch", action='store_true', default=False, help="Should we setup a condor job? [Default: False]")
-parser.add_argument("-w", "--computeWeight", dest="compW", action='store_true', default=False, help="Should we include the parameters to calculate weight? [Default: False]")
 parser.add_argument("-i", "--input",         dest="input", default="procdatasets.conf", help="input config or directory [Default: procdatasets.conf]")
 parser.add_argument("-o", "--outputDir",     dest="outdir", default="out", help="Output directory for ntuples. [Default: \"out\"]")
 parser.add_argument("-j", "--jobdir"       , dest="jobdir", default="jobs", help="Directory for job files  [Default: jobs]")
@@ -94,7 +93,7 @@ def compileLOCMacro() :
     return libName
             
 
-def prepareSampleJob(libName,outList, name, filelist, nFilesPerJob, treeInt, weightJob = False,  xsec = 1, numE = 1):
+def prepareSampleJob(libName,outList, name, filelist, nFilesPerJob, treeInt, xsec = -1, numE = -1):
     
     pcmName = re.sub(r'(.+)\.so', r'\1_ACLiC_dict_rdict.pcm', libName)
     dName   = re.sub(r'(.+)\.so', r'\1.d', libName)
@@ -121,17 +120,11 @@ def prepareSampleJob(libName,outList, name, filelist, nFilesPerJob, treeInt, wei
             if not args.runBatch: 
                 inputF  = os.path.normpath(os.path.join(os.path.join(os.getcwd(), args.jobdir),inputF))
                 outputF = os.path.normpath(os.path.join(os.path.join(os.getcwd(), args.outdir),outputF))
-                if weightJob  :
-                    CMD = "root -l -b -q \'{cfg}+(\"{INF}\",{TreeInt},{RSEED},\"{OUTF}\",{xs},{nE})\'".format( cfg= args.macro,INF=inputF,TreeInt=treeInt,RSEED=iF,OUTF=outputF,xs=xsec,nE=numE)
-                else :
-                    CMD = "root -l -b -q \'{cfg}+(\"{INF}\",{TreeInt},{RSEED},\"{OUTF}\")\'".format( cfg=args.macro,INF=inputF,TreeInt=treeInt,RSEED=iF,OUTF=outputF)
+                CMD = "root -l -b -q \'{cfg}+(\"{INF}\",{TreeInt},{RSEED},\"{OUTF}\",{xs},{nE})\'".format( cfg= args.macro,INF=inputF,TreeInt=treeInt,RSEED=iF,OUTF=outputF,xs=xsec,nE=numE)                
                 outList.append(CMD + " &")
             
             else :
-                if weightJob  :
-                    CMD = "./{MCR} {INF} {TreeInt} {RSEED} {OUTF} {xs} {nE}".format( MCR=os.path.basename(libName),INF=inputF,TreeInt=treeInt,RSEED=iF,OUTF=outputF,xs=xsec,nE=numE)
-                else :
-                    CMD = "./{MCR} {INF} {TreeInt} {RSEED} {OUTF}".format( MCR=os.path.basename(libName),INF=inputF,TreeInt=treeInt,RSEED=iF,OUTF=outputF)
+                CMD = "./{MCR} {INF} {TreeInt} {RSEED} {OUTF} {xs} {nE}".format( MCR=os.path.basename(libName),INF=inputF,TreeInt=treeInt,RSEED=iF,OUTF=outputF,xs=xsec,nE=numE)
 
                 jobscript = open("{0}/submit_{1}_{2}".format(args.jobdir,name,iJ), "w")
                 jobscript.write("""
@@ -208,7 +201,7 @@ else :
             continue
         fileList = getFileList(match.group(6),match.group(1))
         prepareSampleJob(libName,outList,match.group(1), fileList, match.group(5), match.group(2), 
-                         args.compW, match.group(3),match.group(4))
+                         match.group(3),match.group(4))
         
 if args.runBatch:
     subscript = open("submitall.sh", "w")

@@ -23,9 +23,6 @@ int main(int argc, char* argv[])
         convertnumEvent >> numEvent;
     }
     switch(argc) {
-        case 5:
-            __MACRO__NAME__(argv[1], treeInt, randSeed, argv[4]);
-            return 0;
         case 7:
             __MACRO__NAME__(argv[1], treeInt,randSeed, argv[4],xSec,numEvent);
             return 0;

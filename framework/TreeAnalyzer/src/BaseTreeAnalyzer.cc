@@ -131,8 +131,11 @@ void BaseTreeAnalyzer::bookOutputVariables() {
 
 void BaseTreeAnalyzer::setSampleInfo(float inXSec, float inNumE)
 {_xsec =inXSec;_numSampleEvents=inNumE;
-std::cout << " ++  Sample cross-section is set to: "<< inXSec << " [pb]"<<std::endl;
-std::cout << " ++  Number of events produced in this sample: "<< inNumE <<std::endl;
+    if(inXSec > 0 ){
+        std::cout << " ++  Sample cross-section is set to: "<< inXSec << " [pb]"<<std::endl;
+        std::cout << " ++  Number of events produced in this sample: "<< inNumE <<std::endl;
+    }
+
 }
 //--------------------------------------------------------------------------------------------------
 
