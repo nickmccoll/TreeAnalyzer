@@ -5,7 +5,7 @@
 
 namespace TAna{
 
-void BaseReader::initialize(TreeReadingWrapper * wrapper) {
+void BaseReader::initialize(TreeReaderWrapper * wrapper) {
     std::cout << " ++  Attempting to initialize : " << readerName << " ("<<branchName<<")"                     << std::endl;
     std::cout << " ++  ";
     setup(wrapper);
