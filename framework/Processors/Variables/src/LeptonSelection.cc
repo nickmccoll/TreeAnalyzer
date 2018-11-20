@@ -45,7 +45,7 @@ bool LepSelHelpers::isGoodElectron(const Electron* lep, const LepSelParameters& 
 //_____________________________________________________________________________
 bool LeptonProcessor::isGoodMuon(const EventReader& reader_event, const Muon * lep) const {
    const bool useDataAF =  reader_event.realData &&
-              !(reader_event.dataRun == FillerConstants::RUN2016G || reader_event.dataRun == FillerConstants::RUN2016H);
+              !(reader_event.dataRun.val() == FillerConstants::RUN2016G || reader_event.dataRun.val() == FillerConstants::RUN2016H);
    return   LepSelHelpers::isGoodMuon(lep,  useDataAF? lepSelParams_dataABCDEF : lepSelParams    );
 }
 //_____________________________________________________________________________
@@ -60,7 +60,7 @@ bool LeptonProcessor::isGoodLepton(const EventReader& reader_event, const Lepton
 std::vector<const Muon    *> LeptonProcessor::getMuons(const EventReader& reader_event, const MuonReader& reader_muon) const {
     std::vector<const Muon    *>  leps;
     bool useDataAF =  reader_event.realData &&
-              !(reader_event.dataRun == FillerConstants::RUN2016G || reader_event.dataRun == FillerConstants::RUN2016H);
+              !(reader_event.dataRun.val() == FillerConstants::RUN2016G || reader_event.dataRun.val() == FillerConstants::RUN2016H);
     for(const auto& lep :reader_muon.muons){
         if(LepSelHelpers::isGoodMuon(&lep,  useDataAF? lepSelParams_dataABCDEF : lepSelParams    ))
             leps.push_back(&lep);

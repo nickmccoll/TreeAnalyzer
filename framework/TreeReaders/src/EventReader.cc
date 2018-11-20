@@ -6,50 +6,49 @@
 namespace TAna{
 
 EventReader::EventReader(std::string branchName, bool isRealData) : BaseReader("EventReader",branchName),realData(isRealData) {};
-EventReader::~EventReader() { delete genWeights;}
+EventReader::~EventReader() {}
 
-void EventReader::setup(TreeReadingWrapper * wrapper){
+void EventReader::setup(TreeReaderWrapper * wrapper){
 
-    wrapper->setBranchAddressPre(branchName,"run"               , &run              , false);
-    wrapper->setBranchAddressPre(branchName,"lumi"              , &lumi             , false);
-    wrapper->setBranchAddressPre(branchName,"event"             , &event            , false);
-    wrapper->setBranchAddressPre(branchName,"goodVtx"           , &goodVtx          , false);
-    wrapper->setBranchAddressPre(branchName,"npv"               , &npv              , false);
-    wrapper->setBranchAddressPre(branchName,"rho"               , &rho              , false);
-    wrapper->setBranchAddressPre(branchName,"met_pt"            , &met_pt           , true );
-    wrapper->setBranchAddressPre(branchName,"met_phi"           , &met_phi          , true );
-    wrapper->setBranchAddressPre(branchName,"met_sig"           , &met_sig          , false);
-    wrapper->setBranchAddressPre(branchName,"met_unclUp_pt"     , &met_unclUp_pt    , false);
-    wrapper->setBranchAddressPre(branchName,"met_unclUp_phi"    , &met_unclUp_phi   , false);
-    wrapper->setBranchAddressPre(branchName,"met_raw_pt"        , &met_raw_pt       , false);
-    wrapper->setBranchAddressPre(branchName,"met_raw_phi"       , &met_raw_phi      , false);
-
+    wrapper->setBranch(branchName,"run"               , run              , false);
+    wrapper->setBranch(branchName,"lumi"              , lumi             , false);
+    wrapper->setBranch(branchName,"event"             , event            , false);
+    wrapper->setBranch(branchName,"goodVtx"           , goodVtx          , false);
+    wrapper->setBranch(branchName,"npv"               , npv              , false);
+    wrapper->setBranch(branchName,"rho"               , rho              , false);
+    wrapper->setBranch(branchName,"met_pt"            , met_pt           , true );
+    wrapper->setBranch(branchName,"met_phi"           , met_phi          , true );
+    wrapper->setBranch(branchName,"met_sig"           , met_sig          , false);
+    wrapper->setBranch(branchName,"met_unclUp_pt"     , met_unclUp_pt    , false);
+    wrapper->setBranch(branchName,"met_unclUp_phi"    , met_unclUp_phi   , false);
+    wrapper->setBranch(branchName,"met_raw_pt"        , met_raw_pt       , true);
+    wrapper->setBranch(branchName,"met_raw_phi"       , met_raw_phi      , true);
+    wrapper->setBranch(branchName,"dataEra"           , dataEra         , false);
     if(!realData){
-        wrapper->setBranchAddressPre(branchName,"nTruePUInts"       , &nTruePUInts  , false);
-        wrapper->setBranchAddressPre(branchName,"weight"            , &weight       , false);
-        wrapper->setBranchAddressPre(branchName,"process"           , &process      , false);
-        wrapper->setBranchAddressPre(branchName,"genWeights"        ,&genWeights    , false);
-
-        normWeightLoaded = wrapper->setBranchAddressPre(branchName,"normWeight"            , &normWeight       , false);
+        wrapper->setBranch(branchName,"nTruePUInts"       ,nTruePUInts  , false);
+        wrapper->setBranch(branchName,"genWeight"         ,genWeight    , false);
+        wrapper->setBranch(branchName,"process"           ,process      , false);
+        wrapper->setBranch(branchName,"genWeights"        ,genWeights   , false);
     } else {
-        wrapper->setBranchAddressPre(branchName,"dataset"           , &dataset      , false);
-        wrapper->setBranchAddressPre(branchName,"dataRun"           , &dataRun      , false);
-        weight = 1;
-        normWeightLoaded = false;
-        normWeight = 1;
-        process = 0;
+        wrapper->setBranch(branchName,"dataset"           , dataset      , false);
+        wrapper->setBranch(branchName,"dataRun"           , dataRun      , false);
     }
 
-    wrapper->setBranchAddressPre(branchName,"metFilters"         , &metFilters      , false);
-    wrapper->setBranchAddressPre(branchName,"triggerAccepts"    , &triggerAccepts   , false);
-    wrapper->setBranchAddressPre(branchName,"triggerPrescales"  , &triggerPrescales , false);
+    wrapper->setBranch(branchName,"metFilters"         , metFilters      , false);
+    wrapper->setBranch(branchName,"triggerAccepts"    , triggerAccepts   , false);
+    wrapper->setBranch(branchName,"triggerPrescales"  , triggerPrescales , false);
 
 
 }
 
 void EventReader::processVars() {
-    met.setP4(met_pt,float(0),met_phi,float(0));
-    rawMet.setP4(met_raw_pt,float(0),met_raw_phi,float(0));
+    met.setP4(*met_pt,float(0),*met_phi,float(0));
+    rawMet.setP4(*met_raw_pt,float(0),*met_raw_phi,float(0));
+    if(realData){
+        weight = 1;
+    } else {
+        weight = *genWeight;
+    }
 }
 
 

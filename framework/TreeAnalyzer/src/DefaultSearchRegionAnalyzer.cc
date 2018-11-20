@@ -120,10 +120,15 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
-    mcProc = FillerConstants::MCProcess(reader_event->process);
-    if(isRealData()) smpName = "data";
-    else if (mcProc == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
-    else smpName = FillerConstants::MCProcessNames[mcProc];
+    if(isRealData()){
+        mcProc = FillerConstants::NOPROCESS;
+        smpName = "data";
+    } else {
+        mcProc = FillerConstants::MCProcess(*(reader_event->process));
+        if (mcProc == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
+        else smpName = FillerConstants::MCProcessNames[mcProc];
+    }
+
 
     //|||||||||||||||||||||||||||||| CORRECT JETS AND MET FIRST ||||||||||||||||||||||||||||||
     if(!isRealData()){
@@ -136,10 +141,10 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         }
         if(isCorrOn(CORR_JER) ){
             Met dummyMET =reader_event->met;
-            JERAK4PuppiProc ->processJets(*reader_jet,reader_event->met,reader_jet_chs->genJets,reader_event->rho);
-            JERAK4CHSProc   ->processJets(*reader_jet_chs,dummyMET,reader_jet_chs->genJets,reader_event->rho);
-            JERAK8PuppiProc ->processFatJets(reader_fatjet_noLep->jets,std::vector<GenJet>(),reader_event->rho);
-            JERAK8PuppiProc ->processFatJets(reader_fatjet->jets,reader_fatjet->genJets,reader_event->rho);
+            JERAK4PuppiProc ->processJets(*reader_jet,reader_event->met,reader_jet_chs->genJets,reader_event->rho.val());
+            JERAK4CHSProc   ->processJets(*reader_jet_chs,dummyMET,reader_jet_chs->genJets,reader_event->rho.val());
+            JERAK8PuppiProc ->processFatJets(reader_fatjet_noLep->jets,std::vector<GenJet>(),reader_event->rho.val());
+            JERAK8PuppiProc ->processFatJets(reader_fatjet->jets,reader_fatjet->genJets,reader_event->rho.val());
         }
         if(isCorrOn(CORR_MET) ){
             METUncProc->process(reader_event->met,*reader_event);
@@ -148,7 +153,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
     //|||||||||||||||||||||||||||||| GEN PARTICLES ||||||||||||||||||||||||||||||
     if(reader_genpart){
-        if(reader_event->process == FillerConstants::SIGNAL) diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
+        if(mcProc == FillerConstants::SIGNAL) diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
         smDecayEvt.setDecayInfo(reader_genpart->genParticles);
     }
 
@@ -230,7 +235,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size())   )
             weight *= trigSFProc->getLeptonTriggerSF(ht_chs, (selectedLepton && selectedLepton->isMuon()));
         if(isCorrOn(CORR_PU) )
-            weight *= puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL);
+            weight *= puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);
         if(isCorrOn(CORR_LEP)){
             leptonSFProc->load(smDecayEvt,selectedLeptons);
             weight *= leptonSFProc->getSF();

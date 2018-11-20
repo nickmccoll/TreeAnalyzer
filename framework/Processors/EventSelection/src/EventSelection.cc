@@ -9,21 +9,21 @@ namespace EventSelection {
 
 
 bool passEventFilters(const EventReader& reader_event) {
-    if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::Flag_goodVertices) ) return false;
-    if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::Flag_globalTightHalo2016Filter) ) return false;
-    if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::Flag_HBHENoiseFilter) ) return false;
-    if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::Flag_HBHENoiseIsoFilter) ) return false;
-    if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::Flag_EcalDeadCellTriggerPrimitiveFilter) ) return false;
-    if(reader_event.realData && !FillerConstants::doesPass(reader_event.metFilters,FillerConstants::Flag_eeBadScFilter) ) return false;
-    if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::AnaTM_badMuons) ) return false;
-    if(!FillerConstants::doesPass(reader_event.metFilters,FillerConstants::AnaTM_badChargedHadrons) ) return false;
-    if(reader_event.goodVtx == 0) return false;
+    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_goodVertices) ) return false;
+    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_globalTightHalo2016Filter) ) return false;
+    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_HBHENoiseFilter) ) return false;
+    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_HBHENoiseIsoFilter) ) return false;
+    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_EcalDeadCellTriggerPrimitiveFilter) ) return false;
+    if(reader_event.realData && !FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_eeBadScFilter) ) return false;
+    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::AnaTM_badMuons) ) return false;
+    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::AnaTM_badChargedHadrons) ) return false;
+    if(*(reader_event.goodVtx) == 0) return false;
     return true;
 }
 
 bool passTriggerSuite(const EventReader& reader_event   ) {
     auto passTrig = [&](FillerConstants::Triggers trig) -> bool {
-        return FillerConstants::doesPass(reader_event.triggerAccepts,trig);
+        return FillerConstants::doesPass(*reader_event.triggerAccepts,trig);
     };
 
     const bool passMuon = passTrig(FillerConstants::HLT_IsoMu24) || passTrig(FillerConstants::HLT_IsoTkMu24)
@@ -35,9 +35,9 @@ bool passTriggerSuite(const EventReader& reader_event   ) {
     const bool passMET = passTrig(FillerConstants::HLT_PFMETNoMu110_PFMHTNoMu110_IDTight) || passTrig(FillerConstants::HLT_PFMETNoMu120_PFMHTNoMu120_IDTight);
 
     if(reader_event.realData){
-        const bool passMCross = (reader_event.run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
-        const bool passECross = (reader_event.run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
-        switch(reader_event.dataset){
+        const bool passMCross = (*reader_event.run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
+        const bool passECross = (*reader_event.run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
+        switch(*reader_event.dataset){
         case FillerConstants::SINGLEMU:
             return (passMuon || passMCross);
         case FillerConstants::SINGLEE:
@@ -58,7 +58,7 @@ bool passTriggerSuite(const EventReader& reader_event   ) {
 
 bool passMuonTriggerSuite(const EventReader& reader_event   ) {
     auto passTrig = [&](FillerConstants::Triggers trig) -> bool {
-        return FillerConstants::doesPass(reader_event.triggerAccepts,trig);
+        return FillerConstants::doesPass(*reader_event.triggerAccepts,trig);
     };
 
     const bool passMuon = passTrig(FillerConstants::HLT_IsoMu24) || passTrig(FillerConstants::HLT_IsoTkMu24)
@@ -68,8 +68,8 @@ bool passMuonTriggerSuite(const EventReader& reader_event   ) {
     const bool passMET = passTrig(FillerConstants::HLT_PFMETNoMu110_PFMHTNoMu110_IDTight) || passTrig(FillerConstants::HLT_PFMETNoMu120_PFMHTNoMu120_IDTight);
 
     if(reader_event.realData){
-        const bool passMCross = (reader_event.run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
-        switch(reader_event.dataset){
+        const bool passMCross = (*reader_event.run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
+        switch(*reader_event.dataset){
         case FillerConstants::SINGLEMU:
             return (passMuon || passMCross);
         case FillerConstants::JETHT:
@@ -87,7 +87,7 @@ bool passMuonTriggerSuite(const EventReader& reader_event   ) {
 
 bool passElectronTriggerSuite(const EventReader& reader_event   ) {
     auto passTrig = [&](FillerConstants::Triggers trig) -> bool {
-        return FillerConstants::doesPass(reader_event.triggerAccepts,trig);
+        return FillerConstants::doesPass(*reader_event.triggerAccepts,trig);
     };
 
     const bool passEle = passTrig(FillerConstants::HLT_Ele27_WPTight_Gsf)
@@ -97,8 +97,8 @@ bool passElectronTriggerSuite(const EventReader& reader_event   ) {
     const bool passMET = passTrig(FillerConstants::HLT_PFMETNoMu110_PFMHTNoMu110_IDTight) || passTrig(FillerConstants::HLT_PFMETNoMu120_PFMHTNoMu120_IDTight);
 
     if(reader_event.realData){
-        const bool passECross = (reader_event.run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
-        switch(reader_event.dataset){
+        const bool passECross = (*reader_event.run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
+        switch(*reader_event.dataset){
         case FillerConstants::SINGLEE:
             return (passEle || passECross);
         case FillerConstants::JETHT:

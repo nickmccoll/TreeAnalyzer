@@ -31,16 +31,13 @@ void BaseEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequency
     cout <<endl;
     ana->loadVariables();
     ana->setupReaders();
-    if(startEvent >= 0 ){
-        ana->setEventNumber(startEvent);
-        if(numEvents >= 0 ) numEvents += startEvent;
-    }
+    ana->setEventRange(startEvent,numEvents);
+
     while(ana->nextEvent(reportFrequency)){
-        if(numEvents >= 0 && ana->getEventNumber() >= numEvents+1) return;
         ana->processReaders();
         ana->runEvent();
-        ana->setEventNumber(ana->getEventNumber() +1);
     }
+
 }
 
 //--------------------------------------------------------------------------------------------------

@@ -165,8 +165,8 @@ METUncShifter::METUncShifter (const CorrHelp::CORRTYPE cT)
 void METUncShifter::process(Met& met, const EventReader& eventreader) const {
     if(cT == CORRTYPE::NONE || cT == CORRTYPE::NOMINAL) return;
     //calculate deltaMet so it can be applied pos/neg and to possibly already corrected met
-    const Met met_uncUp(ASTypes::CylLorentzVectorF(eventreader.met_unclUp_pt,0,eventreader.met_unclUp_phi,0));
-    const Met met_std(ASTypes::CylLorentzVectorF(eventreader.met_pt,0,eventreader.met_phi,0));
+    const Met met_uncUp(ASTypes::CylLorentzVectorF(eventreader.met_unclUp_pt.val(),0,eventreader.met_unclUp_phi.val(),0));
+    const Met met_std(ASTypes::CylLorentzVectorF(eventreader.met_pt.val(),0,eventreader.met_phi.val(),0));
     auto deltaM = met_uncUp.p4()-met_std.p4();
 
     if(cT == CORRTYPE::UP) met.p4() += deltaM;
