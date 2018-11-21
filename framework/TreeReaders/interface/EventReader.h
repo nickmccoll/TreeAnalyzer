@@ -33,6 +33,8 @@ public:
     rd_float    met_unclUp_phi;
     rd_float    met_raw_pt    ;
     rd_float    met_raw_phi   ;
+    rd_float    met_van_pt    ;
+    rd_float    met_van_phi   ;
     rd_float    nTruePUInts   ;
     rd_float    genWeight     ;
     rd_size8    process       ;
@@ -48,7 +50,6 @@ public:
 
 	//objects created in process
 	Met met;
-	Met rawMet;
 	float weight =1;
 
 
