@@ -10,7 +10,7 @@ public:
     GenParticleReader(std::string branchName);
 	virtual ~GenParticleReader();
 
-	virtual void setup(TreeReadingWrapper * wrapper);
+	virtual void setup(TreeReaderWrapper * wrapper);
 	virtual void processVars();
 
 private:

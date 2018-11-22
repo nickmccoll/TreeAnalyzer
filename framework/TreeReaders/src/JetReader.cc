@@ -32,36 +32,36 @@ JetReader::~JetReader(){
 
 }
 
-void JetReader::setup(TreeReadingWrapper * wrapper){
-    if(fillRecoJets){
-        wrapper->setBranchAddressPre(branchName,"pt"          ,&pt          ,true);
-        wrapper->setBranchAddressPre(branchName,"eta"         ,&eta         ,true);
-        wrapper->setBranchAddressPre(branchName,"phi"         ,&phi         ,true);
-        wrapper->setBranchAddressPre(branchName,"mass"        ,&mass        ,true);
-        wrapper->setBranchAddressPre(branchName,"chef"        ,&chef        ,true);
-        wrapper->setBranchAddressPre(branchName,"toRawFact"   ,&toRawFact        ,true);
-        wrapper->setBranchAddressPre(branchName,"metUnc_rawPx",&metUnc_rawPx        ,true);
-        wrapper->setBranchAddressPre(branchName,"metUnc_rawPy",&metUnc_rawPy        ,true);
-        wrapper->setBranchAddressPre(branchName,"csv"         ,&csv         ,true);
-        wrapper->setBranchAddressPre(branchName,"id"          ,&id          ,true);
-
-        if(!realData){
-            wrapper->setBranchAddressPre(branchName,"hadronFlavor",&hadronFlavor,true);
-            wrapper->setBranchAddressPre(branchName,"partonFlavor",&partonFlavor,true);
-            wrapper->setBranchAddressPre(branchName,"JECUnc"      ,&JECUnc,true);
-        }
-        if(fillGenJets && !realData) {
-            wrapper->setBranchAddressPre(branchName,"genIDX"      ,&genIDX      ,true);
-        }
-    }
-
-
-    if(fillGenJets && !realData) {
-        wrapper->setBranchAddressPre(branchName,"gen_pt"      ,&gen_pt      ,true);
-        wrapper->setBranchAddressPre(branchName,"gen_eta"     ,&gen_eta     ,true);
-        wrapper->setBranchAddressPre(branchName,"gen_phi"     ,&gen_phi     ,true);
-        wrapper->setBranchAddressPre(branchName,"gen_mass"    ,&gen_mass    ,true);
-    }
+void JetReader::setup(TreeReaderWrapper * wrapper){
+//    if(fillRecoJets){
+//        wrapper->setBranchAddressPre(branchName,"pt"          ,&pt          ,true);
+//        wrapper->setBranchAddressPre(branchName,"eta"         ,&eta         ,true);
+//        wrapper->setBranchAddressPre(branchName,"phi"         ,&phi         ,true);
+//        wrapper->setBranchAddressPre(branchName,"mass"        ,&mass        ,true);
+//        wrapper->setBranchAddressPre(branchName,"chef"        ,&chef        ,true);
+//        wrapper->setBranchAddressPre(branchName,"toRawFact"   ,&toRawFact        ,true);
+//        wrapper->setBranchAddressPre(branchName,"metUnc_rawPx",&metUnc_rawPx        ,true);
+//        wrapper->setBranchAddressPre(branchName,"metUnc_rawPy",&metUnc_rawPy        ,true);
+//        wrapper->setBranchAddressPre(branchName,"csv"         ,&csv         ,true);
+//        wrapper->setBranchAddressPre(branchName,"id"          ,&id          ,true);
+//
+//        if(!realData){
+//            wrapper->setBranchAddressPre(branchName,"hadronFlavor",&hadronFlavor,true);
+//            wrapper->setBranchAddressPre(branchName,"partonFlavor",&partonFlavor,true);
+//            wrapper->setBranchAddressPre(branchName,"JECUnc"      ,&JECUnc,true);
+//        }
+//        if(fillGenJets && !realData) {
+//            wrapper->setBranchAddressPre(branchName,"genIDX"      ,&genIDX      ,true);
+//        }
+//    }
+//
+//
+//    if(fillGenJets && !realData) {
+//        wrapper->setBranchAddressPre(branchName,"gen_pt"      ,&gen_pt      ,true);
+//        wrapper->setBranchAddressPre(branchName,"gen_eta"     ,&gen_eta     ,true);
+//        wrapper->setBranchAddressPre(branchName,"gen_phi"     ,&gen_phi     ,true);
+//        wrapper->setBranchAddressPre(branchName,"gen_mass"    ,&gen_mass    ,true);
+//    }
 
 
 }

@@ -8,7 +8,7 @@ class MuonReader: public BaseReader {
 public:
     MuonReader(std::string branchName);
 	virtual ~MuonReader();
-	virtual void setup(TreeReadingWrapper * wrapper);
+	virtual void setup(TreeReaderWrapper * wrapper);
 	virtual void processVars();
 
 private:

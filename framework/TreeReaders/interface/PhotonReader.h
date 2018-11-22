@@ -8,7 +8,7 @@ class PhotonReader: public BaseReader {
 public:
     PhotonReader(std::string branchName);
 	virtual ~PhotonReader();
-	virtual void setup(TreeReadingWrapper * wrapper);
+	virtual void setup(TreeReaderWrapper * wrapper);
 	virtual void processVars();
 
 private:

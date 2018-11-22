@@ -21,18 +21,18 @@ GenParticleReader::~GenParticleReader(){
 }
 
 
-void GenParticleReader::setup(TreeReadingWrapper * wrapper){
-    wrapper->setBranchAddressPre(branchName,"pt"      ,&pt      ,true);
-    wrapper->setBranchAddressPre(branchName,"eta"     ,&eta     ,true);
-    wrapper->setBranchAddressPre(branchName,"phi"     ,&phi     ,true);
-    wrapper->setBranchAddressPre(branchName,"mass"    ,&mass    ,true);
-    wrapper->setBranchAddressPre(branchName,"status"  ,&status  ,true);
-    wrapper->setBranchAddressPre(branchName,"pdgid"   ,&pdgid   ,true);
-    wrapper->setBranchAddressPre(branchName,"nmoms"   ,&nmoms   ,true);
-    wrapper->setBranchAddressPre(branchName,"firstmom",&firstmom,true);
-    wrapper->setBranchAddressPre(branchName,"ndaus"   ,&ndaus   ,true);
-    wrapper->setBranchAddressPre(branchName,"firstdau",&firstdau,true);
-    wrapper->setBranchAddressPre(branchName,"assoc"   ,&assoc   ,true);
+void GenParticleReader::setup(TreeReaderWrapper * wrapper){
+//    wrapper->setBranchAddressPre(branchName,"pt"      ,&pt      ,true);
+//    wrapper->setBranchAddressPre(branchName,"eta"     ,&eta     ,true);
+//    wrapper->setBranchAddressPre(branchName,"phi"     ,&phi     ,true);
+//    wrapper->setBranchAddressPre(branchName,"mass"    ,&mass    ,true);
+//    wrapper->setBranchAddressPre(branchName,"status"  ,&status  ,true);
+//    wrapper->setBranchAddressPre(branchName,"pdgid"   ,&pdgid   ,true);
+//    wrapper->setBranchAddressPre(branchName,"nmoms"   ,&nmoms   ,true);
+//    wrapper->setBranchAddressPre(branchName,"firstmom",&firstmom,true);
+//    wrapper->setBranchAddressPre(branchName,"ndaus"   ,&ndaus   ,true);
+//    wrapper->setBranchAddressPre(branchName,"firstdau",&firstdau,true);
+//    wrapper->setBranchAddressPre(branchName,"assoc"   ,&assoc   ,true);
 }
 
 void GenParticleReader::processVars() {

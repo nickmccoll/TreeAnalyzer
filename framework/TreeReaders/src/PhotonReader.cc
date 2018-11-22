@@ -16,12 +16,12 @@ PhotonReader::~PhotonReader(){
     delete hadOvEm   ;
 }
 
-void PhotonReader::setup(TreeReadingWrapper * wrapper){
-    wrapper->setBranchAddressPre(branchName,"pt"        ,&pt         );
-    wrapper->setBranchAddressPre(branchName,"eta"       ,&eta        );
-    wrapper->setBranchAddressPre(branchName,"phi"       ,&phi        );
-    wrapper->setBranchAddressPre(branchName,"hadOvEm"   ,&hadOvEm    );
-    wrapper->setBranchAddressPre(branchName,"hadTowOvEm",&hadTowOvEm    );
+void PhotonReader::setup(TreeReaderWrapper * wrapper){
+//    wrapper->setBranchAddressPre(branchName,"pt"        ,&pt         );
+//    wrapper->setBranchAddressPre(branchName,"eta"       ,&eta        );
+//    wrapper->setBranchAddressPre(branchName,"phi"       ,&phi        );
+//    wrapper->setBranchAddressPre(branchName,"hadOvEm"   ,&hadOvEm    );
+//    wrapper->setBranchAddressPre(branchName,"hadTowOvEm",&hadTowOvEm    );
 }
 
 void PhotonReader::processVars() {

@@ -8,7 +8,7 @@ class JetReader: public BaseReader {
 public:
     JetReader(std::string branchName, bool isRealData, bool fillGenJets = true,  bool fillRecoJets = true);
 	virtual ~JetReader();
-	virtual void setup(TreeReadingWrapper * wrapper);
+	virtual void setup(TreeReaderWrapper * wrapper);
 	virtual void processVars();
 
 private:

@@ -34,30 +34,30 @@ ElectronReader::~ElectronReader(){
     delete sccol_phi ;
 }
 
-void ElectronReader::setup(TreeReadingWrapper * wrapper){
-    wrapper->setBranchAddressPre(branchName,"pt"         ,&pt         );
-    wrapper->setBranchAddressPre(branchName,"eta"        ,&eta        );
-    wrapper->setBranchAddressPre(branchName,"phi"        ,&phi        );
-    wrapper->setBranchAddressPre(branchName,"q"          ,&q          );
-    wrapper->setBranchAddressPre(branchName,"scEta"      ,&scEta      );
-    wrapper->setBranchAddressPre(branchName,"d0"         ,&d0         );
-    wrapper->setBranchAddressPre(branchName,"dz"         ,&dz         );
-    wrapper->setBranchAddressPre(branchName,"sip3D"      ,&sip3D      );
-    wrapper->setBranchAddressPre(branchName,"mvaID"      ,&mvaID      );
-    wrapper->setBranchAddressPre(branchName,"mvaID_cat"  ,&mvaID_cat  );
-    wrapper->setBranchAddressPre(branchName,"miniIso"    ,&miniIso    );
-    wrapper->setBranchAddressPre(branchName,"eaRelISO"   ,&eaRelISO   );
-    wrapper->setBranchAddressPre(branchName,"id"         ,&id         );
-    wrapper->setBranchAddressPre(branchName,"dRnorm"     ,&dRnorm     ,false);
-    wrapper->setBranchAddressPre(branchName,"lepAct_o_pt",&lepAct_o_pt,false);
-    wrapper->setBranchAddressPre(branchName,"sc_act_o_pt",&sc_act_o_pt,false);
-    wrapper->setBranchAddressPre(branchName,"sc_dr_act"  ,&sc_dr_act  ,false);
-    if(fillReco) wrapper->setBranchAddressPre(branchName,"reco_flag"  ,&reco_flag  ,false);
-    if(fillSCs){
-        wrapper->setBranchAddressPre(branchName,"sccol_et"   ,&sccol_et );
-        wrapper->setBranchAddressPre(branchName,"sccol_eta"  ,&sccol_eta);
-        wrapper->setBranchAddressPre(branchName,"sccol_phi"  ,&sccol_phi);
-    }
+void ElectronReader::setup(TreeReaderWrapper * wrapper){
+//    wrapper->setBranchAddressPre(branchName,"pt"         ,&pt         );
+//    wrapper->setBranchAddressPre(branchName,"eta"        ,&eta        );
+//    wrapper->setBranchAddressPre(branchName,"phi"        ,&phi        );
+//    wrapper->setBranchAddressPre(branchName,"q"          ,&q          );
+//    wrapper->setBranchAddressPre(branchName,"scEta"      ,&scEta      );
+//    wrapper->setBranchAddressPre(branchName,"d0"         ,&d0         );
+//    wrapper->setBranchAddressPre(branchName,"dz"         ,&dz         );
+//    wrapper->setBranchAddressPre(branchName,"sip3D"      ,&sip3D      );
+//    wrapper->setBranchAddressPre(branchName,"mvaID"      ,&mvaID      );
+//    wrapper->setBranchAddressPre(branchName,"mvaID_cat"  ,&mvaID_cat  );
+//    wrapper->setBranchAddressPre(branchName,"miniIso"    ,&miniIso    );
+//    wrapper->setBranchAddressPre(branchName,"eaRelISO"   ,&eaRelISO   );
+//    wrapper->setBranchAddressPre(branchName,"id"         ,&id         );
+//    wrapper->setBranchAddressPre(branchName,"dRnorm"     ,&dRnorm     ,false);
+//    wrapper->setBranchAddressPre(branchName,"lepAct_o_pt",&lepAct_o_pt,false);
+//    wrapper->setBranchAddressPre(branchName,"sc_act_o_pt",&sc_act_o_pt,false);
+//    wrapper->setBranchAddressPre(branchName,"sc_dr_act"  ,&sc_dr_act  ,false);
+//    if(fillReco) wrapper->setBranchAddressPre(branchName,"reco_flag"  ,&reco_flag  ,false);
+//    if(fillSCs){
+//        wrapper->setBranchAddressPre(branchName,"sccol_et"   ,&sccol_et );
+//        wrapper->setBranchAddressPre(branchName,"sccol_eta"  ,&sccol_eta);
+//        wrapper->setBranchAddressPre(branchName,"sccol_phi"  ,&sccol_phi);
+//    }
 
 }
 

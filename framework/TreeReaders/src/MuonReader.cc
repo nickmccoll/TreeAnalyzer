@@ -25,19 +25,19 @@ MuonReader::~MuonReader(){
 
 }
 
-void MuonReader::setup(TreeReadingWrapper * wrapper){
-    wrapper->setBranchAddressPre(branchName,"pt"       ,&pt       );
-    wrapper->setBranchAddressPre(branchName,"eta"      ,&eta      );
-    wrapper->setBranchAddressPre(branchName,"phi"      ,&phi      );
-    wrapper->setBranchAddressPre(branchName,"q"        ,&q        );
-    wrapper->setBranchAddressPre(branchName,"d0"       ,&d0       );
-    wrapper->setBranchAddressPre(branchName,"dz"       ,&dz       );
-    wrapper->setBranchAddressPre(branchName,"sip3D"    ,&sip3D    );
-    wrapper->setBranchAddressPre(branchName,"miniIso"  ,&miniIso  );
-    wrapper->setBranchAddressPre(branchName,"dBRelISO" ,&dBRelISO );
-    wrapper->setBranchAddressPre(branchName,"id"       ,&id       );
-    wrapper->setBranchAddressPre(branchName,"dRnorm"     ,&dRnorm     ,false);
-    wrapper->setBranchAddressPre(branchName,"lepAct_o_pt",&lepAct_o_pt,false);
+void MuonReader::setup(TreeReaderWrapper * wrapper){
+//    wrapper->setBranchAddressPre(branchName,"pt"       ,&pt       );
+//    wrapper->setBranchAddressPre(branchName,"eta"      ,&eta      );
+//    wrapper->setBranchAddressPre(branchName,"phi"      ,&phi      );
+//    wrapper->setBranchAddressPre(branchName,"q"        ,&q        );
+//    wrapper->setBranchAddressPre(branchName,"d0"       ,&d0       );
+//    wrapper->setBranchAddressPre(branchName,"dz"       ,&dz       );
+//    wrapper->setBranchAddressPre(branchName,"sip3D"    ,&sip3D    );
+//    wrapper->setBranchAddressPre(branchName,"miniIso"  ,&miniIso  );
+//    wrapper->setBranchAddressPre(branchName,"dBRelISO" ,&dBRelISO );
+//    wrapper->setBranchAddressPre(branchName,"id"       ,&id       );
+//    wrapper->setBranchAddressPre(branchName,"dRnorm"     ,&dRnorm     ,false);
+//    wrapper->setBranchAddressPre(branchName,"lepAct_o_pt",&lepAct_o_pt,false);
 
 }
 

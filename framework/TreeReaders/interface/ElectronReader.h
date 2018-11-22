@@ -8,7 +8,7 @@ class ElectronReader: public BaseReader {
 public:
     ElectronReader(std::string branchName, bool fillSCs = false, bool fillReco = false);
 	virtual ~ElectronReader();
-	virtual void setup(TreeReadingWrapper * wrapper);
+	virtual void setup(TreeReaderWrapper * wrapper);
 	virtual void processVars();
 
 private:
