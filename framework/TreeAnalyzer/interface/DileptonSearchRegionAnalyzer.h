@@ -111,8 +111,6 @@ public:
     float                      wwDM        = 0;
     bool                       passWWDM    = false;
 
-    MomentumF                  hWW                ;
-    MomentumF                  hh                 ;
     float                      hbbMass     =0     ;
 
     std::unique_ptr<FatJetProcessor>        fjProc     ;

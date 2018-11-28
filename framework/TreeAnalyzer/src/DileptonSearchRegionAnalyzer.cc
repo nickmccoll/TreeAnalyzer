@@ -181,12 +181,8 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
 
     if(hbbCand){
         hbbMass =   isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
-        hWW = selectedDileptons[0]->p4() + selectedDileptons[1]->p4() + dineutrino.p4();
-        hh = hWW.p4() + hbbCand->p4();
     } else {
         hbbMass    = 0;
-        hWW        = MomentumF();
-        hh         = MomentumF();
     }
 
     //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
