@@ -84,10 +84,12 @@ public:
     int             signal_mass=0;
     TString         smpName  = "";
 
+    std::vector<const Jet*> jets_ht;
     std::vector<const Jet*> jets;
     std::vector<const Jet*> jets_HbbV;
     int nMedBTags = 0;
     int nMedBTags_HbbV = 0;
+    float ht_puppi     = 0;
 
     std::vector<const Jet*> jets_chs;
     float                   ht_chs    =0;
@@ -109,7 +111,6 @@ public:
     float                      wwDM        = 0;
     bool                       passWWDM    = false;
 
-    MomentumF                  wlnu               ;
     MomentumF                  hWW                ;
     MomentumF                  hh                 ;
     float                      hbbMass     =0     ;

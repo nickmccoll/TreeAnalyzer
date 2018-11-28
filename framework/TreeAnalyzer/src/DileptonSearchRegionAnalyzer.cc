@@ -176,18 +176,25 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
         hbbCSVCat   = fjProc->getDilepHbbCSVCat();
     } else {
         hbbCand    =  0;
-        hbbCSVCat   = BTagging::CSVSJ_INCL;
+        hbbCSVCat  = BTagging::CSVSJ_INCL;
     }
 
     if(hbbCand){
-        hbbMass    =   isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
+        hbbMass =   isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
+        hWW = selectedDileptons[0]->p4() + selectedDileptons[1]->p4() + dineutrino.p4();
+        hh = hWW.p4() + hbbCand->p4();
     } else {
         hbbMass    = 0;
+        hWW        = MomentumF();
+        hh         = MomentumF();
     }
 
     //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
 
     if(reader_jet){
+    	jets_ht = PhysicsUtilities::selObjsMom(reader_jet->jets,30);
+        ht_puppi = JetKinematics::ht(jets_ht);
+
         jets = PhysicsUtilities::selObjsMom(reader_jet->jets,30,2.4,[](const Jet* j){return j->passTightID();} );
         nMedBTags = PhysicsUtilities::selObjsD(jets,[](const Jet* j){return BTagging::isMediumCSVTagged(*j);} ).size();
         if(hbbCand){
