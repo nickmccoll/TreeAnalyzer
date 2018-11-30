@@ -15,6 +15,8 @@ using namespace CutConstants;
 using namespace ASTypes;
 std::vector<TObject*> writeables;
 
+const float signalXS = 0.8; //in pb
+
 class Dummy {
 public:
     Dummy(const std::string& outName = "") : outName(outName) {};
@@ -162,7 +164,8 @@ public:
                     }
                     //have to do this...bounds are different in the signal
                     hP->Scale(hM->Integral()/hP->Integral());
-                    hP->Scale(2*0.5824*(.2137+.002619)*.2);
+                    //Scale so that we get 0.2pb normalization
+                    hP->Scale(2*0.5824*(.2137+.002619)*signalXS);
                     TH2 * hpNew = new TH2F(TString(hP->GetName()) + "_new",hP->GetTitle(),nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
                     hpNew->SetDirectory(0);
                     for( int iX = 1; iX <= hpNew->GetNbinsX(); ++iX ){
@@ -426,7 +429,8 @@ public:
 
                 if(prefs.signals.size()){
                     p->setLegendPos(xV,yV,xV+0.457,yV+0.245);
-                    p->addText("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=0.1 pb",xV+0.0075,yV-0.04,0.042);
+                    TString sigName = TString::Format("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=%.1f pb",signalXS);
+                    p->addText(sigName.Data(),xV+0.0075,yV-0.04,0.042);
                 }
 
                 else {
