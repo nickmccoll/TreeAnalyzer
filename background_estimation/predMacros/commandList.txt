@@ -189,3 +189,7 @@ hadd -f biasInput_postfit_t2_2500.root  fitDiagnosticspostfit_t2_?_2500.root
 hadd -f biasInput_postfit_t5_1000.root  fitDiagnosticspostfit_t5_?_1000.root
 hadd -f biasInput_postfit_t5_1600.root  fitDiagnosticspostfit_t5_?_1600.root
 hadd -f biasInput_postfit_t5_2500.root  fitDiagnosticspostfit_t5_?_2500.root
+
+#SIGNIFICANCE
+~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M Significance -m 2650 combinedCard.txt
+

@@ -20,8 +20,8 @@ const float maxX = 3600;
 const float minY = 0.5;
 const float maxY = 10000;
 const bool doLog = true;
-std::string titleX = "m_{X} [GeV]";
-std::string titleY = "#sigma#bf{#it{#Beta}}(X #rightarrow HH) [fb]";
+    std::string titleX = "#it{m}_{X} [GeV]";
+    std::string titleY = "#sigma#bf{#it{#Beta}}(X #rightarrow HH) [fb]";
 std::vector<std::string> partLabels = {"Spin-0 X","Spin-2 X"};
 std::vector<std::string> fileLabel = {"radion","blkgrav"};
 std::string lumiText = "35.9 fb^{-1} (13 TeV)";
@@ -89,61 +89,61 @@ std::vector<std::pair<float,float>> radionXSec = {
 };
 
 std::vector<std::pair<float,float>> bgXsec = {
-{800     ,1.64e+01},
-{850     ,1.20e+01},
-{900     ,8.82e+00},
-{950     ,6.71e+00},
-{1000    ,5.10e+00},
-{1050    ,4.05e+00},
-{1100    ,3.22e+00},
-{1150    ,2.56e+00},
-{1200    ,2.04e+00},
-{1250    ,1.62e+00},
-{1300    ,1.29e+00},
-{1350    ,1.03e+00},
-{1400    ,8.15e-01},
-{1450    ,6.48e-01},
-{1500    ,5.15e-01},
-{1550    ,4.26e-01},
-{1600    ,3.52e-01},
-{1650    ,2.91e-01},
-{1700    ,2.41e-01},
-{1750    ,1.99e-01},
-{1800    ,1.65e-01},
-{1850    ,1.38e-01},
-{1900    ,1.16e-01},
-{1950    ,9.72e-02},
-{2000    ,8.16e-02},
-{2050    ,6.96e-02},
-{2100    ,5.95e-02},
-{2150    ,5.08e-02},
-{2200    ,4.34e-02},
-{2250    ,3.70e-02},
-{2300    ,3.16e-02},
-{2350    ,2.70e-02},
-{2400    ,2.31e-02},
-{2450    ,1.97e-02},
-{2500    ,1.68e-02},
-{2550    ,1.46e-02},
-{2600    ,1.26e-02},
-{2650    ,1.09e-02},
-{2700    ,9.44e-03},
-{2750    ,8.17e-03},
-{2800    ,7.07e-03},
-{2850    ,6.12e-03},
-{2900    ,5.30e-03},
-{2950    ,4.59e-03},
-{3000    ,3.97e-03},
-{3050    ,3.47e-03},
-{3100    ,3.04e-03},
-{3150    ,2.65e-03},
-{3200    ,2.32e-03},
-{3250    ,2.03e-03},
-{3300    ,1.77e-03},
-{3350    ,1.55e-03},
-{3400    ,1.36e-03},
-{3450    ,1.19e-03},
-{3500    ,1.04e-03}
+{800     ,1.82e+00},
+{850     ,1.34e+00},
+{900     ,9.80e-01},
+{950     ,7.45e-01},
+{1000    ,5.67e-01},
+{1050    ,4.51e-01},
+{1100    ,3.58e-01},
+{1150    ,2.85e-01},
+{1200    ,2.27e-01},
+{1250    ,1.80e-01},
+{1300    ,1.43e-01},
+{1350    ,1.14e-01},
+{1400    ,9.06e-02},
+{1450    ,7.20e-02},
+{1500    ,5.73e-02},
+{1550    ,4.74e-02},
+{1600    ,3.92e-02},
+{1650    ,3.24e-02},
+{1700    ,2.68e-02},
+{1750    ,2.21e-02},
+{1800    ,1.83e-02},
+{1850    ,1.54e-02},
+{1900    ,1.29e-02},
+{1950    ,1.08e-02},
+{2000    ,9.06e-03},
+{2050    ,7.74e-03},
+{2100    ,6.61e-03},
+{2150    ,5.64e-03},
+{2200    ,4.82e-03},
+{2250    ,4.11e-03},
+{2300    ,3.51e-03},
+{2350    ,3.00e-03},
+{2400    ,2.56e-03},
+{2450    ,2.19e-03},
+{2500    ,1.87e-03},
+{2550    ,1.62e-03},
+{2600    ,1.40e-03},
+{2650    ,1.21e-03},
+{2700    ,1.05e-03},
+{2750    ,9.08e-04},
+{2800    ,7.86e-04},
+{2850    ,6.80e-04},
+{2900    ,5.89e-04},
+{2950    ,5.10e-04},
+{3000    ,4.41e-04},
+{3050    ,3.86e-04},
+{3100    ,3.37e-04},
+{3150    ,2.95e-04},
+{3200    ,2.58e-04},
+{3250    ,2.25e-04},
+{3300    ,1.97e-04},
+{3350    ,1.72e-04},
+{3400    ,1.51e-04},
+{3450    ,1.32e-04},
+{3500    ,1.15e-04}
 };
 
 
@@ -275,7 +275,7 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
     auto leg = new TLegend(0.58,0.66,0.91,0.83,"","NDC");
     leg->SetBorderSize(0);
 
-    leg->AddEntry(sigXSec, sig == RADION ? "Radion (#Lambda_{R}=3 TeV)" : "Bulk graviton (#tilde{k}=0.3)");
+    leg->AddEntry(sigXSec, sig == RADION ? "Radion (#Lambda_{R}=3 TeV)" : "Bulk graviton (#tilde{k}=0.1)");
     if(!blind)leg->AddEntry(bandObs, "Observed");
     leg->AddEntry(bandExp, "Median expected","L");
     leg->AddEntry(band68, "68% expected","F");
@@ -322,5 +322,6 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
 
 #endif
 void doLimits(bool blind, int sig = RADION, std::string inName = "higgsCombineTest.AsymptoticLimits.root", std::string outName = "limitPlot"){
+
     go(blind,sig,inName,outName +"_"+ fileLabel[sig]);
 }

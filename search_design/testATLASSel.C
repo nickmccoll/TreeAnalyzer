@@ -45,10 +45,36 @@ public:
            };
 
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
-        if(!DefaultSearchRegionAnalyzer::runEvent())return false;
+
+        if(hbbCand && wjjCand && passEventFilters && selectedLeptons.size() ==1 ){
+
+            bool passKine = true;
+            const float minHT = 400;
+            const float minElePT = 30;
+            const float minMuPT = 26;
+
+            if(ht_chs < minHT) passKine = false;
+
+            float maxElePT = 0;
+            float maxMuPT = 0;
+            for(const auto * l : selectedLeptons ) {
+                if(l->isMuon()) maxMuPT = std::max(maxMuPT, l->pt());
+                else maxElePT = std::max(maxElePT, l->pt());
+            }
+
+            if(maxElePT < minElePT && maxMuPT < minMuPT ) passKine = false;
+
+
+            if(passKine) fill(12);
+
+
+            if(passTriggerPreselection) fill(13);
+        }
         if(!passTriggerPreselection) return false;
         if(!passEventFilters) return false;
         if(selectedLeptons.size() != 1) return false;
+
+
 
         if(hbbCand && wjjCand){
             fill(9);
@@ -56,6 +82,55 @@ public:
                 fill(10);
             if(wjjCand->tau2otau1() < 0.55)
                 fill(11);
+
+        }
+
+        if(hbbCand && wjjCand && isSignal()&& diHiggsEvt.type >= DiHiggsEvent::MU){
+
+            bool isDouble = false;
+            MomentumF neutrino;
+            MomentumF neutrinoAlt;
+            auto getInvisible =[&](const MomentumF& met, const MomentumF& vis, const double hMass){
+                const double a = hMass*hMass - vis.mass()*vis.mass() +2*vis.x()*met.x() +2*vis.y()*met.y();
+                const double A = 4*(vis.E()*vis.E() - vis.z()*vis.z());
+                const double B = -4*a* vis.z();
+                const double C = 4*vis.E()*vis.E()*(met.x()*met.x() + met.y()*met.y()) - a*a;
+                const double delta = B*B -4*A*C;
+
+                double metZ = 0;
+                double metZAlt = 0;
+                if(delta < 0) {
+                    metZ= -B/(2*A);
+                } else {
+                    isDouble = true;
+                    const double pos = (-B + std::sqrt(delta))/(2*A);
+                    const double neg = (-B - std::sqrt(delta))/(2*A);
+                    if(std::fabs(pos) < std::fabs(neg)){
+                        metZ = pos;
+                        metZAlt = neg;
+                    }
+                    else{
+                        metZ = neg;
+                        metZAlt = pos;
+                    }
+                }
+                ASTypes::CartLorentzVector neutrinoC(met.x(),met.y(),metZ,std::sqrt(met.x()*met.x()+met.y()*met.y()+metZ*metZ));
+                ASTypes::CartLorentzVector neutrinoAltC(met.x(),met.y(),metZAlt,std::sqrt(met.x()*met.x()+met.y()*met.y()+metZAlt*metZAlt));
+                neutrino.setP4(neutrinoC);
+                neutrinoAlt.setP4(neutrinoAltC);
+            };
+            getInvisible(reader_event->met,(selectedLepton->p4() + wjjCand->p4()),125. );
+            plotter.getOrMake1DPre(smpName,"sigReco",";category",6,-0.5,5.5)->Fill(0.,weight);
+            if(!isDouble)plotter.getOrMake1DPre(smpName,"sigReco",";category",6,-0.5,5.5)->Fill(1,weight);
+            else {
+                if(std::fabs(diHiggsEvt.w1_d2->pz() - neutrino.pz()) < std::fabs(diHiggsEvt.w1_d2->pz() - neutrinoAlt.pz())  )
+                    plotter.getOrMake1DPre(smpName,"sigReco",";category",6,-0.5,5.5)->Fill(2.,weight);
+                else
+                    plotter.getOrMake1DPre(smpName,"sigReco",";category",6,-0.5,5.5)->Fill(3.,weight);
+            }
+
+
+
         }
 
 

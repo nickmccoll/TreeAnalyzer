@@ -47,6 +47,7 @@ struct DataPlotPrefs {
     bool binInY = true;
     std::vector<std::string> sels;
     std::vector<std::string> titles;
+    std::string topTitle;
 
     std::string signalFilePrefix = "signalInputs/HHlnujj_radHH_";
     std::vector<std::string> signals;
@@ -418,18 +419,24 @@ public:
                 }
 
                 double xV =0.45;
-                double yV =0.63;
+                double yV =0.68;;
 
                 p->setXTitle( (prefs.binInY ? hbbMCS : hhMCS) .title.c_str());
-                p->setYTitle((std::string("N. of events / ") + flt2Str(binWidth) +" GeV").c_str() );
+                p->setYTitle((std::string("Data / ") + flt2Str(binWidth) +" GeV").c_str() );
                 p->setCMSLumi(10);
 //                p->setCMSLumiExtraText("Preliminary");
-                p->addText(st,xV+0.0075,yV+0.2075,0.045);
+                if(prefs.topTitle.size()){
+                    p->addText(prefs.topTitle,.18,0.75,0.045);
+                    p->addText(st,.18,0.7,0.045);
+                } else {
+                    p->addText(st,.18,0.75,0.045);
+                }
+
                 p->setLegendNColumns(2);
 
                 if(prefs.signals.size()){
                     p->setLegendPos(xV,yV,xV+0.457,yV+0.245);
-                    TString sigName = TString::Format("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=%.1f pb",signalXS);
+                    TString sigName = TString::Format("#sigma#bf{#it{#Beta}}(X #rightarrow HH) = %.1f pb",signalXS);
                     p->addText(sigName.Data(),xV+0.0075,yV-0.04,0.042);
                 }
 
@@ -448,7 +455,7 @@ public:
                     if(prefs.minBot != prefs.maxBot){
                         p->setBotMinMax(prefs.minBot,prefs.maxBot);
                     }
-                    p->setYTitleBot((std::string("N. of events / ") + modTitles[prefs.modelType] +"").c_str());
+                    p->setYTitleBot((std::string("Data / ") + modTitles[prefs.modelType] +"").c_str());
                     auto * c = p->drawSplitRatio(-1,"stack",false,false,plotTitle.c_str());
                     if(prefs.doLog) c->GetPad(1)->SetLogy();
 
@@ -777,6 +784,7 @@ TCanvas * makeUncPlot(const std::vector<std::string>& uncs, const std::string& l
             if(h) h->SetBinContent(nP+1,x);
             if(h) h->SetBinError(nP+1,e);
             if(h) h->GetXaxis()->SetBinLabel(nP+1,unc.c_str());
+            std::cout << unc <<"\t" << v->getVal() <<"\t"<< v->getError()<<"\n";
 
         };
         if(fit_b) fillPt(fit_b_uncsize,fit_b_uncs,nuis_b);
@@ -1163,7 +1171,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         //Horrible
         doComp(reg,hhPlot.nToys,  postFitFilename,limitBaseName +"/postFit_comp.root");
         srList ={"emu_LMT_I_full"};
-        srListTitles ={ std::string(reg == REG_TOPCR ? "Top CR" : "Q/G CR" )+    ": All categories"};
+        srListTitles ={ "All categories"};
 
 
         hhPlot.modelType = MOD_POST;
@@ -1171,9 +1179,10 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.binInY = false;
         hhPlot.sels =  srList;
         hhPlot.titles = srListTitles;
+        hhPlot.topTitle = reg == REG_TOPCR ? "Top CR" : "Q/G CR";
 
         hhPlot.minTop =0.5;
-        hhPlot.maxTop =40000;
+        hhPlot.maxTop =100000;
         hhPlot.rebinFactor=4;
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
@@ -1206,8 +1215,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.minTop =0.2;
         hhPlot.maxTop =2000;
         hhPlot.rebinFactor = 4;
-        hhPlot.signals = {"1000","2500"};
-        hhPlot.signalTitles = {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"};
+//        hhPlot.rebinFactor = -1;
+//        hhPlot.rebins = {700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,2000,2200,2400,3000,4000};
 
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
