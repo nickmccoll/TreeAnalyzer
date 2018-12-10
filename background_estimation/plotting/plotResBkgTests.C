@@ -139,8 +139,8 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR,  std::s
         if(outName.size()) outName += "_all_2DComp";
         writeables = test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },
               filename,{"emu_LMT_I_full"},{700,4000});
-//        writeables = test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },
-//              filename,srList,{100,150},false);
+        writeables = test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },
+              filename,srList,{30,210},false);
 
     }
 

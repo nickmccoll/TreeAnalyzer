@@ -402,11 +402,13 @@ std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filenam
 //           c->Update();
 
          p->setBotMinMax(0,2);
+         if(!binInY)
+         p->setMinMax(0.001,10000);
          p->setYTitleBot("N/N(template)");
          auto * c = p->drawSplitRatio(-1,"stack",false,false,(s + "_"+flt2Str(bins[iB]) +"_"+flt2Str(bins[iB+1])).c_str());
          writeables.push_back(c);
-
-//         c->GetPad(1)->SetLogy();
+         if(!binInY)
+         c->GetPad(1)->SetLogy();
          c->GetPad(1)->Update();
   }
   }

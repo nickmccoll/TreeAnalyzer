@@ -19,7 +19,7 @@ mkdir ${outputdir}/dataPieces
 mv ${outputdir}/data*.root ${outputdir}/dataPieces/
 mv ${outputdir}/*.root ${outputdir}/mcPieces/
 mv ${outputdir}/mcPieces/out*radion*.root ${outputdir}/
-mv ${outputdir}/mcPieces/out*blkgrv*.root ${outputdirputdir}/
+mv ${outputdir}/mcPieces/out*blkgrv*.root ${outputdir}/
 hadd ${outputdir}/betrees_data.root ${outputdir}/dataPieces/*.root
 hadd ${outputdir}/betrees_mc.root ${outputdir}/mcPieces/*.root
 

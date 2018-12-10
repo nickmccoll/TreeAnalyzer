@@ -9,6 +9,7 @@
 #include <TreeAnalyzer/framework/Processors/GenTools/interface/DiHiggsEvent.h>
 #include <TString.h>
 #include <TVector2.h>
+#include <TLorentzVector.h>
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -687,6 +688,40 @@ public:
 
         plotJetGroup(smpName);
         if(hh.mass()>2000)plotJetGroup(smpName+"_hh2TeV");
+
+        auto mkTL = [](const ASTypes::CylLorentzVectorF& in) -> TLorentzVector{
+            return TLorentzVector(in.px(),in.py(),in.pz(),in.E());
+        };
+        auto hhV = mkTL(info.hWW + hbbCand->p4());
+        auto hWWV = mkTL(info.hWW);
+        auto hbbV = mkTL(hbbCand->p4());
+        auto wlnuVect = mkTL(info.wlnu);
+        auto wjjVect = mkTL(info.wqqjet);
+        auto neutVect = mkTL(info.neutrino);
+        auto lepVect = mkTL(selectedLepton->p4());
+
+        auto mkBPl = [&](const TLorentzVector& mom, const TLorentzVector&d1, const TLorentzVector& d2, const TString& name){
+            TVector3 bv = -1*mom.BoostVector();
+            TLorentzVector bd1 = d1;TLorentzVector bd2 = d2;
+            bd1.Boost(bv);
+            bd2.Boost(bv);
+            plotter.getOrMake1DPre(name,"deltaPhi",";deltaPhi",100,-3.2,3.2)->Fill(PhysicsUtilities::deltaPhi(mom.Phi(),bd1.Phi()),weight);
+            plotter.getOrMake1DPre(name,"deltaTheta",";deltaTheta",100,-3.2,3.2)->Fill(PhysicsUtilities::deltaPhi(mom.Theta(),bd1.Theta()),weight);
+            plotter.getOrMake1DPre(name,"deltaPhi2",";deltaPhi",100,-3.2,3.2)->Fill(PhysicsUtilities::deltaPhi(mom.Phi(),bd2.Phi()),weight);
+            plotter.getOrMake1DPre(name,"deltaTheta2",";deltaTheta",100,-3.2,3.2)->Fill(PhysicsUtilities::deltaPhi(mom.Theta(),bd2.Theta()),weight);
+
+        };
+        mkBPl(hhV,hWWV,hbbV,smpName+"_hhB");
+        mkBPl(hWWV,wlnuVect,wjjVect,smpName+"_hwwB");
+        mkBPl(wlnuVect,neutVect,lepVect,smpName+"_wlnuB");
+
+        if(newhh.mass()>2000){
+            mkBPl(hhV,hWWV,hbbV,smpName+"_hh2TeV_hhB");
+            mkBPl(hWWV,wlnuVect,wjjVect,smpName+"_hh2TeV_hwwB");
+            mkBPl(wlnuVect,neutVect,lepVect,smpName+"_hh2TeV_wlnuB");
+        }
+
+
 
     }
 
