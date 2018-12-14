@@ -107,6 +107,9 @@ public:
 
     const FatJet*              hbbCand     =0;
     BTagging::CSVSJ_CAT        hbbCSVCat   = BTagging::CSVSJ_INCL;
+    MomentumF                  nunuMom     ;
+    MomentumF                  hww         ;
+    MomentumF                  hh          ;
 
     float                      wwDM        = 0;
     bool                       passWWDM    = false;

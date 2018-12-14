@@ -58,6 +58,16 @@ void ElectronReader::setup(TreeReadingWrapper * wrapper){
         wrapper->setBranchAddressPre(branchName,"sccol_eta"  ,&sccol_eta);
         wrapper->setBranchAddressPre(branchName,"sccol_phi"  ,&sccol_phi);
     }
+    wrapper->setBranchAddressPre(branchName,"ecalDrivenSeed"     ,&ecalDrivenSeed     ,false);
+    wrapper->setBranchAddressPre(branchName,"hcalOverEcal"     ,&hcalOverEcal     ,false);
+    wrapper->setBranchAddressPre(branchName,"hcalOverEcalBc"     ,&hcalOverEcalBc     ,false);
+    wrapper->setBranchAddressPre(branchName,"dPhi_sc"     ,&dPhi_sc     ,false);
+    wrapper->setBranchAddressPre(branchName,"dEta_sc"     ,&dEta_sc     ,false);
+    wrapper->setBranchAddressPre(branchName,"dEta_seed"     ,&dEta_seed     ,false);
+    wrapper->setBranchAddressPre(branchName,"sigmaIetaIeta"     ,&sigmaIetaIeta     ,false);
+    wrapper->setBranchAddressPre(branchName,"full5x5_sigmaIetaIeta"     ,&full5x5_sigmaIetaIeta     ,false);
+    wrapper->setBranchAddressPre(branchName,"e1x5"     ,&e1x5     ,false);
+    wrapper->setBranchAddressPre(branchName,"e5x5"     ,&e5x5     ,false);
 
 }
 

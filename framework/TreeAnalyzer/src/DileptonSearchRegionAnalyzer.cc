@@ -174,9 +174,18 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
         fjProc->loadDilepFatJet(*reader_fatjet,selectedDileptons[0],selectedDileptons[1]);
         hbbCand     = fjProc->getDilepHbbCand();
         hbbCSVCat   = fjProc->getDilepHbbCSVCat();
+
+		double pz = reader_event->met.pt() / TMath::Tan((selectedDileptons[0]->p4()+selectedDileptons[0]->p4()).theta());
+		pz = (pz < 0 == (selectedDileptons[0]->p4()+selectedDileptons[0]->p4()).pz() < 0) ? pz : (-1)*pz;
+		ASTypes::CartLorentzVector pnunu(reader_event->met.px(),reader_event->met.py(),pz,sqrt(pow(reader_event->met.px(),2)+pow(reader_event->met.py(),2)+pz*pz));
+		nunuMom = pnunu;
+		hww = selectedDileptons[0]->p4() + selectedDileptons[0]->p4() + nunuMom.p4();
     } else {
         hbbCand    =  0;
         hbbCSVCat  = BTagging::CSVSJ_INCL;
+
+        nunuMom = MomentumF();
+        hww     = MomentumF();
     }
 
     if(hbbCand){
