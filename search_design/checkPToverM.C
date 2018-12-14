@@ -1,4 +1,3 @@
-
 #if !defined(__CINT__) || defined(__MAKECINT__)
 
 #include "TreeAnalyzer/interface/DefaultSearchRegionAnalyzer.h"
@@ -28,12 +27,12 @@
 using namespace TAna;
 
 // Macro Description:
-// Plotting Higgs (Pt / M_HH) for DiHiggs event in the Single Lepton + Jets channel {X -> HH -> bbWW --> l nu jjjj}
+// Plotting Higgs (Pt / M_HH) for DiHiggs event in the Single Lepton + Jets channel {X -> HH -> bbWW (lnu jj)}
 
 class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
     }
 
     void SRPlots(TString prefix) {
@@ -103,11 +102,11 @@ public:
         if(!passTriggerPreselection) return false;
         if(selectedLeptons.size() != 1) return false;
 
-        if(!passWjjSel || !hbbCand) return false;
+        if(!wjjCand || !hbbCand) return false;
         if(nMedBTags_HbbV != 0) return false;
-        if(!passHbbSel) return false;
+//        if(!passHbbSel) return false;
 
-        if(!passWlnuDR) return false;
+//        if(!passWlnuDR) return false;
         if(!passWWDM) return false;
 
         // Some code to analyze aspects of W+jets MC sample
@@ -144,22 +143,20 @@ public:
 
     void write(TString fileName){ plotter.write(fileName);}
 
-
     HistGetter plotter;
 
 };
 
 #endif
 
-void checkPToverM(std::string fileName, int treeInt, std::string outFileName){
-    Analyzer a(fileName,"treeMaker/Events",treeInt);
+void checkPToverM(std::string fileName, int treeInt, int randSeed, std::string outFileName){
+    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     a.analyze();
     a.write(outFileName);
 }
-void checkPToverM(std::string fileName, int treeInt, std::string outFileName, float xSec, float numEvent){
-    Analyzer a(fileName,"treeMaker/Events",treeInt);
+void checkPToverM(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec, float numEvent){
+    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     a.setSampleInfo(xSec,numEvent);
     a.analyze();
     a.write(outFileName);
-
 }

@@ -28,11 +28,12 @@ using namespace TAna;
 class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
     }
 
     bool runEvent() override {
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
+        if (ht_chs < 400) return false;
 
         // take only dilepton events
         if(diHiggsEvt.type != DiHiggsEvent::DILEP) return false;
@@ -44,35 +45,35 @@ public:
         // take only e or mu events (get rid of taus)
         if (lep1->absPdgId()==15 || lep2->absPdgId()==15) return false;
 
-        bool validHbb = false;
+        double minDR = 99;
+        int idx = -1;
         if (reader_fatjet) {
-        	for (const auto& fj : reader_fatjet->jets) {
-        		// require at least one medium subjet btag (LMT Btag Cat)
-        		bool hasLMTbtag = false;
-        		for (const auto& sj : fj.subJets()) {
-        			if (sj.csv() >= 0.8484) hasLMTbtag = true;
-        		}
-        		if (!hasLMTbtag) continue;
+			for (const auto& fj : reader_fatjet->jets) {
+				double dr = PhysicsUtilities::deltaR(*diHiggsEvt.hbb, fj);
+				if (dr < minDR) {
+	        		bool hasLMTbtag = false;
+	        		for (const auto& sj : fj.subJets()) {
+	        			if (sj.csv() >= 0.8484) hasLMTbtag = true;
+	        		}
+	        		if (hasLMTbtag) {
+						minDR = dr;
+						idx = fj.index();
+	        		}
+				}
+			}
+        }
+        if (idx == -1) return false;
+        if (minDR > 0.8) return false;
+        if (reader_fatjet->jets[idx].pt() < 200) return false;
 
-        		// require the correct SD mass within a window
-        		float hbbmass = hbbFJSFProc->getCorrSDMass(&fj);
-        		if (hbbmass < 100 || hbbmass > 150) continue;
+        if (lep1->absPdgId() == 13) {
+        	if (lep1->pt() < 26) return false;
+        } else {
+        	if (lep1->pt() < 30) return false;
+        }
+        plotter.getOrMake1DPre(sN,"gen2_pt",";p_{T}",100,0,500)->Fill(lep2->pt());
+        plotter.getOrMake1DPre(sN,"gen1_pt",";p_{T}",100,0,500)->Fill(lep1->pt());
 
-        		validHbb = true;
-        		sN += "_validfj";
-        		break;
-        	}
-        }
-        // fill for the inclusive, 1lep_pt>26, 2lep_pt>15&5, and the former two with ht>400 additionally (5 cases)
-        plotter.getOrMake1DPre(sN, "evts", ";cats",5,0,5)->Fill(0.5, weight);
-        if (lep1->pt() > 26) {
-            plotter.getOrMake1DPre(sN, "evts", ";cats",5,0,5)->Fill(1.5, weight);
-            if (ht_chs > 400) plotter.getOrMake1DPre(sN, "evts", ";cats",5,0,5)->Fill(3.5, weight);
-        }
-        if (lep1->pt() > 15 && lep2->pt() > 5) {
-            plotter.getOrMake1DPre(sN, "evts", ";cats",5,0,5)->Fill(2.5, weight);
-            if (ht_chs > 400) plotter.getOrMake1DPre(sN, "evts", ";cats",5,0,5)->Fill(4.5, weight);
-        }
         return true;
     }
     void write(TString fileName){ plotter.write(fileName);}
@@ -81,13 +82,13 @@ public:
 
 #endif
 
-void getDilepSels(std::string fileName, int treeInt, std::string outFileName){
-    Analyzer a(fileName,"treeMaker/Events",treeInt);
+void getDilepSels(std::string fileName, int treeInt, int randSeed, std::string outFileName){
+    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     a.analyze();
     a.write(outFileName);
 }
-void getDilepSels(std::string fileName, int treeInt, std::string outFileName, float xSec, float numEvent){
-    Analyzer a(fileName,"treeMaker/Events",treeInt);
+void getDilepSels(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec, float numEvent){
+    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     a.setSampleInfo(xSec,numEvent);
     a.analyze();
     a.write(outFileName);

@@ -1,6 +1,7 @@
 #include "Processors/GenTools/interface/DiHiggsEvent.h"
 #include "DataFormats/interface/GenParticle.h"
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
+#include <tuple>
 
 namespace TAna {
 
@@ -8,6 +9,10 @@ enum decayidentifier {Z = 1, HADRON, LEPTON, ELECTRON, MUON, TAU_H, TAU_EL, TAU_
 
 // Function to search and classify the decay channel of a Tau lepton
 int DiHiggsEvent::tau_search(const GenParticle* dau) {
+	if (dau->absPdgId() != ParticleInfo::p_tauminus) {
+		std::cout << "Warning: particle is not a tau" << std::endl;
+		return 99;
+	}
     // get final state of the tau
     auto p = ParticleInfo::getFinal(dau);
 
@@ -27,7 +32,6 @@ bool DiHiggsEvent::isWpair(const GenParticle* f1, const GenParticle* f2, const G
 
     // return false if one of the two particles is a photon
     if (f1id==22 || f2id==22) {
-    	std::cout << "Found photon, not a W pair"<< std::endl;
     	return false;
     }
     // if first particle is a lepton and the second is a neutrino of the same flavor, then they are products of a W
@@ -54,7 +58,7 @@ bool DiHiggsEvent::isWpair(const GenParticle* f1, const GenParticle* f2, const G
     }
     else {
         std::cout << "Function isWpair has failed" << std::endl;
-	ParticleInfo::printGenInfo(g_parts,-1);
+        ParticleInfo::printGenInfo(g_parts,-1);
         return false;
     }
 }
@@ -132,7 +136,7 @@ DiHiggsEvent::DECAYTYPE DiHiggsEvent::classify_decaytype(const std::vector<int>&
         if ((items[0] == Z) && (items[1] == Z)) {
             type = bbZZ;
         }
-        // if items is holding two Hadrons, then fill the event as an HH decay
+        // if items is holding two Hadrons, then fill the event as a hadronic decay
         if ((items[0] == HADRON) && (items[1] == HADRON)) {
             type = HAD;
         }
