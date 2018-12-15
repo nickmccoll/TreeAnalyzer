@@ -45,7 +45,7 @@ public:
 
 	rd_size   metFilters         ;
 	rd_size64 triggerAccepts     ;
-	rd_size64 triggerPrescales   ;
+//	rd_size64 triggerPrescales   ;
 
 
 	//objects created in process
