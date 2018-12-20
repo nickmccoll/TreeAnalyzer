@@ -12,13 +12,13 @@ using namespace TAna;
 class Analyzer : public BaseTreeAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, bool realData) : BaseTreeAnalyzer(fileName,treeName), realData(realData){
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : BaseTreeAnalyzer(fileName,treeName,treeInt, randSeed){
 
     }
     void loadVariables() override {
-        reader_event = (EventReader*)load(new EventReader("event",realData));
-        if(!realData)
-            reader_genParticles = (GenParticleReader*)load(new GenParticleReader("genParticle"));
+        reader_event = loadReader<EventReader>("event",isRealData());
+        if(!isRealData())
+            reader_genParticles = loadReader<GenParticleReader>("genParticle");
     }
 
     bool runEvent() override {
@@ -114,18 +114,17 @@ if(passScen3)
 
     void write(TString fileName){ plotter.write(fileName);}
 
-    bool realData = false;
-    EventReader * reader_event = 0;
-    GenParticleReader * reader_genParticles = 0;
+    std::shared_ptr<EventReader> reader_event = 0;
+    std::shared_ptr<GenParticleReader> reader_genParticles = 0;
     HistGetter plotter;
 
 };
 
 #endif
 
-void testGenParticleFiller(std::string fileName ="output.root",std::string outFileName = "plots.root"){
-    TString path = fileName;
-    Analyzer a(fileName,"treeMaker/Events",path.Contains("data",TString::kIgnoreCase));
+void testGenParticleFiller(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec=-1, float numEvent=-1){
+    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
+    a.setSampleInfo(xSec,numEvent);
     a.analyze();
     a.write(outFileName);
 }
