@@ -71,7 +71,14 @@ public:
     //--------------------------------------------------------------------------------------------------
     // Variable loading
     //--------------------------------------------------------------------------------------------------
-    void load(std::shared_ptr<BaseReader> inReader);
+    template <class T, typename... Args>
+    std::shared_ptr<T> loadReader (Args... args){
+        auto ptr = std::make_shared<T>(args...);
+        readers.push_back(ptr);
+        return ptr;
+    };
+
+
     template<typename T>
     void setBranch(const std::string branchName, const std::string varName, T& var, bool require = false, bool verbose = true)
     { tree.setBranch(branchName,varName,var,require,verbose); }

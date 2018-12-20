@@ -16,7 +16,7 @@ public:
 
     }
     void loadVariables() override {
-        reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
+        reader_event   =loadReader<EventReader>   ("event",isRealData());
     }
 
     bool runEvent() override {

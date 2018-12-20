@@ -69,11 +69,6 @@ void BaseTreeAnalyzer::analyze(int reportFrequency, int numEvents, int startEven
 }
 
 //--------------------------------------------------------------------------------------------------
-void BaseTreeAnalyzer::load(std::shared_ptr<BaseReader> reader) {
-    readers.push_back(reader);
-}
-
-//--------------------------------------------------------------------------------------------------
 void BaseTreeAnalyzer::setupReaders() {for(auto& r : readers) r->initialize(&tree);}
 //--------------------------------------------------------------------------------------------------
 void BaseTreeAnalyzer::processReaders() {for(auto& r : readers) r->processVars();}
