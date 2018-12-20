@@ -73,16 +73,16 @@ void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr) {FillerConstants
 
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::loadVariables()  {
-    reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
-    reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiJet",isRealData());  load(reader_fatjet  );
-    reader_fatjet_noLep=std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);  load(reader_fatjet_noLep  );
-    reader_jet_chs =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jet_chs );
-    reader_jet     =std::make_shared<JetReader>     ("ak4PuppiJet",isRealData(),false);  load(reader_jet     );
-    reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
-    reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
+    reader_event       =loadReader<EventReader>   ("event",isRealData());
+    reader_fatjet      =loadReader<FatJetReader>  ("ak8PuppiJet",isRealData());
+    reader_fatjet_noLep=loadReader<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);
+    reader_jet_chs     =loadReader<JetReader>     ("ak4Jet",isRealData());
+    reader_jet         =loadReader<JetReader>     ("ak4PuppiJet",isRealData(),false);
+    reader_electron    =loadReader<ElectronReader>("electron");
+    reader_muon        =loadReader<MuonReader>    ("muon");
 
     if(!isRealData()){
-        reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
+        reader_genpart =loadReader<GenParticleReader>   ("genParticle");
     }
 
     checkConfig();
