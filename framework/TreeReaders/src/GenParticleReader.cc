@@ -6,42 +6,34 @@
 namespace TAna{
 
 GenParticleReader::GenParticleReader(std::string branchName) : BaseReader("GenParticleReader",branchName){};
-GenParticleReader::~GenParticleReader(){
-    delete pt       ;
-    delete eta      ;
-    delete phi      ;
-    delete mass     ;
-    delete status   ;
-    delete pdgid    ;
-    delete nmoms    ;
-    delete firstmom ;
-    delete ndaus    ;
-    delete firstdau ;
-    delete assoc    ;
-}
+GenParticleReader::~GenParticleReader(){}
 
 
 void GenParticleReader::setup(TreeReaderWrapper * wrapper){
-//    wrapper->setBranchAddressPre(branchName,"pt"      ,&pt      ,true);
-//    wrapper->setBranchAddressPre(branchName,"eta"     ,&eta     ,true);
-//    wrapper->setBranchAddressPre(branchName,"phi"     ,&phi     ,true);
-//    wrapper->setBranchAddressPre(branchName,"mass"    ,&mass    ,true);
-//    wrapper->setBranchAddressPre(branchName,"status"  ,&status  ,true);
-//    wrapper->setBranchAddressPre(branchName,"pdgid"   ,&pdgid   ,true);
-//    wrapper->setBranchAddressPre(branchName,"nmoms"   ,&nmoms   ,true);
-//    wrapper->setBranchAddressPre(branchName,"firstmom",&firstmom,true);
-//    wrapper->setBranchAddressPre(branchName,"ndaus"   ,&ndaus   ,true);
-//    wrapper->setBranchAddressPre(branchName,"firstdau",&firstdau,true);
-//    wrapper->setBranchAddressPre(branchName,"assoc"   ,&assoc   ,true);
+    wrapper->setBranch(branchName,"pt"      ,pt      ,true);
+    wrapper->setBranch(branchName,"eta"     ,eta     ,true);
+    wrapper->setBranch(branchName,"phi"     ,phi     ,true);
+    wrapper->setBranch(branchName,"mass"    ,mass    ,true);
+    wrapper->setBranch(branchName,"status"  ,status  ,true);
+    wrapper->setBranch(branchName,"pdgid"   ,pdgid   ,true);
+    wrapper->setBranch(branchName,"nmoms"   ,nmoms   ,true);
+    wrapper->setBranch(branchName,"firstmom",firstmom,true);
+    wrapper->setBranch(branchName,"assoc"   ,assoc   ,true);
 }
 
 void GenParticleReader::processVars() {
     genParticles.clear();
-    genParticles.reserve(pt->size());
+    genParticles.reserve(pt.size());
 
-    for(unsigned int iP = 0; iP < pt->size(); ++iP){
-      genParticles.emplace_back(ASTypes::CylLorentzVectorF(pt->at(iP),eta->at(iP),phi->at(iP),mass->at(iP)),&genParticles);
-      genParticles.back().setStorage(status->at(iP),pdgid->at(iP),nmoms->at(iP),firstmom->at(iP),ndaus->at(iP),firstdau->at(iP),assoc);
+    for(unsigned int iP = 0; iP < pt.size(); ++iP){
+      genParticles.emplace_back(ASTypes::CylLorentzVectorF(pt[iP],eta[iP],phi[iP],mass[iP]),status[iP],pdgid[iP],&genParticles);
+      for(ASTypes::size16 iM = 0; iM < nmoms[iP]; ++iM  ) genParticles.back().addMother(assoc[ firstmom[iP]+iM ] );
+    }
+
+    for(unsigned int iP = 0; iP < genParticles.size(); ++iP){
+        for(ASTypes::size16 iM = 0; iM < genParticles[iP].numberOfMothers(); ++iM){
+            genParticles[genParticles[iP].motherIndex(iM)].addDaughter(iP);
+        }
     }
 }
 

@@ -5,7 +5,6 @@
 namespace TAna{
 class GenParticleReader: public BaseReader {
 public:
-    typedef ASTypes::size16 stor;
 
     GenParticleReader(std::string branchName);
 	virtual ~GenParticleReader();
@@ -19,17 +18,15 @@ private:
 public:
 	//branches from the tree
 
-    std::vector<float >*          pt       = new std::vector<float >;
-    std::vector<float >*          eta      = new std::vector<float >;
-    std::vector<float >*          phi      = new std::vector<float >;
-    std::vector<float >*          mass     = new std::vector<float >;
-    std::vector<ASTypes::size8 >* status   = new std::vector<ASTypes::size8 >;
-    std::vector<int   >*          pdgid    = new std::vector<int   >;
-    std::vector<stor  >*          nmoms    = new std::vector<stor  >;
-    std::vector<stor  >*          firstmom = new std::vector<stor  >;
-    std::vector<stor  >*          ndaus    = new std::vector<stor  >;
-    std::vector<stor  >*          firstdau = new std::vector<stor  >;
-    std::vector<stor  >*          assoc    = new std::vector<stor  >;
+    ra_float  pt       ;
+    ra_float  eta      ;
+    ra_float  phi      ;
+    ra_float  mass     ;
+    ra_size8  status   ;
+    ra_int    pdgid    ;
+    ra_size16 nmoms    ;
+    ra_size16 firstmom ;
+    ra_size16 assoc    ;
 
 
 	//objects created in process
