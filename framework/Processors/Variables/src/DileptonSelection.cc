@@ -116,6 +116,7 @@ void setDefaultDilepSelParams_dataAF(DilepSelParameters& par)        {
 }
 void setDefaultDileptonProcessor(DileptonProcessor& proc) {
     setDefaultDilepSelParams(proc.lepSelParams);
+    setDefaultDilepSelParams_dataAF(proc.lepSelParams_dataABCDEF);
 }
 }
 
