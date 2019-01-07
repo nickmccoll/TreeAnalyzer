@@ -4,6 +4,7 @@
 #include "DataFormats/interface/Muon.h"
 
 namespace TAna{
+//--------------------------------------------------------------------------------------------------
 class MuonReader: public BaseReader {
 public:
     MuonReader(std::string branchName);
@@ -16,18 +17,22 @@ private:
 
 public:
 	//branches from the tree
-     std::vector<float>          * pt          = new std::vector<float> ;
-     std::vector<float>          * eta         = new std::vector<float> ;
-     std::vector<float>          * phi         = new std::vector<float> ;
-     std::vector<ASTypes::int8  >* q           = new std::vector<ASTypes::int8  >;
-     std::vector<float >         * d0          = new std::vector<float >;
-     std::vector<float >         * dz          = new std::vector<float >;
-     std::vector<float >         * sip3D       = new std::vector<float >;
-     std::vector<float >         * miniIso     = new std::vector<float >;
-     std::vector<float >         * dBRelISO    = new std::vector<float >;
-     std::vector<ASTypes::size16>* id          = new std::vector<ASTypes::size16>;
-     std::vector<float>          * dRnorm      = new std::vector<float> ;
-     std::vector<float>          * lepAct_o_pt = new std::vector<float> ;
+     ra_float pt           ;
+     ra_float eta          ;
+     ra_float phi          ;
+     ra_size  id           ;
+     ra_int8  q            ;
+     ra_float d0           ;
+     ra_float dz           ;
+     ra_float sip3D        ;
+     ra_float miniIso      ;
+     ra_float dBRelISO     ;
+     ra_float trackerIso   ;
+     ra_float ptRel        ;
+     ra_float ptRatio      ;
+     ra_float dRnorm       ;
+     ra_float lepAct_o_pt  ;
+
 
 	//objects created in process
     MuonCollection muons;

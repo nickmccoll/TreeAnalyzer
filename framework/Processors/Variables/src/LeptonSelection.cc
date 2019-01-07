@@ -99,7 +99,7 @@ void setDefaultLepSelParams(LepSelParameters& par)        {
     par.el_maxD0   = 0.05;
     par.el_maxSip3D   = 4   ;
     par.el_maxISO  = 0.1 ;
-    par.el_getID   = &Electron::passTightID_noISO;
+    par.el_getID   = &Electron::passTightID_noIso;
     par.el_getISO  = &Electron::miniIso;
 
     par.mu_minPT   = 20  ;
@@ -108,12 +108,12 @@ void setDefaultLepSelParams(LepSelParameters& par)        {
     par.mu_maxD0   = 0.05;
     par.mu_maxSip3D   = 4   ;
     par.mu_maxISO  = 0.2 ;
-    par.mu_getID   = &Muon::passMed16ID;
+    par.mu_getID   = &Muon::passMedID;
     par.mu_getISO  = &Muon::miniIso;
 }
 void setDefaultLepSelParams_dataAF(LepSelParameters& par)        {
     setDefaultLepSelParams(par);
-    par.mu_getID   = &Muon::passMed16ID;
+    par.mu_getID   = &Muon::passMedID;
 }
 void setDefaultLeptonProcessor(LeptonProcessor& proc) {
     setDefaultLepSelParams(proc.lepSelParams);

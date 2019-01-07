@@ -5,80 +5,66 @@
 
 
 namespace TAna{
-
-ElectronReader::ElectronReader(std::string branchName, bool fillSCs, bool fillReco) : BaseReader("ElectronReader",branchName),
-        fillSCs(fillSCs),fillReco(fillReco)
+//--------------------------------------------------------------------------------------------------
+ElectronReader::ElectronReader(std::string branchName, bool storeIDVars) :
+        BaseReader("ElectronReader",branchName),storeIDVars(storeIDVars)
 {};
 
-ElectronReader::~ElectronReader(){
-    delete pt        ;
-    delete eta       ;
-    delete phi       ;
-    delete q         ;
-    delete scEta     ;
-    delete d0        ;
-    delete dz        ;
-    delete sip3D     ;
-    delete mvaID     ;
-    delete mvaID_cat ;
-    delete miniIso   ;
-    delete eaRelISO  ;
-    delete id        ;
-    delete dRnorm    ;
-    delete lepAct_o_pt;
-    delete sc_act_o_pt;
-    delete sc_dr_act;
-    delete reco_flag ;
-    delete sccol_et  ;
-    delete sccol_eta ;
-    delete sccol_phi ;
-}
-
+ElectronReader::~ElectronReader(){}
+//--------------------------------------------------------------------------------------------------
 void ElectronReader::setup(TreeReaderWrapper * wrapper){
-//    wrapper->setBranchAddressPre(branchName,"pt"         ,&pt         );
-//    wrapper->setBranchAddressPre(branchName,"eta"        ,&eta        );
-//    wrapper->setBranchAddressPre(branchName,"phi"        ,&phi        );
-//    wrapper->setBranchAddressPre(branchName,"q"          ,&q          );
-//    wrapper->setBranchAddressPre(branchName,"scEta"      ,&scEta      );
-//    wrapper->setBranchAddressPre(branchName,"d0"         ,&d0         );
-//    wrapper->setBranchAddressPre(branchName,"dz"         ,&dz         );
-//    wrapper->setBranchAddressPre(branchName,"sip3D"      ,&sip3D      );
-//    wrapper->setBranchAddressPre(branchName,"mvaID"      ,&mvaID      );
-//    wrapper->setBranchAddressPre(branchName,"mvaID_cat"  ,&mvaID_cat  );
-//    wrapper->setBranchAddressPre(branchName,"miniIso"    ,&miniIso    );
-//    wrapper->setBranchAddressPre(branchName,"eaRelISO"   ,&eaRelISO   );
-//    wrapper->setBranchAddressPre(branchName,"id"         ,&id         );
-//    wrapper->setBranchAddressPre(branchName,"dRnorm"     ,&dRnorm     ,false);
-//    wrapper->setBranchAddressPre(branchName,"lepAct_o_pt",&lepAct_o_pt,false);
-//    wrapper->setBranchAddressPre(branchName,"sc_act_o_pt",&sc_act_o_pt,false);
-//    wrapper->setBranchAddressPre(branchName,"sc_dr_act"  ,&sc_dr_act  ,false);
-//    if(fillReco) wrapper->setBranchAddressPre(branchName,"reco_flag"  ,&reco_flag  ,false);
-//    if(fillSCs){
-//        wrapper->setBranchAddressPre(branchName,"sccol_et"   ,&sccol_et );
-//        wrapper->setBranchAddressPre(branchName,"sccol_eta"  ,&sccol_eta);
-//        wrapper->setBranchAddressPre(branchName,"sccol_phi"  ,&sccol_phi);
-//    }
-
+    wrapper->setBranch(branchName,"pt"          ,pt         ,true);
+    wrapper->setBranch(branchName,"eta"         ,eta        ,true);
+    wrapper->setBranch(branchName,"phi"         ,phi        ,true);
+    wrapper->setBranch(branchName,"q"           ,q          ,true);
+    wrapper->setBranch(branchName,"scEta"       ,scEta      ,true);
+    wrapper->setBranch(branchName,"scE"         ,scE        ,true);
+    wrapper->setBranch(branchName,"uncorPt"     ,uncorPt    ,true);
+    wrapper->setBranch(branchName,"id"          ,id         ,true);
+    wrapper->setBranch(branchName,"d0"          ,d0         ,true);
+    wrapper->setBranch(branchName,"dz"          ,dz         ,true);
+    wrapper->setBranch(branchName,"sip3D"       ,sip3D      ,true);
+    wrapper->setBranch(branchName,"mvaID"       ,mvaID      ,true);
+    wrapper->setBranch(branchName,"miniIso"     ,miniIso    ,true);
+    wrapper->setBranch(branchName,"miniIsoFP"   ,miniIsoFP  ,true);
+    wrapper->setBranch(branchName,"eaRelIso"    ,eaRelIso   ,true);
+    wrapper->setBranch(branchName,"trackerIso"  ,trackerIso ,true);
+    wrapper->setBranch(branchName,"dRnorm"      ,dRnorm     ,true);
+    wrapper->setBranch(branchName,"lepAct_o_pt" ,lepAct_o_pt,true);
+    wrapper->setBranch(branchName,"sc_act_o_pt" ,sc_act_o_pt,true);
+    wrapper->setBranch(branchName,"sc_dr_act"   ,sc_dr_act  ,true);
+    if(storeIDVars){
+        wrapper->setBranch(branchName,"passMedCutBased"      ,passMedCutBased      ,false);
+        wrapper->setBranch(branchName,"passTightCutBased"    ,passTightCutBased    ,false);
+        wrapper->setBranch(branchName,"full5x5_sigmaIetaIeta",full5x5_sigmaIetaIeta,false);
+        wrapper->setBranch(branchName,"abs_dEtaSeed"         ,abs_dEtaSeed         ,false);
+        wrapper->setBranch(branchName,"abs_dPhiIn"           ,abs_dPhiIn           ,false);
+        wrapper->setBranch(branchName,"HoE"                  ,HoE                  ,false);
+        wrapper->setBranch(branchName,"HoE_BC"               ,HoE_BC               ,false);
+        wrapper->setBranch(branchName,"abs_1oEm1op"          ,abs_1oEm1op          ,false);
+        wrapper->setBranch(branchName,"missInnerHits"        ,missInnerHits        ,false);
+        wrapper->setBranch(branchName,"passConvVeto"         ,passConvVeto         ,false);
+        wrapper->setBranch(branchName,"seeding"              ,seeding              ,false);
+        wrapper->setBranch(branchName,"nSaturatedXtals"      ,nSaturatedXtals      ,false);
+        wrapper->setBranch(branchName,"e2x5OverE5x5"         ,e2x5OverE5x5         ,false);
+        wrapper->setBranch(branchName,"e1x5OverE5x5"         ,e1x5OverE5x5         ,false);
+        wrapper->setBranch(branchName,"isolEmHadDepth1"      ,isolEmHadDepth1      ,false);
+    }
 }
 
+
+//--------------------------------------------------------------------------------------------------
 void ElectronReader::processVars() {
     electrons.clear();
-    for(unsigned int iO = 0; iO < pt->size(); ++iO){
-        electrons.emplace_back(ASTypes::CylLorentzVectorF(pt->at(iO),eta->at(iO),phi->at(iO),0),iO,
-                q->at(iO),d0->at(iO),dz->at(iO),sip3D->at(iO),miniIso->at(iO),
-                dRnorm->size() ? dRnorm->at(iO) : 0,lepAct_o_pt->size() ? lepAct_o_pt->at(iO) : 0);
-        electrons.back().addElectronInfo(scEta->at(iO),mvaID->at(iO),mvaID_cat->at(iO),eaRelISO->at(iO),id->at(iO),
-                sc_act_o_pt->size() ? sc_act_o_pt->at(iO) : 0,sc_dr_act->size() ? sc_dr_act->at(iO) : 0 );
+    for(unsigned int iO = 0; iO < pt.size(); ++iO){
+        electrons.emplace_back(ASTypes::CylLorentzVectorF(pt[iO],eta[iO],phi[iO],0),iO,
+                q[iO],d0[iO],dz[iO],sip3D[iO]);
+        electrons.back().setIsos(miniIso[iO],eaRelIso[iO],trackerIso[iO],0,0);
+        electrons.back().setSysts(dRnorm[iO],lepAct_o_pt[iO]);
+        electrons.back().addElectronInfo(scEta[iO],scE[iO],mvaID[iO],miniIsoFP[iO],id[iO],
+                 sc_act_o_pt[iO],sc_dr_act[iO] );
     }
     std::sort(electrons.begin(), electrons.end(), PhysicsUtilities::greaterPT<Electron>());
-
-    if(fillSCs){
-        superclusters.clear();
-        for(unsigned int iO = 0; iO < sccol_et->size(); ++iO){
-            superclusters.emplace_back(ASTypes::CylLorentzVectorF(sccol_et->at(iO),sccol_eta->at(iO),sccol_phi->at(iO),0));
-        }
-        std::sort(superclusters.begin(), superclusters.end(), PhysicsUtilities::greaterPT<MomentumF>());
-    }
 }
 
 

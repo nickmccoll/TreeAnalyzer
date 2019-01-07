@@ -4,45 +4,57 @@
 #include "DataFormats/interface/Electron.h"
 
 namespace TAna{
+//--------------------------------------------------------------------------------------------------
 class ElectronReader: public BaseReader {
 public:
-    ElectronReader(std::string branchName, bool fillSCs = false, bool fillReco = false);
+    ElectronReader(std::string branchName, bool storeIDVars = false);
 	virtual ~ElectronReader();
 	virtual void setup(TreeReaderWrapper * wrapper);
 	virtual void processVars();
 
 private:
 	//settings
-	bool fillSCs;
-	bool fillReco;
+	bool storeIDVars;
 public:
 	//branches from the tree
-     std::vector<float>          * pt          = new std::vector<float> ;
-     std::vector<float>          * eta         = new std::vector<float> ;
-     std::vector<float>          * phi         = new std::vector<float> ;
-     std::vector<ASTypes::int8  >* q           = new std::vector<ASTypes::int8  >;
-     std::vector<float >         * scEta       = new std::vector<float >;
-     std::vector<float >         * d0          = new std::vector<float >;
-     std::vector<float >         * dz          = new std::vector<float >;
-     std::vector<float >         * sip3D       = new std::vector<float >;
-     std::vector<float >         * mvaID       = new std::vector<float >;
-     std::vector<ASTypes::size8 >* mvaID_cat   = new std::vector<ASTypes::size8 >;
-     std::vector<float >         * miniIso     = new std::vector<float >;
-     std::vector<float >         * eaRelISO    = new std::vector<float >;
-     std::vector<ASTypes::size16>* id          = new std::vector<ASTypes::size16>;
-     std::vector<float>			 * dRnorm      = new std::vector<float> ;
-     std::vector<float>			 * lepAct_o_pt = new std::vector<float> ;
-     std::vector<float>          * sc_act_o_pt = new std::vector<float> ;
-     std::vector<float>          * sc_dr_act   = new std::vector<float> ;
-     std::vector<ASTypes::size8> * reco_flag   = new std::vector<ASTypes::size8> ;
-
-     std::vector<float>          * sccol_et    = new std::vector<float> ;
-     std::vector<float>          * sccol_eta   = new std::vector<float> ;
-     std::vector<float>          * sccol_phi   = new std::vector<float> ;
+	ra_float pt                    ;
+	ra_float eta                   ;
+	ra_float phi                   ;
+	ra_int8 q                      ;
+	ra_float scEta                 ;
+	ra_float scE                   ;
+	ra_float uncorPt               ;
+	ra_size16 id                  ;
+	ra_float d0                    ;
+	ra_float dz                    ;
+	ra_float sip3D                ;
+	ra_float mvaID                 ;
+	ra_float miniIso               ;
+	ra_float miniIsoFP             ;
+	ra_float eaRelIso              ;
+	ra_float trackerIso           ;
+	ra_float dRnorm                ;
+	ra_float lepAct_o_pt           ;
+	ra_float sc_act_o_pt           ;
+	ra_float sc_dr_act            ;
+	ra_size16 passMedCutBased      ;
+	ra_size16 passTightCutBased    ;
+	ra_float  full5x5_sigmaIetaIeta;
+	ra_float  abs_dEtaSeed         ;
+	ra_float  abs_dPhiIn           ;
+	ra_float  HoE                  ;
+	ra_float  HoE_BC               ;
+	ra_float  abs_1oEm1op          ;
+	ra_size8  missInnerHits        ;
+	ra_size8  passConvVeto         ;
+	ra_size8  seeding              ;
+	ra_size8  nSaturatedXtals      ;
+	ra_float  e2x5OverE5x5         ;
+	ra_float  e1x5OverE5x5         ;
+	ra_float  isolEmHadDepth1      ;
 
 	//objects created in process
     ElectronCollection electrons;
-    MomentumFCollection superclusters;
 
 };
 }

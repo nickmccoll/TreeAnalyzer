@@ -18,15 +18,25 @@ public :
     Lepton(const ROOT::Math::LorentzVector<InputCoordSystem> &mom,
             const int idx,
             const ASTypes::int8 q, const  float d0,
-            const  float dz,const  float sip3D,const  float miniIso, const bool muon, const float dRnorm, const float lepAct_o_pt)
-        : IndexedMomentumF(mom, idx), _q(q), _d0(d0),_dz(dz),_sip3D(sip3D),_miniIso(miniIso), _muon(muon), _dRnorm(dRnorm), _lepAct_o_pt(lepAct_o_pt) {}
+            const  float dz,const  float sip3D, const bool muon)
+        : IndexedMomentumF(mom, idx), _q(q), _d0(d0),_dz(dz),_sip3D(sip3D), _muon(muon) {}
+
     ~Lepton() {}
+
+    void setIsos(  float miniIso,  float pfIso, float trackerIso, float ptRel, float ptRatio)
+    { _miniIso=miniIso;_pfIso=pfIso;_trackerIso=trackerIso;_ptRel=ptRel;_ptRatio=ptRatio;};
+    void setSysts (float dRnorm, const float lepAct_o_pt){_dRnorm =dRnorm;_lepAct_o_pt=lepAct_o_pt;}
 
     int   q           () const {return _q      ;}
     float d0          () const {return _d0     ;}
     float dz          () const {return _dz     ;}
     float sip3D       () const {return _sip3D  ;}
+
     float miniIso     () const {return _miniIso;}
+    float pfIso       () const {return _pfIso;}
+    float trackerIso  () const {return _trackerIso;}
+    float ptRel       () const {return _ptRel;}
+    float ptRatio     () const {return _ptRatio;}
 
     bool isMuon       () const {return _muon;}
     bool isElectron   () const {return !_muon;}
@@ -44,6 +54,10 @@ protected :
     float          _dz          = 0;
     float          _sip3D       = 0;
     float          _miniIso     = 0;
+    float          _pfIso       = 0;
+    float          _trackerIso  = 0;
+    float          _ptRel       = 0;
+    float          _ptRatio     = 0;
 
     bool           _muon        = false;
 

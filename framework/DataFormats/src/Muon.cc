@@ -1,21 +1,17 @@
 
 #include "DataFormats/interface/Muon.h"
 #include "TreeReaders/interface/FillerConstants.h"
-
+using namespace FillerConstants;
 namespace TAna {
 //--------------------------------------------------------------------------------------------------
-void Muon::addMuonInfo(float dbRelISO, ASTypes::size16 id) {
-    _dBRelISO=  dbRelISO;
+void Muon::setMuonInfo( ASTypes::size id) {
     _id      =  id      ;
 }
 //--------------------------------------------------------------------------------------------------
 
-
-float Muon::dbRelISO   () const {return _dBRelISO;}
-bool  Muon::passSoftID () const {return FillerConstants::doesPass(_id,FillerConstants::MUID_SOFT);}
-bool  Muon::passLooseID() const {return FillerConstants::doesPass(_id,FillerConstants::MUID_LOOSE);}
-bool  Muon::passMedID  () const {return FillerConstants::doesPass(_id,FillerConstants::MUID_MED);}
-bool  Muon::passMed16ID() const {return FillerConstants::doesPass(_id,FillerConstants::MUID_MED16);}
-bool  Muon::passTightID() const {return FillerConstants::doesPass(_id,FillerConstants::MUID_TIGHT);}
-bool  Muon::passHighPT () const {return FillerConstants::doesPass(_id,FillerConstants::MUID_HIGHPT);}
+bool  Muon::passSoftID () const {return doesPass(_id,MUID_SoftCutBasedId);}
+bool  Muon::passLooseID() const {return doesPass(_id,MUID_CutBasedIdLoose);}
+bool  Muon::passMedID  () const {return doesPass(_id,MUID_CutBasedIdMedium);}
+bool  Muon::passTightID() const {return doesPass(_id,MUID_CutBasedIdTight);}
+bool  Muon::passHighPT () const {return doesPass(_id,MUID_CutBasedIdGlobalHighPt);}
 }

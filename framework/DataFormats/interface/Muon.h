@@ -15,23 +15,21 @@ public :
     Muon(const ROOT::Math::LorentzVector<InputCoordSystem> &mom,
             const int idx,
             const ASTypes::int8 q, const  float d0,
-            const  float dz,const  float sip3D,const  float miniIso, const float dRnorm, const float lepAct_o_pt)
-        : Lepton(mom, idx,q,d0,dz,sip3D,miniIso,true, dRnorm, lepAct_o_pt) {}
+            const  float dz,const  float sip3D)
+        : Lepton(mom, idx,q,d0,dz,sip3D,true) {}
     ~Muon() {}
 
-    void addMuonInfo(float dbRelISO, ASTypes::size16 id);
+    void setMuonInfo(ASTypes::size id);
 
-    float dbRelISO   () const;
+    size  id () const {return _id;}
     bool  passSoftID () const;
     bool  passLooseID() const;
     bool  passMedID  () const;
-    bool  passMed16ID() const;
     bool  passTightID() const;
     bool  passHighPT () const;
 
 protected :
-    float           _dBRelISO  =0;
-    ASTypes::size16 _id        =0;
+    ASTypes::size _id        =0;
 };
 typedef std::vector<Muon> MuonCollection;
 }
