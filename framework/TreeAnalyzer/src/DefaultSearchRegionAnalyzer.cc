@@ -28,15 +28,19 @@
 
 namespace TAna {
 //--------------------------------------------------------------------------------------------------
-DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt, size randomSeed) : BaseTreeAnalyzer(fileName,treeName,treeInt, randomSeed){
+DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
+        std::string treeName, int treeInt, size randomSeed)
+    : BaseTreeAnalyzer(fileName,treeName,treeInt, randomSeed){
     TPRegexp r1(".*m(\\d+)_[0-9]*\\..*$");
     auto match = r1.MatchS(fileName);
     const Int_t nrSubStr = match->GetLast()+1;
     if(nrSubStr>1){
         signal_mass = (((TObjString *)match->At(1))->GetString()).Atoi();
     }
-    fjProc      .reset(new FatJetProcessor ()); DefaultFatJetSelections::setDefaultFatJetProcessor(*fjProc);
-    leptonProc  .reset(new LeptonProcessor ()); DefaultLeptonSelections::setDefaultLeptonProcessor(*leptonProc);
+    fjProc      .reset(new FatJetProcessor ());
+    DefaultFatJetSelections::setDefaultFatJetProcessor(*fjProc);
+    leptonProc  .reset(new LeptonProcessor ());
+    DefaultLeptonSelections::setDefaultLeptonProcessor(*leptonProc);
     trigSFProc  .reset(new TriggerScaleFactors (dataDirectory));
     puSFProc    .reset(new PUScaleFactors (dataDirectory));
     leptonSFProc.reset(new ActParamScaleFactors(dataDirectory));
@@ -63,13 +67,16 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName, s
     turnOnCorr(CORR_TOPPT);
     turnOnCorr(CORR_JER);
 }
-//--------------------------------------------------------------------------------------------------
 DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
+
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::resetCorr() {corrections = 0;}
-bool DefaultSearchRegionAnalyzer::isCorrOn(Corrections corr) const {return FillerConstants::doesPass(corrections,corr);}
-void DefaultSearchRegionAnalyzer::turnOnCorr(Corrections corr) {FillerConstants::addPass(corrections,corr);}
-void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr) {FillerConstants::removePass(corrections,corr);}
+bool DefaultSearchRegionAnalyzer::isCorrOn(Corrections corr) const
+    {return FillerConstants::doesPass(corrections,corr);}
+void DefaultSearchRegionAnalyzer::turnOnCorr(Corrections corr)
+    {FillerConstants::addPass(corrections,corr);}
+void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr)
+    {FillerConstants::removePass(corrections,corr);}
 
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::loadVariables()  {
@@ -90,7 +97,9 @@ void DefaultSearchRegionAnalyzer::loadVariables()  {
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::checkConfig()  {
     auto mkErr = [&](const std::string& reader, const std::string corr) {
-        throw std::invalid_argument(std::string("DefaultSearchRegionAnalyzer::checkConfig() -> Must load ") + reader + std::string(" if you want ") + corr);};
+        throw std::invalid_argument(
+                std::string("DefaultSearchRegionAnalyzer::checkConfig() -> Must load ")
+        + reader + std::string(" if you want ") + corr);};
     if(!reader_event) mkErr("event","anything");
 
     if(isRealData()) return;
@@ -141,10 +150,14 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         }
         if(isCorrOn(CORR_JER) ){
             Met dummyMET =reader_event->met;
-            JERAK4PuppiProc ->processJets(*reader_jet,reader_event->met,reader_jet_chs->genJets,reader_event->rho.val());
-            JERAK4CHSProc   ->processJets(*reader_jet_chs,dummyMET,reader_jet_chs->genJets,reader_event->rho.val());
-            JERAK8PuppiProc ->processFatJets(reader_fatjet_noLep->jets,std::vector<GenJet>(),reader_event->rho.val());
-            JERAK8PuppiProc ->processFatJets(reader_fatjet->jets,reader_fatjet->genJets,reader_event->rho.val());
+            JERAK4PuppiProc ->processJets(
+                    *reader_jet,reader_event->met,reader_jet_chs->genJets,reader_event->rho.val());
+            JERAK4CHSProc   ->processJets(
+                    *reader_jet_chs,dummyMET,reader_jet_chs->genJets,reader_event->rho.val());
+            JERAK8PuppiProc ->processFatJets(
+                    reader_fatjet_noLep->jets,std::vector<GenJet>(),reader_event->rho.val());
+            JERAK8PuppiProc ->processFatJets(
+                    reader_fatjet->jets,reader_fatjet->genJets,reader_event->rho.val());
         }
         if(isCorrOn(CORR_MET) ){
             METUncProc->process(reader_event->met,*reader_event);
@@ -173,7 +186,8 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
     //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
     passEventFilters= EventSelection::passEventFilters(*reader_event);
-    passTriggerPreselection= EventSelection::passTriggerPreselection(*reader_event,ht_chs,selectedLeptons);
+    passTriggerPreselection= EventSelection::passTriggerPreselection(
+            *reader_event,ht_chs,selectedLeptons);
 
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
@@ -191,7 +205,8 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     }
 
     if(wjjCand){
-        neutrino    = HiggsSolver::getInvisible(reader_event->met,(selectedLepton->p4() + wjjCand->p4()) );
+        neutrino    = HiggsSolver::getInvisible(reader_event->met,
+                (selectedLepton->p4() + wjjCand->p4()) );
         wlnu        =  neutrino.p4() + selectedLepton->p4();
         hWW         = wlnu.p4() + wjjCand->p4();
         wwDM        = PhysicsUtilities::deltaR( wlnu,*wjjCand) * hWW.pt()/2.0;
@@ -205,7 +220,8 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     }
 
     if(hbbCand){
-        hbbMass    =   isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
+        hbbMass    =   isCorrOn(CORR_SDMASS)
+                ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
         hh =  wjjCand  ? (hWW.p4() + hbbCand->p4()) :  MomentumF();
     } else {
         hbbMass    = 0;
@@ -215,11 +231,15 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
 
     if(reader_jet){
-        jets = PhysicsUtilities::selObjsMom(reader_jet->jets,30,2.4,[](const Jet* j){return j->passTightID();} );
-        nMedBTags = PhysicsUtilities::selObjsD(jets,[](const Jet* j){return BTagging::isMediumCSVTagged(*j);} ).size();
+        jets = PhysicsUtilities::selObjsMom(reader_jet->jets,30,2.4,
+                [](const Jet* j){return j->passTightID();} );
+        nMedBTags = PhysicsUtilities::selObjsD(jets,
+                [](const Jet* j){return BTagging::isMediumCSVTagged(*j);} ).size();
         if(hbbCand){
-            jets_HbbV = PhysicsUtilities::selObjsD(jets,[&](const Jet* j){return  PhysicsUtilities::deltaR2(*j,*hbbCand ) >= 1.2*1.2 ;} );
-            nMedBTags_HbbV = PhysicsUtilities::selObjsD(jets_HbbV,[](const Jet* j){return BTagging::isMediumCSVTagged(*j);} ).size();
+            jets_HbbV = PhysicsUtilities::selObjsD(jets,
+                    [&](const Jet* j){return  PhysicsUtilities::deltaR2(*j,*hbbCand ) >= 1.2*1.2;});
+            nMedBTags_HbbV = PhysicsUtilities::selObjsD(jets_HbbV,
+                    [](const Jet* j){return BTagging::isMediumCSVTagged(*j);} ).size();
         } else {
             jets_HbbV = jets;
             nMedBTags_HbbV = nMedBTags;
@@ -231,9 +251,11 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     weight = 1;
     if(!isRealData()){
         if(isCorrOn(CORR_XSEC))
-            weight *= EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
-        if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size())   )
-            weight *= trigSFProc->getLeptonTriggerSF(ht_chs, (selectedLepton && selectedLepton->isMuon()));
+            weight *= EventWeights::getNormalizedEventWeight(
+                    *reader_event,xsec(),nSampEvt(),lumi());
+        if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size()))
+            weight *= trigSFProc->getLeptonTriggerSF(
+                    ht_chs, (selectedLepton && selectedLepton->isMuon()));
         if(isCorrOn(CORR_PU) )
             weight *= puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);
         if(isCorrOn(CORR_LEP)){
@@ -254,3 +276,5 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     return true;
 }
 }
+//--------------------------------------------------------------------------------------------------
+

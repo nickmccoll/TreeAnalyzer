@@ -54,8 +54,8 @@ void JERCorrector::processJets(JetReader& jetreader,Met& met,const GenJetCollect
         parameters.setJetEta(eta);
         auto oRawFact = j.toRawFactor();
         auto ptSF = correctJet(&j,gjptrs,parameters);
-        deltaMX += ((*jetreader.metUnc_rawPx)[j.index()]/oRawFact)*(1.0 - ptSF);
-        deltaMY += ((*jetreader.metUnc_rawPy)[j.index()]/oRawFact)*(1.0 - ptSF);
+        deltaMX += ((jetreader.metUnc_rawPx)[j.index()]/oRawFact)*(1.0 - ptSF);
+        deltaMY += ((jetreader.metUnc_rawPy)[j.index()]/oRawFact)*(1.0 - ptSF);
 //        std::cout << std::sqrt((*jetreader.metUnc_rawPx)[j.index()]*(*jetreader.metUnc_rawPx)[j.index()] + (*jetreader.metUnc_rawPy)[j.index()]*(*jetreader.metUnc_rawPy)[j.index()] )/oRawFact <<","<<
 //                (std::sqrt((*jetreader.metUnc_rawPx)[j.index()]*(*jetreader.metUnc_rawPx)[j.index()] + (*jetreader.metUnc_rawPy)[j.index()]*(*jetreader.metUnc_rawPy)[j.index()] )/oRawFact)*(1.0-ptSF) <<std::endl;
 //        std::cout << j.pt() <<" "<< j.eta() <<std::endl;
@@ -125,8 +125,8 @@ void JESUncShifter::processJets(JetReader& jetreader,Met& met){
         auto oRawFact = j.toRawFactor();
         auto ptSF = correctJet(&j);
         if(j.pt() >= 15) {
-            deltaMX += ((*jetreader.metUnc_rawPx)[j.index()]/oRawFact)*(1.0 - ptSF);
-            deltaMY += ((*jetreader.metUnc_rawPy)[j.index()]/oRawFact)*(1.0 - ptSF);
+            deltaMX += ((jetreader.metUnc_rawPx)[j.index()]/oRawFact)*(1.0 - ptSF);
+            deltaMY += ((jetreader.metUnc_rawPy)[j.index()]/oRawFact)*(1.0 - ptSF);
         }
     }
     ASTypes::CylLorentzVectorF deltaV(std::sqrt(deltaMX*deltaMX+deltaMY*deltaMY),0.0f, (deltaMX == 0.0 && deltaMY == 0.0) ? 0 : std::atan2(deltaMY, deltaMX),0 );

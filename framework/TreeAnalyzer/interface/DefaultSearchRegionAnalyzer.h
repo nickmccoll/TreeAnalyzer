@@ -34,6 +34,9 @@ class Jet               ;
 class FatJet            ;
 class Lepton            ;
 
+//--------------------------------------------------------------------------------------------------
+// DefaultSearchRegionAnalyzer
+//--------------------------------------------------------------------------------------------------
 class DefaultSearchRegionAnalyzer : public BaseTreeAnalyzer {
 public:
     //corrections that can be applied
@@ -50,7 +53,8 @@ public:
                      ,CORR_MET     =(1<<10)
     };
 
-    DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName, int treeInt, size randomSeed =0);
+    DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName,
+            int treeInt, size randomSeed =0);
 
     virtual ~DefaultSearchRegionAnalyzer();
 
