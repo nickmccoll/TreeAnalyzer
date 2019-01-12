@@ -4,9 +4,13 @@
 #include "DataFormats/interface/Jet.h"
 
 namespace TAna{
+//--------------------------------------------------------------------------------------------------
+// JetReader
+//--------------------------------------------------------------------------------------------------
 class JetReader: public BaseReader {
 public:
-    JetReader(std::string branchName, bool isRealData, bool fillGenJets = true,  bool fillRecoJets = true);
+    JetReader(std::string branchName, bool isRealData,
+            bool fillGenJets = true,  bool fillRecoJets = true);
 	virtual ~JetReader();
 	virtual void setup(TreeReaderWrapper * wrapper);
 	virtual void processVars();
@@ -18,24 +22,24 @@ private:
 	bool fillRecoJets;
 public:
 	//branches from the tree
-    std::vector<float>          * pt             = new std::vector<float>;
-    std::vector<float>          * eta            = new std::vector<float>;
-    std::vector<float>          * phi            = new std::vector<float>;
-    std::vector<float>          * mass           = new std::vector<float>;
-    std::vector<float>          * toRawFact      = new std::vector<float> ;
-    std::vector<float>          * chef           = new std::vector<float> ;
-    std::vector<float>          * metUnc_rawPx   = new std::vector<float> ;
-    std::vector<float>          * metUnc_rawPy   = new std::vector<float> ;
-    std::vector<float>          * csv            = new std::vector<float>;
-    std::vector<ASTypes::size8> * id             = new std::vector<ASTypes::size8>;
-    std::vector<ASTypes::int8>  * hadronFlavor   = new std::vector<ASTypes::int8> ;
-    std::vector<ASTypes::int8>  * partonFlavor   = new std::vector<ASTypes::int8> ;
-    std::vector<float>          * JECUnc         = new std::vector<float>         ;
-    std::vector<ASTypes::size8> * genIDX         = new std::vector<ASTypes::size8>;
-    std::vector<float>          * gen_pt         = new std::vector<float>;
-    std::vector<float>          * gen_eta        = new std::vector<float>;
-    std::vector<float>          * gen_phi        = new std::vector<float>;
-    std::vector<float>          * gen_mass       = new std::vector<float>;
+    ra_float pt                 ;
+    ra_float eta                ;
+    ra_float phi                ;
+    ra_float mass               ;
+    ra_float toRawFact          ;
+    ra_float metUnc_rawPx       ;
+    ra_float metUnc_rawPy       ;
+    ra_float csv                ;
+    ra_float deep_csv           ;
+    ra_size8 id                 ;
+    ra_int8  hadronFlavor       ;
+    ra_int8  partonFlavor       ;
+    ra_float JECUnc             ;
+    ra_size8 genIDX             ;
+    ra_float gen_pt             ;
+    ra_float gen_eta            ;
+    ra_float gen_phi            ;
+    ra_float gen_mass           ;
 
 	//objects created in process
     JetCollection jets;

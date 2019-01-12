@@ -23,14 +23,18 @@ public :
     template <class InputCoordSystem>
     BaseRecoJet(const ROOT::Math::LorentzVector<InputCoordSystem> &mom,
             const int idx,
-            const float toRaw, const float csv, const  ASTypes::int8 hadronFlv = 0,
-            const  ASTypes::int8 partonFlv=0,const float JECUnc =0)
-        : IndexedMomentumF(mom, idx),_toRaw(toRaw), _csv(csv), _hadronFlv(hadronFlv)
-          ,_partonFlv(partonFlv) ,_JECUnc(JECUnc) {}
-    ~BaseRecoJet() {}
+            const float toRaw=0, const float csv=0, const float deep_csv=0)
+        : IndexedMomentumF(mom, idx),_toRaw(toRaw),
+          _csv(csv),_deep_csv(deep_csv) {}
+    virtual ~BaseRecoJet() {}
+
+    void addMCInfo(const  ASTypes::int8 hadronFlv,
+            const  ASTypes::int8 partonFlv,const float JECUnc);
+
     void setRawFactor(float nrw) {_toRaw=nrw;}
     float toRawFactor() const {return _toRaw;}
     float csv() const {return _csv;}
+    float deep_csv() const {return _deep_csv;}
     int  hadronFlv() const {return _hadronFlv;}
     int  partonFlv() const {return _partonFlv;}
     float  jecUnc() const {return _JECUnc;}
@@ -41,6 +45,7 @@ public :
 protected :
     float          _toRaw     = 0;
     float          _csv       = 0;
+    float          _deep_csv  = 0;
     ASTypes::int8  _hadronFlv = 0;
     ASTypes::int8  _partonFlv = 0;
     float          _JECUnc    = 0;
@@ -57,11 +62,13 @@ public :
     template <class InputCoordSystem>
     Jet(const ROOT::Math::LorentzVector<InputCoordSystem> &mom,
             const int idx,
-            const float toRaw, const float csv, const  ASTypes::size8 jetID, const  ASTypes::int8 hadronFlv = 0,
-            const  ASTypes::int8 partonFlv=0,const float JECUnc =0, GenJet *gj = 0)
-        : BaseRecoJet(mom, idx,toRaw,csv,hadronFlv,partonFlv,JECUnc),_jetID(jetID),_gj(gj) {}
-    ~Jet() {}
+            const float toRaw=0, const float csv=0, const float deep_csv=0)
+        : BaseRecoJet(mom, idx,toRaw,csv,deep_csv){}
+    virtual ~Jet() {}
 
+    void addMCInfo(const  ASTypes::int8 hadronFlv,
+            const  ASTypes::int8 partonFlv,const float JECUnc, GenJet *gj);
+    void addExtraInfo(const float jetID);
 
     bool passPUID() const;
     bool passLooseID() const;

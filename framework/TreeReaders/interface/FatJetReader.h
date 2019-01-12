@@ -4,9 +4,13 @@
 #include "DataFormats/interface/FatJet.h"
 
 namespace TAna{
+//--------------------------------------------------------------------------------------------------
+// FatJetReader
+//--------------------------------------------------------------------------------------------------
 class FatJetReader: public BaseReader {
 public:
-    FatJetReader(std::string branchName, bool isRealData, bool fillGenFatJets = true);
+    FatJetReader(std::string branchName, bool isRealData,
+            bool fillGenFatJets = true, bool fillBTagging = true);
 	virtual ~FatJetReader();
 	virtual void setup(TreeReaderWrapper * wrapper);
 	virtual void processVars();
@@ -15,46 +19,43 @@ private:
 	//settings
 	bool realData   ;
 	bool fillGenFatJets;
+	bool fillBTagging   ;
 public:
 	//branches from the tree
-    std::vector<float>          * pt             = new std::vector<float>;
-    std::vector<float>          * eta            = new std::vector<float>;
-    std::vector<float>          * phi            = new std::vector<float>;
-    std::vector<float>          * mass           = new std::vector<float>;
-    std::vector<float>          * toRawFact      = new std::vector<float>;
-    std::vector<float>          * csv            = new std::vector<float>;
-    std::vector<ASTypes::size8> * id             = new std::vector<ASTypes::size8>;
-    std::vector<ASTypes::int8>  * hadronFlavor   = new std::vector<ASTypes::int8> ;
-    std::vector<ASTypes::int8>  * partonFlavor   = new std::vector<ASTypes::int8> ;
-    std::vector<float>          * JECUnc         = new std::vector<float> ;
-    std::vector<ASTypes::size8> * genIDX         = new std::vector<ASTypes::size8>;
-    std::vector<float>          * gen_pt         = new std::vector<float>;
-    std::vector<float>          * gen_eta        = new std::vector<float>;
-    std::vector<float>          * gen_phi        = new std::vector<float>;
-    std::vector<float>          * gen_mass       = new std::vector<float>;
+    ra_float pt                 ;
+    ra_float eta                ;
+    ra_float phi                ;
+    ra_float mass               ;
+    ra_float toRawFact          ;
+    ra_size8 id                 ;
+    ra_float bbt                ;
+    ra_float tau1               ;
+    ra_float tau2               ;
+    ra_float tau3               ;
+    ra_float ecfb1              ;
+    ra_float ecfb2              ;
 
-    std::vector<float>          * bbt               = new std::vector<float>;
-    std::vector<float>          * tau1              = new std::vector<float>;
-    std::vector<float>          * tau2              = new std::vector<float>;
-    std::vector<float>          * tau3              = new std::vector<float>;
-    std::vector<float>          * sj1_pt            = new std::vector<float>;
-    std::vector<float>          * sj1_eta           = new std::vector<float>;
-    std::vector<float>          * sj1_phi           = new std::vector<float>;
-    std::vector<float>          * sj1_mass          = new std::vector<float>;
-    std::vector<float>          * sj1_toRawFact     = new std::vector<float>;
-    std::vector<float>          * sj1_csv           = new std::vector<float>;
-    std::vector<float>          * sj1_JECUnc        = new std::vector<float>;
-    std::vector<ASTypes::int8>  * sj1_hadronFlavor  = new std::vector<ASTypes::int8>;
-    std::vector<ASTypes::int8>  * sj1_partonFlavor  = new std::vector<ASTypes::int8>;
-    std::vector<float>          * sj2_pt            = new std::vector<float>;
-    std::vector<float>          * sj2_eta           = new std::vector<float>;
-    std::vector<float>          * sj2_phi           = new std::vector<float>;
-    std::vector<float>          * sj2_mass          = new std::vector<float>;
-    std::vector<float>          * sj2_toRawFact     = new std::vector<float>;
-    std::vector<float>          * sj2_csv           = new std::vector<float>;
-    std::vector<float>          * sj2_JECUnc        = new std::vector<float>;
-    std::vector<ASTypes::int8>  * sj2_hadronFlavor  = new std::vector<ASTypes::int8>;
-    std::vector<ASTypes::int8>  * sj2_partonFlavor  = new std::vector<ASTypes::int8>;
+    ra_int8  hadronFlavor       ;
+    ra_int8  partonFlavor       ;
+    ra_float JECUnc             ;
+    ra_size8 genIDX             ;
+    ra_float gen_pt             ;
+    ra_float gen_eta            ;
+    ra_float gen_phi            ;
+    ra_float gen_mass           ;
+
+    ra_size8 sjIDX1             ;
+    ra_size8 sjnum              ;
+    ra_float sj_pt              ;
+    ra_float sj_eta             ;
+    ra_float sj_phi             ;
+    ra_float sj_mass            ;
+    ra_float sj_toRawFact       ;
+    ra_float sj_csv             ;
+    ra_float sj_deep_csv        ;
+    ra_int8  sj_hadronFlavor    ;
+    ra_int8  sj_partonFlavor    ;
+    ra_float sj_JECUnc          ;
 
 
 	//objects created in process

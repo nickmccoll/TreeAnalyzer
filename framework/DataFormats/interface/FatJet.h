@@ -29,12 +29,14 @@ public :
     template <class InputCoordSystem>
     FatJet(const ROOT::Math::LorentzVector<InputCoordSystem> &mom,
             const int idx,
-            const float toRaw, const float csv, const  ASTypes::size8 jetID, const  ASTypes::int8 hadronFlv = 0,
-            const  ASTypes::int8 partonFlv=0,const float JECUnc =0, GenJet *gj = 0)
-            : Jet(mom, idx,toRaw,csv,jetID,hadronFlv,partonFlv,JECUnc,gj){}
-    ~FatJet() {}
+            const float toRaw=0, const float csv=0, const float deep_csv=0)
+            : Jet(mom, idx,toRaw,csv,deep_csv){}
+    virtual ~FatJet() {}
 
-    void addFatJetInfo(const float bbt, const float tau1, const float tau2, const float tau3);
+    void addExtraInfo(const float jetID,
+            const float bbt, const float tau1, const float tau2, const float tau3,
+            const float ecfb1,const float ecfb2);
+
     void addSubJet(const SubJet& sj);
 
     float     bbt()       const;
@@ -44,6 +46,8 @@ public :
     float     tau2otau1() const;
     float     tau3otau1() const;
     float     tau3otau2() const;
+    float     ecfb1()     const;
+    float     ecfb2()     const;
 
     size      nSubJets()  const;
     MomentumF sdMom()     const;
@@ -60,6 +64,8 @@ protected :
     float _tau1 =0;
     float _tau2 =0;
     float _tau3 =0;
+    float _ecfb1 =0;
+    float _ecfb2 =0;
     std::vector<SubJet> _sjs;
 
 

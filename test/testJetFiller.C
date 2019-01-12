@@ -8,16 +8,17 @@
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 
 using namespace TAna;
-
+//--------------------------------------------------------------------------------------------------
+// testJetFiller
+//--------------------------------------------------------------------------------------------------
 class Analyzer : public BaseTreeAnalyzer {
 public:
-
-    Analyzer(std::string fileName, std::string treeName, bool realData) : BaseTreeAnalyzer(fileName,treeName), realData(realData){
-
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed)
+    : BaseTreeAnalyzer(fileName,treeName,treeInt, randSeed){
     }
     void loadVariables() override {
-        reader_event = (EventReader*)load(new EventReader("event",realData));
-        reader_jets = (JetReader*)load(new JetReader("ak4Jet",realData));
+        reader_event = loadReader<EventReader>("event",isRealData());
+        reader_jets =  loadReader<JetReader>("ak4Jet",isRealData());
     }
 
     bool runEvent() override {
@@ -55,12 +56,12 @@ public:
             plotter.getOrMake2D(TString::Format("%s_csv_hadronflv",jetstr),";csv ;hadron flv",50,0,1,10,-0.5,9.5)->
                     Fill(j.csv(), j.hadronFlv(), weight);
 
+            plotter.getOrMake1D("csv",";csv", 80, -2,2)->Fill(j.csv(),weight);
+            plotter.getOrMake1D("deep_csv",";deep csv", 80, -2,2)->Fill(j.deep_csv(),weight);
+
 
         }
-
         plotter.getOrMake1D("njet_20",";N. jets", 10, -0.5,9.5)->Fill(n20,weight);
-
-
 
         return true;
     }
@@ -68,18 +69,17 @@ public:
 
     void write(TString fileName){ plotter.write(fileName);}
 
-    bool realData = false;
-    EventReader * reader_event = 0;
-    JetReader * reader_jets = 0;
+    std::shared_ptr<EventReader> reader_event = 0;
+    std::shared_ptr<JetReader> reader_jets = 0;
     HistGetter plotter;
 
 };
 
 #endif
 
-void testJetFiller(std::string fileName ="output.root",std::string outFileName = "plots.root"){
-    TString path = fileName;
-    Analyzer a(fileName,"treeMaker/Events",path.Contains("data",TString::kIgnoreCase));
+void testJetFiller(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec=-1, float numEvent=-1){
+    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
+    a.setSampleInfo(xSec,numEvent);
     a.analyze();
     a.write(outFileName);
 }
