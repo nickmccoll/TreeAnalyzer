@@ -13,7 +13,8 @@ using namespace TAna;
 class Analyzer : public BaseTreeAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : BaseTreeAnalyzer(fileName,treeName,treeInt, randSeed){
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed)
+    : BaseTreeAnalyzer(fileName,treeName,treeInt, randSeed){
 
     }
     void loadVariables() override {
