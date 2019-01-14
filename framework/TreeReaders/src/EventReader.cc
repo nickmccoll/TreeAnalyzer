@@ -4,12 +4,12 @@
 
 
 namespace TAna{
-
-EventReader::EventReader(std::string branchName, bool isRealData) : BaseReader("EventReader",branchName),realData(isRealData) {};
+//--------------------------------------------------------------------------------------------------
+EventReader::EventReader(std::string branchName, bool isRealData) :
+        BaseReader("EventReader",branchName),realData(isRealData) {};
 EventReader::~EventReader() {}
-
+//--------------------------------------------------------------------------------------------------
 void EventReader::setup(TreeReaderWrapper * wrapper){
-
     wrapper->setBranch(branchName,"run"               , run              , false);
     wrapper->setBranch(branchName,"lumi"              , lumi             , false);
     wrapper->setBranch(branchName,"event"             , event            , false);
@@ -25,12 +25,15 @@ void EventReader::setup(TreeReaderWrapper * wrapper){
     wrapper->setBranch(branchName,"met_raw_phi"       , met_raw_phi      , false);
     wrapper->setBranch(branchName,"met_van_pt"        , met_van_pt       , false);
     wrapper->setBranch(branchName,"met_van_phi"       , met_van_phi      , false);
-    wrapper->setBranch(branchName,"dataEra"           , dataEra         , false);
+    wrapper->setBranch(branchName,"dataEra"           , dataEra          , false);
     if(!realData){
-        wrapper->setBranch(branchName,"nTruePUInts"       ,nTruePUInts  , false);
-        wrapper->setBranch(branchName,"genWeight"         ,genWeight    , false);
-        wrapper->setBranch(branchName,"process"           ,process      , false);
-        wrapper->setBranch(branchName,"genWeights"        ,genWeights   , false);
+        wrapper->setBranch(branchName,"nTruePUInts"       ,nTruePUInts   , false);
+        wrapper->setBranch(branchName,"genWeight"         ,genWeight     , false);
+        wrapper->setBranch(branchName,"process"           ,process       , false);
+        wrapper->setBranch(branchName,"prefweight"        ,prefweight    ,false);
+        wrapper->setBranch(branchName,"prefweightup"      ,prefweightup  ,false);
+        wrapper->setBranch(branchName,"prefweightdown"    ,prefweightdown,false);
+        wrapper->setBranch(branchName,"genWeights"        ,genWeights    , false);
     } else {
         wrapper->setBranch(branchName,"dataset"           , dataset      , false);
         wrapper->setBranch(branchName,"dataRun"           , dataRun      , false);
@@ -42,7 +45,7 @@ void EventReader::setup(TreeReaderWrapper * wrapper){
 
 
 }
-
+//--------------------------------------------------------------------------------------------------
 void EventReader::processVars() {
     met.setP4(*met_pt,float(0),*met_phi,float(0));
     if(realData){

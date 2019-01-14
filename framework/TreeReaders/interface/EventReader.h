@@ -8,6 +8,9 @@ using ASTypes::size16;
 using ASTypes::size64;
 
 namespace TAna{
+//--------------------------------------------------------------------------------------------------
+// EventReader
+//--------------------------------------------------------------------------------------------------
 class EventReader: public BaseReader {
 public:
     EventReader(std::string branchName, bool isRealData);
@@ -41,6 +44,9 @@ public:
     rd_size8    dataEra       ;
     rd_size8    dataset       ;
     rd_size8    dataRun       ;
+    rd_float    prefweight    ;
+    rd_float    prefweightup  ;
+    rd_float    prefweightdown;
     ra_float    genWeights    ;
 
 	rd_size   metFilters         ;
