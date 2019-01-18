@@ -47,7 +47,6 @@ public:
     		plotter.getOrMake1DPre(sn,"dr_ll",";#DeltaR_{l,l}",50,0,4)->Fill(dR,weight);
     		plotter.getOrMake1DPre(sn,"dPhi_metLL",";#Delta#phi_{ll,met}",50,-3.14,3.14)->Fill(dPhi,weight);
     		plotter.getOrMake1DPre(sn,"mll",";M_{ll}",50,80,100)->Fill(mll,weight);
-    		plotter.getOrMake1DPre(sn,"ht",";H_{T}",50,0,3000)->Fill(ht,weight);
     		plotter.getOrMake1DPre(sn,"numB",";numB",5,-0.5,4.5)->Fill(numB,weight);
     	};
 
@@ -86,6 +85,12 @@ public:
     		plotter.getOrMake1DPre(sn+"_fullSel","dr_ll",";#DeltaR_{l,l}",50,0,4)->Fill(sqrt(dR2_ll),weight);
     		plotter.getOrMake1DPre(sn+"_fullSel","dPhi_metLL",";#Delta#phi_{ll,met}",50,-3.14,3.14)->Fill(dPhi_metLL,weight);
     		plotter.getOrMake1DPre(sn+"_fullSel","mll",";M_{ll}",50,0,120)->Fill(mll,weight);
+    		plotter.getOrMake1DPre(sn+"_fullSel","ht",";H_{T}",50,0,3000)->Fill(ht_puppi,weight);
+    		plotter.getOrMake1DPre(sn+"_fullSel","Mbb",";M_{bb}",20,30,210)->Fill(hbbMass,weight);
+    		plotter.getOrMake1DPre(sn+"_fullSel","Mhh",";M_{HH}",30,0,4500)->Fill(hh.mass(),weight);
+    		plotter.getOrMake1DPre(sn+"_fullSel","met",";E_{T}^{miss}",50,0,3000)->Fill(reader_event->met.pt(),weight);
+    		plotter.getOrMake1DPre(sn+"_fullSel","pt2",";p_{T}",50,0,3000)->Fill(lep2->pt(),weight);
+    		plotter.getOrMake1DPre(sn+"_fullSel","maxLepEta",";|#eta|",20,0,3)->Fill(lep1->absEta() > lep2->absEta() ? lep1->absEta() : lep2->absEta(),weight);
     	}
     }
     void plotTopCR(TString sn, const Lepton* lep1, const Lepton* lep2) {
@@ -143,10 +148,17 @@ public:
 	}
 
     bool runEvent() override {
+//    	cout<<"jansen"<<endl;
         if(!DileptonSearchRegionAnalyzer::runEvent()) return false;
+//    	cout<<"jansen01"<<endl;
+
         if(reader_event->process == FillerConstants::SIGNAL && diHiggsEvt.type != DiHiggsEvent::DILEP) return false;
         if(!passEventFilters) return false;
+//    	cout<<"jansen02"<<endl;
+
         if(!passTriggerPreselection) return false;
+//    	cout<<"jansen03"<<endl;
+
         TString sn = smpName;
 
         // cuts before separating into SR and CR
@@ -159,14 +171,22 @@ public:
         if (ht_puppi < 400) return false;
         if (hh.mass() < 700) return false;
 
+        // trying out straight MET cut
+//        if(reader_event->met.pt() < 50) return false;
+//    	cout<<"jansen2"<<endl;
+
         // separate into SR and CR
         if (nMedBTags_HbbV != 0 && hbbCSVCat >= BTagging::CSVSJ_MF)                  plotTopCR (sn, selectedDileptons[0],selectedDileptons[1]);
         if (nMedBTags_HbbV == 0 && hbbCSVCat == BTagging::CSVSJ_FF)                  plotQgCR  (sn, selectedDileptons[0],selectedDileptons[1]);
         if (nMedBTags_HbbV == 0 && hbbCSVCat >= BTagging::CSVSJ_MF && !isRealData()) plotSR    (sn, selectedDileptons[0],selectedDileptons[1]);
 
         // debugging
-        if (hbbCSVCat == BTagging::CSVSJ_FF) testQgCR (sn, selectedDileptons[0],selectedDileptons[1]);
+//        if (hbbCSVCat == BTagging::CSVSJ_FF) testQgCR (sn, selectedDileptons[0],selectedDileptons[1]);
+//    	cout<<"jansen3"<<endl;
 
+        double DR1 = PhysicsUtilities::deltaR(*hbbCand,*selectedDileptons[0]);
+        double DR2 = PhysicsUtilities::deltaR(*hbbCand,*selectedDileptons[1]);
+        plotter.getOrMake1DPre(sn,"minDR_lepHbb","",200,0,4)->Fill(DR1 > DR2 ? DR2 : DR1,weight);
         return true;
     }
 

@@ -52,7 +52,7 @@ public:
         if(!DileptonSearchRegionAnalyzer::runEvent()) return false;
         if(reader_event->process == FillerConstants::SIGNAL && diHiggsEvt.type != DiHiggsEvent::DILEP) return false;
 
-        // require Hbb cand, which itself requires two selected Dileptons to be fille in DileptonSearchRegionAnalyzer
+        // require Hbb cand, which itself requires two selected Dileptons to be filled in DileptonSearchRegionAnalyzer
         if(!hbbCand) return false;
         if(ht_puppi < 400) return false;
         reader_event->genWeights->clear();

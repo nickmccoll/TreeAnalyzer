@@ -54,6 +54,7 @@ public:
     void plot(TString sn, const Lepton* lep1, const Lepton* lep2, const FatJet* hbb) {
     	const MomentumF dilepmom = lep1->p4() + lep2->p4();
     	if (dilepmom.mass() < 12 || dilepmom.mass() > 75) return; // mass cut on 12 < Mll < 75
+    	if (fabs(PhysicsUtilities::deltaPhi(reader_event->met,dilepmom)) > TMath::PiOver2()) return;
 
     	const MomentumF bbllmom = dilepmom.p4() + hbb->p4();
     	const MomentumF metLL = dilepmom.p4() + reader_event->met.p4();
@@ -71,6 +72,18 @@ public:
     	plotter.getOrMake1DPre(sn,"metLL_o_dRll",";GeV",100,0,2000)->Fill(metLL.Et()/dR_ll,weight);
     	plotter.getOrMake1DPre(sn,"met_o_dPhill",";GeV",100,0,2000)->Fill(reader_event->met.Et()/dPhi_ll,weight);
     	plotter.getOrMake1DPre(sn,"met_o_dRll",";GeV",100,0,2000)->Fill(reader_event->met.Et()/dR_ll,weight);
+    	plotter.getOrMake1DPre(sn,"met_o_metLL",";GeV",100,0,5)->Fill(reader_event->met.Et()/metLL.Et(),weight);
+    	plotter.getOrMake1DPre(sn,"met_o_ptLL",";GeV",100,0,5)->Fill(reader_event->met.Et()/dilepmom.pt(),weight);
+
+    	plotter.getOrMake1DPre(sn,"pt_o_m",";GeV",100,0,1)->Fill(hww.pt()/hh.mass(),weight);
+    	plotter.getOrMake1DPre(sn,"met_o_m",";GeV",100,0,1)->Fill(reader_event->met.pt()/hh.mass(),weight);
+    	plotter.getOrMake1DPre(sn,"met_o_ptHww",";GeV",100,0,1)->Fill(reader_event->met.pt()/hww.pt(),weight);
+
+    	if (hww.pt() < 400) {
+        	plotter.getOrMake1DPre(sn,"pt_o_m_400",";GeV",100,0,1)->Fill(hww.pt()/hh.mass(),weight);
+        	plotter.getOrMake1DPre(sn,"met_o_m_400",";GeV",100,0,1)->Fill(reader_event->met.pt()/hh.mass(),weight);
+        	plotter.getOrMake1DPre(sn,"met_o_ptHww_400",";GeV",100,0,1)->Fill(reader_event->met.pt()/hww.pt(),weight);
+    	}
     }
     void debugEvt(TString sn, const Lepton* lep1, const Lepton* lep2, const FatJet* hbb) {
     	ParticleInfo::printGenInfo(reader_genpart->genParticles,-1);
@@ -99,6 +112,7 @@ public:
         if (ht_puppi < 400) return false;
         if (PhysicsUtilities::deltaR2(*selectedDileptons[0],*selectedDileptons[1]) > 1.6*1.6) return false;
         if (nMedBTags_HbbV != 0) return false;
+        if (hh.mass() < 700) return false;
 
         // assuming the input dataset is a skim using the Dilepton + Hbb selection
         TString sn = smpName+getDilepChan(selectedDileptons[0],selectedDileptons[1]);
