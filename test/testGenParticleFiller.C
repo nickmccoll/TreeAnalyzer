@@ -6,6 +6,7 @@
 #include "TreeReaders/interface/GenParticleReader.h"
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
+#include "Processors/GenTools/interface/SMDecayEvent.h"
 
 using namespace TAna;
 
@@ -22,6 +23,16 @@ public:
     }
 
     bool runEvent() override {
+
+        SMDecayEvent    smDecayEvt;
+        smDecayEvt.setDecayInfo(reader_genParticles->genParticles);
+        MomentumF topMom;
+        for(const auto& t : smDecayEvt.topDecays){
+            topMom.p4() += t.top->p4();
+        }
+        plotter.getOrMake1D("topMass",";topMass",20,0,2000)->Fill(topMom.mass(),reader_event->weight);
+
+
         const auto& genparticles = reader_genParticles->genParticles;
 //        if(getEventNumber() < 10)
             std::cout <<getEventNumber()<<std::endl;
