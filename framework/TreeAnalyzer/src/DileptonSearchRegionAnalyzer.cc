@@ -173,24 +173,24 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
         hbbCand     = fjProc->getDilepHbbCand();
         hbbCSVCat   = fjProc->getDilepHbbCSVCat();
 
-		double pz = reader_event->met.pt() / TMath::Tan((selectedDileptons[0]->p4()+selectedDileptons[0]->p4()).theta());
-		pz = (pz < 0 == (selectedDileptons[0]->p4()+selectedDileptons[0]->p4()).pz() < 0) ? pz : (-1)*pz;
-		ASTypes::CartLorentzVector pnunu(reader_event->met.px(),reader_event->met.py(),pz,sqrt(pow(reader_event->met.px(),2)+pow(reader_event->met.py(),2)+pz*pz+40*40));
+		double pz = reader_event->met.pt() / TMath::Tan((selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).theta());
+		pz = ((pz < 0) == ((selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).pz() < 0)) ? pz : (-1)*pz;
+		ASTypes::CartLorentzVector pnunu(reader_event->met.px(),reader_event->met.py(),pz,sqrt(pow(reader_event->met.px(),2)+pow(reader_event->met.py(),2)+pz*pz));
 //        HwwTestStat = hwwSolver.HwwMinimization(selectedDileptons[0]->p4(),selectedDileptons[1]->p4(),reader_event->met.p4(),&hwwInfo);
 
         hww = selectedDileptons[0]->p4() + selectedDileptons[1]->p4() + pnunu;
-        hh = hww.p4() + hbbCand->p4();
     } else {
         hbbCand    =  0;
         hbbCSVCat  = BTagging::CSVSJ_INCL;
         hww     = MomentumF();
-        hh      = MomentumF();
     }
 
     if(hbbCand){
         hbbMass =   isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
+        hh = hww.p4() + hbbCand->p4();
     } else {
         hbbMass    = 0;
+        hh      = MomentumF();
     }
 
     //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
@@ -209,7 +209,6 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
             nMedBTags_HbbV = nMedBTags;
         }
     }
-
 
     //|||||||||||||||||||||||||||||| EVENT WEIGHTS ||||||||||||||||||||||||||||||
     weight = 1;
