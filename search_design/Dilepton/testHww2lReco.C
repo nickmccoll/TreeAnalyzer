@@ -404,7 +404,7 @@ public:
         // assuming the input dataset is a skim using the Dilepton + Hbb selection
         TString sn = smpName + "_";
         if (getDilepChan(selectedDileptons[0],selectedDileptons[1]).Contains("ee")) {
-        	if (!((const Electron*)selectedDileptons[0])->passMedID_noISO() && ((const Electron*)selectedDileptons[1])->passMedID_noISO()) return false;
+        	if (!(((const Electron*)selectedDileptons[0])->passMedID_noISO() && ((const Electron*)selectedDileptons[1])->passMedID_noISO())) return false;
         }
 
         testSolution0(sn,selectedDileptons[0],selectedDileptons[1]);

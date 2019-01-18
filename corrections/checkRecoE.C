@@ -64,26 +64,37 @@ public:
         if(ht_chs < 400) return false;
 
         if(diHiggsEvt.type != DiHiggsEvent::E) return false;
-        const GenParticle* genlep1 = diHiggsEvt.w1_d1;
-        if (genlep1->absPdgId() != 11) {
-        	printf("genlep1 not an electron\n");
+        const GenParticle* genlep = diHiggsEvt.w1_d1;
+        if (diHiggsEvt.w1_d1->absPdgId() == 11) genlep = diHiggsEvt.w1_d1;
+        else if (diHiggsEvt.w2_d1->absPdgId() == 11) genlep = diHiggsEvt.w2_d1;
+        else {
+        	printf("no gen electron found\n");
         	return false;
         }
-        if (genlep1->pt() < 30) return false;
+/*        const GenParticle* genlep1 = diHiggsEvt.w1_d1;
+        if (genlep1->absPdgId() != 11) {
+        	printf("genlep1 not an electron\nid = %d\n",genlep1->pdgId());
+        	if (diHiggsEvt.w2_d1->absPdgId() != 11) {
+        		printf("genlep2 is not electron either\n");
+        		return false;
+        	}
+//        	return false;
+        } */
+        if (genlep->pt() < 30 || genlep->absEta() > 2.5) return false;
     	plotter.getOrMake1DPre(smpName+"e_gen","evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
 
     	const auto electrons = PhysicsUtilities::selObjsMom(reader_electron->electrons,10,2.5);
     	double maxDR = 0.1;
     	int e_idx = -1;
     	for (const auto& e : electrons) {
-    		double dr = PhysicsUtilities::deltaR(*genlep1,*e);
+    		double dr = PhysicsUtilities::deltaR(*genlep,*e);
     		if (dr < maxDR) {
     			maxDR = dr;
     			e_idx = e->index();
     		}
     	}
     	if (maxDR >= 0.1) return false;
-    	if (reader_electron->electrons[e_idx].pt() < 30) {
+    	if (reader_electron->electrons[e_idx].pt() < 30 || reader_electron->electrons[e_idx].absEta() > 2.5) {
     		printf("reco electron below pt threshold\n");
     		return false;
     	}
@@ -91,8 +102,8 @@ public:
     	const Electron* el = &reader_electron->electrons[e_idx];
 
     	plotter.getOrMake1DPre(smpName+"e_reco","evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
-    	if (el->absEta() <= 1.479) plotRecoVars(smpName+"_barrel_",el,e_idx);
-    	else plotRecoVars(smpName+"_endcap_",el,e_idx);
+//    	if (el->absEta() <= 1.479) plotRecoVars(smpName+"_barrel_",el,e_idx);
+//    	else plotRecoVars(smpName+"_endcap_",el,e_idx);
         return true;
     }
 
