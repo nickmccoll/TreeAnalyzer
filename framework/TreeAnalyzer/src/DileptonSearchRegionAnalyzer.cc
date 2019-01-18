@@ -6,10 +6,8 @@
 #include "TreeReaders/interface/MuonReader.h"
 #include "TreeReaders/interface/JetReader.h"
 #include "TreeReaders/interface/FatJetReader.h"
-#include "TreeReaders/interface/FillerConstants.h"
 
 #include "Processors/Corrections/interface/EventWeights.h"
-#include "Processors/Variables/interface/HiggsSolver.h"
 #include "Processors/Variables/interface/JetKinematics.h"
 
 #include "Processors/Variables/interface/DileptonSelection.h"
@@ -166,26 +164,27 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
 
     //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
     passEventFilters= EventSelection::passEventFilters(*reader_event);
-    passTriggerPreselection= EventSelection::passTriggerPreselection(*reader_event,ht_chs,selectedDileptons);
-
+    passTriggerPreselection= EventSelection::passTriggerPreselection(*reader_event,ht_puppi,selectedDileptons); // changed from ht_chs to ht_puppi due to dilepton skims
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
     if(reader_fatjet && selectedDileptons.size() == 2){
+
         fjProc->loadDilepFatJet(*reader_fatjet,selectedDileptons[0],selectedDileptons[1]);
         hbbCand     = fjProc->getDilepHbbCand();
         hbbCSVCat   = fjProc->getDilepHbbCSVCat();
 
 		double pz = reader_event->met.pt() / TMath::Tan((selectedDileptons[0]->p4()+selectedDileptons[0]->p4()).theta());
 		pz = (pz < 0 == (selectedDileptons[0]->p4()+selectedDileptons[0]->p4()).pz() < 0) ? pz : (-1)*pz;
-		ASTypes::CartLorentzVector pnunu(reader_event->met.px(),reader_event->met.py(),pz,sqrt(pow(reader_event->met.px(),2)+pow(reader_event->met.py(),2)+pz*pz));
-		nunuMom = pnunu;
-		hww = selectedDileptons[0]->p4() + selectedDileptons[0]->p4() + nunuMom.p4();
+		ASTypes::CartLorentzVector pnunu(reader_event->met.px(),reader_event->met.py(),pz,sqrt(pow(reader_event->met.px(),2)+pow(reader_event->met.py(),2)+pz*pz+40*40));
+//        HwwTestStat = hwwSolver.HwwMinimization(selectedDileptons[0]->p4(),selectedDileptons[1]->p4(),reader_event->met.p4(),&hwwInfo);
+
+        hww = selectedDileptons[0]->p4() + selectedDileptons[1]->p4() + pnunu;
+        hh = hww.p4() + hbbCand->p4();
     } else {
         hbbCand    =  0;
         hbbCSVCat  = BTagging::CSVSJ_INCL;
-
-        nunuMom = MomentumF();
         hww     = MomentumF();
+        hh      = MomentumF();
     }
 
     if(hbbCand){
@@ -235,6 +234,7 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
             weight *= topPTProc->getCorrection(mcProc,smDecayEvt);
         }
     }
+
     return true;
 }
 }

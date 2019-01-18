@@ -7,6 +7,7 @@
 #include "Processors/GenTools/interface/SMDecayEvent.h"
 #include "TreeReaders/interface/FillerConstants.h"
 #include "Processors/Variables/interface/BTagging.h"
+//#include "Processors/Variables/interface/Hww2lSolver.h"
 
 
 namespace TAna{
@@ -107,12 +108,12 @@ public:
 
     const FatJet*              hbbCand     =0;
     BTagging::CSVSJ_CAT        hbbCSVCat   = BTagging::CSVSJ_INCL;
-    MomentumF                  nunuMom     ;
     MomentumF                  hww         ;
     MomentumF                  hh          ;
 
-    float                      wwDM        = 0;
-    bool                       passWWDM    = false;
+//    Hww2lSolver hwwSolver       ;
+//    HwwInfo     hwwInfo         ;
+//    double      HwwTestStat = -1;
 
     float                      hbbMass     =0     ;
 

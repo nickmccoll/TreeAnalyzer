@@ -65,6 +65,7 @@ const FatJet* FatJetSelHelpers::getDilepHbbCand(const MomentumF* lep1, const Mom
     	if (jets[k]->pt() < param.hbbLL_minPT) break;
     	if (param.hbbLL_minDphiBBLL > 0 && PhysicsUtilities::absDeltaPhi(*jets[k],dilepmom) < param.hbbLL_minDphiBBLL) continue;
     	if (param.hbbLL_minDRbbLL > 0 && PhysicsUtilities::deltaR2(*jets[k],dilepmom) < param.hbbLL_minDRbbLL*param.hbbLL_minDRbbLL) continue;
+    	if (PhysicsUtilities::deltaR2(*jets[k],*lep1) < 0.8*0.8 || PhysicsUtilities::deltaR2(*jets[k],*lep2) < 0.8*0.8) continue;
     	selFJ = jets[k];
     	break;
     }

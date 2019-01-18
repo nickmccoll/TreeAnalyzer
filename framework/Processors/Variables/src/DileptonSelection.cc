@@ -111,8 +111,6 @@ void setDefaultDilepSelParams(DilepSelParameters& par)        {
 }
 void setDefaultDilepSelParams_dataAF(DilepSelParameters& par)        {
     setDefaultDilepSelParams(par);
-    par.mu_getID1 = &Muon::passMed16ID;
-    par.mu_getID2 = &Muon::passMed16ID;
 }
 void setDefaultDileptonProcessor(DileptonProcessor& proc) {
     setDefaultDilepSelParams(proc.lepSelParams);
