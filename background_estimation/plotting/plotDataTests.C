@@ -15,7 +15,7 @@ using namespace CutConstants;
 using namespace ASTypes;
 std::vector<TObject*> writeables;
 
-const float signalXS = 0.8; //in pb
+const float signalXS = 0.2; //in pb
 
 class Dummy {
 public:
@@ -458,7 +458,7 @@ public:
                     p->setYTitleBot((std::string("Data / ") + modTitles[prefs.modelType] +"").c_str());
                     auto * c = p->drawSplitRatio(-1,"stack",false,false,plotTitle.c_str());
                     if(prefs.doLog) c->GetPad(1)->SetLogy();
-
+                    p->botStyle.xAxis->SetTitleOffset(1.05);
                     for(unsigned int iSig = 0; iSig < cont.sig.size(); ++iSig){
                         auto prim = c->GetPad(2)->GetPrimitive((s+"_"+prefs.signals[iSig]+"_0" ).c_str());
                         if(prim) prim->Delete();

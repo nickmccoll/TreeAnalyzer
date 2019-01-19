@@ -118,6 +118,21 @@ def custom_crab(config):
         config.Site.storageSite = 'T3_US_FNALLPC'
 
 
+#observation
+toys->
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+hadd higgsCombineTest.HybridNew.mH2300.allToys.root higgsCombineTest.HybridNew.mH2300.*    
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance   --readHybridResult --toysFile=higgsCombineTest.HybridNew.mH2300.allToys.root 
+assymp->
+combine -M Significance  -m 2300 ./combined.root
+
+
 #Stat tests
 text2workspace.py combinedCard.txt -o combined.root
 ~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M MaxLikelihoodFit -m 1000 combined.root  
@@ -189,7 +204,3 @@ hadd -f biasInput_postfit_t2_2500.root  fitDiagnosticspostfit_t2_?_2500.root
 hadd -f biasInput_postfit_t5_1000.root  fitDiagnosticspostfit_t5_?_1000.root
 hadd -f biasInput_postfit_t5_1600.root  fitDiagnosticspostfit_t5_?_1600.root
 hadd -f biasInput_postfit_t5_2500.root  fitDiagnosticspostfit_t5_?_2500.root
-
-#SIGNIFICANCE
-~/GitRepositories/TreeAnalyzer/framework/HiggsAnalysis/CombinedLimit/exe/combine -M Significance -m 2650 combinedCard.txt
-

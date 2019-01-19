@@ -167,8 +167,9 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
 //        auto * c = p->draw(false,prefix+vars[iV].varName+"_srvardists.pdf");
         auto * c = p->drawSplitRatio(-1,"stack",false,false,prefix+vars[iV].varName+"_srvardists.pdf");
 //        p->yAxis()->SetTitleOffset(1.55);
-//        p->xAxis()->SetTitleOffset(1.0);
+        p->xAxis()->SetTitleOffset(1.05);
 
+        p->botStyle.xAxis->SetTitleOffset(1.05);
 
 
         for(unsigned int iSig = 0; iSig < signalFiles.size(); ++iSig){
