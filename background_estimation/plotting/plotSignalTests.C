@@ -218,19 +218,20 @@ void plotEfficiencies(std::string name, std::string filename,std::string fitName
                     plot->addGraph(gr,title,-1,1,5,20,1,true,false,false," C");
 //                    plot->addGraph(gr,b.title,-1,1,4,0,true,false,false);
                 }
-                plot->setMinMax(0,.016);
+                plot->setMinMax(0,.014);
 //                plot->addText(l.title+", "+p.title,0.1454849,0.866087,0.04);
                 plot->setLegendPos(0.58,0.7286957,0.95,0.88);
                 std::string sigNam = signal ? "Spin-2 X" : "Spin-0 X";
                 plot->addText(sigNam,0.595,0.88,0.03);
-                plot->addText("arXiv: xxxx.xxxxx",0.19,0.78,0.025);
-                plot->setCMSLumi(10);
+//                plot->addText("arXiv: xxxx.xxxxx",0.19,0.78,0.025);
+                plot->setCMSLumi(0);
                 plot->setCMSLumiExtraText("Simulation Supplementary");
-                plot->setCMSLumiLumiText("");
+                plot->setCMSLumiLumiText("13 TeV");
                 plot->topStyle.leftMarginSize=0.15;
 
                 auto c = plot->draw(false,(name+"_"+l+"_"+p+"_"+h+"_sigeff") .c_str());
-                plot->yAxis()->SetTitleOffset(1.86);
+                plot->yAxis()->SetTitleOffset(1.9);
+                plot->xAxis()->SetTitleOffset(1.05);
                 writeables.push_back(c);
             }
         }
