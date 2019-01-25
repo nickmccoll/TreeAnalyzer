@@ -88,11 +88,11 @@ auto proc =[&](TH2* inH, const std::string& name) ->TH1* {
 };
 
 Plotter * p = new Plotter();
-p->addHistLine(proc(nH,bkg + "_"+reg+"_"+pName+"_nom"),"nominal"  );
+p->addHistLine(proc(nH,bkg + "_"+reg+"_"+pName+"_nom"),"Initial template"  );
 
 for(unsigned int iS = 0; iS < systs.size(); ++iS){
-    p->addHistLine(proc(sUps[iS],bkg + "_"+reg+"_"+pName+systs[iS].second+"Up"),systs[iS].first +" +1#sigma",StyleInfo::getLineColor(iS+1) , 1  );
-    p->addHistLine(proc(sDowns[iS],bkg + "_"+reg+"_"+pName+systs[iS].second+"Down"),systs[iS].first +" -1#sigma",StyleInfo::getLineColor(iS+1) , 9  );
+    p->addHistLine(proc(sUps[iS],bkg + "_"+reg+"_"+pName+systs[iS].second+"Up"),systs[iS].first +" unc. up",StyleInfo::getLineColor(iS+1) , 1  );
+    p->addHistLine(proc(sDowns[iS],bkg + "_"+reg+"_"+pName+systs[iS].second+"Down"),systs[iS].first +" unc. down",StyleInfo::getLineColor(iS+1) , 9  );
 }
 if(plotX){
     p->setXTitle(hbbMCS.title);
@@ -104,11 +104,22 @@ if(plotX){
     p->setMinMax(0.00001,0.2);
     p->setXTitle(hhMCS.title);
 }
-p->setYTitle("arbitrary units");
-p->setBotMinMax(0,2);
+p->setYTitle("Arbitrary scale");
+p->setBotMinMax(0,1.99);
+p->setYTitleBot("Alt. / initial temp.");
+p->setLegendPos(0.45,0.5530435,0.93,0.93);
+
+    if(bkg == bkgSels[BKG_MT]){
+        p->setBotMinMax(0.71,1.29);
+        p->setCMSLumi();
+        p->setCMSLumiPosition(0,1.05);
+        p->setCMSLumiExtraText("Simulation Supplementary");
+        p->setCMSLumiLumiText("13 TeV");
+    }
 
 auto c = p->drawSplitRatio(0,"stack",false,false,bkg+"_"+pName);
 c->SetTitle((bkg+"_"+pName).c_str());
+p->botStyle.xAxis->SetTitleOffset(1.05);
 if(!plotX){
       c->GetPad(1)->SetLogy();
       c->Update();
@@ -148,7 +159,7 @@ void getNuisHists(const std::string& rootFile, const std::string& outDir){
     go(bkgSels[BKG_MW],
             {
                     "hbb_scale","hbb_res",
-                    systName("top","res"  ) ,systName("top","scale") ,systName("top","mt_rel_scale",b),systName("top","lostmw_rel_scale",b)
+                    systName("top","res"  ) ,systName("top","scale") ,systName("top","lostmw_rel_scale",b)
     });
 
 
@@ -187,8 +198,10 @@ void makeNuisPlots(const std::string& baseDir, std::vector<TObject*>& writeables
     writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_nuisHists.root",bkgSels[BKG_MW],cat,"mhbb",{{"b#bar{b} jet soft-drop scale","hbb_scale"},{"b#bar{b} jet soft-drop res.","hbb_res"}},true));
     writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MW]+"_nuisHists.root",bkgSels[BKG_MW],cat,"mhh",{{"top res." ,systName("top","res"  )}, {"top scale" ,systName("top","scale")}, {"rel. top scale" ,systName("top","lostmw_rel_scale",b)}    },false));
 
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhbb",{{"b#bar{b} jet soft-drop scale","hbb_scale"},{"b#bar{b} jet soft-drop res.","hbb_res"}},true));
-    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhh",{{"top res." ,systName("top","res"  )}, {"top scale" ,systName("top","scale")}, {"rel. top scale" ,systName("top","mt_rel_scale",b)}    },false));
+    //  remove rel because it is the same size as the standard scale
+    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhbb",{{"b#bar{b} jet SD mass scale","hbb_scale"},{"b#bar{b} jet SD mass res.","hbb_res"}},true));
+//    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhh",{{"top res." ,systName("top","res"  )}, {"top scale" ,systName("top","scale")}, {"rel. top scale" ,systName("top","mt_rel_scale",b)}    },false));
+    writeables.push_back(makeNuisPlot(baseDir+bkgSels[BKG_MT]+"_nuisHists.root",bkgSels[BKG_MT],cat,"mhh",{{"#it{m}_{HH} res." ,systName("top","res"  )}, {"#it{m}_{HH} scale" ,systName("top","scale")}   },false));
 
 
 }

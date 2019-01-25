@@ -113,40 +113,48 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
         if(rebinFactor) hd->Rebin(rebinFactor);
         p->addHist(hd,"Data",kBlack,1,2,20,0.5,true,true,true);
 
+        p->setCMSLumi(10);
 
-
-
+        bool sup = false;
         switch(iV){
-        case 1:
+        case 1: //hbb
             p->setMinMax(0,500);
             break;
-        case 2:
+        case 2: //hh
             p->setMinMax(0.1,10000);
+            sup = true;
             break;
-        case 3:
+        case 3://nAK4Btags
             p->setMinMax(0,9000);
+            sup = true;
             break;
-        case 4:
+        case 4://wjjTau2o1
             p->setMinMax(0,800);
             break;
-        case 5:
+        case 5://hwwPT_o_hhMass
             p->setMinMax(0,950);
             break;
-        case 6:
+        case 6://wwDM
             p->setMinMax(0,1250);
             break;
-        case 7:
+        case 7://hbbCSVCat
             p->setMinMax(20,1000000);
+            sup = true;
             break;
         }
 
         double xV =0.45;
         double yV =0.68;
 
-
-        p->setCMSLumi(10);
 //        p->addText("All categories",xV+0.0075,yV+0.2075,0.045);
-        p->addText("All categories",.18,0.75,0.045);
+        if(sup){
+            p->setCMSLumiPosition(0,1.05);
+            p->setCMSLumiExtraText("Supplementary");
+            p->addText("All categories",.18,0.83,0.045);
+        } else {
+            p->addText("All categories",.18,0.75,0.045);
+        }
+
         if(signalNames.size()){
             p->setLegendPos(xV,yV,xV+0.457,yV+0.245);
             p->addText("#sigma#bf{#it{#Beta}}(X #rightarrow HH) = 1 pb",xV+0.0075,yV-0.04,0.042);
@@ -177,15 +185,17 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             if(prim) prim->Delete();
         }
 
-
+        if(iV == 1){//temp hack
+            p->botStyle.xAxis->SetTitle(hbbMCS.title.c_str());
+        }
         if(iV == 7){
-            p->xAxis()->SetBinLabel(1,"No loose");
-            p->xAxis()->SetBinLabel(2,"One loose");
-            p->xAxis()->SetBinLabel(3,"Two loose");
-            p->xAxis()->SetBinLabel(4,"One medium, no loose");
-            p->xAxis()->SetBinLabel(5,"One medium, one loose");
-            p->xAxis()->SetBinLabel(6,"Two medium");
-            p->xAxis()->SetTitle(" ");
+            p->botStyle.xAxis->SetBinLabel(1,"0 L");
+            p->botStyle.xAxis->SetBinLabel(2,"1 L");
+            p->botStyle.xAxis->SetBinLabel(3,"2 L");
+            p->botStyle.xAxis->SetBinLabel(4,"1 M");
+            p->botStyle.xAxis->SetBinLabel(5,"1 M, 1 L");
+            p->botStyle.xAxis->SetBinLabel(6,"2 M");
+            p->botStyle.xAxis->SetTitle("b#bar{b} jet subjet b tagging");
             c->GetPad(1)->SetLogy();
 
 
@@ -275,8 +285,9 @@ void plotSRVariables( int step, int reg,std::string tree, std::string name){
     std::string out = "srVarDists/"+hhFilename;
     if(ASTypes::strFind(tree,"radion")) blindCut.cut = "(1.0)";
     if(isData) cut += "&&"+blindCut.cut;
-
-    vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass,hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
+    vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,
+            minHbbMass,maxHbbMass,hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins
+            ,minHHMass,maxHHMass );
     vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass);
     vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
     vars.emplace_back("nAK4Btags" ,"; N. of AK4 jet b tags","nAK4Btags",4,-0.5,3.5);
@@ -293,7 +304,7 @@ void plotSRVariables( int step, int reg,std::string tree, std::string name){
     varUnits.emplace_back("");
     varUnits.emplace_back("GeV");
     varUnits.emplace_back("-1");
-
+    std::cout <<vars[1].varTitle << std::endl;
 
     samps.emplace_back("all","1.0");
     if(!isData){
@@ -315,9 +326,11 @@ void plotSRVariables( int step, int reg,std::string tree, std::string name){
 
         if(reg==REG_SR){
             compilePlots(prefix,out+"_mc_srVarDistributions.root",out+"_data_srVarDistributions.root",
-                    {out+"_m1000_srVarDistributions.root",out+"_m2500_srVarDistributions.root"}, {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"});
+                    {out+"_m1000_srVarDistributions.root",out+"_m2500_srVarDistributions.root"},
+                    {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"});
         } else{
-            compilePlots(prefix,out+"_mc_srVarDistributions.root",out+"_data_srVarDistributions.root",{},{});
+            compilePlots(prefix,out+"_mc_srVarDistributions.root",out+"_data_srVarDistributions.root"
+                    ,{},{});
 
         }
 

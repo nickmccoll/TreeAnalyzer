@@ -58,6 +58,7 @@ TCanvas* make2DTests(std::string plotTitle, int mass, const TH2* dH,TH2* pH, con
 void test2DFits(std::string name, std::string filename, const std::vector<int>& signalMassBins, std::string fitName,bool binInY, const std::vector<std::string>& sels) {
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<double> bins = {30,210,30,115,135,210};
+//    TFile * fit = new TFile("testSignal/HHlnujj_radHH_distributions.root");
 
     for(const auto& s : sels){
         TFile * fo =0;
@@ -72,12 +73,21 @@ void test2DFits(std::string name, std::string filename, const std::vector<int>& 
             return true;
         };
 
+//        auto addH2 = [&](const std::string& name,std::vector<TObject*>& list)->bool{
+//            TH2 * can= 0;
+//            fit->GetObject(name.c_str(),can);
+//            if(can==0) return false;
+//            list.push_back(can);
+//            return true;
+//        };
+
         std::vector<TObject*> mcPads;
         std::vector<TObject*> pdfPads;
         std::vector<TObject*> compPads;
         gROOT->SetBatch(true);
         for(const auto& sB : signalMassBins){
             if(addH(std::string("data_m") +int2Str(sB) +"__"+MOD_MJ+"_"+MOD_MR, mcPads) && addH(std::string("pdf_m") +int2Str(sB) +"__"+MOD_MJ+"_"+MOD_MR, pdfPads)){
+//            if(addH2(std::string("radHH_m")+int2Str(sB) +"_"+s+"_hbbMass_hhMass", mcPads) && addH(std::string("pdf_m") +int2Str(sB) +"__"+MOD_MJ+"_"+MOD_MR, pdfPads)){
                 if(binInY){
                     std::vector<double> cbins = {700,4000};
                     cbins.push_back(700);

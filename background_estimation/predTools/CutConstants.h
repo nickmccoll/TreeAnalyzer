@@ -37,7 +37,7 @@ CutStr abV  ("abV"   , "nAK4Btags!=0");
 CutStr preSel("preSel"  , "passPre==1");
 
 
-CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
+CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{bb} [GeV]");
 CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
 
 unsigned int nHbbMassBins   =90;
