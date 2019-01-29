@@ -86,11 +86,13 @@ public:
     TString         smpName  = "";
 
     std::vector<const Jet*> jets_ht;
+    std::vector<const Jet*> jets_puppiNoLepOverlap;
     std::vector<const Jet*> jets;
     std::vector<const Jet*> jets_HbbV;
     int nMedBTags = 0;
     int nMedBTags_HbbV = 0;
     float ht_puppi     = 0;
+    float ht_puppiNoLepOverlap = 0;
 
     std::vector<const Jet*> jets_chs;
     float                   ht_chs    =0;
@@ -105,6 +107,9 @@ public:
     SMDecayEvent    smDecayEvt;
 
     std::vector<const Lepton*> selectedDileptons;
+    enum DilepChan {ee, mumu, emu};
+    DilepChan dilepChan;
+    std::map<DilepChan,TString> dilepMap = { {ee, "_ee_"}, {mumu,"_mumu_"}, {emu,"_emu_"}};
 
     const FatJet*              hbbCand     =0;
     BTagging::CSVSJ_CAT        hbbCSVCat   = BTagging::CSVSJ_INCL;

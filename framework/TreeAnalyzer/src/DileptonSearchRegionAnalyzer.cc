@@ -52,13 +52,13 @@ DileptonSearchRegionAnalyzer::DileptonSearchRegionAnalyzer(std::string fileName,
     setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
 
     turnOnCorr(CORR_XSEC);
-//    turnOnCorr(CORR_TRIG);
+    turnOnCorr(CORR_TRIG);
     turnOnCorr(CORR_PU  );
     turnOnCorr(CORR_LEP );
     turnOnCorr(CORR_SJBTAG);
     turnOnCorr(CORR_AK4BTAG);
     turnOnCorr(CORR_SDMASS);
-    turnOnCorr(CORR_TOPPT);
+//    turnOnCorr(CORR_TOPPT);
 //    turnOnCorr(CORR_JER);
 }
 //--------------------------------------------------------------------------------------------------
@@ -175,10 +175,14 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
 
 		double pz = reader_event->met.pt() / TMath::Tan((selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).theta());
 		pz = ((pz < 0) == ((selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).pz() < 0)) ? pz : (-1)*pz;
-		ASTypes::CartLorentzVector pnunu(reader_event->met.px(),reader_event->met.py(),pz,sqrt(pow(reader_event->met.px(),2)+pow(reader_event->met.py(),2)+pz*pz));
+		ASTypes::CartLorentzVector pnunu(reader_event->met.px(),reader_event->met.py(),pz,sqrt(pow(reader_event->met.px(),2)+pow(reader_event->met.py(),2)+pz*pz+40*40));
 //        HwwTestStat = hwwSolver.HwwMinimization(selectedDileptons[0]->p4(),selectedDileptons[1]->p4(),reader_event->met.p4(),&hwwInfo);
 
         hww = selectedDileptons[0]->p4() + selectedDileptons[1]->p4() + pnunu;
+
+        if (selectedDileptons[0]->isMuon() && selectedDileptons[1]->isMuon()) dilepChan = mumu;
+        else if (selectedDileptons[0]->isElectron() && selectedDileptons[1]->isElectron()) dilepChan = ee;
+        else dilepChan = emu;
     } else {
         hbbCand    =  0;
         hbbCSVCat  = BTagging::CSVSJ_INCL;
@@ -199,6 +203,12 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
     	jets_ht = PhysicsUtilities::selObjsMom(reader_jet->jets,30);
         ht_puppi = JetKinematics::ht(jets_ht);
 
+        if (selectedDileptons.size() == 2) {
+        	jets_puppiNoLepOverlap = PhysicsUtilities::selObjsMom(reader_jet->jets,30,2.4,[&](const Jet* j){return (PhysicsUtilities::deltaR2(*j,*selectedDileptons[0]) > 0.4*0.4
+        			&& PhysicsUtilities::deltaR2(*j,*selectedDileptons[1]) > 0.4*0.4);} );
+        	ht_puppiNoLepOverlap = JetKinematics::ht(jets_puppiNoLepOverlap);
+        }
+
         jets = PhysicsUtilities::selObjsMom(reader_jet->jets,30,2.4,[](const Jet* j){return j->passTightID();} );
         nMedBTags = PhysicsUtilities::selObjsD(jets,[](const Jet* j){return BTagging::isMediumCSVTagged(*j);} ).size();
         if(hbbCand){
@@ -215,8 +225,9 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
     if(!isRealData()){
         if(isCorrOn(CORR_XSEC))
             weight *= EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi());
-        if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size())   )
-//            weight *= trigSFProc->getLeptonTriggerSF(ht_chs, (selectedLepton && selectedLepton->isMuon()));
+        if(isCorrOn(CORR_TRIG) && (selectedDileptons.size()==2) && (smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size())   ){
+            weight *= trigSFProc->getLeptonTriggerSF(ht_puppi, selectedDileptons[0]->isMuon());
+            }
         if(isCorrOn(CORR_PU) )
             weight *= puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL);
         if(isCorrOn(CORR_LEP)){
