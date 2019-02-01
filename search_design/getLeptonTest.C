@@ -55,29 +55,96 @@ public:
 //        return true;
 //    }
 
+
+
+    const Lepton * getMatchedLepton(const GenParticle& genLepton,const std::vector<const Muon *> muons, const std::vector<const Electron*> electrons){
+       if(genLepton.absPdgId() == ParticleInfo::p_muminus){
+           double nearestDR =10;
+           int idx = PhysicsUtilities::findNearestDRDeref(genLepton,muons,nearestDR,0.2);
+           if(idx < 0) return 0;
+           else return muons[idx];
+       } else {
+           double nearestDR =10;
+           int idx = PhysicsUtilities::findNearestDRDeref(genLepton,electrons,nearestDR,0.2);
+           if(idx < 0) return 0;
+           else return electrons[idx];
+       }
+    }
+
     bool runEvent() override {
         bool passPre = true;
         if(!DefaultSearchRegionAnalyzer::runEvent()) passPre = false;
-        if(diHiggsEvt.type < DiHiggsEvent::MU) return false;
-        if(!passTriggerPreselection) passPre = false;
-//        if(!passEventFilters) passPre = false;
-        if(selectedLeptons.size() != 1) passPre = false;
-        if(!hbbCand)  passPre = false;
-        if(!wjjCand)  passPre = false;
-        if(!passPre) return false;
-        if(wwDM>=125)  passPre = false;
-        if(hWW.pt()/hh.mass() <= 0.3)  passPre = false;
-        if(nMedBTags_HbbV >0) passPre=false;
-        if(wjjCand->tau2otau1() >=0.75) passPre = false;
-        if(hbbCSVCat < 4) passPre = false;
-        if(!passPre) return false;
+        const GenParticle * genLep = 0;
+        std::string typeStr = "";
+        if(diHiggsEvt.type >= DiHiggsEvent::MU ){
+            if(diHiggsEvt.type == DiHiggsEvent::MU) typeStr = "HHMu";
+            else typeStr = "HHEl";
+            genLep = diHiggsEvt.w1_d1;
+        } else {
+            int nWLeps = 0;
+            int nHad = 0;
+            int nBad = 0;
+            bool isE = false;
+            const GenParticle * genLepTemp = 0;
+            for(const auto& t : smDecayEvt.topDecays){
+                if(t.type >= TopDecay::MU){
+                    nWLeps++;
+                    genLepTemp = t.W_decay.dau1;
+                }
+                else if(t.type == TopDecay::HAD) nHad++;
+                else nBad++;
+                if(t.type == TopDecay::E) isE = true;
 
-        double drHbb = PhysicsUtilities::deltaR(*diHiggsEvt.hbb,*hbbCand);
-        double drbb = std::max(PhysicsUtilities::deltaR(*diHiggsEvt.b1,*hbbCand),PhysicsUtilities::deltaR(*diHiggsEvt.b2,*hbbCand));
+            }
+            if(nWLeps == 1 && nHad==1 && nBad==0){
+                typeStr = isE ? "ZpEl": "ZpMu";
+                genLep = genLepTemp;
+            } else {
+                typeStr = "Bad";
+            }
+        }
 
-        plotter.getOrMake1DPre("","drhbb",";drhbb",500,0,5)->Fill(drHbb,weight);
-        plotter.getOrMake1DPre("","drbb",";drbb",500,0,5)->Fill(drbb,weight);
+        if(genLep==0) return false;
+        const GenParticle* nearQ = 0;
+        double minDR2 = 6;
+        for(const auto& g : reader_genpart->genParticles){
+            if(!ParticleInfo::isDoc(g.status())) continue;
+            if(!ParticleInfo::isLastInChain(&g)) continue;
+            const int pdg = std::abs(g.pdgId());
+            if(!(ParticleInfo::p_d <= pdg && pdg < ParticleInfo::p_t)) continue;
+            const float dr2 = PhysicsUtilities::deltaR2(g,*genLep);
+            if(dr2 > minDR2) continue;
+            minDR2 = dr2;
+            nearQ = &g;
+        }
 
+
+        const auto muons = PhysicsUtilities::selObjsMom(reader_muon->muons,20,2.4);
+        const auto electrons = PhysicsUtilities::selObjsMom(reader_electron->electrons,20,2.4);
+        const auto* recoL = getMatchedLepton(*genLep,muons,electrons);
+
+        auto mkPlots = [&](const std::string& pref){
+            plotter.getOrMake1DPre(pref.c_str(),"genLepPT",";generated lepton #it{p}_{T}",30,0,600)->Fill(genLep->pt(),weight);
+            plotter.getOrMake1DPre(pref.c_str(),"genLepQDR",";#DeltaR (lepton,Q)",30,0,5)->Fill(nearQ ? std::sqrt(minDR2) : 6,weight);
+            plotter.getOrMake1DPre(pref.c_str(),"genLepQRelPT",";Q pT / lep PT",30,0,3)->Fill(nearQ ? nearQ->pt()/genLep->pt() : 6,weight);
+
+
+
+            if(nearQ){
+                plotter.getOrMake2DPre(pref.c_str(),"genLepQDR_genLepQRelPT",";#DeltaR (lepton,nearest quark);quark #it{p}_{T} / lepton #it{p}_{T}",20,0,1,5,0,2)->Fill(std::sqrt(minDR2),nearQ->pt()/genLep->pt(),weight);
+
+            }
+            if(nearQ && nearQ->pt()/genLep->pt() > 0.5){
+                plotter.getOrMake1DPre(pref.c_str(),"nearQ_genLepQDR",";#DeltaR (lepton,nearest quark)",20,0,1)->Fill(nearQ ? std::sqrt(minDR2) : 6,weight);
+            }
+
+        };
+        mkPlots(typeStr);
+        if(recoL) mkPlots(typeStr+"_reco");
+
+        if(recoL){
+            plotter.getOrMake1DPre(typeStr.c_str(),"genLepRecoLepDR",";#DeltaR (gen. lepton,reco. lepton)",40,0,.2)->Fill( PhysicsUtilities::deltaR(*recoL,*genLep),weight);
+        }
 
         return true;
     }
