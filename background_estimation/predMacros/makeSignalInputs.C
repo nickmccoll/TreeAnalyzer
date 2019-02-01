@@ -145,7 +145,7 @@ void makeSignalFittingDistributions(const std::string& name, const std::string& 
     gSystem->Exec((std::string("hadd -f ")+ compiledFile + " " + allFiles).c_str());
     gSystem->Exec((std::string("rm ") + allFiles).c_str());
 }
-void makeSignalYields(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,   const double BR= 2*0.5824*(.2137+.002619)){
+void makeSignalYields(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_exclM_distributions.root");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         FunctionParameterPlotter plotter;
@@ -161,8 +161,8 @@ void makeSignalYields(const std::string& name, const std::string& filename,const
             }
             double error = 0;
             double integral = hh_H->IntegralAndError(1,hh_H->GetNbinsX(),error);
-            yieldGraph->SetPoint(n,signalMassBins[iS],integral*BR);
-            yieldGraph->SetPointError(n,0.0,error*BR);
+            yieldGraph->SetPoint(n,signalMassBins[iS],integral*HHtobbVVBF);
+            yieldGraph->SetPointError(n,0.0,error*HHtobbVVBF);
             n++;
         }
         plotter.addFit(yieldGraph,"yield");

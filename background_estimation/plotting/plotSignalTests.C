@@ -189,8 +189,17 @@ void plotEfficiencies(std::string name, std::string filename,std::string fitName
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<TObject*> paramPads;
     double inclusiveN  = 1000*35.9; //1000 fb x lumi
-//    inclusiveN *= 2*0.5824*(.2137+.002619); //BR to bbVV
-    inclusiveN *= 2*0.5824*(.2137+.002619); //BR to bbWW or bbZZ
+    inclusiveN *= CutConstants::HHtobbVVBF_BUGGY; //BR to bbVV
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+//    inclusiveN *= CutConstants::HHtobbVVBF; //BR to bbWW or bbZZ
 //    inclusiveN *= 2*.676*(.216+.108*.3524);//BR of WW to he, hmu or htau where the tau is leptonic...for the AN
     for(auto& l : lepCats){
         if(l == lepCats[LEP_EMU]) continue;

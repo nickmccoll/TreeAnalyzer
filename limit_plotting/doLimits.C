@@ -26,7 +26,7 @@ std::vector<std::string> partLabels = {"Spin-0 X","Spin-2 X"};
 std::vector<std::string> fileLabel = {"radion","blkgrav"};
 std::string lumiText = "35.9 fb^{-1} (13 TeV)";
 const bool prelim = false;
-const float limitScale = 1000;
+const float limitScale = 1000 * HHtobbVVBF_BUGGY/HHtobbVVBF;
 
 //https://github.com/CrossSectionsLHC/WED
 
@@ -322,6 +322,14 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
 
 #endif
 void doLimits(bool blind, int sig = RADION, std::string inName = "higgsCombineTest.AsymptoticLimits.root", std::string outName = "limitPlot"){
-
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
     go(blind,sig,inName,outName +"_"+ fileLabel[sig]);
 }

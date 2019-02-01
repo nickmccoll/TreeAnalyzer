@@ -205,7 +205,12 @@ public:
                     f->GetObject((std::string("pdf_m")+prefs.signals[iSig]+ "__MJ_MR").c_str(),hP);
                     if(hP){
                         double yield = yFunc->Eval(float(std::atoi(prefs.signals[iSig].c_str())));
-                        //have to do this...bounds are different in the signal
+                        std::cout << "WARNING!!!!! You are applying a correction to the BF!!!"<<std::endl;
+                        std::cout << "WARNING!!!!! You are applying a correction to the BF!!!"<<std::endl;
+                        std::cout << "WARNING!!!!! You are applying a correction to the BF!!!"<<std::endl;
+                        std::cout << "WARNING!!!!! You are applying a correction to the BF!!!"<<std::endl;
+                        yield *=CutConstants::HHtobbVVBF / CutConstants::HHtobbVVBF_BUGGY;
+
                         hP->Scale(yield/hP->Integral());
                         //Scale so that we get 0.2pb normalization
                         hP->Scale(signalXS);
@@ -465,6 +470,7 @@ public:
                 for(unsigned int iH = 0; iH < cont.bkg.size(); ++iH){
                     if(cont.bkg[iH]) p->addStackHist(cont.bkg[iH],bkgSels[iH].title.c_str());
                 }
+                if(cont.toyErr)p->clearTotStackError();
                 p->setUnderflow(false);
                 p->setOverflow(false);
                 double binWidth = 10;

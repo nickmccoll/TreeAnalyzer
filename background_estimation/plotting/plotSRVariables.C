@@ -83,8 +83,21 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             };
             if(iB == 1) setPt(iB-1,x-tot->GetBinWidth(iB)/2.);
             setPt(iB,x);
+            if(iV==1){
+                const auto& hs =p->getStackHists();
+                std::cout << iB <<" "<< x <<" "<< y << " "<< err;
+                        for(const auto& h : hs){
+                            std::cout << "(" <<((const TH1*)h.obj)->GetBinContent(iB)<<","<<((const TH1*)h.obj)->GetBinError(iB)<<") ";
+                        }
+
+
+                        std::cout <<std::endl;
+
+            }
             if(iB == tot->GetNbinsX() ) setPt(iB+1,x+tot->GetBinWidth(iB)/2.);
         }
+
+        p->clearTotStackError();
 
         int fillColor = 2;
         errBand->SetFillColor(fillColor);
@@ -101,7 +114,7 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             f->GetObject((std::string("all_loose_")+vars[iV].varName+"_"+vars[iV].varName).c_str(),hm);
             if(hm == 0) continue;
             //Scale so that we get 1pb normalization
-            hm->Scale(2*0.5824*(.2137+.002619));
+            hm->Scale(CutConstants::HHtobbVVBF);
             if(rebinFactor) hm->Rebin(rebinFactor);
             hm->SetName((signalNames[iS]+vars[iV].varName).c_str());
             p->addHistLine(hm,signalNames[iS],StyleInfo::getLineColor(iS+1));
