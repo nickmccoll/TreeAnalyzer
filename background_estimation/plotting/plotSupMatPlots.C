@@ -137,6 +137,42 @@ void doSig(const int mx, const std::string& mxTitle, const std::string& outDir) 
 
 
 
+void doExtraPlots(){
+    TFile * f = new TFile ("out_radion.root","read");
+    std::vector<std::string> sigs  = {"m1000","m2000","m3000"};
+    std::vector<std::string> sigTs = {"1 TeV X_{spin-0}","2 TeV X_{spin-0}","3 TeV X_{spin-0}"};
+    std::vector<std::string> vars  = {"deltaRlW","deltaPhiHH"};
+    std::vector<float> maxys  = {0.065,0.13};
+
+    for(unsigned int iV = 0; iV < vars.size(); ++iV){
+        Plotter * p = new Plotter();
+        for(unsigned int iS = 0; iS < sigs.size(); ++iS){
+            TH1 * h = 0;
+            f->GetObject((sigs[iS]+"_"+vars[iV]).c_str(),h);
+            if(h==0) continue;
+            p->addHistLine(h,sigTs[iS].c_str());
+
+        }
+        p->normalize();
+        p->setCMSLumi(10);
+        p->setCMSLumiExtraText("Simulation Supplementary");
+        p->setCMSLumiLumiText("13 TeV");
+        p->setYTitle("Normalized events / 0.01");
+        double xV = 0.6;
+        double yV = 0.75;
+        p->setLegendPos(xV,yV,xV+0.3,yV+0.15);
+        p->setMinMax(0,maxys[iV]);
+        auto * c = p->draw(false,vars[iV]+"_genDist.pdf");
+        p->xAxis()->SetTitleOffset(1.05);
+        p->yAxis()->SetTitleOffset(1.54);
+        c->Print((vars[iV]+"_genDist.pdf").c_str());
+
+    }
+}
+
+
+
+
 void plotSupMatPlots(int step = 0, std::string limitBaseName = ""){
 //    REGION reg = REGION(inreg);
 //
@@ -168,6 +204,9 @@ void plotSupMatPlots(int step = 0, std::string limitBaseName = ""){
     }
     if(step==1) {
         doSig(1600,"1.6 TeV X_{spin-0}","supMatPlots");
+    }
+    if(step==2){
+        doExtraPlots();
     }
 }
 
