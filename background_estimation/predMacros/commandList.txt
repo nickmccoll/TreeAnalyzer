@@ -94,7 +94,7 @@ cd crab_grid-test/results/
 for a in `ls -1 *.tar`; do tar -xvf $a; done
 cd ../.. 
 hadd higgsCombine.Test.HybridNew.m3500.123456.root crab_grid-test/results/higgsCombine*root
-combine -d combinedCard.root -m 2500  -M HybridNew --LHCmode LHC-limits -v 2 --readHybridResults --grid=higgsCombine.Test.HybridNew.mH2500.123456.root  --expectedFromGrid=0.8399999
+combine -d combinedCard.root -m 2500  -M HybridNew --LHCmode LHC-limits -v 2 --readHybridResults --grid=higgsCombine.Test.HybridNew.mH2500.123456.root  --expectedFromGrid=0.5
 
 #impacts
 text2workspace.py combinedCard.txt -m 1000 -o forImpact.root
