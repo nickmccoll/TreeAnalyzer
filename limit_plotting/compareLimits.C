@@ -17,15 +17,15 @@ using namespace CutConstants;
 
 const float minX = 700;
 const float maxX = 3600;
-const float minY = 0.5;
-const float maxY = 10000;
+const float minY = 5;
+const float maxY = 500;
 const bool doLog = true;
     std::string titleX = "#it{m}_{X} [GeV]";
     std::string titleY = "#sigma#bf{#it{#Beta}}(X #rightarrow HH) [fb]";
 std::vector<std::string> partLabels = {"Spin-0 X","Spin-2 X"};
 std::vector<std::string> fileLabel = {"radion","blkgrav"};
 std::string lumiText = "35.9 fb^{-1} (13 TeV)";
-const bool prelim = false;
+const bool prelim = true;
 const float limitScale = 1000 * HHtobbVVBF_BUGGY/HHtobbVVBF;
 
 //expected/observed
@@ -85,9 +85,11 @@ std::pair<TGraph*,TGraph*> getValues(const std::string& filename, bool blind){
     auto band95= new TGraphAsymmErrors();
     auto bandObs= new TGraph();
     auto bandExp= new TGraph();
-
+    std::cout << filename<<std::endl;
     for(unsigned int iM = 0; iM < exp.size(); ++iM){
+
         float mh = exp[iM].first;
+        std::cout << mh<<" "<< exp[iM].second<<std::endl;
         bandExp->SetPoint(iM,mh,exp[iM].second);
         band68->SetPoint(iM,mh,exp[iM].second);
         band95->SetPoint(iM,mh,exp[iM].second);
@@ -193,5 +195,5 @@ void compareLimits(bool blind, int sig = RADION, std::string inName = "higgsComb
     std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
     std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
     std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    go(blind,sig,{ {"silepton_rad/higgsCombineTest.AsymptoticLimits.root","1l"},{"dilepton_rad/higgsCombineTest.AsymptoticLimits.root","2l"} },outName +"_"+ fileLabel[sig]);
+    go(blind,sig,{ {"silepton_rad/higgsCombineTest.AsymptoticLimits.root","1l"},{"dilepton_rad/higgsCombineTest.AsymptoticLimits.root","2l"},{"combined_rad/higgsCombineTest.AsymptoticLimits.root","1l+2l"} },outName +"_"+ fileLabel[sig]);
 }
