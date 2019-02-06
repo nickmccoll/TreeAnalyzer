@@ -113,6 +113,15 @@ PostFitter::PostFitter(const std::string& inputFileName, double rvalue, double m
     isExtended = mc->GetPdf()->canBeExtended();
     MH = w->var("MH");
     dobs = w->data("data_obs");
+    //Remove zeros....this will fix a warning
+    //but has no actual effect
+    if(dobs->isNonPoissonWeighted()){
+        auto newData = copyDataWOZeros((RooDataSet*)dobs);
+        dobs =newData;
+    }
+
+    
+
     // Generate with signal model if r or other physics model parameters are defined
     //signal settings...may want to change
     if(rvalue >= 0){
@@ -315,13 +324,18 @@ void PostFitter::doToys(int nToys){
 
 RooDataSet * PostFitter::copyDataWOZeros(RooDataSet* indata){
     RooArgSet vars(*observables), varsPlusWeight(*observables);
-    if (weightVar_) varsPlusWeight.add(*weightVar_);
+
+    if (indata->isWeighted()) {
+        if (weightVar_ == 0) weightVar_ = new RooRealVar("_weight_","",1.0);
+        varsPlusWeight.add(*weightVar_);
+    }
+
     auto ret = new RooDataSet(TString::Format("%sDataCopy", indata->GetName()), "", varsPlusWeight, (weightVar_ ? weightVar_->GetName() : 0));
     RooAbsArg::setDirtyInhibit(true); // don't propagate dirty flags while filling histograms
     for (unsigned int i = 0, n = indata->numEntries(); i < n; ++i) {
         vars = *indata->get(i);
         if(indata->weight() ==0) continue;
-        ret->add(vars, indata->weight());
+        ret->add(vars,indata->weight());
     }
     RooAbsArg::setDirtyInhibit(false); // restore proper propagation of dirty flags
     return ret;
