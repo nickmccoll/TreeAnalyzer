@@ -36,12 +36,12 @@ public:
     void plotSpectra(TString sn, const FatJet hbbjet, const Lepton* lep1, const Lepton* lep2) {
     	const MomentumF dilepmom = lep1->p4() + lep2->p4();
     	double dR_bbll = PhysicsUtilities::deltaR(hbbjet,dilepmom);
-    	double dphi_bbll = PhysicsUtilities::deltaPhi(hbbjet,dilepmom);
+    	double dphi_bbll = PhysicsUtilities::absDeltaPhi(hbbjet,dilepmom);
 
     	plotter.getOrMake1DPre(sn,"evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
     	plotter.getOrMake1DPre(sn,"ptbb",";p_{T}",400,0,4000)->Fill(hbbjet.pt(),weight);
     	plotter.getOrMake1DPre(sn,"dR_bbll",";#DeltaR_{bb,ll}",100,0,7)->Fill(dR_bbll,weight);
-    	plotter.getOrMake1DPre(sn,"dphi_bbll",";#Delta#Phi_{bb,ll}",100,0,3.14)->Fill(abs(dphi_bbll),weight);
+    	plotter.getOrMake1DPre(sn,"dphi_bbll",";|#Delta#Phi_{bb,ll}|",100,0,3.14)->Fill(dphi_bbll,weight);
     }
 
     const FatJet* findHbbCand(const Lepton* lep1, const Lepton* lep2, double minDPhi, double minDR, bool takeFurthestFJ) {
@@ -126,7 +126,7 @@ public:
     	double d0 = 0.05;
     	double sip = 4.0;
 
-    	bool passIP = lep->dz() < dz && lep->d0() < d0 && lep->sip3D() < sip;
+    	bool passIP = fabs(lep->dz()) < dz && fabs(lep->d0()) < d0 && lep->sip3D() < sip;
     	if (!passIP) return false;
 
     	bool passID = false;

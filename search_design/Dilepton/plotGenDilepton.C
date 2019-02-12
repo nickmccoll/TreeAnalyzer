@@ -49,7 +49,7 @@ public:
         plotter.getOrMake1DPre(sn, "nu_pz", ";P_{z} (GeV)",100,0,1000)->Fill(nu2->pz(), weight);
         plotter.getOrMake1DPre(sn, "nu_deltapz", ";#DeltaP_{z} (GeV)",100,0,100)->Fill(abs(nu1->pz()-nu2->pz()), weight);
         plotter.getOrMake1DPre(sn, "nu_totalpz", ";Total P_{z} (GeV)",100,0,1000)->Fill(nu1->pz()+nu2->pz(), weight);
-        plotter.getOrMake1DPre(sn, "M_nunu", ";M_{#nu#nu} (GeV)",100,0,1000)->Fill((nu1->p4()+nu2->p4()).mass(), weight);
+        plotter.getOrMake1DPre(sn, "M_nunu", ";M_{#nu#nu} (GeV)",100,0,400)->Fill((nu1->p4()+nu2->p4()).mass(), weight);
 
         // W bosons
         double mw1 = diHiggsEvt.w1 ? diHiggsEvt.w1->mass() : (lep1->p4() + nu1->p4()).mass();
@@ -64,13 +64,11 @@ public:
         plotter.getOrMake1DPre(sn, "delta_Misspx", ";#DeltaP_{x} (GeV)",100,0,200)->Fill(abs(nu1->px()+nu2->px()-reader_event->met.px()), weight);
         plotter.getOrMake1DPre(sn, "delta_Misspy", ";#DeltaP_{y} (GeV)",100,0,200)->Fill(abs(nu1->py()+nu2->py()-reader_event->met.py()), weight);
 
-    }
+        MomentumF nunuMOM = nu1->p4() + nu2->p4();
+        MomentumF llMOM = lep1->p4() + lep2->p4();
+        plotter.getOrMake1DPre(sn, "dTheta_ll_nunu", ";",100,-1,1)->Fill(nunuMOM.theta()-llMOM.theta(), weight);
 
-	TString getDilepChan(const Lepton* lep1, const Lepton* lep2) {
-		if (lep1->isMuon() && lep2->isMuon()) return "_mumu_";
-		else if (lep1->isElectron() && lep2->isElectron()) return "_ee_";
-		else return "_emu_";
-	}
+    }
 
     bool runEvent() override {
         if(!DileptonSearchRegionAnalyzer::runEvent()) return false;
@@ -85,12 +83,18 @@ public:
         // kinematic cuts
         if (PhysicsUtilities::deltaR2(*selectedDileptons[0],*selectedDileptons[1]) > 1.6*1.6) return false;
         double mll = (selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).mass();
+
+        if (reader_event->met.pt() < 40) return false;
         if (mll > 75 || mll < 12) return false;
+        if (fabs(PhysicsUtilities::deltaPhi(reader_event->met.p4(),
+        		selectedDileptons[0]->p4()+selectedDileptons[1]->p4())) > TMath::PiOver2() ) return false;
 
         // assuming the input dataset is a skim using the Dilepton + Hbb selection
-        TString sn = smpName+getDilepChan(selectedDileptons[0],selectedDileptons[1]);
+        TString sn = smpName+dilepMap[dilepChan];
 
         plotGen(sn,diHiggsEvt.w1_d1,diHiggsEvt.w2_d1,diHiggsEvt.w1_d2,diHiggsEvt.w2_d2);
+        plotGen(smpName,diHiggsEvt.w1_d1,diHiggsEvt.w2_d1,diHiggsEvt.w1_d2,diHiggsEvt.w2_d2);
+
         return true;
     }
 

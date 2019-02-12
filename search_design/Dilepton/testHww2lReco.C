@@ -315,7 +315,7 @@ public:
 
 	void testSolution2(TString sn, const Lepton* lep1, const Lepton* lep2) {
 
-		// assume the dineutrinos have the same theta as the dileptons and retain the pt from MET
+		// assume the dineutrinos have the same theta as the dileptons and retain the pt from MET (with mvv = 0)
 		double pz = reader_event->met.pt() / TMath::Tan((lep1->p4()+lep2->p4()).theta());
 		pz = (pz < 0 == (lep1->p4()+lep2->p4()).pz() < 0) ? pz : (-1)*pz;
 		ASTypes::CartLorentzVector pnunu(reader_event->met.px(),reader_event->met.py(),pz,sqrt(pow(reader_event->met.px(),2)+pow(reader_event->met.py(),2)+pz*pz));
