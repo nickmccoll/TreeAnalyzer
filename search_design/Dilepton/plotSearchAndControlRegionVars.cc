@@ -14,8 +14,8 @@ using namespace std;
 
 void plotSearchAndControlRegionVars() {
     vector<TString> chans = {"","ee_","mumu_","emu_"};
-    vector<TString> vars = {/*"mll","dPhi_metLL","dr_ll","ht","met","Mbb",*/"ht","minDR_lepHbb"};
-    vector<TString> regions = {/*"SR_","TopCR_",*/"QgCR_"};
+    vector<TString> vars = {"Mww","Mbb","Mhh"};
+    vector<TString> regions = {"SR_","TopCR_","QgCR_"};
     vector<TString> btags = {"","btagLMT_","btagL_","btagM_","btagT_"};
 
     TFile *fdy = new TFile("/Users/brentstone/Dropbox/Physics/HHbbWW/SR_CR/dyll.root");
@@ -27,9 +27,9 @@ void plotSearchAndControlRegionVars() {
     for (const TString& reg : regions) {
     	for (const TString& var : vars) {
     		vector<TObject*> canvases;
+    		gROOT->SetBatch(true);
 
     		for (TString& ch : chans) {
-//    			gROOT->SetBatch(true);
     			for (const auto& btag : btags) {
 
     				if (reg=="QgCR_" && btag.Contains("b")) continue;
@@ -37,8 +37,7 @@ void plotSearchAndControlRegionVars() {
 
     				TString suff;
     				//if (var=="mll" || var=="Mbb" || var=="ht" || var=="met" || var=="dr_ll") suff = ch+reg+btag+"fullSel_"+var;
-    				if (var=="minDR_lepHbb") suff = var;
-    				else suff = ch+reg+btag+"fullSel_"+var;
+    				suff = ch+reg+btag+"fullSel_"+var;
 
     				cout<<suff<<endl;
     				Plotter *p = new Plotter();
@@ -72,17 +71,19 @@ void plotSearchAndControlRegionVars() {
 
     				if (reg !="SR_") {
     					TH1F* data = (TH1F*)fdata->Get("data_"+suff);
-    					p->addHist(data,"data");
+    					if (data) p->addHist(data,"data");
+    					else cout<<endl<<"NO DATA IN "<<suff<<endl<<endl;
     				}
 
-    				p->addText(suff,0.2,0.8);
+    				p->addText(ch+btag,0.2,0.8);
+    				p->setBotMinMax(0,2);
+    				if (var=="Mww") p->rebin(2);
     				if (!reg.Contains("Qg") && ((ch=="" && btag.Contains("LMT")) || (ch=="" && !btag.Contains("LMT")) || (ch.Contains("_") && btag.Contains("LMT"))) ) {
     					canvases.push_back(p->draw(false,suff));
     				} else if (reg.Contains("Qg")) canvases.push_back(p->drawSplitRatio(-1,suff,false,false,suff));
     			}
-//    			gROOT->SetBatch(false);
     		}
-    		cout<<"gerald"<<endl;
+    		gROOT->SetBatch(false);
     		Drawing::drawAll(canvases,reg+var,"");
     	}
     }

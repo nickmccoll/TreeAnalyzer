@@ -41,7 +41,7 @@ public:
             reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");          load(reader_genpart   );
         }
     }
-    void makeTest(TString sn, const Lepton* lep1, const Lepton* lep2) {
+/*    void makeTest(TString sn, const Lepton* lep1, const Lepton* lep2) {
 
     	auto testPlots = [&](TString sn, double ht, double dR, double dPhi, double mll, int numB) {
     		plotter.getOrMake1DPre(sn,"dr_ll",";#DeltaR_{l,l}",50,0,4)->Fill(dR,weight);
@@ -68,15 +68,16 @@ public:
     	if (passDphi && passBveto)           testPlots(sn+"_passDphi_B",ht_puppi,dR_ll,dPhi_metLL,mll,nMedBTags_HbbV);
     	if (passDR && passDphi && passBveto) testPlots(sn+"_passDR_Dphi_B",ht_puppi,dR_ll,dPhi_metLL,mll,nMedBTags_HbbV);
     }
+*/
     void makePlots(TString sn, const Lepton* lep1, const Lepton* lep2) {
     	// N-1 plots for discriminating variables
     	double mll = (lep1->p4()+lep2->p4()).mass();
     	double dPhi_metLL = PhysicsUtilities::deltaPhi(lep1->p4()+lep2->p4(),reader_event->met);
     	double dR2_ll = PhysicsUtilities::deltaR2(*lep1,*lep2);
 
-    	bool passMLL  = mll > 12 && mll < 75;
-    	bool passDphi = fabs(dPhi_metLL) < TMath::PiOver2();
-    	bool passDR   = dR2_ll < 1.6*1.6;
+    	bool passMLL  = (mll > 12 && mll < 75);
+    	bool passDphi = (fabs(dPhi_metLL) < TMath::PiOver2());
+    	bool passDR   = (dR2_ll < 1.6*1.6);
 
     	if (passMLL && passDphi) plotter.getOrMake1DPre(sn,"dr_ll",";#DeltaR_{l,l}",50,0,4)->Fill(sqrt(dR2_ll),weight);
     	if (passMLL && passDR)   plotter.getOrMake1DPre(sn,"dPhi_metLL",";#Delta#phi_{ll,met}",50,-3.14,3.14)->Fill(dPhi_metLL,weight);
@@ -89,14 +90,23 @@ public:
     		plotter.getOrMake1DPre(sn+"_fullSel","Mbb",";M_{bb}",20,30,210)->Fill(hbbMass,weight);
     		plotter.getOrMake1DPre(sn+"_fullSel","Mhh",";M_{HH}",30,0,4500)->Fill(hh.mass(),weight);
     		plotter.getOrMake1DPre(sn+"_fullSel","met",";E_{T}^{miss}",50,0,3000)->Fill(reader_event->met.pt(),weight);
-    		plotter.getOrMake1DPre(sn+"_fullSel","pt2",";p_{T}",50,0,3000)->Fill(lep2->pt(),weight);
+    		plotter.getOrMake1DPre(sn+"_fullSel","pt2",";p_{T}",50,0,1000)->Fill(lep2->pt(),weight);
     		plotter.getOrMake1DPre(sn+"_fullSel","maxLepEta",";|#eta|",20,0,3)->Fill(lep1->absEta() > lep2->absEta() ? lep1->absEta() : lep2->absEta(),weight);
+    		plotter.getOrMake1DPre(sn+"_fullSel","pt1",";p_{T}",50,0,1000)->Fill(lep1->pt(),weight);
+    		plotter.getOrMake1DPre(sn+"_fullSel","ptll",";p_{T}",50,0,2000)->Fill((lep1->p4()+lep2->p4()).pt(),weight);
+    		plotter.getOrMake1DPre(sn+"_fullSel","ptbb",";p_{T}",50,0,3000)->Fill(hbbCand->pt(),weight);
+        	plotter.getOrMake1DPre(sn+"_fullSel","Mww",";M_{WW}",100,0,400)->Fill(hww.mass(),weight);
+
+
+            double DR1 = PhysicsUtilities::deltaR(*hbbCand,*lep1);
+            double DR2 = PhysicsUtilities::deltaR(*hbbCand,*lep2);
+            plotter.getOrMake1DPre(sn+"_fullSel","minDR_lepHbb","",200,0,4)->Fill(DR1 > DR2 ? DR2 : DR1,weight);
     	}
     }
     void plotTopCR(TString sn, const Lepton* lep1, const Lepton* lep2) {
     	makePlots(sn+"_TopCR_btagLMT",lep1,lep2);
 
-    	TString chan = getDilepChan(lep1,lep2);
+    	TString chan = dilepMap[dilepChan];
     	makePlots(sn+chan+"TopCR_btagLMT",lep1,lep2);
 
     	if (hbbCSVCat == BTagging::CSVSJ_MF) {
@@ -113,7 +123,7 @@ public:
     void plotSR(TString sn, const Lepton* lep1, const Lepton* lep2) {
     	makePlots(sn+"_SR_btagLMT",lep1,lep2);
 
-    	TString chan = getDilepChan(lep1,lep2);
+    	TString chan = dilepMap[dilepChan];
     	makePlots(sn+chan+"SR_btagLMT",lep1,lep2);
 
     	if (hbbCSVCat == BTagging::CSVSJ_MF) {
@@ -130,22 +140,22 @@ public:
     void plotQgCR(TString sn, const Lepton* lep1, const Lepton* lep2) {
     	makePlots(sn+"_QgCR",lep1,lep2);
 
-    	TString chan = getDilepChan(lep1,lep2);
+    	TString chan = dilepMap[dilepChan];
     	makePlots(sn+chan+"QgCR",lep1,lep2);
     }
 
-    void testQgCR(TString sn, const Lepton* lep1, const Lepton* lep2) {
+/*    void testQgCR(TString sn, const Lepton* lep1, const Lepton* lep2) {
     	makeTest(sn+"_QgCR",lep1,lep2);
 
     	TString chan = getDilepChan(lep1,lep2);
     	makeTest(sn+chan+"QgCR",lep1,lep2);
     }
-
-	TString getDilepChan(const Lepton* lep1, const Lepton* lep2) {
-		if (lep1->isMuon() && lep2->isMuon()) return "_mumu_";
-		else if (lep1->isElectron() && lep2->isElectron()) return "_ee_";
-		else return "_emu_";
-	}
+*/
+    bool passMMeID(const Lepton* lep1, const Lepton* lep2) {
+    	bool pass = false;
+    	if (((const Electron*)lep1)->passMedID_noISO() && ((const Electron*)lep2)->passMedID_noISO()) pass = true;
+    	return pass;
+    }
 
     bool runEvent() override {
 //    	cout<<"jansen"<<endl;
@@ -164,15 +174,14 @@ public:
         // cuts before separating into SR and CR
         if(!hbbCand) return false;
         if(selectedDileptons.size() != 2) return false;
-        if (getDilepChan(selectedDileptons[0],selectedDileptons[1]).Contains("_ee_")) {
-        	if (!(((const Electron*)selectedDileptons[0])->passMedID_noISO() && ((const Electron*)selectedDileptons[1])->passMedID_noISO())) return false;
-        }
+        if (dilepChan == ee && !passMMeID(selectedDileptons[0],selectedDileptons[1])) return false;
+
         if (hbbMass < 30 || hbbMass > 210) return false;
         if (ht_puppi < 400) return false;
         if (hh.mass() < 700) return false;
 
         // trying out straight MET cut
-//        if(reader_event->met.pt() < 50) return false;
+        if(reader_event->met.pt() < 40) return false;
 //    	cout<<"jansen2"<<endl;
 
         // separate into SR and CR
@@ -184,9 +193,6 @@ public:
 //        if (hbbCSVCat == BTagging::CSVSJ_FF) testQgCR (sn, selectedDileptons[0],selectedDileptons[1]);
 //    	cout<<"jansen3"<<endl;
 
-        double DR1 = PhysicsUtilities::deltaR(*hbbCand,*selectedDileptons[0]);
-        double DR2 = PhysicsUtilities::deltaR(*hbbCand,*selectedDileptons[1]);
-        plotter.getOrMake1DPre(sn,"minDR_lepHbb","",200,0,4)->Fill(DR1 > DR2 ? DR2 : DR1,weight);
         return true;
     }
 

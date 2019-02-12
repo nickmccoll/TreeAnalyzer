@@ -46,12 +46,19 @@ public:
     	plotter.getOrMake1DPre(smpName+sn+plotID,"ht",";H_{T}",100,0,4000)->Fill(ht_puppi,weight);
     	plotter.getOrMake1DPre(smpName+sn+plotID,"Mbb",";M_{bb}",40,30,210)->Fill(hbbMass,weight);
     	plotter.getOrMake1DPre(smpName+sn+plotID,"Mhh",";M_{HH}",100,0,4500)->Fill(hh.mass(),weight);
+    	plotter.getOrMake1DPre(smpName+sn+plotID,"Mww",";M_{WW}",100,0,400)->Fill(hww.mass(),weight);
+
+    	plotter.getOrMake1DPre(smpName+sn+plotID,"hbbCSVCat",";hbbCSVCat",7,-0.5,6.5)->Fill(hbbCSVCat,weight);
 
     	if (!isSignal()) {
         	plotter.getOrMake1DPre("bkg"+sn+plotID,"ht",";H_{T}",100,0,4000)->Fill(ht_puppi,weight);
         	plotter.getOrMake1DPre("bkg"+sn+plotID,"Mbb",";M_{bb}",40,30,210)->Fill(hbbMass,weight);
         	plotter.getOrMake1DPre("bkg"+sn+plotID,"Mhh",";M_{HH}",100,0,4500)->Fill(hh.mass(),weight);
+        	plotter.getOrMake1DPre("bkg"+sn+plotID,"Mww",";M_{WW}",100,0,400)->Fill(hww.mass(),weight);
+
+        	plotter.getOrMake1DPre("bkg"+sn+plotID,"hbbCSVCat",";hbbCSVCat",7,-0.5,6.5)->Fill(hbbCSVCat,weight);
     	}
+
     }
     void plotByMassWindows(TString sn) {
     	plotVars(sn,"_incl");
@@ -92,7 +99,7 @@ public:
     void plotSR(const Lepton* lep1, const Lepton* lep2) {
     	makePlots("_SR_btagLMT",lep1,lep2);
 
-    	TString chan = getDilepChan(lep1,lep2);
+    	TString chan = dilepMap[dilepChan];
     	makePlots(chan+"SR_btagLMT",lep1,lep2);
 
     	if (hbbCSVCat == BTagging::CSVSJ_MF) {
@@ -107,11 +114,11 @@ public:
     	}
     }
 
-	TString getDilepChan(const Lepton* lep1, const Lepton* lep2) {
-		if (lep1->isMuon() && lep2->isMuon()) return "_mumu_";
-		else if (lep1->isElectron() && lep2->isElectron()) return "_ee_";
-		else return "_emu_";
-	}
+    bool passMMeID(const Lepton* lep1, const Lepton* lep2) {
+    	bool pass = false;
+    	if (((const Electron*)lep1)->passMedID_noISO() && ((const Electron*)lep2)->passMedID_noISO()) pass = true;
+    	return pass;
+    }
 
     bool runEvent() override {
         if(!DileptonSearchRegionAnalyzer::runEvent()) return false;
@@ -122,12 +129,16 @@ public:
         // cuts before separating into SR and CR
         if(!hbbCand) return false;
         if(selectedDileptons.size() != 2) return false;
-        if (getDilepChan(selectedDileptons[0],selectedDileptons[1]).Contains("_ee_")) {
-        	if (!(((const Electron*)selectedDileptons[0])->passMedID_noISO() && ((const Electron*)selectedDileptons[1])->passMedID_noISO())) return false;
-        }
+
+        if(isSignal()) plotter.getOrMake1DPre(smpName,"hbbCSVCat",";hbbCSVCat",7,-0.5,6.5)->Fill(hbbCSVCat,weight);
+        else plotter.getOrMake1DPre("bkg","hbbCSVCat",";hbbCSVCat",7,-0.5,6.5)->Fill(hbbCSVCat,weight);
+
+        if (dilepChan == ee && !passMMeID(selectedDileptons[0],selectedDileptons[1])) return false;
+
         if (hbbMass < 30 || hbbMass > 210) return false;
         if (ht_puppi < 400) return false;
         if (hh.mass() < 700) return false;
+        if (reader_event->met.pt() < 40) return false;
 
         if (!isRealData()) plotSR(selectedDileptons[0],selectedDileptons[1]);
 
