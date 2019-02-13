@@ -13,6 +13,7 @@ void EventReader::setup(TreeReaderWrapper * wrapper){
     wrapper->setBranch(branchName,"run"               , run              , false);
     wrapper->setBranch(branchName,"lumi"              , lumi             , false);
     wrapper->setBranch(branchName,"event"             , event            , false);
+    wrapper->setBranch(branchName,"sampParam"         , sampParam        , false);
     wrapper->setBranch(branchName,"goodVtx"           , goodVtx          , false);
     wrapper->setBranch(branchName,"npv"               , npv              , false);
     wrapper->setBranch(branchName,"rho"               , rho              , false);
@@ -30,6 +31,7 @@ void EventReader::setup(TreeReaderWrapper * wrapper){
         wrapper->setBranch(branchName,"nTruePUInts"       ,nTruePUInts   , false);
         wrapper->setBranch(branchName,"genWeight"         ,genWeight     , false);
         wrapper->setBranch(branchName,"process"           ,process       , false);
+        wrapper->setBranch(branchName,"signalType"        ,signalType    , false);
         wrapper->setBranch(branchName,"prefweight"        ,prefweight    ,false);
         wrapper->setBranch(branchName,"prefweightup"      ,prefweightup  ,false);
         wrapper->setBranch(branchName,"prefweightdown"    ,prefweightdown,false);

@@ -42,11 +42,12 @@ enum Dataset   {
 };
 const std::vector<std::string> DatasetNames = { "NONE","BTagCSV","BTagMu","Charmonium","DoubleEG","DoubleMuon","HTMHT","JetHT","MET","MuOnia","MuonEG","SingleElectron","SingleMuon","SinglePhoton","Tau","EGamma"};
 enum MCProcess {NOPROCESS, SIGNAL,TTBAR,WJETS,ZJETS,SINGLET,DIBOSON,TTX,QCD,HX};
-const std::vector<std::string> MCProcessNames = { "NONE","signal","ttbar","wjets","zjets","singlet","diboson","ttX","qcd","hx"};
+const std::vector<std::string> MCProcessNames = { "NONE","signal","ttbar","wjets","zjets","singlet","diboson","ttx","qcd","hx"};
 
+enum SignalType  {NOSIGNAL,RADION,BLKGRAV};
+const std::vector<std::string> SignalTypeNames = {"NONE", "radion","blkgrav"};
 
-
-enum JetIDStatus { JETID_PU_L,JETID_PU_M,JETID_PU_T, JETID_LOOSE, JETID_TIGHT};
+enum JetIDStatus { JETID_PU_L,JETID_PU_M,JETID_PU_T, JETID_LOOSE, JETID_TIGHT, JETID_TIGHTNOLEP};
 
 enum ElectronID {
      ELID_cut_loose

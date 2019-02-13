@@ -26,6 +26,7 @@ public:
     rd_size     run           ;
     rd_size     lumi          ;
     rd_size64   event         ;
+    rd_int      sampParam     ;
     rd_size8    goodVtx       ;
     rd_size16   npv           ;
     rd_float    rho           ;
@@ -44,6 +45,7 @@ public:
     rd_size8    dataEra       ;
     rd_size8    dataset       ;
     rd_size8    dataRun       ;
+    rd_size8    signalType    ;
     rd_float    prefweight    ;
     rd_float    prefweightup  ;
     rd_float    prefweightdown;

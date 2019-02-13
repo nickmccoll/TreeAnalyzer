@@ -29,6 +29,8 @@ public:
         if(!isRealData()){
             plotter.getOrMake1D("nTruePUInts",";nTruePUInts",200,-0.5,99.5)->Fill(*reader_event->nTruePUInts,eventWeight);
             plotter.getOrMake2D("process_weight",";weight;process",1000,0,500,20,-0.5,19.5)->Fill(eventWeight,*reader_event->process);
+            plotter.getOrMake1D("signalType",";signalType",11,-0.5,10.5)->Fill(*reader_event->signalType,eventWeight);
+            plotter.getOrMake1D("sampParam",";sampParam",3011,-10.5,3000.5)->Fill(*reader_event->sampParam,eventWeight);
         } else {
             plotter.getOrMake2D("dataset_dataRun",";dataset;dataRun",20,-0.5,19.5,20,-0.5,19.5)->Fill(*reader_event->dataset,*reader_event->dataRun);
         }
