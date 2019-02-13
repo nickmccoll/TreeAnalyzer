@@ -51,6 +51,7 @@ public:
             if(j.passPUID()) plotter.getOrMake1D("passPU_pt"      ,";p_{T}", 20, 0,200)->Fill(j.pt(),weight);
             if(j.passLooseID()) plotter.getOrMake1D("passLoose_pt",";p_{T}", 20, 0,200)->Fill(j.pt(),weight);
             if(j.passTightID()) plotter.getOrMake1D("passTight_pt",";p_{T}", 20, 0,200)->Fill(j.pt(),weight);
+            if(j.passTightNoLepID()) plotter.getOrMake1D("passTightNoLep_pt",";p_{T}", 20, 0,200)->Fill(j.pt(),weight);
             if(j.pt() > 30) n20++;
 
             plotter.getOrMake2D(TString::Format("%s_csv_hadronflv",jetstr),";csv ;hadron flv",50,0,1,10,-0.5,9.5)->
