@@ -53,6 +53,18 @@ public:
 	ra_float  e1x5OverE5x5         ;
 	ra_float  isolEmHadDepth1      ;
 
+     std::vector<bool>           * ecalDrivenSeed   = new std::vector<bool> ;
+     std::vector<float>          * hcalOverEcal   = new std::vector<float> ;
+     std::vector<float>          * hcalOverEcalBc   = new std::vector<float> ;
+     std::vector<float>          * dPhi_sc   = new std::vector<float> ;
+     std::vector<float>          * dEta_sc   = new std::vector<float> ;
+     std::vector<float>          * dEta_seed   = new std::vector<float> ;
+     std::vector<float>          * sigmaIetaIeta   = new std::vector<float> ;
+     std::vector<float>          * full5x5_sigmaIetaIeta   = new std::vector<float> ;
+     std::vector<float>          * e1x5   = new std::vector<float> ;
+     std::vector<float>          * e5x5   = new std::vector<float> ;
+
+
 	//objects created in process
     ElectronCollection electrons;
 

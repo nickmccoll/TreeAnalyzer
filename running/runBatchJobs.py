@@ -58,7 +58,7 @@ def compileSAMacro() :
     envCMD = "root-config --cflags --libs"
     ps = subprocess.Popen(envCMD, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)    
     envStr = ps.communicate()[0]    
-    compCmd = ("g++ {MCR} {ENV} -o {OBJ} -lGenVector" .format (MCR=compM,ENV=envStr.rstrip(), OBJ=exeM))
+    compCmd = ("g++ {MCR} {ENV} -o {OBJ} -lGenVector  -lMinuit" .format (MCR=compM,ENV=envStr.rstrip(), OBJ=exeM))
     if args.libDir != "" :
         compCmd += (" -I{INC} {INC}/*.a "  .format( INC=os.path.normpath(args.libDir)))
     ps = subprocess.Popen(compCmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

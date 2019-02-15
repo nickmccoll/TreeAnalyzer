@@ -22,7 +22,7 @@ using namespace FillerConstants;
 class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
         tagLeptonProc .reset(new LeptonProcessor ()); DefaultLeptonSelections::setDefaultLeptonProcessor(*tagLeptonProc);
         tagLeptonProc->lepSelParams.mu_getID =  &Muon::passTightID;
         tagLeptonProc->lepSelParams.mu_minPT =  26;
@@ -39,7 +39,12 @@ public:
         leptonProc->lepSelParams_dataABCDEF.el_minPT = 5;
         leptonProc->lepSelParams_dataABCDEF.mu_minPT = 5;
 
+
         turnOffCorr(CORR_TRIG);
+        turnOffCorr(CORR_SJBTAG);
+        turnOffCorr(CORR_AK4BTAG);
+        turnOffCorr(CORR_SDMASS);
+        turnOffCorr(CORR_JER);
     }
 
 
@@ -202,6 +207,8 @@ public:
         bool passBu = passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30)|| passTrig(HLT_PFMETNoMu110_PFMHTNoMu110_IDTight) || passTrig(HLT_PFMETNoMu120_PFMHTNoMu120_IDTight);
         bool passSMuoHtMuoBu = passSMuoHtMu || passBu ||  passTrig(HLT_TkMu50)|| passTrig(HLT_Mu50);
 
+        bool passMuDenNoCross = passBu || passSMu;
+
 
 
         //HT side
@@ -209,6 +216,7 @@ public:
         if(passSMu ) makeLepPlots(preName +"_passSMu_","ht","mupt",maxOtherPT,ht_chs);
         if(passSMuoHtMu) makeLepPlots(preName +"_passSMuoHtMu_","ht","mupt",maxOtherPT,ht_chs);
         if(passSMuoHtMuoBu) makeLepPlots(preName +"_passSMuoHtMuoBu_","ht","mupt",maxOtherPT,ht_chs);
+        if(passMuDenNoCross) makeLepPlots(preName +"_passMuDenNoCross_","ht","mupt",maxOtherPT,ht_chs);
 
         //Mu side
         makeHTPlots(preName,"mu_pt",ht_chs,maxOtherPT);
@@ -239,6 +247,8 @@ public:
         bool passBu = passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30)|| passTrig(HLT_PFMETNoMu110_PFMHTNoMu110_IDTight) || passTrig(HLT_PFMETNoMu120_PFMHTNoMu120_IDTight);
         bool passSEloHtEloBu = passSEloHtEl || passBu ||  passTrig(HLT_Ele45_WPLoose_Gsf)|| passTrig(HLT_Ele115_CaloIdVT_GsfTrkIdT);
 
+        bool passElDenNoCross = passBu || passSEl;
+
 
 
         //HT side
@@ -246,6 +256,7 @@ public:
         if(passSEl ) makeLepPlots(preName +"_passSEl_","ht","elpt",maxOtherPT,ht_chs);
         if(passSEloHtEl) makeLepPlots(preName +"_passSEloHtEl_","ht","elpt",maxOtherPT,ht_chs);
         if(passSEloHtEloBu) makeLepPlots(preName +"_passSEloHtEloBu_","ht","elpt",maxOtherPT,ht_chs);
+        if(passElDenNoCross) makeLepPlots(preName +"_passElDenNoCross_","ht","elpt",maxOtherPT,ht_chs);
 
         //Mu side
         makeHTPlots(preName,"el_pt",ht_chs,maxOtherPT);
@@ -281,17 +292,23 @@ public:
         bool passSEloHtEl = passSEl  || passECross;
         bool passSEloHtEloBu = passSEloHtEl || passBu ||  passTrig(HLT_Ele45_WPLoose_Gsf)|| passTrig(HLT_Ele115_CaloIdVT_GsfTrkIdT);
 
+        bool passMuDenNoCross = passBu || passSMu;
+        bool passElDenNoCross = passBu || passSEl;
+
 
         //HT side
         makeLepPlots(preName,"ht","mupt",maxMu,ht_chs);
         if(passSMu ) makeLepPlots(preName +"_passSMu_","ht","mupt",maxMu,ht_chs);
         if(passSMuoHtMu) makeLepPlots(preName +"_passSMuoHtMu_","ht","mupt",maxMu,ht_chs);
         if(passSMuoHtMuoBu) makeLepPlots(preName +"_passSMuoHtMuoBu_","ht","mupt",maxMu,ht_chs);
+        if(passMuDenNoCross) makeLepPlots(preName +"_passMuDenNoCross_","ht","mupt",maxMu,ht_chs);
 
         makeLepPlots(preName,"ht","elpt",maxEl,ht_chs);
         if(passSEl ) makeLepPlots(preName +"_passSEl_","ht","elpt",maxEl,ht_chs);
         if(passSEloHtEl) makeLepPlots(preName +"_passSEloHtEl_","ht","elpt",maxEl,ht_chs);
         if(passSEloHtEloBu) makeLepPlots(preName +"_passSEloHtEloBu_","ht","elpt",maxEl,ht_chs);
+        if(passElDenNoCross) makeLepPlots(preName +"_passElDenNoCross_","ht","elpt",maxEl,ht_chs);
+
 
         //Mu side
         makeHTPlots(preName,"mu_pt",ht_chs,maxMu);
@@ -325,6 +342,12 @@ public:
         reader_jet_chs       =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jet_chs );
         reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
         reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
+
+        if(!isRealData()){
+             reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
+         }
+
+        checkConfig();
     }
 
     bool runEvent() override {
@@ -397,13 +420,13 @@ public:
 
 #endif
 
-void getTriggerTurnons(std::string fileName, int treeInt, std::string outFileName){
-    Analyzer a(fileName,"treeMaker/Events",treeInt);
+void getTriggerTurnons(std::string fileName, int treeInt, int randSeed, std::string outFileName){
+    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     a.analyze();
     a.write(outFileName);
 }
-void getTriggerTurnons(std::string fileName, int treeInt, std::string outFileName, float xSec, float numEvent){
-    Analyzer a(fileName,"treeMaker/Events",treeInt);
+void getTriggerTurnons(std::string fileName, int treeInt,  int randSeed, std::string outFileName, float xSec, float numEvent){
+    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     a.setSampleInfo(xSec,numEvent);
     a.analyze();
     a.write(outFileName);

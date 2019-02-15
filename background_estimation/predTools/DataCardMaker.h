@@ -100,6 +100,11 @@ public:
         PDFAdder::addCB(w,PDFName,pVar,variableX,varXPF,modelPF,json,scale_X,resolution_X);
     }
 
+    void add2DGaussian(const std::string& name,const std::string& variableX,const std::string& variableY,const std::string& jsonFile,const StrFlts& scale_X,const StrFlts& resolution_X
+            ,const StrFlts& scale_Y,const StrFlts& resolution_Y,  const std::string& pVar="MH"){
+        PDFAdder::add2DGaus(w,name,tag,variableX,variableY,jsonFile,
+                scale_X,resolution_X,scale_Y,resolution_Y,pVar);
+    }
 
     void add2DSignalParametricShape(const std::string& name,const std::string& variableX,const std::string& variableY,const std::string& jsonFile,const StrFlts& scale_X,const StrFlts& resolution_X
             ,const StrFlts& scale_Y,const StrFlts& resolution_Y, bool exponential_X, const std::string& pVar="MH"){
@@ -148,6 +153,12 @@ public:
         contributions.emplace_back(name,name+"_"+tag,id,nEvents);
         iF->Close();
         delete iF;
+        return nEvents;
+
+    }
+    double addFixedYield(const std::string& name, const int id, const double yield= 1.0, bool isY = false){
+        double nEvents =luminosity*yield;
+        contributions.emplace_back(name,name+"_"+tag,id,nEvents);
         return nEvents;
 
     }

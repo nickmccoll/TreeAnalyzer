@@ -64,7 +64,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     turnOnCorr(CORR_SJBTAG);
     turnOnCorr(CORR_AK4BTAG);
     turnOnCorr(CORR_SDMASS);
-    turnOnCorr(CORR_TOPPT);
+//    turnOnCorr(CORR_TOPPT);
     turnOnCorr(CORR_JER);
 }
 DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}

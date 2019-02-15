@@ -89,8 +89,13 @@ nohup combine -m 1600  -M AsymptoticLimits -v 2 combinedCard.txt &
 nohup combine -m 2500  -M AsymptoticLimits -v 2 combinedCard.txt &
 nohup combine -m 3000  -M AsymptoticLimits -v 2 combinedCard.txt &
 
+#observation
 combineTool.py -d combinedCard.root -m 2500  -M HybridNew --LHCmode LHC-limits -v 2 --singlePoint 0.002:0.05:0.001 -T 100 --clsAcc 0 --iterations 2 --fork 2    --saveToys --saveHybridResult  --job-mode crab3 --task-name grid-test  --custom-crab cuscrab.py 
-combine -d combinedCard.root -m 2500  -M HybridNew --LHCmode LHC-limits -v 2 --readHybridResults --grid=higgsCombine.Test.HybridNew.mH2500.123456.root  --expectedFromGrid=0.8399999
+cd crab_grid-test/results/
+for a in `ls -1 *.tar`; do tar -xvf $a; done
+cd ../.. 
+hadd higgsCombine.Test.HybridNew.m3500.123456.root crab_grid-test/results/higgsCombine*root
+combine -d combinedCard.root -m 2500  -M HybridNew --LHCmode LHC-limits -v 2 --readHybridResults --grid=higgsCombine.Test.HybridNew.mH2500.123456.root  --expectedFromGrid=0.5
 
 #impacts
 text2workspace.py combinedCard.txt -m 1000 -o forImpact.root
@@ -116,6 +121,21 @@ combineTool.py -M Impacts -d forImpact.root -m 1000 --rMax 0.2  --robustFit  1 -
 #cuscrab.py contents:
 def custom_crab(config):
         config.Site.storageSite = 'T3_US_FNALLPC'
+
+
+#observation
+toys->
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance  --saveToys --fullBToys --saveHybridResult -T 10 -i 5 -s -1 &
+hadd higgsCombineTest.HybridNew.mH2300.allToys.root higgsCombineTest.HybridNew.mH2300.*    
+combine -M HybridNew -m 2300 ../combined.root --LHCmode LHC-significance   --readHybridResult --toysFile=higgsCombineTest.HybridNew.mH2300.allToys.root 
+assymp->
+combine -M Significance  -m 2300 ./combined.root
 
 
 #Stat tests

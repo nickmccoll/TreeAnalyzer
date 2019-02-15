@@ -15,6 +15,8 @@ using namespace CutConstants;
 using namespace ASTypes;
 std::vector<TObject*> writeables;
 
+const float signalXS = 0.2; //in pb
+
 class Dummy {
 public:
     Dummy(const std::string& outName = "") : outName(outName) {};
@@ -45,6 +47,8 @@ struct DataPlotPrefs {
     bool binInY = true;
     std::vector<std::string> sels;
     std::vector<std::string> titles;
+    std::string topTitle;
+    std::vector<std::string> botTitles;
 
     std::string signalFilePrefix = "signalInputs/HHlnujj_radHH_";
     std::vector<std::string> signals;
@@ -57,7 +61,9 @@ struct DataPlotPrefs {
     bool addErrorBars = false;
     unsigned int nToys = 100;
 
-    std::vector<std::pair<int,float>> maxTops; //override maxTop
+    bool isSupp = false;
+
+    std::vector<float> maxTops; //override maxTop
 
     double minTop = -1;
     double maxTop = -1;
@@ -87,7 +93,7 @@ struct HistContainter {
 };
 
 
-void doComp(REGION region, const unsigned int nToys, const std::string& postFitFilename,const std::string& postFitCompFilename ){
+void doComp(REGION region, const unsigned int nToys, const std::string& postFitFilename,const std::string& postFitCompFilename, const std::vector<std::string>& signals ){
     TFile * inFile  = new TFile(postFitFilename.c_str(),"read");
     TFile * fo      = new TFile(postFitCompFilename.c_str(),"recreate");
 
@@ -120,6 +126,43 @@ void doComp(REGION region, const unsigned int nToys, const std::string& postFitF
     }
 
     fo->Close();
+
+    TFile * fos      = new TFile(("signalInputs/HHlnujj_radHH_" + compName +"_2D_fit.root").c_str(),"recreate");
+    for(unsigned int iSig = 0; iSig < signals.size(); ++iSig){
+        TH2 * h = 0;
+        for(const auto& s: sels){
+            TFile * f = new TFile(("signalInputs/HHlnujj_radHH_" + s +"_2D_fit.root").c_str() ,"READ");
+            TFile * fy = new TFile(("signalInputs/HHlnujj_radHH_" + s +"_yield.json.root").c_str() ,"READ");
+            TF1 * yFunc = 0;
+            TH2 * hP = 0;
+            fy->GetObject("yield_func",yFunc);
+            f->GetObject((std::string("pdf_m")+signals[iSig]+ "__MJ_MR").c_str(),hP);
+            if(!yFunc || !hP){
+                continue;
+            }
+            double yield = yFunc->Eval(float(std::atoi(signals[iSig].c_str())));
+            //have to do this...bounds are different in the signal
+            hP->Scale(yield/hP->Integral());
+            //Scale so that we get 0.2pb normalization
+            hP->Scale(signalXS);
+            TH2 * hpNew = new TH2F(TString(hP->GetName()) + "_newC_"+ s,hP->GetTitle(),nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
+            hpNew->SetDirectory(0);
+            for( int iX = 1; iX <= hpNew->GetNbinsX(); ++iX ){
+                int nX = hP->GetXaxis()->FindFixBin(hpNew->GetXaxis()->GetBinCenter(iX));
+                for( int iY = 1; iY <= hpNew->GetNbinsY(); ++iY ){
+                    int nY = hP->GetYaxis()->FindFixBin(hpNew->GetYaxis()->GetBinCenter(iY));
+                    hpNew->SetBinContent(iX,iY,hP->GetBinContent(nX,nY));
+                }
+            }
+            if(h==0) h = hpNew;
+            else h->Add(hpNew);
+        }
+        if(h){
+            fos->cd();
+            h->Write((std::string("sigComp_m")+signals[iSig]+ "__MJ_MR").c_str());
+        }
+    }
+    fos->Close();
 }
 
 
@@ -151,28 +194,50 @@ public:
             std::vector<TH2*> sHists;
             if(prefs.signals.size()){
                 TFile * f = new TFile((prefs.signalFilePrefix + prefs.sels[iSel] +"_2D_fit.root").c_str() ,"READ");
+                TFile * fy = new TFile((prefs.signalFilePrefix + prefs.sels[iSel] +"_yield.json.root").c_str() ,"READ");
+                TF1 * yFunc = 0;
+                fy->GetObject("yield_func",yFunc);
+                if(yFunc==0)  for(unsigned int iSig = 0; iSig < prefs.signals.size(); ++iSig){
+                    sHists.push_back(0);
+                }
                 for(unsigned int iSig = 0; iSig < prefs.signals.size(); ++iSig){
-                    TH2 * hM = 0;
                     TH2 * hP = 0;
-                    f->GetObject((std::string("data_m")+prefs.signals[iSig]+ "__MJ_MR").c_str(),hM);
                     f->GetObject((std::string("pdf_m")+prefs.signals[iSig]+ "__MJ_MR").c_str(),hP);
-                    if(!hM || !hP){
-                        sHists.push_back(0);
-                        continue;
-                    }
-                    //have to do this...bounds are different in the signal
-                    hP->Scale(hM->Integral()/hP->Integral());
-                    hP->Scale(2*0.5824*(.2137+.002619)*.2);
-                    TH2 * hpNew = new TH2F(TString(hP->GetName()) + "_new",hP->GetTitle(),nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
-                    hpNew->SetDirectory(0);
-                    for( int iX = 1; iX <= hpNew->GetNbinsX(); ++iX ){
-                        int nX = hP->GetXaxis()->FindFixBin(hpNew->GetXaxis()->GetBinCenter(iX));
-                        for( int iY = 1; iY <= hpNew->GetNbinsY(); ++iY ){
-                            int nY = hP->GetYaxis()->FindFixBin(hpNew->GetYaxis()->GetBinCenter(iY));
-                            hpNew->SetBinContent(iX,iY,hP->GetBinContent(nX,nY));
+                    if(hP){
+                        double yield = yFunc->Eval(float(std::atoi(prefs.signals[iSig].c_str())));
+                        std::cout << "WARNING!!!!! You are applying a correction to the BF!!!"<<std::endl;
+                        std::cout << "WARNING!!!!! You are applying a correction to the BF!!!"<<std::endl;
+                        std::cout << "WARNING!!!!! You are applying a correction to the BF!!!"<<std::endl;
+                        std::cout << "WARNING!!!!! You are applying a correction to the BF!!!"<<std::endl;
+                        yield *=CutConstants::HHtobbVVBF / CutConstants::HHtobbVVBF_BUGGY;
+
+                        hP->Scale(yield/hP->Integral());
+                        //Scale so that we get 0.2pb normalization
+                        hP->Scale(signalXS);
+                        TH2 * hpNew = new TH2F(TString(hP->GetName()) + "_new",hP->GetTitle(),nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
+                        hpNew->SetDirectory(0);
+                        for( int iX = 1; iX <= hpNew->GetNbinsX(); ++iX ){
+                            int nX = hP->GetXaxis()->FindFixBin(hpNew->GetXaxis()->GetBinCenter(iX));
+                            for( int iY = 1; iY <= hpNew->GetNbinsY(); ++iY ){
+                                int nY = hP->GetYaxis()->FindFixBin(hpNew->GetYaxis()->GetBinCenter(iY));
+                                hpNew->SetBinContent(iX,iY,hP->GetBinContent(nX,nY));
+                            }
+                        }
+                        sHists.push_back(hpNew);
+
+
+                    } else {
+                        TH2 * hMC = 0;
+                        f->GetObject((std::string("sigComp_m")+prefs.signals[iSig]+ "__MJ_MR").c_str(),hMC);
+                        if(hMC){
+                            TH2 * hpNew = (TH2*)hMC->Clone();
+                            hpNew->SetDirectory(0);
+                            sHists.push_back(hpNew);
+                        } else {
+                            sHists.push_back(0);
+                            continue;
                         }
                     }
-                    sHists.push_back(hpNew);
                 }
             }
             signalHists.push_back(sHists);
@@ -391,7 +456,7 @@ public:
                     cont.toyErr->SetFillStyle(3352);
                     gStyle->SetHatchesLineWidth(1);
                     gStyle->SetHatchesSpacing(.5);
-//                    p->addGraph(cont.toyErr,"fit unc.",fillColor,1,1,20,1,false,true,false,"3");
+                    //                    p->addGraph(cont.toyErr,"fit unc.",fillColor,1,1,20,1,false,true,false,"3");
 
                     p->addGraph(cont.toyErr,"Fit unc.",fillColor,1,1,20,1,false,true,false,"2");
                 }
@@ -405,6 +470,7 @@ public:
                 for(unsigned int iH = 0; iH < cont.bkg.size(); ++iH){
                     if(cont.bkg[iH]) p->addStackHist(cont.bkg[iH],bkgSels[iH].title.c_str());
                 }
+                if(cont.toyErr)p->clearTotStackError();
                 p->setUnderflow(false);
                 p->setOverflow(false);
                 double binWidth = 10;
@@ -415,18 +481,36 @@ public:
                 }
 
                 double xV =0.45;
-                double yV =0.63;
+                double yV =0.68;;
 
                 p->setXTitle( (prefs.binInY ? hbbMCS : hhMCS) .title.c_str());
-                p->setYTitle((std::string("N. of events / ") + flt2Str(binWidth) +" GeV").c_str() );
-                p->setCMSLumi(10);
-//                p->setCMSLumiExtraText("Preliminary");
-                p->addText(st,xV+0.0075,yV+0.2075,0.045);
+                p->setYTitle((std::string("Data / ") + flt2Str(binWidth) +" GeV").c_str() );
+                if(prefs.isSupp){
+                    p->setCMSLumi(0);
+                    p->setCMSLumiExtraText("Supplementary");
+                    p->setCMSLumiPosition(0,1.05);
+
+                } else {
+                    p->setCMSLumi(10);
+                }
+
+                float startY = prefs.isSupp ? 0.83 : 0.75;
+                if(prefs.topTitle.size() ){
+                    p->addText(prefs.topTitle,.18,startY,0.045);
+                    startY -= 0.05;
+                }
+                p->addText(st,.18,startY,0.045);
+                startY -= 0.05;
+                if(prefs.botTitles.size() && prefs.botTitles[iB].size()){
+                    p->addText(prefs.botTitles[iB],.18,startY,0.045);
+                }
+
                 p->setLegendNColumns(2);
 
                 if(prefs.signals.size()){
                     p->setLegendPos(xV,yV,xV+0.457,yV+0.245);
-                    p->addText("#sigma(pp#rightarrowX)x#it{B}(X#rightarrowHH)=0.1 pb",xV+0.0075,yV-0.04,0.042);
+                    TString sigName = TString::Format("#sigma#bf{#it{#Beta}}(X #rightarrow HH) = %.1f pb",signalXS);
+                    p->addText(sigName.Data(),xV+0.0075,yV-0.04,0.042);
                 }
 
                 else {
@@ -436,21 +520,33 @@ public:
 
                 if(prefs.doLog) p->setMinMax(0.1,1000 );
                 if(prefs.minTop != prefs.maxTop){
-                       p->setMinMax(prefs.minTop,prefs.maxTop);
-                   }
+                    p->setMinMax(prefs.minTop,prefs.maxTop);
+                } else if(prefs.maxTops.size()){
+                    p->setMinMax(prefs.minTop,prefs.maxTops[iB]);
+                }
                 else if(cont.data) p->setMinMax(0,(cont.data->GetMaximum()  + std::sqrt(cont.data->GetMaximum()))*1.75);
                 if(prefs.addRatio){
                     p->setBotMinMax(0.05,1.95);
                     if(prefs.minBot != prefs.maxBot){
                         p->setBotMinMax(prefs.minBot,prefs.maxBot);
                     }
-                    p->setYTitleBot((std::string("N. of events / ") + modTitles[prefs.modelType] +"").c_str());
+                    p->setYTitleBot((std::string("Data / ") + modTitles[prefs.modelType] +"").c_str());
                     auto * c = p->drawSplitRatio(-1,"stack",false,false,plotTitle.c_str());
                     if(prefs.doLog) c->GetPad(1)->SetLogy();
-
+                    p->botStyle.xAxis->SetTitleOffset(1.05);
                     for(unsigned int iSig = 0; iSig < cont.sig.size(); ++iSig){
                         auto prim = c->GetPad(2)->GetPrimitive((s+"_"+prefs.signals[iSig]+"_0" ).c_str());
                         if(prim) prim->Delete();
+                        prim = c->GetPad(2)->GetPrimitive((s+"_"+prefs.signals[iSig]+"_1" ).c_str());
+                        if(prim) prim->Delete();
+                        prim = c->GetPad(2)->GetPrimitive((s+"_"+prefs.signals[iSig]+"_2" ).c_str());
+                        if(prim) prim->Delete();
+                        prim = c->GetPad(2)->GetPrimitive((s+"_"+prefs.signals[iSig]+"_3" ).c_str());
+                        if(prim) prim->Delete();
+                        prim = c->GetPad(2)->GetPrimitive((s+"_"+prefs.signals[iSig]+"_4" ).c_str());
+                                                if(prim) prim->Delete();
+                                                prim = c->GetPad(2)->GetPrimitive((s+"_"+prefs.signals[iSig]+"_5" ).c_str());
+                                                                        if(prim) prim->Delete();
                     }
 
 
@@ -773,6 +869,7 @@ TCanvas * makeUncPlot(const std::vector<std::string>& uncs, const std::string& l
             if(h) h->SetBinContent(nP+1,x);
             if(h) h->SetBinError(nP+1,e);
             if(h) h->GetXaxis()->SetBinLabel(nP+1,unc.c_str());
+            std::cout << unc <<"\t" << v->getVal() <<"\t"<< v->getError()<<"\n";
 
         };
         if(fit_b) fillPt(fit_b_uncsize,fit_b_uncs,nuis_b);
@@ -867,13 +964,13 @@ TCanvas * makeUncPlot(const std::vector<std::string>& uncs, const std::string& l
     }
 
     if(fit_b){                                                                               ;
-        h_fit_e_b->SetLineColor(kBlue)                                               ;
-        h_fit_e_b->GetYaxis()->SetTitle("#sigma_{#theta}/(#sigma_{#theta} prefit)")        ;
-        h_fit_e_b->SetTitle("Nuisance Parameter Uncertainty Reduction")                   ;
-        h_fit_e_b->SetMaximum(1.1)                                                        ;
-        h_fit_e_b->SetMinimum(0)                                                          ;
-        h_fit_e_b->SetLineWidth(4)                   ;
-        h_fit_e_b->Draw("hist")                                                            ;
+    h_fit_e_b->SetLineColor(kBlue)                                               ;
+    h_fit_e_b->GetYaxis()->SetTitle("#sigma_{#theta}/(#sigma_{#theta} prefit)")        ;
+    h_fit_e_b->SetTitle("Nuisance Parameter Uncertainty Reduction")                   ;
+    h_fit_e_b->SetMaximum(1.1)                                                        ;
+    h_fit_e_b->SetMinimum(0)                                                          ;
+    h_fit_e_b->SetLineWidth(4)                   ;
+    h_fit_e_b->Draw("hist")                                                            ;
     }
     if(fit_s){
         h_fit_e_s->SetLineWidth(4)                   ;
@@ -1129,8 +1226,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         if(inreg == REG_SR){
             //            hbbTest.bins = {30,100,100,150,210};
         } else {
-//                        hhTest.bins = {30,210,30,100,150,210};
-//            hbbTest.bins = {700,4000};
+            //                        hhTest.bins = {30,210,30,100,150,210};
+            //            hbbTest.bins = {700,4000};
             auto writeables2 = doStatTest(hbbTest,filename,postFitFilename,outName + "statTest");
             writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         }
@@ -1142,7 +1239,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
     if(step==4){ //summary plots
         if(outName.size())         outName += "summaryPlots";
         doGlobChi2(writeables,limitBaseName);
-//        doUncPlots(writeables,limitBaseName,reg,reg!=REG_SR);
+        //        doUncPlots(writeables,limitBaseName,reg,reg!=REG_SR);
         doUncPlots(writeables,limitBaseName,reg,true);
         Dummy d(outName);
     }
@@ -1153,13 +1250,13 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
     }
 
     if(step== 6){ //postfit CR for Paper
-//        if(reg == REG_SR) return;
+        //        if(reg == REG_SR) return;
         if(outName.size())         outName += "postfitPaper_dataComp";
         DataPlotPrefs hhPlot;
         //Horrible
-        doComp(reg,hhPlot.nToys,  postFitFilename,limitBaseName +"/postFit_comp.root");
+        doComp(reg,hhPlot.nToys,  postFitFilename,limitBaseName +"/postFit_comp.root",{});
         srList ={"emu_LMT_I_full"};
-        srListTitles ={ std::string(reg == REG_TOPCR ? "Top CR" : "Q/G CR" )+    ": All categories"};
+        srListTitles ={ "All categories"};
 
 
         hhPlot.modelType = MOD_POST;
@@ -1167,9 +1264,10 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.binInY = false;
         hhPlot.sels =  srList;
         hhPlot.titles = srListTitles;
+        hhPlot.topTitle = reg == REG_TOPCR ? "Top CR" : "Q/G CR";
 
         hhPlot.minTop =0.5;
-        hhPlot.maxTop =40000;
+        hhPlot.maxTop =100000;
         hhPlot.rebinFactor=4;
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
@@ -1189,11 +1287,11 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
     }
 
     if(step== 7){ //postfit SR for Paper
-//        if(reg != REG_TOPCR) return;
+        //        if(reg != REG_TOPCR) return;
         if(outName.size())         outName += "postfitPaper_dataCompSR";
         DataPlotPrefs hhPlot;
         hhPlot.modelType = MOD_POST;
-            hhPlot.bins = {30,210};
+        hhPlot.bins = {30,210};
         hhPlot.binInY = false;
         hhPlot.sels =  srList;
         hhPlot.titles = srListTitles;
@@ -1202,8 +1300,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.minTop =0.2;
         hhPlot.maxTop =2000;
         hhPlot.rebinFactor = 4;
-        hhPlot.signals = {"1000","2500"};
-        hhPlot.signalTitles = {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"};
+        //        hhPlot.rebinFactor = -1;
+        //        hhPlot.rebins = {700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,2000,2200,2400,3000,4000};
 
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
@@ -1216,11 +1314,80 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hbbPlot.minTop =400;
         hbbPlot.maxTop =400;
         hbbPlot.rebinFactor = 3;
-//        if(inreg == REG_SR) hbbPlot.blindRange ={100,150};
+        //        if(inreg == REG_SR) hbbPlot.blindRange ={100,150};
         auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename);
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         Dummy d(outName);
     }
+
+    if(step== 8){ //postfit SR for Supp
+        //        if(reg == REG_SR) return;
+        if(outName.size())         outName += "postfitSupMat_dataComp";
+        DataPlotPrefs hhPlot;
+        hhPlot.signals = {"1000","2500"};
+        hhPlot.signalTitles = {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"};
+        //Horrible
+        doComp(reg,hhPlot.nToys,  postFitFilename,limitBaseName +"/postFit_comp.root",hhPlot.signals);
+        srList ={"emu_LMT_I_full"};
+        srListTitles ={ "All categories"};
+
+
+        hhPlot.modelType = MOD_POST;
+        hhPlot.bins = {30,210,210,100,150};
+        hhPlot.binInY = false;
+        hhPlot.sels =  srList;
+        hhPlot.titles = srListTitles;
+        hhPlot.isSupp = true;
+        hhPlot.botTitles = {"","","","100 < #it{m}_{bb} < 150 GeV"};
+
+        hhPlot.minTop =0.5;
+        hhPlot.maxTop =5000;
+        hhPlot.rebinFactor=4;
+        hhPlot.addRatio = true;
+        hhPlot.addErrorBars = true;
+        hhPlot.doLog = true;
+        hhPlot.rebinFactor = 4;
+        writeables = doDataPlot(hhPlot,filename,limitBaseName +"/postFit_comp.root");
+        DataPlotPrefs hbbPlot = hhPlot;
+        hbbPlot.binInY = true;
+        hbbPlot.bins = {700,4000,4000,700,1000,2000,4000};
+        hbbPlot.doLog = false;
+        hbbPlot.minTop =0;
+        hbbPlot.maxTop =0;//reg==REG_TOPCR ?  1000 :2000;
+        hbbPlot.maxTops = {450.0,0,0,375.0,200.0,20.0};
+        hbbPlot.botTitles = {"","","","0.7 < #it{m}_{HH} < 1 TeV","1 < #it{m}_{HH} < 2 TeV","2 < #it{m}_{HH} < 4  TeV"};
+        hbbPlot.rebinFactor = 3;
+        auto writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root");
+        writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
+        Dummy d(outName);
+    }
+
+    if(step== 9){ //postfit SR for Supp 1
+        if(outName.size())         outName += "postfitSupMat_dataComp";
+        DataPlotPrefs hhPlot;
+        hhPlot.signals = {"1000","2500"};
+        hhPlot.signalTitles = {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"};
+        hhPlot.modelType = MOD_POST;
+        hhPlot.bins = {100,150};
+        hhPlot.binInY = false;
+        hhPlot.sels =  srList;
+        hhPlot.titles = srListTitles;
+        hhPlot.isSupp = true;
+        hhPlot.botTitles = {"100 < #it{m}_{bb} < 150 GeV"};
+
+        hhPlot.minTop =0.05;
+        hhPlot.maxTop =1000;
+        hhPlot.addRatio = true;
+        hhPlot.addErrorBars = true;
+        hhPlot.doLog = true;
+        hhPlot.rebinFactor = 4;
+        writeables = doDataPlot(hhPlot,filename,postFitFilename);
+        Dummy d(outName);
+
+
+    }
+
+
 
 
 

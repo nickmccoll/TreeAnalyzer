@@ -123,28 +123,30 @@ void makeSignalFittingDistributions(const std::string& name, const std::string& 
                 l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
     }
     if(doIncl){
-        vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nInclHbbMassBins,minInclHbbMass,maxInclHbbMass,hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nInclHHMassBins,minInclHHMass,maxInclHHMass );
+        vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nInclHbbMassBins,minInclHbbMass,maxInclHbbMass,
+                           hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nInclHHMassBins,minInclHHMass,maxInclHHMass );
     } else {
-        vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass,hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
+        vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass,
+                          hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
         vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass);
         vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
     }
 
     for(const auto& sM : signalMassBins){
         std::vector<PlotSamp> samps = { {name +"_m"+ASTypes::int2Str(sM),"1.0"}};
-        std::string outFileName=filename+"_"+name+"_m"+ASTypes::int2Str(sM) + (doIncl ? "_inclM_distributions.root" : "_distributions.root");
+        std::string outFileName=filename+"_"+name+"_m"+ASTypes::int2Str(sM) + (doIncl ? "_inclM_distributions.root" : "_exclM_distributions.root");
         std::string inputName = inputFile;
         inputName.replace(nameIDX,3,ASTypes::int2Str(sM));
         MakePlots a(inputName,outFileName,samps,sels,vars,cut,nomW.cut);
     }
-    std::string compiledFile =  filename+"_"+name + (doIncl ? "_inclM_distributions.root" : "_distributions.root");
-    std::string allFiles = filename+"_"+name+"_m*" + (doIncl ? "_inclM_distributions.root" : "_distributions.root");
+    std::string compiledFile =  filename+"_"+name + (doIncl ? "_inclM_distributions.root" : "_exclM_distributions.root");
+    std::string allFiles = filename+"_"+name+"_m*" + (doIncl ? "_inclM_distributions.root" : "_exclM_distributions.root");
 
     gSystem->Exec((std::string("hadd -f ")+ compiledFile + " " + allFiles).c_str());
     gSystem->Exec((std::string("rm ") + allFiles).c_str());
 }
-void makeSignalYields(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,   const double BR= 2*0.5824*(.2137+.002619)){
-    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
+void makeSignalYields(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins){
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_exclM_distributions.root");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         FunctionParameterPlotter plotter;
         const std::string catName = l +"_"+b+"_"+p +"_"+h;
@@ -159,8 +161,8 @@ void makeSignalYields(const std::string& name, const std::string& filename,const
             }
             double error = 0;
             double integral = hh_H->IntegralAndError(1,hh_H->GetNbinsX(),error);
-            yieldGraph->SetPoint(n,signalMassBins[iS],integral*BR);
-            yieldGraph->SetPointError(n,0.0,error*BR);
+            yieldGraph->SetPoint(n,signalMassBins[iS],integral*HHtobbVVBF);
+            yieldGraph->SetPointError(n,0.0,error*HHtobbVVBF);
             n++;
         }
         plotter.addFit(yieldGraph,"yield");
@@ -257,7 +259,7 @@ void makeSignal1DShapes(const std::string& name, const std::string& filename,con
 
 void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins){
     //    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
-    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root"); //Changing to cond on MR
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_exclM_distributions.root"); //Changing to cond on MR
     const std::string fitName = "MJJ_fit1stIt";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l != lepCats[LEP_EMU] ) continue;
@@ -274,7 +276,7 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
 }
 void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins){
     //    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
-    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root"); //Changing to cond on MR
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_exclM_distributions.root"); //Changing to cond on MR
     const std::string fitName = "MJJ_fit";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l != lepCats[LEP_EMU] ) continue;
@@ -297,7 +299,7 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
 
 void makeSignalMVVShapes1D(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins, const std::string postfix = ""){
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_"+postfix +"distributions.root");
-    const std::string fitName = postfix + "MVV_fit1stIt";
+    const std::string fitName =  ASTypes::strFind(postfix,"exclM") ? std::string("MVV_fit1stIt") : postfix + "MVV_fit1stIt";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
 //        if(l == lepCats[LEP_EMU] ) continue;
         if(b != btagCats[BTAG_LMT] ) continue;
@@ -312,7 +314,7 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename,
 }
 
 void makeSignalMVVShapes1stIt(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins){
-    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_exclM_distributions.root");
     const std::string fitName = "MVV_fit1stIt";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
@@ -328,7 +330,7 @@ void makeSignalMVVShapes1stIt(const std::string& name, const std::string& filena
     }
 }
 void makeSignalMVVShapes2ndIt(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins){
-    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_exclM_distributions.root");
     const std::string fitName = "MVV_fit";
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
@@ -552,7 +554,7 @@ void makeSignal2DShapesCondMVV(const std::string& name, const std::string& filen
 
 //void makeSignal2DShapesCondMVVFirstIteration(const std::string& name, const std::string& filename){
 //    std::string fitName = "2D_fit1stIt";
-//    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
+//    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_exclM_distributions.root");
 //    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
 //        if(p !=  purSels[PUR_LMT] ) continue;
 //        if(h !=  hadSels[HAD_LTMB] ) continue;
@@ -584,7 +586,7 @@ void makeSignal2DShapesCondMVV(const std::string& name, const std::string& filen
 
 //void makeSignal2DShapesFirstIteration(const std::string& name, const std::string& filename){
 //    std::string fitName = "2D_fit1stIt";
-//    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
+//    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_exclM_distributions.root");
 //    for(const auto& l :lepSels) for(const auto& p :purSels) for(const auto& h :hadSels){
 //        if(l == lepSels[LEP_EMU] ) continue;
 //        if(p !=  purSels[PUR_LMT] ) continue;
@@ -612,7 +614,7 @@ void makeSignal2DShapesCondMVV(const std::string& name, const std::string& filen
 
 void makeSignal2DShapesSecondIteration(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins){
     std::string fitName = "2D_fit";
-    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_exclM_distributions.root");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
         if( b == btagCats[BTAG_LMT] ) continue;
@@ -649,7 +651,7 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
 
 void copySignalShapes(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins, const std::string inputName, bool doCond ){
     std::string fitName = "2D_fit";
-    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_exclM_distributions.root");
 
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
@@ -699,7 +701,7 @@ void copySignalShapes(const std::string& name, const std::string& filename, cons
 
 void combine2DShapesNoCond(const std::string& name, const std::string& filename, const std::vector<int>& signalMassBins){
     std::string fitName = "2D_fit";
-    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_distributions.root");
+    auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_exclM_distributions.root");
     for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU] ) continue;
         if(b == btagCats[BTAG_LMT] ) continue;
@@ -747,7 +749,7 @@ void go(int step,int sig, std::string treeDir) {
         if(sig == RADION){
             makeSignalMJJShapes1stIt(name,filename,signalMassBins[sig]);
             makeSignalMJJShapes2ndIt(name,filename,signalMassBins[sig]);
-            makeSignalMVVShapes1D(name,filename,signalMassBins[sig]);
+            makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"exclM_");
             makeSignal2DShapesSecondIteration(name,filename,signalMassBins[sig]);
         }
         else

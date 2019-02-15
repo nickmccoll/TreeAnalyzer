@@ -1,34 +1,3 @@
-//MAKE TOTAL BACKGROUND
-{
-std::vector<TString> bkgs = {"qg","losttw","mt","mw"};
-TString reg = "mu_L_LP_full";
-
-TH2 * outH=0;
-
-for(unsigned int iB = 0; iB < bkgs.size();++iB){
-    TFile * fmc = new TFile("HHlnujj_"+bkgs[iB]+"_distributions.root");
-    TH2 * hmc = 0;
-    fmc->GetObject(bkgs[iB]+"_"+reg+"_hbbMass_hhMass",hmc);
-    if(hmc==0){
-        std::cout << bkgs[iB]+"_"+reg+"_hbbMass_hhMass"<<std::endl;
-        continue;
-    }
-    TFile * ftemp = new TFile("HHlnujj_"+bkgs[iB]+"_2D_template_debug.root");
-    TH2 * hmtemp = 0;
-    ftemp->GetObject(bkgs[iB]+"_"+reg,hmtemp);
-    if(hmtemp==0)continue;
-    hmtemp->Scale(hmc->Integral()/hmtemp->Integral());
-    if(outH == 0) outH=(TH2*)hmtemp->Clone();
-    else outH->Add(hmtemp);
-}
-
-outH->Draw("COLZ");
-
-
-
-}
-
-
 {
   TFile * f = new TFile("bkgInputs/HHlnujj_mt_emu_M_I_none_MJJ_fit.root");
   TCanvas* c=0;

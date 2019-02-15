@@ -37,7 +37,7 @@ CutStr abV  ("abV"   , "nAK4Btags!=0");
 CutStr preSel("preSel"  , "passPre==1");
 
 
-CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
+CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{bb} [GeV]");
 CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
 
 unsigned int nHbbMassBins   =90;
@@ -176,6 +176,13 @@ std::string MOD_MR("MR");
 std::string MOD_MS("MH");
 
 CutStr sigMCS("mx","mx","#it{m}_{#it{X}} [GeV]");
+//https://twiki.cern.ch/twiki/bin/view/LHCPhysics/LHCHXSWG#Higgs_cross_sections_and_decay_b
+const double HtoBBBF = 0.5824;
+const double HtoWWBF = 0.2137;
+const double HtoZZBF = 0.02619;
+const double HHtobbVVBF = 2*HtoBBBF*(HtoWWBF+HtoZZBF);
+
+const double HHtobbVVBF_BUGGY = 2*0.5824*(.2137+.002619);
 
 
 }

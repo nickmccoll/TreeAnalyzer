@@ -58,6 +58,7 @@ TCanvas* make2DTests(std::string plotTitle, int mass, const TH2* dH,TH2* pH, con
 void test2DFits(std::string name, std::string filename, const std::vector<int>& signalMassBins, std::string fitName,bool binInY, const std::vector<std::string>& sels) {
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<double> bins = {30,210,30,115,135,210};
+//    TFile * fit = new TFile("testSignal/HHlnujj_radHH_distributions.root");
 
     for(const auto& s : sels){
         TFile * fo =0;
@@ -72,12 +73,21 @@ void test2DFits(std::string name, std::string filename, const std::vector<int>& 
             return true;
         };
 
+//        auto addH2 = [&](const std::string& name,std::vector<TObject*>& list)->bool{
+//            TH2 * can= 0;
+//            fit->GetObject(name.c_str(),can);
+//            if(can==0) return false;
+//            list.push_back(can);
+//            return true;
+//        };
+
         std::vector<TObject*> mcPads;
         std::vector<TObject*> pdfPads;
         std::vector<TObject*> compPads;
         gROOT->SetBatch(true);
         for(const auto& sB : signalMassBins){
             if(addH(std::string("data_m") +int2Str(sB) +"__"+MOD_MJ+"_"+MOD_MR, mcPads) && addH(std::string("pdf_m") +int2Str(sB) +"__"+MOD_MJ+"_"+MOD_MR, pdfPads)){
+//            if(addH2(std::string("radHH_m")+int2Str(sB) +"_"+s+"_hbbMass_hhMass", mcPads) && addH(std::string("pdf_m") +int2Str(sB) +"__"+MOD_MJ+"_"+MOD_MR, pdfPads)){
                 if(binInY){
                     std::vector<double> cbins = {700,4000};
                     cbins.push_back(700);
@@ -174,14 +184,23 @@ void plotYields(std::string name, std::string filename,std::string fitName, cons
 
 }
 
-void plotEfficiencies(std::string name, std::string filename,std::string fitName) {
+void plotEfficiencies(std::string name, std::string filename,std::string fitName, int signal) {
 //    gROOT->SetBatch(true);
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<TObject*> paramPads;
     double inclusiveN  = 1000*35.9; //1000 fb x lumi
-//    inclusiveN *= 2*0.5824*(.2137+.002619); //BR to bbVV
-    inclusiveN *= 2*0.5824*(.2137); //BR to bbWW
-    inclusiveN *= 2*.676*(.216+.108*.3524);//BR of WW to he, hmu or htau where the tau is leptonic
+    inclusiveN *= CutConstants::HHtobbVVBF_BUGGY; //BR to bbVV
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+//    inclusiveN *= CutConstants::HHtobbVVBF; //BR to bbWW or bbZZ
+//    inclusiveN *= 2*.676*(.216+.108*.3524);//BR of WW to he, hmu or htau where the tau is leptonic...for the AN
     for(auto& l : lepCats){
         if(l == lepCats[LEP_EMU]) continue;
         for(auto& p : purCats){
@@ -190,27 +209,48 @@ void plotEfficiencies(std::string name, std::string filename,std::string fitName
                 if(h != hadCuts[HAD_FULL]) continue;
                 Plotter * plot = new Plotter();
                 for(auto& b : btagCats){
+                    if(b == btagCats[BTAG_LMT]) continue;
                     std::string s = l+"_"+b+"_"+p+"_"+h;
-                    TFile * fo = new TFile((filename+"_"+name+"_"+s+"_"+fitName+".root").c_str(),"read");
+                    TFile * fo = new TFile((filename+"_"+name+"_"+s+"_"+fitName+".json.root").c_str(),"read");
                     if(fo == 0) continue;
-                    TGraphErrors * gr= 0;
-                    fo->GetObject("yield",gr);
-                    if(gr == 0) continue;
+                    TGraphErrors * gr= new TGraphErrors();
+                    TF1 * fr= 0;
+                    fo->GetObject("yield_func",fr);
+                    if(fr == 0) continue;
                     gr->GetXaxis()->SetTitle(sigMCS.title.c_str());
-                    gr->GetYaxis()->SetTitle("efficiency");
-                    for(int iP = 0; iP < gr->GetN(); ++iP){
-                        double x,y,ey;
-                        gr->GetPoint(iP,x,y);
-                        ey = gr->GetErrorY(iP);
-                        gr->SetPoint(iP,x,y/inclusiveN);
-                        gr->SetPointError(iP,0,ey/inclusiveN);
+                    gr->GetYaxis()->SetTitle("X#rightarrowHH#rightarrowb#bar{b}VV (VV=ZZ or WW) efficiency");
+                    int iP = 0;
+                    for(float mass = 800; mass <3500; mass+=10){
+                        double y = fr->Eval(mass);
+                        gr->SetPoint(iP,mass,y/inclusiveN);
+                        iP++;
                     }
-                    plot->addGraph(gr,b.title);
+
+//                    for(int iP = 0; iP < gr->GetN(); ++iP){
+//                        double x,y,ey;
+//                        gr->GetPoint(iP,x,y);
+//                        ey = gr->GetErrorY(iP);
+//                        gr->SetPoint(iP,x,y/inclusiveN);
+//                        gr->SetPointError(iP,0,ey/inclusiveN);
+//                    }
+                    std::string title = l.title+", "+p.title+", "+ b.title +" category";
+                    plot->addGraph(gr,title,-1,1,5,20,1,true,false,false," C");
+//                    plot->addGraph(gr,b.title,-1,1,4,0,true,false,false);
                 }
-                plot->setMinMax(0,.1);
-                plot->addText(l.title+", "+p.title,0.1454849,0.866087,0.04);
-                plot->setLegendPos(0.5016722,0.7286957,0.9682274,0.9165217);
+                plot->setMinMax(0,.014);
+//                plot->addText(l.title+", "+p.title,0.1454849,0.866087,0.04);
+                plot->setLegendPos(0.58,0.7286957,0.95,0.88);
+                std::string sigNam = signal ? "Spin-2 X" : "Spin-0 X";
+                plot->addText(sigNam,0.595,0.88,0.03);
+//                plot->addText("arXiv: xxxx.xxxxx",0.19,0.78,0.025);
+                plot->setCMSLumi(0);
+                plot->setCMSLumiExtraText("Simulation Supplementary");
+                plot->setCMSLumiLumiText("13 TeV");
+                plot->topStyle.leftMarginSize=0.15;
+
                 auto c = plot->draw(false,(name+"_"+l+"_"+p+"_"+h+"_sigeff") .c_str());
+                plot->yAxis()->SetTitleOffset(1.9);
+                plot->xAxis()->SetTitleOffset(1.05);
                 writeables.push_back(c);
             }
         }
@@ -585,7 +625,7 @@ void plotSignalTests(int cat = 0,int sig = RADION,  bool doCond = true, std::str
     case 0:
         if(outName.size()) outName += "_yield";
         plotYields(name,filename,"yield",{"e_L_LP_full","e_M_LP_full","e_T_LP_full","e_L_HP_full","e_M_HP_full","e_T_HP_full","mu_L_LP_full","mu_M_LP_full","mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
-        plotEfficiencies(name,filename,"yield" );
+        plotEfficiencies(name,filename,"yield" ,sig);
         break;
     case 1:
         if(outName.size()) outName += "_MJJ_fit1stIt";
