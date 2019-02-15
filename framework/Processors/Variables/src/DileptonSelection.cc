@@ -44,7 +44,7 @@ bool DilepSelHelpers::isGoodElectron(const Electron* lep, const DilepSelParamete
 }
 //_____________________________________________________________________________
 bool DileptonProcessor::isGoodMuon(const EventReader& reader_event, const Muon * lep) const {
-   const bool useDataAF = reader_event.realData && !(reader_event.dataRun == FillerConstants::RUN2016G || reader_event.dataRun == FillerConstants::RUN2016H);
+   const bool useDataAF = reader_event.realData && !(*reader_event.dataRun == FillerConstants::RUN2016G || *reader_event.dataRun == FillerConstants::RUN2016H);
    return DilepSelHelpers::isGoodMuon(lep, useDataAF? lepSelParams_dataABCDEF : lepSelParams);
 }
 //_____________________________________________________________________________
@@ -58,7 +58,7 @@ bool DileptonProcessor::isGoodLepton(const EventReader& reader_event, const Lept
 //_____________________________________________________________________________
 std::vector<const Muon*> DileptonProcessor::getMuons(const EventReader& reader_event, const MuonReader& reader_muon) const {
     std::vector<const Muon*> leps;
-    bool useDataAF =  reader_event.realData && !(reader_event.dataRun == FillerConstants::RUN2016G || reader_event.dataRun == FillerConstants::RUN2016H);
+    bool useDataAF =  reader_event.realData && !(*reader_event.dataRun == FillerConstants::RUN2016G || *reader_event.dataRun == FillerConstants::RUN2016H);
     for(const auto& lep : reader_muon.muons){
         if(DilepSelHelpers::isGoodMuon(&lep, useDataAF ? lepSelParams_dataABCDEF : lepSelParams)) leps.push_back(&lep);
     }
@@ -95,8 +95,8 @@ void setDefaultDilepSelParams(DilepSelParameters& par)        {
     par.el_maxD0   = 0.05;
     par.el_maxSip3D   = 4   ;
     par.el_maxISO  = 0.2 ;
-    par.el_getID1   = &Electron::passHEEPID_noISO;
-    par.el_getID2   = &Electron::passMedID_noISO;
+    par.el_getID1   = &Electron::passHEEPID_noIso;
+    par.el_getID2   = &Electron::passMedID_noIso;
     par.el_getISO  = &Electron::miniIso;
 
     par.mu_minPT   = 10  ;
@@ -105,8 +105,8 @@ void setDefaultDilepSelParams(DilepSelParameters& par)        {
     par.mu_maxD0   = 0.05;
     par.mu_maxSip3D   = 4   ;
     par.mu_maxISO  = 0.2 ;
-    par.mu_getID1  = &Muon::passMed16ID;
-    par.mu_getID2  = &Muon::passMed16ID;
+    par.mu_getID1  = &Muon::passMedID;
+    par.mu_getID2  = &Muon::passMedID;
     par.mu_getISO  = &Muon::miniIso;
 }
 void setDefaultDilepSelParams_dataAF(DilepSelParameters& par)        {

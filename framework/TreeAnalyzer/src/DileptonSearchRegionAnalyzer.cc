@@ -71,16 +71,16 @@ void DileptonSearchRegionAnalyzer::turnOffCorr(Corrections corr) {FillerConstant
 
 //--------------------------------------------------------------------------------------------------
 void DileptonSearchRegionAnalyzer::loadVariables()  {
-    reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
-    reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiJet",isRealData());  load(reader_fatjet  );
-    reader_fatjet_noLep=std::make_shared<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);  load(reader_fatjet_noLep  );
-    reader_jet_chs =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jet_chs );
-    reader_jet     =std::make_shared<JetReader>     ("ak4PuppiJet",isRealData(),false);  load(reader_jet     );
-    reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
-    reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
+    reader_event       =loadReader<EventReader>   ("event",isRealData());
+    reader_fatjet      =loadReader<FatJetReader>  ("ak8PuppiJet",isRealData());
+    reader_fatjet_noLep=loadReader<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);
+    reader_jet_chs     =loadReader<JetReader>     ("ak4Jet",isRealData());
+    reader_jet         =loadReader<JetReader>     ("ak4PuppiJet",isRealData(),false);
+    reader_electron    =loadReader<ElectronReader>("electron");
+    reader_muon        =loadReader<MuonReader>    ("muon");
 
     if(!isRealData()){
-        reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
+        reader_genpart =loadReader<GenParticleReader>   ("genParticle");
     }
 
     checkConfig();
@@ -118,7 +118,7 @@ void DileptonSearchRegionAnalyzer::checkConfig()  {
 }
 //--------------------------------------------------------------------------------------------------
 bool DileptonSearchRegionAnalyzer::runEvent() {
-    mcProc = FillerConstants::MCProcess(reader_event->process);
+    mcProc = FillerConstants::MCProcess(*reader_event->process);
     if(isRealData()) smpName = "data";
     else if (mcProc == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
     else smpName = FillerConstants::MCProcessNames[mcProc];
@@ -135,10 +135,10 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
 
         if(isCorrOn(CORR_JER) ){
             Met dummyMET =reader_event->met;
-            JERAK4PuppiProc ->processJets(*reader_jet,reader_event->met,reader_jet_chs->genJets,reader_event->rho);
-            JERAK4CHSProc   ->processJets(*reader_jet_chs,dummyMET,reader_jet_chs->genJets,reader_event->rho);
-            JERAK8PuppiProc ->processFatJets(reader_fatjet_noLep->jets,std::vector<GenJet>(),reader_event->rho);
-            JERAK8PuppiProc ->processFatJets(reader_fatjet->jets,reader_fatjet->genJets,reader_event->rho);
+            JERAK4PuppiProc ->processJets(*reader_jet,reader_event->met,reader_jet_chs->genJets,*reader_event->rho);
+            JERAK4CHSProc   ->processJets(*reader_jet_chs,dummyMET,reader_jet_chs->genJets,*reader_event->rho);
+            JERAK8PuppiProc ->processFatJets(reader_fatjet_noLep->jets,std::vector<GenJet>(),*reader_event->rho);
+            JERAK8PuppiProc ->processFatJets(reader_fatjet->jets,reader_fatjet->genJets,*reader_event->rho);
         }
         if(isCorrOn(CORR_MET) ){
             METUncProc->process(reader_event->met,*reader_event);
@@ -147,7 +147,7 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
 
     //|||||||||||||||||||||||||||||| GEN PARTICLES ||||||||||||||||||||||||||||||
     if(reader_genpart){
-        if(reader_event->process == FillerConstants::SIGNAL) diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
+        if(*reader_event->process == FillerConstants::SIGNAL) diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
         smDecayEvt.setDecayInfo(reader_genpart->genParticles);
     }
 
@@ -229,7 +229,7 @@ bool DileptonSearchRegionAnalyzer::runEvent() {
             weight *= trigSFProc->getLeptonTriggerSF(ht_puppi, selectedDileptons[0]->isMuon());
             }
         if(isCorrOn(CORR_PU) )
-            weight *= puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL);
+            weight *= puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL);
         if(isCorrOn(CORR_LEP)){
             leptonSFProc->load(smDecayEvt,selectedDileptons);
             weight *= leptonSFProc->getSF();
