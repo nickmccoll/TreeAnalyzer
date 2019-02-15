@@ -195,5 +195,18 @@ void compareLimits(bool blind, int sig = RADION, std::string inName = "higgsComb
     std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
     std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
     std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    go(blind,sig,{ {"silepton_rad/higgsCombineTest.AsymptoticLimits.root","1l"},{"dilepton_rad/higgsCombineTest.AsymptoticLimits.root","2l"},{"combined_rad/higgsCombineTest.AsymptoticLimits.root","1l+2l"} },outName +"_"+ fileLabel[sig]);
+    std:: vector<std::pair<std::string,std::string>> inputs;
+    inputs = {
+            {"silepton_rad/higgsCombineTest.AsymptoticLimits.root","1l"},
+            {"dilepton_rad/higgsCombineTest.AsymptoticLimits.root","2l"},
+            {"combined_rad/higgsCombineTest.AsymptoticLimits.root","1l+2l"}
+    };
+//    inputs = {
+//            {"higgsCombineTest.AsymptoticLimits.testBinning_std.root","Fine binning"},
+            //            {"higgsCombineTest.AsymptoticLimits.testBinning_rebinX.root","rebinX"},
+            //            {"higgsCombineTest.AsymptoticLimits.testBinning_rebinY.root","rebinY"},
+//            {"higgsCombineTest.AsymptoticLimits.testBinning_rebinXY.root","Coarse binning"}
+//    };
+
+    go(blind,sig,inputs ,outName +"_"+ fileLabel[sig]);
 }
