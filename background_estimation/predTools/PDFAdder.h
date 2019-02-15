@@ -12,6 +12,7 @@
 #include "HiggsAnalysis/CombinedLimit/interface/VerticalInterpHistPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/HZZ2L2QRooPdfs.h"
 #include "RooExponential.h"
+#include "RooGaussian.h"
 
 #include <utility>
 
@@ -257,6 +258,19 @@ void addExpo(RooWorkspace* w, const std::string& pdfName,const std::string& pVar
     w->import(modelE);
 }
 
+void addGaus(RooWorkspace* w,const std::string& pdfName,const std::string& pVar, const std::string& varName, const std::string& parPostFix,const std::string& JSONPostFix, const CJSON& json,const StrFlts& scale,const StrFlts& resolution){
+    auto pN = [&](const std::string& v)->std::string{return v +"_"+parPostFix;};
+    auto pJS = [&](const std::string& v)->std::string{return std::string("(0*")+pVar+"+"  +json.getP(v+JSONPostFix)+")";};
+    auto pF = [&](const std::string& v)->RooAbsReal*{return w->function(pN(v).c_str());};
+
+    makeParamFormula(w,pN("mean"),pJS("mean"),scale,{pVar});
+    makeParamFormula(w,pN("sigma"),pJS("sigma"),resolution,{pVar});
+
+    RooGaussian modelP(pdfName.c_str(),pdfName.c_str(),*w->var(varName.c_str()),
+            *pF("mean"),*pF("sigma"));
+    w->import(modelP);
+}
+
 void addCB(RooWorkspace* w,const std::string& pdfName,const std::string& pVar, const std::string& varName, const std::string& parPostFix,const std::string& JSONPostFix, const CJSON& json,const StrFlts& scale,const StrFlts& resolution,const StrFlts& alpha1 = StrFlts()){
     auto pN = [&](const std::string& v)->std::string{return v +"_"+parPostFix;};
     auto pJS = [&](const std::string& v)->std::string{return std::string("(0*")+pVar+"+"  +json.getP(v+JSONPostFix)+")";};
@@ -309,6 +323,23 @@ void addCondCB(RooWorkspace* w, const std::string& pdfName,const std::string& pV
     RooDoubleCB modelP(pdfName.c_str(),pdfName.c_str(),*w->var(varName.c_str()),
             *pF("meanYDepX"),*pF("sigmaYDepX"),*pF("alpha"),*pF("n") ,*pF("alpha2"),*pF("n2"));
     w->import(modelP);
+}
+
+void add2DGaus(RooWorkspace* w, const std::string& name,const std::string& PF,const std::string& variableX,const std::string& variableY,const std::string& jsonFile,const StrFlts& scale_X,const StrFlts& resolution_X
+        ,const StrFlts& scale_Y,const StrFlts& resolution_Y, const std::string& pVar){
+    CJSON json( jsonFile);
+    const std::string varXCBPDFName =  name+"_"+variableX+"_"+PF;
+    const std::string varXEPDFName = name+"_"+variableX+"_"+"E"+"_"+PF;
+    const std::string varXPF = name+"_"+variableX+"_"+PF;
+    const std::string varYPF = name+"_"+variableY+"_"+PF;
+    const std::string varXPDFName = name+"_"+variableX+"_"+PF;
+    const std::string varYPDFName = name+"_"+variableY+"_"+PF;
+    const std::string PDFName = name+"_"+PF;
+
+    addGaus(w,varXCBPDFName,pVar,variableX,varXPF,variableX,json,scale_X,resolution_X);
+    addGaus(w,varYPDFName,pVar,variableY,varYPF,variableY,json,scale_Y,resolution_Y);
+    RooProdPdf prodP(PDFName.c_str(), (varXPDFName+"*"+varYPDFName).c_str(),RooArgSet(*w->pdf(varXPDFName.c_str()), *w->pdf(varYPDFName.c_str())) );
+    w->import(prodP);
 }
 
 

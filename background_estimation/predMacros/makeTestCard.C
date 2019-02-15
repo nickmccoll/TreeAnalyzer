@@ -94,7 +94,7 @@ void makeInputs() {
     w->factory((MOD_MR + "["+ASTypes::flt2Str(1000)+","+ASTypes::flt2Str(0)+","+ASTypes::flt2Str(10000)+"]").c_str());
     w->factory((MOD_MS + "["+ASTypes::flt2Str(2000)+","+ASTypes::flt2Str(0)+","+ASTypes::flt2Str(10000)+"]").c_str());
     w->var(MOD_MS.c_str())->setVal(MH);
-    PDFAdder::addDoubleGaus(w,"signal","PF",MOD_MJ,MOD_MR,"signalJSON.json",{},{},{},{},MOD_MS);
+    PDFAdder::add2DGaus(w,"signal","PF",MOD_MJ,MOD_MR,"signalJSON.json",{},{},{},{},MOD_MS);
     auto* pdf = w->pdf("signal_PF");
 
     TH2 * sig = new TH2F("fine_sig",";X;Y",nBinsX,minX,maxX,nBinsYF,minY,maxY);
