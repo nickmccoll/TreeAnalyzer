@@ -46,7 +46,7 @@ void doAllBKG(const std::string& outDir) {
     }
     outH->Scale(1./outH->Integral());
     TGaxis::SetMaxDigits(3);
-    TH2 * newOutH = new TH2F("newComb",";#it{m}_{bb} [GeV];#it{m}_{HH} [TeV]; Arbitrary scale",90,30,210,132,0.7,4);
+    TH2 * newOutH = new TH2F("newComb",";#it{m}_{b#bar{b}} [GeV];#it{m}_{HH} [TeV]; Arbitrary scale",90,30,210,132,0.7,4);
     for(unsigned int iX = 1; iX <= 90; iX++)for(unsigned int iY = 1; iY <= 132; iY++)
         newOutH->SetBinContent(iX,iY,outH->GetBinContent(iX,iY));
     newOutH->GetXaxis()->SetTitleOffset(1.05);
@@ -91,7 +91,7 @@ void doSig(const int mx, const std::string& mxTitle, const std::string& outDir) 
     TFile * f = new TFile(std::string("signalInputs/HHlnujj_radHH_"+cat+"_2D_fit.root").c_str());
     TH2* c=0;
     f->GetObject(("pdf_m"+int2Str(mx)+"__MJ_MR").c_str(),c);
-    TH2 * newOutH = new TH2F("newComb",";#it{m}_{bb} [GeV];#it{m}_{HH} [TeV]; Arbitrary scale",90,30,210,132,0.7,4);
+    TH2 * newOutH = new TH2F("newComb",";#it{m}_{b#bar{b}} [GeV];#it{m}_{HH} [TeV]; Arbitrary scale",90,30,210,132,0.7,4);
 
     for( int iX = 1; iX <= c->GetNbinsX(); iX++)for( int iY = 1; iY <= c->GetNbinsY(); iY++){
         int oX = newOutH->GetXaxis()->FindFixBin(c->GetXaxis()->GetBinCenter(iX));
@@ -162,9 +162,11 @@ void doExtraPlots(){
         double yV = 0.75;
         p->setLegendPos(xV,yV,xV+0.3,yV+0.15);
         p->setMinMax(0,maxys[iV]);
+        if(iV==0) p->setXTitle("#DeltaR(lepton,W#rightarrowq#bar{q}')");
         auto * c = p->draw(false,vars[iV]+"_genDist.pdf");
         p->xAxis()->SetTitleOffset(1.05);
         p->yAxis()->SetTitleOffset(1.54);
+
         c->Print((vars[iV]+"_genDist.pdf").c_str());
 
     }

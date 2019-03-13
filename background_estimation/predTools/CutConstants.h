@@ -37,7 +37,7 @@ CutStr abV  ("abV"   , "nAK4Btags!=0");
 CutStr preSel("preSel"  , "passPre==1");
 
 
-CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{bb} [GeV]");
+CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
 CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
 
 unsigned int nHbbMassBins   =90;
@@ -69,10 +69,10 @@ CutStr hbbInclBinning ("hbbInclBinning" ,ASTypes::int2Str(nInclHbbMassBins)+","+
 
 enum BKGModels  {BKG_QG, BKG_LOSTTW, BKG_MW, BKG_MT};
 std::vector<CutStr > bkgSels = {
-        CutStr("qg"    ,"hbbWQuark==0","Q/G bkg."),
+        CutStr("qg"    ,"hbbWQuark==0","q/g bkg."),
         CutStr("losttw","hbbWQuark>0&&hbbWQuark<=3","Lost t/W bkg."),
-        CutStr("mw"     ,"hbbWQuark==4","m_{W} bkg."),
-        CutStr("mt"     ,"hbbWQuark==5","m_{t} bkg.")
+        CutStr("mw"     ,"hbbWQuark==4","#it{m}_{W} bkg."),
+        CutStr("mt"     ,"hbbWQuark==5","#it{m}_{t} bkg.")
 };
 
 enum LEPCats  {LEP_EMU, LEP_E, LEP_MU};

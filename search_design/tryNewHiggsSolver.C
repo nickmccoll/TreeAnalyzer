@@ -654,6 +654,9 @@ public:
 
         };
         plotgrp(smpName +"_orig",hh.p4(),hWW.p4(),wlnu.p4(), neutrino.p4());
+        plotgrp(smpName +"_pN",(hbbCand->p4() + selectedLepton->p4() +diHiggsEvt.w1_d2->p4() + wjjCand->p4() ),( selectedLepton->p4() +diHiggsEvt.w1_d2->p4() + wjjCand->p4()),(selectedLepton->p4() +diHiggsEvt.w1_d2->p4()), diHiggsEvt.w1_d2->p4());
+        ASTypes::CylLorentzVectorF perfectZN(reader_event->met.pt(),diHiggsEvt.w1_d2->eta(),  reader_event->met.phi(),  0);
+        plotgrp(smpName +"_pNZ",(hbbCand->p4() + selectedLepton->p4() +perfectZN + wjjCand->p4() ),( selectedLepton->p4() +perfectZN + wjjCand->p4()),(selectedLepton->p4() +perfectZN), perfectZN);
 
         auto newhh = (info.hWW + hbbCand->p4());
 

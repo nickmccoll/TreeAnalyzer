@@ -16,6 +16,8 @@ std::vector<PlotVar> vars;
 std::vector<std::string> varUnits;
 std::vector<PlotSamp> samps;
 
+bool preliminary = false;
+
 
 
 void makeDataDistributions(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut,bool isData){
@@ -41,6 +43,7 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
 
     for(unsigned int iV = 1; iV < vars.size(); ++iV){
         Plotter * p = new Plotter;
+        std::vector<Drawing::TLegendEntryDef> legEntries;
 
 
         int rebinFactor = 0;
@@ -59,7 +62,9 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             fm->GetObject((processes[iP]+"_loose_"+vars[iV].varName+"_"+vars[iV].varName).c_str(),hm);
             if(hm == 0) continue;
             if(rebinFactor) hm->Rebin(rebinFactor);
-            p->addStackHist(hm,processes[iP].title);
+            auto * g = p->addStackHist(hm,processes[iP].title);
+            legEntries.push_back(std::make_tuple(10+processes.size() +iP,g,processes[iP].title.c_str(),"f"));
+
         }
 
         auto * tot = (TH1*)p->getTotStack()->Clone();
@@ -99,13 +104,14 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
 
         p->clearTotStackError();
 
-        int fillColor = 2;
+        int fillColor = kMagenta+4;
         errBand->SetFillColor(fillColor);
         errBand->SetFillStyle(3352);
         gStyle->SetHatchesLineWidth(1);
         gStyle->SetHatchesSpacing(.5);
-        p->addGraph(errBand,"MC stat. unc.",fillColor,1,1,20,1,false,true,false,"2");
-
+        auto * g_mcunc = p->addGraph(errBand,"MC stat. unc.",fillColor,1,1,20,1,false,true,false,"2");
+        legEntries.push_back(std::make_tuple(2,g_mcunc,"MC stat. unc.","F"));
+        legEntries.push_back(std::make_tuple(4,(TObject*)(0),"",""));
 
 
         for(unsigned int iS = 0; iS < signalFiles.size(); ++iS){
@@ -117,35 +123,46 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             hm->Scale(CutConstants::HHtobbVVBF);
             if(rebinFactor) hm->Rebin(rebinFactor);
             hm->SetName((signalNames[iS]+vars[iV].varName).c_str());
-            p->addHistLine(hm,signalNames[iS],StyleInfo::getLineColor(iS+1));
+            auto * g = p->addHistLine(hm,signalNames[iS],StyleInfo::getLineColor(iS+1));
+            legEntries.push_back(std::make_tuple(100+iS,g,signalNames[iS],"L"));
+
         }
 
         TH1 * hd = 0;
         fd->GetObject((std::string("all_loose_")+vars[iV].varName+"_"+vars[iV].varName).c_str(),hd);
         if(hd == 0) continue;
         if(rebinFactor) hd->Rebin(rebinFactor);
-        p->addHist(hd,"Data",kBlack,1,2,20,0.5,true,true,true);
+         p->addHist(hd,"Data",kBlack,1,2,20,0.5,true,true,true);
+        TGraphAsymmErrors * g_d = new TGraphAsymmErrors;
+        g_d->SetLineColor  (kBlack);
+        g_d->SetLineWidth  (2);
+        g_d->SetLineStyle  (1);
+        g_d->SetMarkerStyle(20);
+        g_d->SetMarkerColor(kBlack);
+        g_d->SetMarkerSize (0.5);
+        legEntries.push_back(std::make_tuple(0,g_d,"Data","P E"));
+        legEntries.push_back(std::make_tuple(1,(TObject*)(0),"",""));
 
         p->setCMSLumi(10);
 
         bool sup = false;
         switch(iV){
         case 1: //hbb
-            p->setMinMax(0,500);
+            p->setMinMax(0,575);
             break;
         case 2: //hh
-            p->setMinMax(0.1,10000);
+            p->setMinMax(0.1,12000);
             sup = true;
             break;
         case 3://nAK4Btags
-            p->setMinMax(0,9000);
+            p->setMinMax(0,10000);
             sup = true;
             break;
         case 4://wjjTau2o1
-            p->setMinMax(0,800);
+            p->setMinMax(0,1000);
             break;
         case 5://hwwPT_o_hhMass
-            p->setMinMax(0,950);
+            p->setMinMax(0,1100);
             break;
         case 6://wwDM
             p->setMinMax(0,1250);
@@ -157,23 +174,34 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
         }
 
         double xV =0.45;
-        double yV =0.68;
+        double yV =0.619;
 
 //        p->addText("All categories",xV+0.0075,yV+0.2075,0.045);
-        if(sup){
+        if(sup||preliminary){
             p->setCMSLumiPosition(0,1.05);
-            p->setCMSLumiExtraText("Supplementary");
+           if(sup) p->setCMSLumiExtraText("Supplementary");
+           else p->setCMSLumiExtraText("Preliminary");
             p->addText("All categories",.18,0.83,0.045);
         } else {
             p->addText("All categories",.18,0.75,0.045);
         }
 
+        //--------------------LEGEND AND TEXT------------------------------
+        p->turnOffLegend();
+        TLegend * legend = signalNames.size() ? new TLegend(xV,yV,xV+0.457,yV+0.25) : new TLegend(xV,yV,xV+0.445,yV+0.25);
+        legend->SetFillStyle(0);
+        legend->SetBorderSize(0);
+        legend->SetNColumns(2);
+        std::sort(legEntries.begin(), legEntries.end(), [](const Drawing::TLegendEntryDef& a, const Drawing::TLegendEntryDef& b) {return  std::get<0>(a) < std::get<0>(b); }  );
+        for(const auto& l : legEntries){
+            legend->AddEntry(std::get<1>(l),std::get<2>(l),std::get<3>(l));
+        }
+        //--------------------LEGEND AND TEXT------------------------------
+
+
         if(signalNames.size()){
-            p->setLegendPos(xV,yV,xV+0.457,yV+0.245);
             p->addText("#sigma#bf{#it{#Beta}}(X #rightarrow HH) = 1 pb",xV+0.0075,yV-0.04,0.042);
         } else {
-            p->setLegendPos(xV,yV,xV+0.445,yV+0.245);
-
         }
         p->setLegendNColumns(2);
 
@@ -189,6 +217,9 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
         auto * c = p->drawSplitRatio(-1,"stack",false,false,prefix+vars[iV].varName+"_srvardists.pdf");
 //        p->yAxis()->SetTitleOffset(1.55);
         p->xAxis()->SetTitleOffset(1.05);
+        c->GetPad(1)->cd();
+        legend->Draw();
+        c->GetPad(1)->Update();
 
         p->botStyle.xAxis->SetTitleOffset(1.05);
 
@@ -200,6 +231,9 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
 
         if(iV == 1){//temp hack
             p->botStyle.xAxis->SetTitle(hbbMCS.title.c_str());
+        }
+        if(iV == 4){//temp hack
+            p->botStyle.xAxis->SetTitle("q#bar{q}' #tau_{2}/#tau_{1}");
         }
         if(iV == 7){
             p->botStyle.xAxis->SetBinLabel(1,"0 L");
@@ -304,7 +338,7 @@ void plotSRVariables( int step, int reg,std::string tree, std::string name){
     vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass);
     vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
     vars.emplace_back("nAK4Btags" ,"; N. of AK4 jet b tags","nAK4Btags",4,-0.5,3.5);
-    vars.emplace_back("wjjTau2o1" ,"; q#bar{q} #tau_{2}/#tau_{1}","wjjTau2o1",50,0,1);
+    vars.emplace_back("wjjTau2o1" ,"; q#bar{q}' #tau_{2}/#tau_{1}","wjjTau2o1",50,0,1);
     vars.emplace_back("hwwPT_o_hhMass" ,"; #it{p}_{T}/#it{m}","hwwPT/hhMass",50,0,1);
     vars.emplace_back("wwDM","; #it{m}_{D} [GeV]","wwDM",50,0,500);
     vars.emplace_back("hbbCSVCat","; hbbCSVCat","(hbbCSVCat-1)",6,-0.5,5.5);
