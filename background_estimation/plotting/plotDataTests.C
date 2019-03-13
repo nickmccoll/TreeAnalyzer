@@ -34,6 +34,7 @@ public:
     std::string outName;
 };
 
+bool preliminary = false;
 
 enum ModelType {MOD_NONE, MOD_MC, MOD_PRE, MOD_POST};
 std::string modTitles[] = {"NONE","MC","prefit","fit"};
@@ -449,27 +450,60 @@ public:
 
 
                 Plotter * p = new Plotter();
+                std::vector<Drawing::TLegendEntryDef> legEntries;
 
                 if(cont.toyErr){
-                    int fillColor = 2;
+                    int fillColor = kMagenta+4;
                     cont.toyErr->SetFillColor(fillColor);
                     cont.toyErr->SetFillStyle(3352);
                     gStyle->SetHatchesLineWidth(1);
                     gStyle->SetHatchesSpacing(.5);
                     //                    p->addGraph(cont.toyErr,"fit unc.",fillColor,1,1,20,1,false,true,false,"3");
 
-                    p->addGraph(cont.toyErr,"Fit unc.",fillColor,1,1,20,1,false,true,false,"2");
+                    auto * g = p->addGraph(cont.toyErr,"Fit unc.",fillColor,1,1,20,1,false,true,false,"2");
+                    legEntries.push_back(std::make_tuple(2,g,"Fit unc.","F"));
                 }
-                if(cont.add)p->addHistLine(cont.add,modTitles[prefs.addType],kBlue);
+                if(cont.add){
+                    auto * g = p->addHistLine(cont.add,modTitles[prefs.addType],kBlue);
+                    legEntries.push_back(std::make_tuple(3,g,modTitles[prefs.addType],"L"));
+                }
+
+                if( int(cont.toyErr!=0) + int(cont.add!=0)  == 1  ){
+                    legEntries.push_back(std::make_tuple(4,(TObject*)(0),"",""));
+                }
+
+
 
                 for(unsigned int iSig = 0; iSig < cont.sig.size(); ++iSig){
-                    if(cont.sig[iSig]) p->addHistLine(cont.sig[iSig],prefs.signalTitles[iSig],StyleInfo::getLineColor(iSig+1));
+                    if(cont.sig[iSig]){
+                        auto * g = p->addHistLine(cont.sig[iSig],prefs.signalTitles[iSig],StyleInfo::getLineColor(iSig+1));
+                        legEntries.push_back(std::make_tuple(100+iSig,g,prefs.signalTitles[iSig],"L"));
+                    }
                 }
 
-                if(cont.data) p->addHist(cont.data,"Data",kBlack,1,2,20,0.5,true,true,true);
-                for(unsigned int iH = 0; iH < cont.bkg.size(); ++iH){
-                    if(cont.bkg[iH]) p->addStackHist(cont.bkg[iH],bkgSels[iH].title.c_str());
+                if(cont.data){
+                    p->addHist(cont.data,"Data",kBlack,1,2,20,0.5,true,true,true);
+                    TGraphAsymmErrors * g = new TGraphAsymmErrors;
+                    g->SetLineColor  (kBlack);
+                    g->SetLineWidth  (2);
+                    g->SetLineStyle  (1);
+                    g->SetMarkerStyle(20);
+                    g->SetMarkerColor(kBlack);
+                    g->SetMarkerSize (0.5);
+                    legEntries.push_back(std::make_tuple(0,g,"Data","P E"));
                 }
+                legEntries.push_back(std::make_tuple(1,(TObject*)(0),"",""));
+
+                int nB = 0;
+                for(unsigned int iH = 0; iH < cont.bkg.size(); ++iH){
+                    if(cont.bkg[iH]){
+                        nB ++;
+                        auto *g = p->addStackHist(cont.bkg[iH],bkgSels[iH].title.c_str());
+                        legEntries.push_back(std::make_tuple(10+cont.bkg.size() -iH,g,bkgSels[iH].title.c_str(),"f"));
+                    }
+                }
+                if(nB % 2)  legEntries.push_back(std::make_tuple(10+ cont.bkg.size()+1,(TObject*)(0),"",""));
+
                 if(cont.toyErr)p->clearTotStackError();
                 p->setUnderflow(false);
                 p->setOverflow(false);
@@ -481,20 +515,22 @@ public:
                 }
 
                 double xV =0.45;
-                double yV =0.68;;
+                double yV =0.63;;
 
                 p->setXTitle( (prefs.binInY ? hbbMCS : hhMCS) .title.c_str());
                 p->setYTitle((std::string("Data / ") + flt2Str(binWidth) +" GeV").c_str() );
-                if(prefs.isSupp){
+                if(prefs.isSupp || preliminary){
                     p->setCMSLumi(0);
-                    p->setCMSLumiExtraText("Supplementary");
+                    if( prefs.isSupp) p->setCMSLumiExtraText("Supplementary");
+                    else  p->setCMSLumiExtraText("Preliminary");
                     p->setCMSLumiPosition(0,1.05);
 
                 } else {
                     p->setCMSLumi(10);
                 }
 
-                float startY = prefs.isSupp ? 0.83 : 0.75;
+
+                float startY = (prefs.isSupp||preliminary) ? 0.83 : 0.75;
                 if(prefs.topTitle.size() ){
                     p->addText(prefs.topTitle,.18,startY,0.045);
                     startY -= 0.05;
@@ -510,13 +546,22 @@ public:
                 if(prefs.signals.size()){
                     p->setLegendPos(xV,yV,xV+0.457,yV+0.245);
                     TString sigName = TString::Format("#sigma#bf{#it{#Beta}}(X #rightarrow HH) = %.1f pb",signalXS);
-                    p->addText(sigName.Data(),xV+0.0075,yV-0.04,0.042);
+                    p->addText(sigName.Data(),xV+0.0075,yV-0.035,0.042);
                 }
-
                 else {
                     p->setLegendPos(xV,yV,xV+0.445,yV+0.245);
                 }
-
+                //--------------------LEGEND AND TEXT------------------------------
+                p->turnOffLegend();
+                TLegend * legend = prefs.signals.size() ? new TLegend(xV,yV,xV+0.457,yV+0.245) : new TLegend(xV,yV,xV+0.445,yV+0.245);
+                legend->SetFillStyle(0);
+                legend->SetBorderSize(0);
+                legend->SetNColumns(2);
+                std::sort(legEntries.begin(), legEntries.end(), [](const Drawing::TLegendEntryDef& a, const Drawing::TLegendEntryDef& b) {return  std::get<0>(a) < std::get<0>(b); }  );
+                for(const auto& l : legEntries){
+                    legend->AddEntry(std::get<1>(l),std::get<2>(l),std::get<3>(l));
+                }
+                //--------------------LEGEND AND TEXT------------------------------
 
                 if(prefs.doLog) p->setMinMax(0.1,1000 );
                 if(prefs.minTop != prefs.maxTop){
@@ -549,12 +594,16 @@ public:
                                                                         if(prim) prim->Delete();
                     }
 
-
+                    c->GetPad(1)->cd();
+                    legend->Draw();
                     c->GetPad(1)->Update();
+
                     writeables.push_back(c);
                 } else {
                     auto * c = p->draw(false,plotTitle.c_str());
                     if(prefs.doLog)c->SetLogy();
+                    c->cd();
+                        legend->Draw();
                     c->Update();
                     writeables.push_back(c);
                 }
@@ -1264,7 +1313,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.binInY = false;
         hhPlot.sels =  srList;
         hhPlot.titles = srListTitles;
-        hhPlot.topTitle = reg == REG_TOPCR ? "Top CR" : "Q/G CR";
+        hhPlot.topTitle = reg == REG_TOPCR ? "t#bar{t} CR" : "q/g CR";
 
         hhPlot.minTop =0.5;
         hhPlot.maxTop =100000;
@@ -1279,7 +1328,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hbbPlot.bins = {700,4000};
         hbbPlot.doLog = false;
         hbbPlot.minTop =0;
-        hbbPlot.maxTop =reg==REG_TOPCR ?  1000 :2000;
+        hbbPlot.maxTop =reg==REG_TOPCR ?  1100 :2000;
         hbbPlot.rebinFactor = 3;
         auto writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root");
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
@@ -1311,8 +1360,9 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hbbPlot.bins = {700,4000};
         hbbPlot.binInY = true;
         hbbPlot.doLog = false;
-        hbbPlot.minTop =400;
-        hbbPlot.maxTop =400;
+        hbbPlot.minTop =0;
+        hbbPlot.maxTop =0;
+//        hbbPlot.maxTops = {140,90,35, 20,25,15,200,100,40,30};
         hbbPlot.rebinFactor = 3;
         //        if(inreg == REG_SR) hbbPlot.blindRange ={100,150};
         auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename);
@@ -1354,7 +1404,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hbbPlot.doLog = false;
         hbbPlot.minTop =0;
         hbbPlot.maxTop =0;//reg==REG_TOPCR ?  1000 :2000;
-        hbbPlot.maxTops = {450.0,0,0,375.0,200.0,20.0};
+        hbbPlot.maxTops = {480.0,0,0,400.0,200.0,20.0};
         hbbPlot.botTitles = {"","","","0.7 < #it{m}_{HH} < 1 TeV","1 < #it{m}_{HH} < 2 TeV","2 < #it{m}_{HH} < 4  TeV"};
         hbbPlot.rebinFactor = 3;
         auto writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root");
@@ -1373,7 +1423,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.sels =  srList;
         hhPlot.titles = srListTitles;
         hhPlot.isSupp = true;
-        hhPlot.botTitles = {"100 < #it{m}_{bb} < 150 GeV"};
+        hhPlot.botTitles = {"100 < #it{m}_{b#bar{b}} < 150 GeV"};
 
         hhPlot.minTop =0.05;
         hhPlot.maxTop =1000;

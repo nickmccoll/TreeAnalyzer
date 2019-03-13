@@ -146,17 +146,77 @@ std::vector<std::pair<float,float>> bgXsec = {
 {3500    ,1.15e-04}
 };
 
+std::vector<std::pair<float,float>> bgXsec0p3 = {
+{800 ,1.64e+01},
+{850 ,1.20e+01},
+{900 ,8.82e+00},
+{950 ,6.71e+00},
+{1000,5.10e+00},
+{1050,4.05e+00},
+{1100,3.22e+00},
+{1150,2.56e+00},
+{1200,2.04e+00},
+{1250,1.62e+00},
+{1300,1.29e+00},
+{1350,1.03e+00},
+{1400,8.15e-01},
+{1450,6.48e-01},
+{1500,5.15e-01},
+{1550,4.26e-01},
+{1600,3.52e-01},
+{1650,2.91e-01},
+{1700,2.41e-01},
+{1750,1.99e-01},
+{1800,1.65e-01},
+{1850,1.38e-01},
+{1900,1.16e-01},
+{1950,9.72e-02},
+{2000,8.16e-02},
+{2050,6.96e-02},
+{2100,5.95e-02},
+{2150,5.08e-02},
+{2200,4.34e-02},
+{2250,3.70e-02},
+{2300,3.16e-02},
+{2350,2.70e-02},
+{2400,2.31e-02},
+{2450,1.97e-02},
+{2500,1.68e-02},
+{2550,1.46e-02},
+{2600,1.26e-02},
+{2650,1.09e-02},
+{2700,9.44e-03},
+{2750,8.17e-03},
+{2800,7.07e-03},
+{2850,6.12e-03},
+{2900,5.30e-03},
+{2950,4.59e-03},
+{3000,3.97e-03},
+{3050,3.47e-03},
+{3100,3.04e-03},
+{3150,2.65e-03},
+{3200,2.32e-03},
+{3250,2.03e-03},
+{3300,1.77e-03},
+{3350,1.55e-03},
+{3400,1.36e-03},
+{3450,1.19e-03},
+{3500,1.04e-03}
+};
 
 TGraph * getSignalCrossSection(int sig) {
 TGraph * gr = new TGraph();
 
-const auto& sigXSec = sig == RADION ? radionXSec : bgXsec;
+    const auto& sigXSec = (sig == 0 ? radionXSec : (sig == 1 ? bgXsec0p3 : bgXsec) );
+
 
 int pt = 0;
 for(const auto & xsec : sigXSec){
     gr->SetPoint(pt,xsec.first, xsec.second);
     pt++;
 }
+
+
 
 
 
@@ -251,12 +311,21 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
     frame->GetYaxis()->SetTitleSize(0.05);
     frame->GetYaxis()->SetTitleOffset(1.15);
 
+
     auto sigXSec = getSignalCrossSection(sig);
     sigXSec->SetLineWidth(3);
     sigXSec->SetLineColor(kRed);
-//    bandExp->SetLineStyle(7);
+//    if(sig!=RADION)
+//        sigXSec->SetLineStyle(7);
     sigXSec->SetMarkerStyle(0);
     sigXSec->SetMarkerColor(kRed);
+
+    auto sigXSec2 = getSignalCrossSection(2);
+    sigXSec2->SetLineWidth(3);
+    sigXSec2->SetLineColor(kRed);
+    sigXSec2->SetLineStyle(7);
+    sigXSec2->SetMarkerStyle(0);
+    sigXSec2->SetMarkerColor(kRed);
 
 
     auto bandExp = (TGraphAsymmErrors*)band68->Clone();
@@ -275,7 +344,9 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
     auto leg = new TLegend(0.58,0.66,0.91,0.83,"","NDC");
     leg->SetBorderSize(0);
 
-    leg->AddEntry(sigXSec, sig == RADION ? "Radion (#Lambda_{R}=3 TeV)" : "Bulk graviton (#tilde{k}=0.1)");
+    leg->AddEntry(sigXSec, sig == RADION ? "Radion (#Lambda_{R}=3 TeV)" : "Bulk graviton (#tilde{k}=0.3)");
+    if(sig != RADION)
+        leg->AddEntry(sigXSec2,  "Bulk graviton (#tilde{k}=0.1)");
     if(!blind)leg->AddEntry(bandObs, "Observed");
     leg->AddEntry(bandExp, "Median expected","L");
     leg->AddEntry(band68, "68% expected","F");
@@ -287,6 +358,7 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
     band95->Draw("3same");
     band68->Draw("3same");
     sigXSec->Draw("LX");
+    if(sig != RADION) sigXSec2->Draw("LX");
     bandExp->Draw("LX");
     if(!blind) bandObs->Draw("PLsame");
     leg->Draw();
