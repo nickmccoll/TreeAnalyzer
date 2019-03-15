@@ -24,8 +24,8 @@ def get_num_mc_events(filelist, prefix='', selection=''):
         filepath = '/'.join(['%s' % prefix, '%s' % filename])
         file = TFile.Open(filepath)
         tree = file.Get(args.treeName)
-        totnegentries += tree.GetEntries('event_weight<0' + selection)
-        totposentries += tree.GetEntries('event_weight>0' + selection)
+        totnegentries += tree.GetEntries('event_genWeight<0' + selection)
+        totposentries += tree.GetEntries('event_genWeight>0' + selection)
     return totposentries, totnegentries
 def get_num_data_events(filelist, prefix='', selection=''):
     totposentries = 0
@@ -36,7 +36,7 @@ def get_num_data_events(filelist, prefix='', selection=''):
         totposentries += tree.GetEntries(selection)
     return totposentries
 
-def addSample(name,sample,datarun,cross,numE,numF,cmdLine,dasName,configs) :
+def addSample(name,datarun,cross,dasName,configs) :
 	if(re.match(".+-ext\d*", name)) : return
 	
 	files = []
@@ -51,7 +51,7 @@ def addSample(name,sample,datarun,cross,numE,numF,cmdLine,dasName,configs) :
 	result = ps.communicate()
 	filelist = result[0].rstrip('\n').split('\n')
 	totNumE = 0
-	if datarun == "-" :
+	if datarun.startswith("MC"):
 		nposevents, nnegevents = get_num_mc_events(filelist, prefix)
 		print "Sample " + name + " has " + str(nposevents) + " positive and " + str(nnegevents) + " negative weight events"
 		totNumE = nposevents - nnegevents
@@ -59,7 +59,7 @@ def addSample(name,sample,datarun,cross,numE,numF,cmdLine,dasName,configs) :
 		nposevents = get_num_data_events(filelist, prefix)
 		print "Sample " + name + " has " + str(nposevents) + " number of events"
 		totNumE = nposevents
-	cfgLine = ("%s\t%s\t%s\t%s\t5\t%s" % (name,str(1 if datarun == "-" else 0 ),cross,str(totNumE),args.dataDir))
+	cfgLine = ("%s\t%s\t%s\t%s\t5\t%s" % (name,str(1 if datarun.startswith("MC") else 0 ),cross,str(totNumE),args.dataDir))
 	configs.append(cfgLine)
 
 outputLines = []
@@ -67,13 +67,13 @@ inputData = open(args.inputData, "r")
 for line in inputData:
 	if re.match("\s*#.*", line) : 
 		continue
-	match = re.match("^\s*(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s*$", line)
+	match = re.match("(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*", line)
 	if not match : 
 		print "Do not understand:"
 		print line
 		continue
-	addSample(match.group(1),match.group(2),match.group(3),match.group(4),
-			match.group(5),match.group(6),match.group(7),match.group(8),outputLines)
+	addSample(match.group(1),match.group(3),match.group(5),
+			match.group(7),outputLines)
 print "Creating new config file: " + args.outputData
 with open(args.outputData, "w") as script:
 	for line in outputLines:
