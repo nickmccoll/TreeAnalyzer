@@ -21,7 +21,7 @@ public :
 
     void setMuonInfo(ASTypes::size id);
 
-    size  id () const {return _id;}
+    ASTypes::size  id () const {return _id;}
     bool  passSoftID () const;
     bool  passLooseID() const;
     bool  passMedID  () const;
