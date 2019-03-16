@@ -39,7 +39,6 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     }
     fjProc      .reset(new FatJetProcessor ());
     leptonProc  .reset(new LeptonProcessor ());
-    DefaultLeptonSelections::setDefaultLeptonProcessor(*leptonProc);
     trigSFProc  .reset(new TriggerScaleFactors (dataDirectory));
     puSFProc    .reset(new PUScaleFactors (dataDirectory));
     leptonSFProc.reset(new ActParamScaleFactors(dataDirectory));
@@ -129,6 +128,7 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::setParameters()  {
     fjProc->setParameters(parameters.fatJets);
+    leptonProc->setParameters(parameters.leptons);
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {

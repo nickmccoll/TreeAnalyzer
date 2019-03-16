@@ -11,6 +11,14 @@ class FatJet;
 namespace FatJetSelHelpers {
 typedef  bool (FatJet::*fjFunBool)() const;
 }
+class Muon;
+class Electron;
+namespace LepSelHelpers {
+    typedef  bool (Muon::*muFunBool)() const;
+    typedef  bool (Electron::*elFunBool)() const;
+    typedef  float (Muon::*muFunFloat)() const;
+    typedef  float (Electron::*elFunFloat)() const;
+}
 }
 
 
@@ -45,9 +53,30 @@ struct FatJetParameters{
     float hbbLL_minDRbbLL   = -1;
 };
 
+struct LeptonParameters {
+    float el_minPT  ;
+    float el_maxETA ;
+    float el_maxDZ  ;
+    float el_maxD0  ;
+    float el_maxSip3D  ;
+    float el_maxISO ;
+    LepSelHelpers::elFunBool el_getID ;
+    LepSelHelpers::elFunFloat el_getISO;
+
+    float mu_minPT  ;
+    float mu_maxETA ;
+    float mu_maxDZ  ;
+    float mu_maxD0  ;
+    float mu_maxSip3D  ;
+    float mu_maxISO ;
+    LepSelHelpers::muFunBool mu_getID ;
+    LepSelHelpers::muFunFloat mu_getISO;
+};
+
 
 struct ParameterSet {
     FatJetParameters fatJets;
+    LeptonParameters leptons;
 };
 
 namespace ReaderConstants{
