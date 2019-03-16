@@ -5,7 +5,8 @@
 #include "DataFormats/interface/Momentum.h"
 #include "Processors/GenTools/interface/DiHiggsEvent.h"
 #include "Processors/GenTools/interface/SMDecayEvent.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
+#include "Configuration/interface/ReaderConstants.h"
 #include "Processors/Variables/interface/BTagging.h"
 
 
@@ -69,6 +70,8 @@ public:
 
     //check configuration
     virtual void checkConfig();
+    //set parameters
+    virtual void setParameters();
 
     //fills class member variables....can be run before child runEvent
     virtual bool runEvent() override;
@@ -123,6 +126,10 @@ public:
     MomentumF                  hWW                ;
     MomentumF                  hh                 ;
     float                      hbbMass     =0     ;
+
+    ParameterSet parameters;
+    FillerConstants::DataEra lastEra = FillerConstants::NOERA; //See if we need to load new params.
+
 
     std::unique_ptr<FatJetProcessor>        fjProc     ;
     std::unique_ptr<LeptonProcessor>        leptonProc ;

@@ -95,32 +95,5 @@ const FatJet * FatJetProcessor::getDilepHbbCand() const {return dilepHbbCand;}
 BTagging::CSVSJ_CAT FatJetProcessor::getHbbCSVCat() const {return hbbCSVCat;}
 BTagging::CSVSJ_CAT FatJetProcessor::getWjjCSVCat() const {return wjjCSVCat;}
 BTagging::CSVSJ_CAT FatJetProcessor::getDilepHbbCSVCat() const {return dilepHbbCSVCat;}
-//_____________________________________________________________________________
-void DefaultFatJetSelections::setDefaultFatJetProcessor(FatJetParameters& proc) {
-    proc.cand_minPT     = 50                   ;
-    proc.cand_maxETA    = 2.4                  ;
-    proc.fjJetID        = &FatJet::passTightID ;
 
-    proc.sj_minPT       = 20 ;
-    proc.sj_maxETA      = 2.4;
-    proc.sj_minBTagPT    = 30 ;
-    proc.sj_maxBTagETA  = 2.4;
-
-    proc.wjj_maxLepDR   = 1.2    ;
-    proc.wjj_minPT      = 50     ;
-    proc.wjj_minSJs     = 2      ;
-
-    proc.hbb_minLepDPhi = 2.0    ;
-    proc.hbb_minPT      = 200    ;
-    proc.hbb_minSJs     = 2      ;
-
-    proc.hbbLL_minDphiBBLL = 2.0;
-    proc.hbbLL_minPT       = 200;
-    proc.hbbLL_minSJs      = 2;
-    proc.hbbLL_minDRbbLL   = 2.0;
-}
-//_____________________________________________________________________________
-void DefaultFatJetSelections::setDefaultFatJetProcessor(FatJetProcessor& proc) {
-    setDefaultFatJetProcessor(proc.param);
-}
 }
