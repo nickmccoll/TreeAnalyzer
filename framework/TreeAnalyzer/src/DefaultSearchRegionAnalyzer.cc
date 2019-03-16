@@ -38,7 +38,6 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
         signal_mass = (((TObjString *)match->At(1))->GetString()).Atoi();
     }
     fjProc      .reset(new FatJetProcessor ());
-    DefaultFatJetSelections::setDefaultFatJetProcessor(*fjProc);
     leptonProc  .reset(new LeptonProcessor ());
     DefaultLeptonSelections::setDefaultLeptonProcessor(*leptonProc);
     trigSFProc  .reset(new TriggerScaleFactors (dataDirectory));
@@ -128,6 +127,10 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_JES) && !reader_jet_chs) mkErr("jet_chs","CORR_JES");
 }
 //--------------------------------------------------------------------------------------------------
+void DefaultSearchRegionAnalyzer::setParameters()  {
+    fjProc->setParameters(parameters.fatJets);
+}
+//--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
     if(isRealData()){
         mcProc = FillerConstants::NOPROCESS;
@@ -136,6 +139,20 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         mcProc = FillerConstants::MCProcess(*(reader_event->process));
         if (mcProc == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
         else smpName = FillerConstants::MCProcessNames[mcProc];
+    }
+
+    //|||||||||||||||||||||||||||||| Setup parameters ||||||||||||||||||||||||||||||||||||||||
+    if(*reader_event->dataEra != lastEra){
+        lastEra = FillerConstants::DataEra(*reader_event->dataEra);
+        switch(lastEra){
+        case FillerConstants::ERA_2017:
+            parameters = ReaderConstants::set2017Parameters();
+            break;
+        default:
+            throw std::invalid_argument(
+                    "DefaultSearchRegionAnalyzer -> The era needs to be set to use this class");
+        }
+        setParameters();
     }
 
 
