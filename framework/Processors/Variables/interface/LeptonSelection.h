@@ -33,7 +33,8 @@ namespace LepSelHelpers {
 
 class LeptonProcessor {
 public:
-    void setParameters(const LeptonParameters& inParams) {params = inParams;}
+    LeptonProcessor(const LeptonParameters * params) : params(params){}
+    void setParameters(const LeptonParameters * inParams) {params = inParams;}
 
     bool isGoodMuon(const EventReader& reader_event, const Muon * lep)const;
     bool isGoodElectron(const Electron * lep) const;
@@ -41,7 +42,7 @@ public:
     std::vector<const Muon    *> getMuons    (const EventReader& reader_event, const MuonReader& reader_muon) const;
     std::vector<const Electron*> getElectrons(const ElectronReader& reader_electron ) const ;
     std::vector<const Lepton  *> getLeptons  (const EventReader& reader_event, const MuonReader& reader_muon, const ElectronReader& reader_electron) const;
-    LeptonParameters params;
+    const LeptonParameters * params;
 };
 }
 

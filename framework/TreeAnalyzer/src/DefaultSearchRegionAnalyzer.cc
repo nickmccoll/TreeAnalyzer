@@ -37,8 +37,8 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     if(nrSubStr>1){
         signal_mass = (((TObjString *)match->At(1))->GetString()).Atoi();
     }
-    fjProc      .reset(new FatJetProcessor ());
-    leptonProc  .reset(new LeptonProcessor ());
+    fjProc      .reset(new FatJetProcessor (&parameters.fatJets));
+    leptonProc  .reset(new LeptonProcessor (&parameters.leptons));
     trigSFProc  .reset(new TriggerScaleFactors (dataDirectory));
     puSFProc    .reset(new PUScaleFactors (dataDirectory));
     leptonSFProc.reset(new ActParamScaleFactors(dataDirectory));
@@ -126,11 +126,6 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_JES) && !reader_jet_chs) mkErr("jet_chs","CORR_JES");
 }
 //--------------------------------------------------------------------------------------------------
-void DefaultSearchRegionAnalyzer::setParameters()  {
-    fjProc->setParameters(parameters.fatJets);
-    leptonProc->setParameters(parameters.leptons);
-}
-//--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
     if(isRealData()){
         mcProc = FillerConstants::NOPROCESS;
@@ -152,7 +147,6 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
             throw std::invalid_argument(
                     "DefaultSearchRegionAnalyzer -> The era needs to be set to use this class");
         }
-        setParameters();
     }
 
 

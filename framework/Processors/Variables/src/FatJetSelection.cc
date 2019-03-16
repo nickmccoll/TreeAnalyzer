@@ -99,16 +99,16 @@ const FatJet* FatJetSelHelpers::getDilepHbbCand(const MomentumF* lep1, const Mom
 //_____________________________________________________________________________
 void FatJetProcessor::loadFatJets(const FatJetReader& reader_fatjet,
         const FatJetReader& reader_fatjet_noLep, const MomentumF* lepton) {
-    auto fjs = FatJetSelHelpers::selectFatJets(reader_fatjet,params);
-    auto fjs_noLep = FatJetSelHelpers::selectFatJets(reader_fatjet_noLep,params);
-    wjjCand = FatJetSelHelpers::getWjjCand(lepton,fjs_noLep,params,wjjCSVCat);
-    hbbCand = FatJetSelHelpers::getHbbCand(wjjCand,lepton,fjs,params,hbbCSVCat);
+    auto fjs = FatJetSelHelpers::selectFatJets(reader_fatjet,*params);
+    auto fjs_noLep = FatJetSelHelpers::selectFatJets(reader_fatjet_noLep,*params);
+    wjjCand = FatJetSelHelpers::getWjjCand(lepton,fjs_noLep,*params,wjjCSVCat);
+    hbbCand = FatJetSelHelpers::getHbbCand(wjjCand,lepton,fjs,*params,hbbCSVCat);
 }
 //_____________________________________________________________________________
 void FatJetProcessor::loadDilepFatJet(const FatJetReader& reader_fatjet, const MomentumF* lep1,
         const MomentumF* lep2) {
-	auto fjs = FatJetSelHelpers::selectFatJets(reader_fatjet,params);
-	dilepHbbCand = FatJetSelHelpers::getDilepHbbCand(lep1,lep2,fjs,params,dilepHbbCSVCat);
+	auto fjs = FatJetSelHelpers::selectFatJets(reader_fatjet,*params);
+	dilepHbbCand = FatJetSelHelpers::getDilepHbbCand(lep1,lep2,fjs,*params,dilepHbbCSVCat);
 }
 //_____________________________________________________________________________
 const FatJet * FatJetProcessor::getHBBCand() const {return hbbCand;}

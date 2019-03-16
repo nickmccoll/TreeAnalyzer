@@ -50,11 +50,11 @@ bool LepSelHelpers::isGoodElectron(const Electron* lep, const LeptonParameters& 
 }
 //_____________________________________________________________________________
 bool LeptonProcessor::isGoodMuon(const EventReader& reader_event, const Muon * lep) const {
-   return   LepSelHelpers::isGoodMuon(lep, params    );
+   return   LepSelHelpers::isGoodMuon(lep, *params    );
 }
 //_____________________________________________________________________________
 bool LeptonProcessor::isGoodElectron(const Electron * lep) const {
-    return  LepSelHelpers::isGoodElectron(lep,params);
+    return  LepSelHelpers::isGoodElectron(lep,*params);
 }
 //_____________________________________________________________________________
 bool LeptonProcessor::isGoodLepton(const EventReader& reader_event, const Lepton * lep) const {
@@ -66,7 +66,7 @@ std::vector<const Muon    *> LeptonProcessor::getMuons(const EventReader& reader
         const MuonReader& reader_muon) const {
     std::vector<const Muon    *>  leps;
     for(const auto& lep :reader_muon.muons){
-        if(LepSelHelpers::isGoodMuon(&lep,  params    ))
+        if(LepSelHelpers::isGoodMuon(&lep,  *params    ))
             leps.push_back(&lep);
     }
     std::sort(leps.begin(),leps.end(), PhysicsUtilities::greaterPTDeref<Muon>());
@@ -77,7 +77,7 @@ std::vector<const Electron*> LeptonProcessor::getElectrons(
         const ElectronReader& reader_electron) const {
     std::vector<const Electron    *>  leps;
     for(const auto& lep :reader_electron.electrons){
-        if(LepSelHelpers::isGoodElectron(&lep,params))
+        if(LepSelHelpers::isGoodElectron(&lep,*params))
             leps.push_back(&lep);
     }
     std::sort(leps.begin(),leps.end(), PhysicsUtilities::greaterPTDeref<Electron>());

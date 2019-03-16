@@ -70,8 +70,6 @@ public:
 
     //check configuration
     virtual void checkConfig();
-    //set parameters
-    virtual void setParameters();
 
     //fills class member variables....can be run before child runEvent
     virtual bool runEvent() override;

@@ -34,7 +34,8 @@ namespace FatJetSelHelpers {
 
 class FatJetProcessor {
 public:
-    void setParameters(const FatJetParameters& inParams) {params = inParams;}
+    FatJetProcessor(const FatJetParameters* params) :params(params){}
+    void setParameters(const FatJetParameters* inParams) {params = inParams;}
 
     //uses built in FatJetParameters
     void loadFatJets( const FatJetReader& reader_fatjet,const FatJetReader& reader_fatjet_noLep,
@@ -49,7 +50,7 @@ public:
     BTagging::CSVSJ_CAT getWjjCSVCat() const;
     BTagging::CSVSJ_CAT getDilepHbbCSVCat() const;
 
-    FatJetParameters params;
+    const FatJetParameters* params;
 
 
 private:
