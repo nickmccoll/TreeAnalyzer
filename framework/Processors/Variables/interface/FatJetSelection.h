@@ -19,7 +19,6 @@ class FatJet;
 class FatJetReader;
 
 namespace FatJetSelHelpers {
-    typedef  bool (FatJet::*fjFunBool)() const;
     std::vector<const FatJet*> selectFatJets(const FatJetParameters& params,
             const FatJetReader& reader_fatjet);
     const FatJet* getWjjCand(const FatJetParameters& params, const MomentumF* lepton,

@@ -134,10 +134,4 @@ void BaseTreeAnalyzer::setSampleInfo(float inXSec, float inNumE)
 }
 //--------------------------------------------------------------------------------------------------
 
-void BaseTreeAnalyzer::setLumi(float inLumi) {
-    _lumi=inLumi;
-    std::cout << " ++  Luminosity is set to: "<< inLumi <<" [fb-1]" <<std::endl;
-}
-
-
 }

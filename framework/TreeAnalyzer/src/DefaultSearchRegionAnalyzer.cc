@@ -51,8 +51,6 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     JESUncProc . reset(new JESUncShifter());
     METUncProc . reset(new METUncShifter());
 
-    setLumi(35.922); //https://hypernews.cern.ch/HyperNews/CMS/get/luminosity/688.html
-
     turnOnCorr(CORR_XSEC);
     turnOnCorr(CORR_TRIG);
     turnOnCorr(CORR_PU  );
@@ -195,9 +193,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
 
     //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
-    passEventFilters= EventSelection::passEventFilters(*reader_event);
+    passEventFilters= EventSelection::passEventFilters(parameters.event,*reader_event);
     passTriggerPreselection= EventSelection::passTriggerPreselection(
-            *reader_event,ht_chs,selectedLeptons);
+            parameters.event,*reader_event,ht_chs,selectedLeptons);
 
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
@@ -262,7 +260,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     if(!isRealData()){
         if(isCorrOn(CORR_XSEC))
             weight *= EventWeights::getNormalizedEventWeight(
-                    *reader_event,xsec(),nSampEvt(),lumi());
+                    *reader_event,xsec(),nSampEvt(),parameters.event.lumi);
         if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size()))
             weight *= trigSFProc->getLeptonTriggerSF(
                     ht_chs, (selectedLepton && selectedLepton->isMuon()));

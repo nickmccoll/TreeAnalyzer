@@ -94,7 +94,6 @@ public:
     void setLumi(float inLumi);
     float xsec() const {return _xsec;}
     float nSampEvt() const {return _numSampleEvents;}
-    float lumi() const {return _lumi;}
 
     //--------------------------------------------------------------------------------------------------
     // Helper functions for tree writing
@@ -129,7 +128,6 @@ private:
     //Standard variables for normalization
     float _xsec            = -1;
     float _numSampleEvents = -1;
-    float _lumi            =  1;
 protected:
 
     std::string        outTreeName = "";

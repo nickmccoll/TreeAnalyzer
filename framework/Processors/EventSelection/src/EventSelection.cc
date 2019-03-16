@@ -4,25 +4,96 @@
 #include "Configuration/interface/FillerConstants.h"
 #include "DataFormats/interface/Lepton.h"
 
+using namespace FillerConstants;
+
 namespace TAna {
 namespace EventSelection {
+//--------------------------------------------------------------------------------------------------
+bool passTriggerSuite2017(const EventReader& reader_event   ) {
+    auto passTrig = [&](FillerConstants::Triggers_2017 trig) -> bool {
+        return FillerConstants::doesPass(*reader_event.triggerAccepts,trig);
+    };
 
+    const bool passMuon = passTrig(HLT17_IsoMu27) || passTrig(HLT17_Mu50)
+            || passTrig(HLT17_Mu15_IsoVVVL_PFHT450);
+    const bool passEle =
+              passTrig(HLT17_Ele32_WPTight_Gsf)
+            || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG)
+            || passTrig(HLT17_Ele35_WPTight_Gsf)
+            || passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT)
+            || passTrig(HLT17_Ele15_IsoVVVL_PFHT450)
+            || passTrig(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150)
+            || passTrig(HLT17_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned)
+            || passTrig(HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
 
-bool passEventFilters(const EventReader& reader_event) {
-    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_goodVertices) ) return false;
-    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_globalSuperTightHalo2016Filter) ) return false;
-    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_HBHENoiseFilter) ) return false;
-    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_HBHENoiseIsoFilter) ) return false;
-    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_EcalDeadCellTriggerPrimitiveFilter) ) return false;
-    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_BadPFMuonFilter) ) return false;
-    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_BadChargedCandidateFilter) ) return false;
-    if(reader_event.realData && !FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_eeBadScFilter) ) return false;
-    if(!FillerConstants::doesPass(*reader_event.metFilters,FillerConstants::Flag_ecalBadCalibFilter) ) return false;
+    const bool passMET = passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight)
+            || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)
+            || passTrig(HLT17_PFMETNoMu140_PFMHTNoMu140_IDTight);
+
+    const bool passJetHT = passTrig(HLT17_PFHT1050) || passTrig(HLT17_AK8PFJet500) ||
+            passTrig(HLT17_AK8PFJet400_TrimMass30) || passTrig(HLT17_AK8PFHT850_TrimMass50);
+    const bool passPhoton = passTrig(HLT17_Photon200);
+
+    if(reader_event.realData){
+        switch(*reader_event.dataset){
+        case PD_SingleMuon:
+            return passMuon;
+        case PD_SingleElectron:
+            return passEle && !(passMuon);
+        case PD_JetHT:
+            return passJetHT && !(passEle || passMuon);
+        case PD_MET:
+            return passMET && !(passJetHT ||passEle || passMuon);
+        case PD_SinglePhoton:
+            return passPhoton && !(passMET || passJetHT ||passEle || passMuon);
+        default:
+            throw std::invalid_argument(
+                    "EventSelection::passTriggerSuite2017 -> "
+                    "This is not a valid primary dataset");
+        }
+    } else {
+        return (passMuon || passEle  || passJetHT || passMET || passPhoton);
+    }
+    return true;
+}
+
+bool passEventFilters(const EventParameters& params,const EventReader& reader_event) {
+    for(const auto& filter : reader_event.realData  ? params.dataFilters : params.mcFilters){
+        if(!FillerConstants::doesPass(*reader_event.metFilters,filter) ) return false;
+    }
     if(*(reader_event.goodVtx) == 0) return false;
     return true;
 }
 
-bool passTriggerSuite(const EventReader& reader_event   ) {
+
+
+bool passTriggerPreselection(const EventParameters& params,
+        const EventReader& reader_event,const float ht,
+        const std::vector<const Lepton    *>& selectedLeptons ){
+    if(!(*params.passTrigger)(reader_event)) return false;
+
+    if(ht < params.minHT) return false;
+
+    float maxElePT = 0;
+    float maxMuPT = 0;
+    for(const auto * l : selectedLeptons ) {
+        if(l->isMuon()) maxMuPT = std::max(maxMuPT, l->pt());
+        else maxElePT = std::max(maxElePT, l->pt());
+    }
+
+    if(maxElePT < params.minTriggerEl && maxMuPT < params.minTriggerMu ) return false;
+    return true;
+};
+
+
+
+}
+
+}
+
+
+//2016 ->
+//bool passTriggerSuite(const EventReader& reader_event   ) {
 //    auto passTrig = [&](FillerConstants::Triggers trig) -> bool {
 //        return FillerConstants::doesPass(*reader_event.triggerAccepts,trig);
 //    };
@@ -55,10 +126,10 @@ bool passTriggerSuite(const EventReader& reader_event   ) {
 //        const bool passECross = passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
 //        return (passMuon || passMCross) || (passEle || passECross)  || passJetHT || passMET;
 //    }
-    return true;
-}
+//    return true;
+//}
 
-bool passMuonTriggerSuite(const EventReader& reader_event   ) {
+//bool passMuonTriggerSuite(const EventReader& reader_event   ) {
 //    auto passTrig = [&](FillerConstants::Triggers trig) -> bool {
 //        return FillerConstants::doesPass(*reader_event.triggerAccepts,trig);
 //    };
@@ -85,10 +156,10 @@ bool passMuonTriggerSuite(const EventReader& reader_event   ) {
 //        const bool passMCross = passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
 //        return (passMuon || passMCross)  || passJetHT || passMET;
 //    }
-    return true;
-}
+//    return true;
+//}
 
-bool passElectronTriggerSuite(const EventReader& reader_event   ) {
+//bool passElectronTriggerSuite(const EventReader& reader_event   ) {
 //    auto passTrig = [&](FillerConstants::Triggers trig) -> bool {
 //        return FillerConstants::doesPass(*reader_event.triggerAccepts,trig);
 //    };
@@ -115,34 +186,6 @@ bool passElectronTriggerSuite(const EventReader& reader_event   ) {
 //        const bool passECross = passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
 //        return  (passEle || passECross)  || passJetHT || passMET;
 //    }
-    return true;
-}
-
-bool passTriggerPreselection(const EventReader& reader_event,const float ht, const std::vector<const Lepton    *>& selectedLeptons ){
-    if(!passTriggerSuite(reader_event)) return false;
-
-    const float minHT = 400;
-    const float minElePT = 30;
-    const float minMuPT = 26;
-
-    if(ht < minHT) return false;
-
-    float maxElePT = 0;
-    float maxMuPT = 0;
-    for(const auto * l : selectedLeptons ) {
-        if(l->isMuon()) maxMuPT = std::max(maxMuPT, l->pt());
-        else maxElePT = std::max(maxElePT, l->pt());
-    }
-
-    if(maxElePT < minElePT && maxMuPT < minMuPT ) return false;
-    return true;
-};
-
-
-
-}
-
-}
-
-
+//    return true;
+//}
 

@@ -4,11 +4,30 @@
 #include "DataFormats/interface/FatJet.h"
 #include "DataFormats/interface/Electron.h"
 #include "DataFormats/interface/Muon.h"
+#include "Processors/EventSelection/interface/EventSelection.h"
 namespace TAna {
 
 namespace ReaderConstants{
 ParameterSet set2017Parameters() {
     ParameterSet paramSet;
+    paramSet.event.lumi = 41.53; //https://twiki.cern.ch/twiki/bin/view/CMS/TWikiLUM
+    paramSet.event.mcFilters = {
+            FillerConstants::Flag_goodVertices,
+            FillerConstants::Flag_globalSuperTightHalo2016Filter,
+            FillerConstants::Flag_HBHENoiseFilter,
+            FillerConstants::Flag_HBHENoiseIsoFilter,
+            FillerConstants::Flag_EcalDeadCellTriggerPrimitiveFilter,
+            FillerConstants::Flag_BadPFMuonFilter,
+            FillerConstants::Flag_BadChargedCandidateFilter,
+            FillerConstants::Flag_ecalBadCalibFilter
+    };
+    paramSet.event.dataFilters = paramSet.event.mcFilters;
+    paramSet.event.dataFilters.push_back(FillerConstants::Flag_eeBadScFilter);
+    paramSet.event.passTrigger = &EventSelection::passTriggerSuite2017;
+    paramSet.event.minHT         =400;
+    paramSet.event.minTriggerEl  =30;
+    paramSet.event.minTriggerMu  =26;
+
 
     paramSet.fatJets.cand_minPT     = 50                   ;
     paramSet.fatJets.cand_maxETA    = 2.4                  ;
