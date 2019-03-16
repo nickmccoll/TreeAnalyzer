@@ -95,7 +95,7 @@ public:
         if(fj->nSubJets() != 2) return;
 
         resetOutData();
-        outTree->fill(i_csvCat      , size8(BTagging::getCSVSJCat(fj->subJets(), fjProc->param.sj_minBTagPT, fjProc->param.sj_maxBTagETA)));
+        outTree->fill(i_csvCat      , size8(BTagging::getCSVSJCat(fj->subJets(), fjProc->params.sj_minBTagPT, fjProc->params.sj_maxBTagETA)));
         outTree->fill(i_puWeight        , float( puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL)));
         outTree->fill(i_bosonMass       , float(diHiggsEvt.hbb->mass()));
         outTree->fill(i_bosonPT         , float(diHiggsEvt.hbb->pt()));

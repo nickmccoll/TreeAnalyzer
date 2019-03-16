@@ -31,8 +31,8 @@ public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt)
 {
-        fjProc->param.wjj_min_CSVSJCat    = BTagging::CSVSJ_INCL   ;
-        fjProc->param.wjj_max_CSVSJCat    = BTagging::CSVSJ_INCL   ;
+        fjProc->params.wjj_min_CSVSJCat    = BTagging::CSVSJ_INCL   ;
+        fjProc->params.wjj_max_CSVSJCat    = BTagging::CSVSJ_INCL   ;
 }
 
     //--------------------------------------------------------------------------------------------------
