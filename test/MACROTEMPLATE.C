@@ -3,7 +3,7 @@
 
 #include "TreeAnalyzer/interface/BaseTreeAnalyzer.h"
 #include "TreeReaders/interface/EventReader.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 #include "Processors/Corrections/interface/EventWeights.h"
 

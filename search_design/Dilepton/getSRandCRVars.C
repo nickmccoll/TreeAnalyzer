@@ -2,7 +2,7 @@
 
 #include "TreeAnalyzer/interface/DileptonSearchRegionAnalyzer.h"
 #include "TreeAnalyzer/interface/BaseTreeCopier.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 
 #include "TreeReaders/interface/EventReader.h"
 #include "TreeReaders/interface/GenParticleReader.h"

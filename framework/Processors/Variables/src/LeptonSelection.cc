@@ -5,7 +5,7 @@
 #include "TreeReaders/interface/ElectronReader.h"
 #include "TreeReaders/interface/MuonReader.h"
 #include "TreeReaders/interface/EventReader.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 
 namespace TAna {
 //_____________________________________________________________________________

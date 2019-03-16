@@ -1,6 +1,6 @@
 
 #include "DataFormats/interface/Jet.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 
 namespace TAna {
 

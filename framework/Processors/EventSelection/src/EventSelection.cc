@@ -1,7 +1,7 @@
 
 #include "Processors/EventSelection/interface/EventSelection.h"
 #include "TreeReaders/interface/EventReader.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 #include "DataFormats/interface/Lepton.h"
 
 namespace TAna {

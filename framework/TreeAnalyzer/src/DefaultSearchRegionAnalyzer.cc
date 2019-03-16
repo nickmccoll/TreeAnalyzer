@@ -6,7 +6,7 @@
 #include "TreeReaders/interface/MuonReader.h"
 #include "TreeReaders/interface/JetReader.h"
 #include "TreeReaders/interface/FatJetReader.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 
 #include "Processors/Corrections/interface/EventWeights.h"
 #include "Processors/Variables/interface/HiggsSolver.h"

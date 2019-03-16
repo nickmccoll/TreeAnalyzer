@@ -3,7 +3,7 @@
 #include "Processors/GenTools/interface/SMDecayEvent.h"
 #include "TreeReaders/interface/EventReader.h"
 #include "DataFormats/interface/GenParticle.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 
 namespace TAna {
 namespace EventWeights {

@@ -1,6 +1,6 @@
 
 #include "DataFormats/interface/Electron.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 
 using namespace FillerConstants;
 namespace TAna {

@@ -4,7 +4,7 @@
 #include "TreeAnalyzer/interface/DefaultSearchRegionAnalyzer.h"
 #include "TreeReaders/interface/EventReader.h"
 #include "TreeReaders/interface/GenParticleReader.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
 #include "Processors/Corrections/interface/EventWeights.h"
