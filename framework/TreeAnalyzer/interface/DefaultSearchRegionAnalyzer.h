@@ -19,7 +19,6 @@ class JetReader         ;
 class FatJetReader      ;
 
 class FatJetProcessor   ;
-class LeptonProcessor   ;
 class TriggerScaleFactors;
 class PUScaleFactors;
 class LeptonScaleFactors;
@@ -130,7 +129,6 @@ public:
 
 
     std::unique_ptr<FatJetProcessor>        fjProc     ;
-    std::unique_ptr<LeptonProcessor>        leptonProc ;
     std::unique_ptr<TriggerScaleFactors>    trigSFProc ;
     std::unique_ptr<PUScaleFactors>         puSFProc ;
     std::unique_ptr<LeptonScaleFactors>     leptonSFProc ;

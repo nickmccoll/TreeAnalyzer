@@ -12,38 +12,24 @@ class EventReader;
 class MuonReader;
 class ElectronReader;
 
-namespace LepSelHelpers {
-    typedef  bool (Muon::*muFunBool)() const;
-    typedef  bool (Electron::*elFunBool)() const;
-    typedef  float (Muon::*muFunFloat)() const;
-    typedef  float (Electron::*elFunFloat)() const;
+
+namespace LeptonProcessor {
+bool isGoodMuon(const Muon* lep, const float minPT, const float maxETA, const float maxDZ,
+        const float maxD0,const float maxSIP3D,  const float maxISO, muFunBool getID,
+        muFunFloat getISO);
+bool isGoodElectron(const Electron* lep, const float minPT, const float maxETA,
+        const float maxDZ, const float maxD0,const float maxSIP3D, const float maxISO,
+        elFunBool getID, elFunFloat getISO);
+bool isGoodMuon(const LeptonParameters& params, const Muon* lep);
+bool isGoodElectron(const LeptonParameters& params, const Electron* lep);
+bool isGoodLepton(const LeptonParameters& params, const Lepton * lep);
+std::vector<const Muon    *> getMuons    (const LeptonParameters& params,
+        const MuonReader& reader_muon);
+std::vector<const Electron*> getElectrons(const LeptonParameters& params,
+        const ElectronReader& reader_electron );
+std::vector<const Lepton  *> getLeptons  (const LeptonParameters& params,
+        const MuonReader& reader_muon, const ElectronReader& reader_electron);
 }
-
-
-
-namespace LepSelHelpers {
-    bool isGoodMuon(const Muon* lep, const float minPT, const float maxETA, const float maxDZ, const float maxD0,const float maxSIP3D,  const float maxISO, muFunBool getID, muFunFloat getISO);
-    bool isGoodElectron(const Electron* lep, const float minPT, const float maxETA, const float maxDZ, const float maxD0,const float maxSIP3D, const float maxISO, elFunBool getID, elFunFloat getISO);
-    bool isGoodMuon(const Muon* lep, const LeptonParameters& params);
-    bool isGoodElectron(const Electron* lep, const LeptonParameters& params);
-}
-
-
-
-
-class LeptonProcessor {
-public:
-    LeptonProcessor(const LeptonParameters * params) : params(params){}
-    void setParameters(const LeptonParameters * inParams) {params = inParams;}
-
-    bool isGoodMuon(const EventReader& reader_event, const Muon * lep)const;
-    bool isGoodElectron(const Electron * lep) const;
-    bool isGoodLepton(const EventReader& reader_event, const Lepton * lep) const;
-    std::vector<const Muon    *> getMuons    (const EventReader& reader_event, const MuonReader& reader_muon) const;
-    std::vector<const Electron*> getElectrons(const ElectronReader& reader_electron ) const ;
-    std::vector<const Lepton  *> getLeptons  (const EventReader& reader_event, const MuonReader& reader_muon, const ElectronReader& reader_electron) const;
-    const LeptonParameters * params;
-};
 }
 
 

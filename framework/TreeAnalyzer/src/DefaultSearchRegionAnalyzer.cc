@@ -37,8 +37,6 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     if(nrSubStr>1){
         signal_mass = (((TObjString *)match->At(1))->GetString()).Atoi();
     }
-    fjProc      .reset(new FatJetProcessor (&parameters.fatJets));
-    leptonProc  .reset(new LeptonProcessor (&parameters.leptons));
     trigSFProc  .reset(new TriggerScaleFactors (dataDirectory));
     puSFProc    .reset(new PUScaleFactors (dataDirectory));
     leptonSFProc.reset(new ActParamScaleFactors(dataDirectory));
@@ -190,7 +188,8 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
     //|||||||||||||||||||||||||||||| LEPTONS ||||||||||||||||||||||||||||||
     if(reader_electron && reader_muon){
-        selectedLeptons = leptonProc->getLeptons(*reader_event,*reader_muon,*reader_electron);
+        selectedLeptons = LeptonProcessor::getLeptons(parameters.leptons,
+                *reader_muon,*reader_electron);
         selectedLepton = selectedLeptons.size() ? selectedLeptons.front() : 0;
     }
 
@@ -203,7 +202,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
     if(reader_fatjet && selectedLepton){
-        fjProc->loadFatJets(*reader_fatjet,*reader_fatjet_noLep,selectedLepton);
+        fjProc->loadFatJets(parameters.fatJets,*reader_fatjet,*reader_fatjet_noLep,selectedLepton);
         hbbCand     = fjProc->getHBBCand();
         wjjCand     = fjProc->getWjjCand();
         hbbCSVCat   = fjProc->getHbbCSVCat();
