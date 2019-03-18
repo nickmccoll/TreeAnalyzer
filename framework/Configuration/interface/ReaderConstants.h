@@ -39,8 +39,6 @@ struct FatJetParameters{
     //parameters applied to both wjj and hbb AND dilep hbb
     float sj_minPT       =-1; //cand sel
     float sj_maxETA      =-1; //cand sel
-    float sj_minBTagPT       =-1;  //For counting btags in pass sel
-    float sj_maxBTagETA      =-1;  //For counting btags in pass sel
 
     //parameters applied to wjj candidate sel
     float wjj_maxLepDR   =-1;
@@ -89,10 +87,50 @@ struct LeptonParameters {
 };
 
 //--------------------------------------------------------------------------------------------------
+class BaseRecoJet;
+class Jet;
+namespace BTagging {
+    typedef  float (BaseRecoJet::*getBTagVal)() const;
+}
+namespace JetProcessor{
+typedef  bool (Jet::*jetFun)() const;
+}
+struct JetParameters {
+
+
+    float minJetPT      ;
+    float maxJetETA     ;
+    JetProcessor::jetFun    passJetID;
+
+    std::vector<float> CSV_WP;
+    std::vector<float> DeepCSV_WP;
+    float minBtagJetPT  ;
+    float maxBTagJetETA ;
+
+    BTagging::getBTagVal getJetBTagVal;
+    float jetBTagWP;
+    BTagging::getBTagVal getSJBTagVal;
+    float sjBTagLWP;
+    float sjBTagMWP;
+
+    std::vector<float>   jetBtagCorrWP;
+    BTagging::getBTagVal jetBtagCorrGetBTagVal;
+    std::string          jetBtagCorrSFFile;
+    std::string          jetBtagCorrEffFile;
+    std::vector<float>   sjBtagCorrWP;
+    BTagging::getBTagVal sjBtagCorrGetBTagVal;
+    std::string          sjBtagCorrSFFile;
+    std::string          sjBtagCorrEffFile;
+
+
+};
+
+//--------------------------------------------------------------------------------------------------
 struct ParameterSet {
     EventParameters  event;
     FatJetParameters fatJets;
     LeptonParameters leptons;
+    JetParameters    jets;
 };
 //--------------------------------------------------------------------------------------------------
 namespace ReaderConstants{

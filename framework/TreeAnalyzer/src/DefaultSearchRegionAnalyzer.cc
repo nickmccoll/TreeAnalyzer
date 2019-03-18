@@ -37,6 +37,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     if(nrSubStr>1){
         signal_mass = (((TObjString *)match->At(1))->GetString()).Atoi();
     }
+    fjProc      .reset(new FatJetProcessor ());
     trigSFProc  .reset(new TriggerScaleFactors (dataDirectory));
     puSFProc    .reset(new PUScaleFactors (dataDirectory));
     leptonSFProc.reset(new ActParamScaleFactors(dataDirectory));
@@ -76,7 +77,7 @@ void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr)
 void DefaultSearchRegionAnalyzer::loadVariables()  {
     reader_event       =loadReader<EventReader>   ("event",isRealData());
     reader_fatjet      =loadReader<FatJetReader>  ("ak8PuppiJet",isRealData());
-    reader_fatjet_noLep=loadReader<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false);
+    reader_fatjet_noLep=loadReader<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false,false);
     reader_jet_chs     =loadReader<JetReader>     ("ak4Jet",isRealData());
     reader_jet         =loadReader<JetReader>     ("ak4PuppiJet",isRealData(),false);
     reader_electron    =loadReader<ElectronReader>("electron");
@@ -135,6 +136,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //|||||||||||||||||||||||||||||| Setup parameters ||||||||||||||||||||||||||||||||||||||||
     if(*reader_event->dataEra != lastEra){
         lastEra = FillerConstants::DataEra(*reader_event->dataEra);
+        std::cout << " ++  Setting era: "<<FillerConstants::DataEraNames[lastEra]<<std::endl;
         switch(lastEra){
         case FillerConstants::ERA_2017:
             parameters = ReaderConstants::set2017Parameters();
@@ -143,6 +145,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
             throw std::invalid_argument(
                     "DefaultSearchRegionAnalyzer -> The era needs to be set to use this class");
         }
+
+        if(isCorrOn(CORR_SJBTAG)) sjbtagSFProc->setParameters(parameters.jets);
+        if(isCorrOn(CORR_AK4BTAG)) ak4btagSFProc->setParameters(parameters.jets);
     }
 
 
@@ -199,12 +204,14 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
-    if(reader_fatjet && selectedLepton){
+    if(reader_fatjet && reader_fatjet_noLep &&  selectedLepton){
         fjProc->loadFatJets(parameters.fatJets,*reader_fatjet,*reader_fatjet_noLep,selectedLepton);
         hbbCand     = fjProc->getHBBCand();
         wjjCand     = fjProc->getWjjCand();
-        hbbCSVCat   = fjProc->getHbbCSVCat();
-        wjjCSVCat   = fjProc->getWjjCSVCat();
+        hbbCSVCat   = hbbCand ? BTagging::getCSVSJCat(parameters.jets,hbbCand->subJets())
+                              : BTagging::CSVSJ_INCL ;
+        wjjCSVCat   = wjjCand ? BTagging::getCSVSJCat(parameters.jets,wjjCand->subJets())
+                              : BTagging::CSVSJ_INCL ;
     } else {
         wjjCand    =  0;
         hbbCand    =  0;
@@ -239,15 +246,18 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
 
     if(reader_jet){
-        jets = PhysicsUtilities::selObjsMom(reader_jet->jets,30,2.4,
-                [](const Jet* j){return j->passTightID();} );
-        nMedBTags = PhysicsUtilities::selObjsD(jets,
-                [](const Jet* j){return BTagging::isMediumCSVTagged(*j);} ).size();
+        jets = PhysicsUtilities::selObjsMom(reader_jet->jets,
+                parameters.jets.minJetPT,parameters.jets.maxJetETA,
+                [&](const Jet* j){return (j->*parameters.jets.passJetID)();} );
+        nMedBTags = PhysicsUtilities::selObjsMomD(jets,
+                parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
+                [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
         if(hbbCand){
             jets_HbbV = PhysicsUtilities::selObjsD(jets,
                     [&](const Jet* j){return  PhysicsUtilities::deltaR2(*j,*hbbCand ) >= 1.2*1.2;});
-            nMedBTags_HbbV = PhysicsUtilities::selObjsD(jets_HbbV,
-                    [](const Jet* j){return BTagging::isMediumCSVTagged(*j);} ).size();
+            nMedBTags_HbbV = PhysicsUtilities::selObjsMomD(jets_HbbV,
+                    parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
+                    [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
         } else {
             jets_HbbV = jets;
             nMedBTags_HbbV = nMedBTags;
@@ -271,7 +281,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
             weight *= leptonSFProc->getSF();
         }
         if(isCorrOn(CORR_SJBTAG)){
-            weight *= sjbtagSFProc->getSF({hbbCand});
+            weight *= sjbtagSFProc->getSF(parameters.jets,{hbbCand});
         }
         if(isCorrOn(CORR_AK4BTAG)){
             weight *= ak4btagSFProc->getSF(jets_HbbV);

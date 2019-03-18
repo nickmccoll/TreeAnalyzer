@@ -5,6 +5,8 @@
 #include "DataFormats/interface/Electron.h"
 #include "DataFormats/interface/Muon.h"
 #include "Processors/EventSelection/interface/EventSelection.h"
+#include "Processors/Variables/interface/BTagging.h"
+#include "Processors/Corrections/interface/BTagCalibrationStandalone.h"
 namespace TAna {
 
 namespace ReaderConstants{
@@ -34,8 +36,6 @@ ParameterSet set2017Parameters() {
     paramSet.fatJets.fjJetID        = &FatJet::passTightID ;
     paramSet.fatJets.sj_minPT       = 20 ;
     paramSet.fatJets.sj_maxETA      = 2.4;
-    paramSet.fatJets.sj_minBTagPT    = 30 ;
-    paramSet.fatJets.sj_maxBTagETA  = 2.4;
     paramSet.fatJets.wjj_maxLepDR   = 1.2    ;
     paramSet.fatJets.wjj_minPT      = 50     ;
     paramSet.fatJets.wjj_minSJs     = 2      ;
@@ -64,6 +64,32 @@ ParameterSet set2017Parameters() {
     paramSet.leptons.mu_maxISO  = 0.2 ;
     paramSet.leptons.mu_getID   = &Muon::passMedID;
     paramSet.leptons.mu_getISO  = &Muon::miniIso;
+
+
+
+    paramSet.jets.minJetPT      = 30;
+    paramSet.jets.maxJetETA     = 2.4;
+    paramSet.jets.passJetID     = &Jet::passTightID;
+
+    paramSet.jets.CSV_WP        = {-100,0.5803,0.8838,0.9693};
+    paramSet.jets.DeepCSV_WP    = {-100,0.1522,0.4941,0.8001};
+    paramSet.jets.minBtagJetPT  = 30;
+    paramSet.jets.maxBTagJetETA = 2.4;
+
+    paramSet.jets.getJetBTagVal = &BaseRecoJet::csv;
+    paramSet.jets.jetBTagWP     = paramSet.jets.CSV_WP [BTagging::BTAG_M];
+    paramSet.jets.getSJBTagVal =&BaseRecoJet::csv;
+    paramSet.jets.sjBTagLWP = paramSet.jets.CSV_WP [BTagging::BTAG_L];
+    paramSet.jets.sjBTagMWP = paramSet.jets.CSV_WP [BTagging::BTAG_M];
+
+    paramSet.jets.jetBtagCorrSFFile ="corrections/CSVv2_Moriond17_B_H.csv";
+    paramSet.jets.jetBtagCorrEffFile ="corrections/ak4_csvEff.root";
+    paramSet.jets.jetBtagCorrWP       = paramSet.jets.CSV_WP      ;
+    paramSet.jets.jetBtagCorrGetBTagVal = paramSet.jets.getJetBTagVal;
+    paramSet.jets.sjBtagCorrWP         = paramSet.jets.CSV_WP      ;
+    paramSet.jets.sjBtagCorrGetBTagVal = paramSet.jets.getSJBTagVal;
+    paramSet.jets.sjBtagCorrSFFile     = "corrections/subjet_CSVv2_Moriond17_B_H.csv";
+    paramSet.jets.sjBtagCorrEffFile    = "corrections/sj_csvEff.root";
 
 
     return paramSet;

@@ -3,26 +3,26 @@
 #define PROCESSORS_VARIABLES_BTAGGING_H
 
 #include "AnalysisSupport/Utilities/interface/PhysicsUtilities.h"
+#include "Configuration/interface/ReaderConstants.h"
 namespace TAna {
 
 namespace BTagging{
-enum  CSVWP { CSV_INCL, CSV_L, CSV_M, CSV_T};
-const float CSVWP_VALS[] = {-100,0.5426,0.8484,0.9535};
+enum  BTAGWP { BTAG_INCL, BTAG_L, BTAG_M, BTAG_T};
 
 template<typename Jet>
-bool isLooseCSVTagged(const Jet& jet) { return jet.csv() >=  CSVWP_VALS[CSV_L];}
+bool passJetBTagWP(const JetParameters& params, const Jet& jet){
+    return (jet.*params.getJetBTagVal)() >= params.jetBTagWP ;
+}
 
 template<typename Jet>
-bool isMediumCSVTagged(const Jet& jet) { return jet.csv() >=  CSVWP_VALS[CSV_M];}
+bool passSubjetBTagLWP(const JetParameters& params, const Jet& subjet){
+    return (subjet.*params.getSJBTagVal)() >= params.sjBTagLWP ;
+}
 
 template<typename Jet>
-bool isTightCSVTagged(const Jet& jet) { return jet.csv() >=  CSVWP_VALS[CSV_T];}
-
-template<typename Jet>
-bool csvTagged(const Jet& jet, CSVWP wp) { return jet.csv() >=  CSVWP_VALS[wp];}
-
-template<typename Jet>
-bool csvNotTagged(const Jet& jet, CSVWP wp) { return jet.csv() <  CSVWP_VALS[wp];}
+bool passSubjetBTagMWP(const JetParameters& params, const Jet& subjet){
+    return (subjet.*params.getSJBTagVal)() >= params.sjBTagMWP ;
+}
 
 
 enum CSVSJ_CAT {CSVSJ_INCL, //inclusive
@@ -35,14 +35,14 @@ enum CSVSJ_CAT {CSVSJ_INCL, //inclusive
 };
 
 template<typename Jet>
-CSVSJ_CAT getCSVSJCat(const std::vector<Jet>& subjets, const float minPT, const float maxAETA){
+CSVSJ_CAT getCSVSJCat(const JetParameters& params, const std::vector<Jet>& subjets){
     int nMB = 0;
     int nLB = 0;
     for(const auto& j : subjets) {
-        if(j.pt() < minPT) continue;
-        if(maxAETA > 0 && j.absEta() > maxAETA) continue;
-        if(isLooseCSVTagged(j)) nLB++ ;
-        if(isMediumCSVTagged(j)) nMB++ ;
+        if(j.pt() < params.minBtagJetPT) continue;
+        if(params.maxBTagJetETA > 0 && j.absEta() > params.maxBTagJetETA) continue;
+        if(passSubjetBTagLWP(params,j)) nLB++ ;
+        if(passSubjetBTagMWP(params,j)) nMB++ ;
     }
 
     if(nLB == 0) return CSVSJ_FF;
@@ -70,9 +70,6 @@ FLAVOR jetFlavor(const Jet& jet) {
         return FLV_L;
     }
 }
-
-enum  BBTWP { BBT_INCL, BBT_L, BBT_M1, BBT_M2, BBT_T};
-const float BBT_VALS[] = {-100,0.3,0.6,0.8,0.9};
 }
 
 
