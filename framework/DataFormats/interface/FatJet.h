@@ -49,13 +49,13 @@ public :
     float     ecfb1()     const;
     float     ecfb2()     const;
 
-    size      nSubJets()  const;
+    ASTypes::size      nSubJets()  const;
     MomentumF sdMom()     const;
     MomentumF rawSdMom()  const;
 
 
-    const SubJet&     subJet(const size idx)  const;
-    SubJet&           subJet(const size idx);
+    const SubJet&     subJet(const ASTypes::size idx)  const;
+    SubJet&           subJet(const ASTypes::size idx);
     const std::vector<SubJet>& subJets() const;
 
 protected :

@@ -54,7 +54,7 @@ public:
     };
 
     DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName,
-            int treeInt, size randomSeed =0);
+            int treeInt, ASTypes::size randomSeed =0);
 
     virtual ~DefaultSearchRegionAnalyzer();
 

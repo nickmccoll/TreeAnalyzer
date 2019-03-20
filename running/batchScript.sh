@@ -17,7 +17,7 @@ ls -l -a
 source /cvmfs/cms.cern.ch/cmsset_default.sh
 SCRAM_ARCH=slc6_amd64_gcc530
 eval `scramv1 project CMSSW ${CMSSWVERS}`
-cd CMSSW_8_0_27/src/
+cd ${CMSSWVERS}/src/
 eval `scramv1 runtime -sh` # cmsenv is an alias not on the workers
 echo "CMSSW: "$CMSSW_BASE
 
