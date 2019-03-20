@@ -13,6 +13,7 @@ STARGET=libTreeAnalysis.a
 
 ASTREEINT    = AnalysisSupport/TreeInterface/src
 ASUTILITIES  = AnalysisSupport/Utilities/src
+CONFIGURATION = Configuration/src
 TREEANALYZER = TreeAnalyzer/src
 TREEREADING  = TreeReaders/src
 DATAFORMATS  = DataFormats/src
@@ -22,7 +23,7 @@ VARIABLES   = Processors/Variables/src
 EVENTSEL   = Processors/EventSelection/src
 HCOMBI   = Utilities/HiggsCombineImport/src
 
-SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(DATAFORMATS)/*.cc) $(wildcard $(CORRECTIONS)/*.cc) $(wildcard $(TREEREADING)/*.cc)  $(wildcard $(TREEANALYZER)/*.cc) $(wildcard $(GENTOOLS)/*.cc) $(wildcard $(VARIABLES)/*.cc) $(wildcard $(EVENTSEL)/*.cc)
+SOURCE = $(wildcard $(ASTREEINT)/*.cc) $(wildcard $(ASUTILITIES)/*.cc) $(wildcard $(DATAFORMATS)/*.cc) $(wildcard $(CORRECTIONS)/*.cc) $(wildcard $(TREEREADING)/*.cc)  $(wildcard $(TREEANALYZER)/*.cc) $(wildcard $(GENTOOLS)/*.cc) $(wildcard $(VARIABLES)/*.cc) $(wildcard $(EVENTSEL)/*.cc) $(wildcard $(CONFIGURATION)/*.cc)
 OBJ=$(join $(addsuffix ../obj/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.o))) 
 DEPENDS=$(join $(addsuffix ../.dep/, $(dir $(SOURCE))), $(notdir $(SOURCE:.cc=.d)))
 
@@ -179,6 +180,18 @@ $(EVENTSEL)/../.dep/%.d: $(EVENTSEL)/%.cc
 	@echo "============="
 	@echo Building dependencies file for $*.o
 	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(EVENTSEL)/../obj/$*.o^" > $@'
+	
+	
+$(CONFIGURATION)/../obj/%.o : $(CONFIGURATION)/%.cc
+	@mkdir -p $(dir $@)
+	@echo "============="
+	@echo "Compiling $<"
+	$(CXX) $(CXXFLAGS) -c $<  -o $@
+$(CONFIGURATION)/../.dep/%.d: $(CONFIGURATION)/%.cc
+	@mkdir -p $(dir $@)
+	@echo "============="
+	@echo Building dependencies file for $*.o
+	@$(SHELL) -ec '$(CXX) -M $(CXXFLAGS) $< | sed "s^$*.o^$(CONFIGURATION)/../obj/$*.o^" > $@'
 	
 #$(HCOMBI)/../obj/%.o : $(HCOMBI)/%.cc
 #	@mkdir -p $(dir $@)

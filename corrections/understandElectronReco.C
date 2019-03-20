@@ -8,7 +8,7 @@
 #include "TreeReaders/interface/ElectronReader.h"
 #include "TreeReaders/interface/PhotonReader.h"
 
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
 #include "AnalysisSupport/Utilities/interface/PhysicsUtilities.h"

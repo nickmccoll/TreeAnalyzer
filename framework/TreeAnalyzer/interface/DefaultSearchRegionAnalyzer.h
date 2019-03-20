@@ -5,7 +5,8 @@
 #include "DataFormats/interface/Momentum.h"
 #include "Processors/GenTools/interface/DiHiggsEvent.h"
 #include "Processors/GenTools/interface/SMDecayEvent.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
+#include "Configuration/interface/ReaderConstants.h"
 #include "Processors/Variables/interface/BTagging.h"
 
 
@@ -18,7 +19,6 @@ class JetReader         ;
 class FatJetReader      ;
 
 class FatJetProcessor   ;
-class LeptonProcessor   ;
 class TriggerScaleFactors;
 class PUScaleFactors;
 class LeptonScaleFactors;
@@ -124,8 +124,11 @@ public:
     MomentumF                  hh                 ;
     float                      hbbMass     =0     ;
 
+    ParameterSet parameters;
+    FillerConstants::DataEra lastEra = FillerConstants::NOERA; //See if we need to load new params.
+
+
     std::unique_ptr<FatJetProcessor>        fjProc     ;
-    std::unique_ptr<LeptonProcessor>        leptonProc ;
     std::unique_ptr<TriggerScaleFactors>    trigSFProc ;
     std::unique_ptr<PUScaleFactors>         puSFProc ;
     std::unique_ptr<LeptonScaleFactors>     leptonSFProc ;

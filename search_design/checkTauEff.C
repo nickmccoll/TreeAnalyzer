@@ -10,7 +10,7 @@
 #include "TreeReaders/interface/JetReader.h"
 #include "TreeReaders/interface/FatJetReader.h"
 
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
 #include "AnalysisSupport/Utilities/interface/PhysicsUtilities.h"
@@ -74,13 +74,13 @@ public:
         if(hbbCand == 0 || wjjCand== 0) return false;
         MomentumF Wlnu = selectedLepton->p4() + neutrino.p4();
         if(PhysicsUtilities::deltaR(Wlnu, wjjCand->sdMom().p4()) > 0.5) return false;
-        makeCRPlots(smpName+"_tHtW", fjProc->param);
+        makeCRPlots(smpName+"_tHtW", fjProc->params);
         makeCRPlots(smpName+"_tH"  , noTauW);
         makeCRPlots(smpName+"_tW"  , noTauH);
         makeCRPlots(smpName        , noTauWH);
 
         if(reader_event->process != FillerConstants::SIGNAL){
-            makeCRPlots("bkg_tHtW", fjProc->param);
+            makeCRPlots("bkg_tHtW", fjProc->params);
             makeCRPlots("bkg_tH"  , noTauW);
             makeCRPlots("bkg_tW"  , noTauH);
             makeCRPlots("bkg"     , noTauWH);

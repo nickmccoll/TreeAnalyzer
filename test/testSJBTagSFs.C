@@ -4,7 +4,7 @@
 #include "TreeAnalyzer/interface/DefaultSearchRegionAnalyzer.h"
 #include "TreeReaders/interface/EventReader.h"
 #include "TreeReaders/interface/GenParticleReader.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
 #include "Processors/Corrections/interface/EventWeights.h"
@@ -22,28 +22,29 @@ using namespace TAna::BTagging;
 class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) :
+        DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
     }
 
     void assignVals(const BTagging::FLAVOR flv,const float pt, const float eta,const float csv, const CorrHelp::CORRTYPE corrT,
             float& lE,float& hE,float& lSF,float& hSF) const {
-        auto gE = [&](const BTagging::CSVWP wp)->float{return sjbtagSFProc->getJetEff(flv,pt,eta,wp);};
-        auto gS = [&](const BTagging::CSVWP wp)->float{return sjbtagSFProc->getJetSF(flv,pt,eta,wp,corrT);};
+        auto gE = [&](const BTagging::BTAGWP wp)->float{return sjbtagSFProc->getJetEff(flv,pt,eta,wp);};
+        auto gS = [&](const BTagging::BTAGWP wp)->float{return sjbtagSFProc->getJetSF(flv,pt,eta,wp,corrT);};
 
-        if(csv <  CSVWP_VALS[CSV_L]){
+        if(csv <  parameters.jets.sjBtagCorrWP[BTAG_L]){
             lE = 1.0;
-            hE = gE(CSV_L);
+            hE = gE(BTAG_L);
             lSF = 1.0;
-            hSF = gS(CSV_L);
-        } else if(csv <  CSVWP_VALS[CSV_M]){
-            lE = gE(CSV_L);
-            hE = gE(CSV_M);
-            lSF = gS(CSV_L);
-            hSF = gS(CSV_M);
+            hSF = gS(BTAG_L);
+        } else if(csv <  parameters.jets.sjBtagCorrWP[BTAG_M]){
+            lE = gE(BTAG_L);
+            hE = gE(BTAG_M);
+            lSF = gS(BTAG_L);
+            hSF = gS(BTAG_M);
         } else {
-            lE = gE(CSV_M);
+            lE = gE(BTAG_M);
             hE = 0;
-            lSF = gS(CSV_M);
+            lSF = gS(BTAG_M);
             hSF = 0;
 
         }
@@ -125,7 +126,7 @@ public:
             dS(NONE,UP     );
             std::cout <<endl;
         }
-        cout <<"Weights: " <<sjbtagSFProc->getSF({hbbCand,wjjCand});
+        cout <<"Weights: " <<sjbtagSFProc->getSF(parameters.jets,{hbbCand,wjjCand});
         return true;
     }
 
@@ -140,13 +141,9 @@ public:
 
 #endif
 
-void testSJBTagSFs(std::string fileName, int treeInt, std::string outFileName){
-    Analyzer a(fileName,"treeMaker/Events",treeInt);
-    a.analyze(1000,1000);
-    a.write(outFileName);
-}
-void testSJBTagSFs(std::string fileName, int treeInt, std::string outFileName, float xSec, float numEvent){
-    Analyzer a(fileName,"treeMaker/Events",treeInt);
+
+void testSJBTagSFs(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec=-1, float numEvent=-1){
+    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     a.setSampleInfo(xSec,numEvent);
     a.analyze();
     a.write(outFileName);

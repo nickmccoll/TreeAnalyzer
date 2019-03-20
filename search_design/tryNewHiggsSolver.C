@@ -18,7 +18,7 @@
 #if !defined(__CINT__) || defined(__MAKECINT__)
 
 #include "TreeAnalyzer/interface/DefaultSearchRegionAnalyzer.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 #include "Processors/Variables/interface/LeptonSelection.h"
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"

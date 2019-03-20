@@ -7,7 +7,6 @@
 #include "TreeReaders/interface/BaseReader.h"
 #include <memory>
 
-using ASTypes::size;
 
 namespace TAna {
 //Function for processing tree type, expandable for more
@@ -30,7 +29,7 @@ public:
 
 class BaseTreeAnalyzer {
 public:
-    BaseTreeAnalyzer(std::string fileName, std::string treeName, int inputTreeType, size randomSeed = 0);
+    BaseTreeAnalyzer(std::string fileName, std::string treeName, int inputTreeType, ASTypes::size randomSeed = 0);
     virtual ~BaseTreeAnalyzer();
 
     // Function that user calls to setup the output tree
@@ -95,7 +94,6 @@ public:
     void setLumi(float inLumi);
     float xsec() const {return _xsec;}
     float nSampEvt() const {return _numSampleEvents;}
-    float lumi() const {return _lumi;}
 
     //--------------------------------------------------------------------------------------------------
     // Helper functions for tree writing
@@ -130,7 +128,6 @@ private:
     //Standard variables for normalization
     float _xsec            = -1;
     float _numSampleEvents = -1;
-    float _lumi            =  1;
 protected:
 
     std::string        outTreeName = "";

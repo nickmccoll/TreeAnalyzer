@@ -10,7 +10,7 @@
 #include "TreeReaders/interface/JetReader.h"
 #include "TreeReaders/interface/FatJetReader.h"
 
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
 #include "AnalysisSupport/Utilities/interface/PhysicsUtilities.h"
@@ -32,10 +32,10 @@ public:
 
         DefaultFatJetSelections::setDefaultFatJetProcessor(fjProc_inclWBtag);
 
-        fjProc_inclWBtag.param.wjj_maxCSVWP =BTagging::CSV_INCL;
+        fjProc_inclWBtag.params.wjj_maxCSVWP =BTagging::CSV_INCL;
         DefaultFatJetSelections::setDefaultFatJetProcessor(fjProc_inclHbbBtag);
-        fjProc_inclHbbBtag.param.hbb_l_firMinCSVWP =BTagging::CSV_INCL;
-        fjProc_inclHbbBtag.param.hbb_l_secMinCSVWP =BTagging::CSV_INCL;
+        fjProc_inclHbbBtag.params.hbb_l_firMinCSVWP =BTagging::CSV_INCL;
+        fjProc_inclHbbBtag.params.hbb_l_secMinCSVWP =BTagging::CSV_INCL;
     }
 
     void makeCRPlots(TString pre, const MomentumF& hWW, const MomentumF& hbb){

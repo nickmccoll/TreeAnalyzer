@@ -3,6 +3,7 @@
 #include "DataFormats/interface/Jet.h"
 #include "DataFormats/interface/FatJet.h"
 #include "Processors/Corrections/interface/BTagCalibrationStandalone.h"
+#include "Configuration/interface/ReaderConstants.h"
 
 
 
@@ -11,49 +12,64 @@ using namespace CorrHelp;
 using namespace BTagging;
 
 //_____________________________________________________________________________
-BTagScaleFactors::BTagScaleFactors(BTagging::CSVWP maxWP, std::string ht,std::string lt, const std::string& dataDir, const std::string& sfFile, const std::string& effFile, bool verbose) :
-                        calib(new BTagCalibration("CSVv2", dataDir+sfFile))
-{
+BTagScaleFactors::BTagScaleFactors(const std::string& dataDir, BTagging::BTAGWP maxWP,
+        std::string heavySFName,std::string lightSFName) :
+        dataDir(dataDir), maxWP(maxWP), heavySFName(heavySFName), lightSFName(lightSFName)
+{}
+//_____________________________________________________________________________
+BTagScaleFactors::~BTagScaleFactors() {}
+//_____________________________________________________________________________
+void BTagScaleFactors::setParameters(const std::string& sfFile, const std::string& effFile,
+        bool verbose){
+    efficiencies.clear();
+    calibReaders.clear();
+    calib.reset(new BTagCalibration("CSVv2", dataDir+sfFile));
 
     auto makeNewReader = [&] (const BTagEntry::OperatingPoint op){
         calibReaders.emplace_back(new BTagCalibrationReader(op, "central",{"up", "down"}));
-        calibReaders.back()->load(*calib, BTagEntry::FLAV_B,ht);
-        calibReaders.back()->load(*calib, BTagEntry::FLAV_C,ht);
-        calibReaders.back()->load(*calib, BTagEntry::FLAV_UDSG,lt);
+        calibReaders.back()->load(*calib, BTagEntry::FLAV_B,heavySFName);
+        calibReaders.back()->load(*calib, BTagEntry::FLAV_C,heavySFName);
+        calibReaders.back()->load(*calib, BTagEntry::FLAV_UDSG,lightSFName);
 
     };
-    if(maxWP >= CSV_L) makeNewReader(BTagEntry::OP_LOOSE );
-    if(maxWP >= CSV_M) makeNewReader(BTagEntry::OP_MEDIUM);
-    if(maxWP >= CSV_T) makeNewReader(BTagEntry::OP_TIGHT );
+
+    if(maxWP >= BTAG_L) makeNewReader(BTagEntry::OP_LOOSE );
+    if(maxWP >= BTAG_M) makeNewReader(BTagEntry::OP_MEDIUM);
+    if(maxWP >= BTAG_T) makeNewReader(BTagEntry::OP_TIGHT );
+
 
     TFile * efile = TObjectHelper::getFile(dataDir+effFile,"read",verbose);
     std::vector<TString> taggers {"loose","med","tight"};
     std::vector<TString> flvs {"b","c","l"};
     for(unsigned int iF = FLV_B; iF <= FLV_L; ++iF){
         efficiencies.push_back(std::vector< std::unique_ptr<TObjectHelper::Hist2DContainer> >());
-        for(unsigned int iT = CSV_L; iT <= maxWP; ++iT){ //the tagger is displaced by 1 for the inclusive entry
-            efficiencies[iF].emplace_back(new  TObjectHelper::Hist2DContainer(efile,TString::Format("%s_%s",flvs[iF].Data(),taggers[iT-1].Data()).Data(),verbose));
+        //the tagger is displaced by 1 for the inclusive entry
+        for(unsigned int iT = BTAG_L; iT <= maxWP; ++iT){
+            efficiencies[iF].emplace_back(new  TObjectHelper::Hist2DContainer(efile,
+                    TString::Format("%s_%s",flvs[iF].Data(),taggers[iT-1].Data()).Data(),verbose));
         }
     }
+    efile->Close();
 }
 //_____________________________________________________________________________
-BTagScaleFactors::~BTagScaleFactors() {}
-//_____________________________________________________________________________
-float BTagScaleFactors::getJetEff(const BTagging::FLAVOR flv, const float pt, const float eta, const BTagging::CSVWP wp) const {
+float BTagScaleFactors::getJetEff(const BTagging::FLAVOR flv, const float pt, const float eta,
+        const BTagging::BTAGWP wp) const {
     return efficiencies[flv][wp -1]->getBinContentByValue(pt, eta < 0 ? -eta : eta).val();
 }
 //_____________________________________________________________________________
-float BTagScaleFactors::getJetSF(const BTagging::FLAVOR flv, const float pt, const float eta, const BTagging::CSVWP wp,
-        CorrHelp::CORRTYPE corrT) const{
+float BTagScaleFactors::getJetSF(const BTagging::FLAVOR flv, const float pt, const float eta,
+        const BTagging::BTAGWP wp, CorrHelp::CORRTYPE corrT) const{
     //wp[0] = inclusive
-    return calibReaders[wp-1]->eval_auto_bounds(systNames[corrT],BTagEntry::JetFlavor(flv), eta,pt  );   // BTagEntry::JetFlavor set to have same order as BTagging::Flavor
+    // BTagEntry::JetFlavor set to have same order as BTagging::Flavor
+    return calibReaders[wp-1]->eval_auto_bounds(systNames[corrT],BTagEntry::JetFlavor(flv), eta,pt);
 }
 //_____________________________________________________________________________
-float BTagScaleFactors::getJetCorr(const BaseRecoJet* jet,  CorrHelp::CORRTYPE lightT,  CorrHelp::CORRTYPE heavyT) const {
+float BTagScaleFactors::getJetCorr(const BaseRecoJet* jet,  CorrHelp::CORRTYPE lightT,
+        CorrHelp::CORRTYPE heavyT) const {
     const float pt = jet->pt();
     const float eta = jet->eta();
     const auto flv = jetFlavor(*jet);
-    const float csv = jet->csv();
+    const float csv = (jet->*btagCorrGetBTagVal)();
     const CorrHelp::CORRTYPE corrT =  flv == FLV_L ? lightT : heavyT;
     if(corrT == NONE) return 1.0;
 
@@ -77,40 +93,49 @@ float BTagScaleFactors::getJetCorr(const BaseRecoJet* jet,  CorrHelp::CORRTYPE l
 }
 //_____________________________________________________________________________
 //_____________________________________________________________________________
-JetBTagScaleFactors::JetBTagScaleFactors(const std::string& dataDir, const std::string& sfFile, const std::string& effFile, bool verbose) :
-                BTagScaleFactors(CSV_T,"comb","incl", dataDir, sfFile,effFile,verbose) {}
+JetBTagScaleFactors::JetBTagScaleFactors(const std::string& dataDir) :
+                BTagScaleFactors(dataDir,BTAG_T,"comb","incl") {}
 //_____________________________________________________________________________
 JetBTagScaleFactors::~JetBTagScaleFactors() {}
 //_____________________________________________________________________________
-void JetBTagScaleFactors::assignVals(const BTagging::FLAVOR flv,const float pt, const float eta,const float csv, const CorrHelp::CORRTYPE corrT,
+void JetBTagScaleFactors::setParameters(const JetParameters& parameters, bool verbose) {
+    btagCorrWP = parameters.jetBtagCorrWP;
+    btagCorrGetBTagVal = parameters.jetBtagCorrGetBTagVal;
+    BTagScaleFactors::setParameters(parameters.jetBtagCorrSFFile,parameters.jetBtagCorrEffFile,
+            verbose);
+}
+//_____________________________________________________________________________
+void JetBTagScaleFactors::assignVals(const BTagging::FLAVOR flv,const float pt, const float eta,
+        const float csv, const CorrHelp::CORRTYPE corrT,
         float& lE,float& hE,float& lSF,float& hSF) const {
-    auto gE = [&](const BTagging::CSVWP wp)->float{return getJetEff(flv,pt,eta,wp);};
-    auto gS = [&](const BTagging::CSVWP wp)->float{return getJetSF(flv,pt,eta,wp,corrT);};
+    auto gE = [&](const BTagging::BTAGWP wp)->float{return getJetEff(flv,pt,eta,wp);};
+    auto gS = [&](const BTagging::BTAGWP wp)->float{return getJetSF(flv,pt,eta,wp,corrT);};
 
-    if(csv <  CSVWP_VALS[CSV_L]){
+    if(csv <  btagCorrWP[BTAG_L]){
         lE = 1.0;
-        hE = gE(CSV_L);
+        hE = gE(BTAG_L);
         lSF = 1.0;
-        hSF = gS(CSV_L);
-    } else if(csv <  CSVWP_VALS[CSV_M]){
-        lE = gE(CSV_L);
-        hE = gE(CSV_M);
-        lSF = gS(CSV_L);
-        hSF = gS(CSV_M);
-    } else if(csv <  CSVWP_VALS[CSV_T]){
-        lE = gE(CSV_M);
-        hE = gE(CSV_T);
-        lSF = gS(CSV_M);
-        hSF = gS(CSV_T);
+        hSF = gS(BTAG_L);
+    } else if(csv <  btagCorrWP[BTAG_M]){
+        lE = gE(BTAG_L);
+        hE = gE(BTAG_M);
+        lSF = gS(BTAG_L);
+        hSF = gS(BTAG_M);
+    } else if(csv <  btagCorrWP[BTAG_T]){
+        lE = gE(BTAG_M);
+        hE = gE(BTAG_T);
+        lSF = gS(BTAG_M);
+        hSF = gS(BTAG_T);
     } else {
-        lE = gE(CSV_T);
+        lE = gE(BTAG_T);
         hE = 0;
-        lSF = gS(CSV_T);
+        lSF = gS(BTAG_T);
         hSF = 0;
     }
 }
 //_____________________________________________________________________________
-float JetBTagScaleFactors::getSF(const std::vector<const Jet*>& jets, CorrHelp::CORRTYPE lightT,  CorrHelp::CORRTYPE heavyT) const{
+float JetBTagScaleFactors::getSF(const std::vector<const Jet*>& jets, CorrHelp::CORRTYPE lightT,
+        CorrHelp::CORRTYPE heavyT) const{
     float SF = 1.0;
     for(const auto* j : jets) SF *= getJetCorr(j,lightT,heavyT);
     return SF;
@@ -118,41 +143,53 @@ float JetBTagScaleFactors::getSF(const std::vector<const Jet*>& jets, CorrHelp::
 //_____________________________________________________________________________
 //_____________________________________________________________________________
 
-SubJetBTagScaleFactors::SubJetBTagScaleFactors(const std::string& dataDir, const std::string& sfFile, const std::string& effFile, bool verbose) :
-                BTagScaleFactors(CSV_M,"lt","incl",dataDir, sfFile,effFile,verbose) {}
+SubJetBTagScaleFactors::SubJetBTagScaleFactors(const std::string& dataDir) :
+                BTagScaleFactors(dataDir,BTAG_M,"lt","incl") {}
 //_____________________________________________________________________________
 SubJetBTagScaleFactors::~SubJetBTagScaleFactors() {}
 //_____________________________________________________________________________
-void SubJetBTagScaleFactors::assignVals(const BTagging::FLAVOR flv,const float pt, const float eta,const float csv, const CorrHelp::CORRTYPE corrT,
+void SubJetBTagScaleFactors::setParameters(const JetParameters& parameters, bool verbose) {
+    btagCorrWP = parameters.sjBtagCorrWP;
+    btagCorrGetBTagVal = parameters.sjBtagCorrGetBTagVal;
+    BTagScaleFactors::setParameters(parameters.sjBtagCorrSFFile,parameters.sjBtagCorrEffFile,
+            verbose);
+}
+//_____________________________________________________________________________
+void SubJetBTagScaleFactors::assignVals(const BTagging::FLAVOR flv,const float pt, const float eta,
+        const float csv, const CorrHelp::CORRTYPE corrT,
         float& lE,float& hE,float& lSF,float& hSF) const {
-    auto gE = [&](const BTagging::CSVWP wp)->float{return getJetEff(flv,pt,eta,wp);};
-    auto gS = [&](const BTagging::CSVWP wp)->float{return getJetSF(flv,pt,eta,wp,corrT);};
+    auto gE = [&](const BTagging::BTAGWP wp)->float{return getJetEff(flv,pt,eta,wp);};
+    auto gS = [&](const BTagging::BTAGWP wp)->float{return getJetSF(flv,pt,eta,wp,corrT);};
 
-    if(csv <  CSVWP_VALS[CSV_L]){
+    if(csv <  btagCorrWP[BTAG_L]){
         lE = 1.0;
-        hE = gE(CSV_L);
+        hE = gE(BTAG_L);
         lSF = 1.0;
-        hSF = gS(CSV_L);
-    } else if(csv <  CSVWP_VALS[CSV_M]){
-        lE = gE(CSV_L);
-        hE = gE(CSV_M);
-        lSF = gS(CSV_L);
-        hSF = gS(CSV_M);
+        hSF = gS(BTAG_L);
+    } else if(csv <  btagCorrWP[BTAG_M]){
+        lE = gE(BTAG_L);
+        hE = gE(BTAG_M);
+        lSF = gS(BTAG_L);
+        hSF = gS(BTAG_M);
     } else {
-        lE = gE(CSV_M);
+        lE = gE(BTAG_M);
         hE = 0;
-        lSF = gS(CSV_M);
+        lSF = gS(BTAG_M);
         hSF = 0;
 
     }
 }
 //_____________________________________________________________________________
-float SubJetBTagScaleFactors::getSF(const std::vector<const FatJet*>& fatJets, CorrHelp::CORRTYPE lightT,  CorrHelp::CORRTYPE heavyT) const{
+float SubJetBTagScaleFactors::getSF(const JetParameters& parameters,
+        const std::vector<const FatJet*>& fatJets, CorrHelp::CORRTYPE lightT,
+        CorrHelp::CORRTYPE heavyT) const{
     std::vector<const BaseRecoJet*> subjets;
     for(const auto* fj : fatJets){
         if(fj){
             for(const auto& sj : fj->subJets()){
-                if(sj.absEta() < 2.4 && sj.pt() >= 30) subjets.push_back(static_cast<const BaseRecoJet*>(&sj) );
+                if(sj.absEta() < parameters.maxBTagJetETA
+                        && sj.pt() >= parameters.minBtagJetPT)
+                    subjets.push_back(static_cast<const BaseRecoJet*>(&sj) );
             }
         }
     }

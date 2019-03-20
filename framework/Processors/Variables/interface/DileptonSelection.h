@@ -3,7 +3,6 @@
 #define PROCESSORS_VARIABLES_LEPTONSELECTION_H
 #include <vector>
 
-using namespace std;
 
 namespace TAna {
 class Lepton;

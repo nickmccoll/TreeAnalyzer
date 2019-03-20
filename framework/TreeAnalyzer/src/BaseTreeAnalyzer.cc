@@ -41,7 +41,7 @@ void BaseEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequency
 }
 
 //--------------------------------------------------------------------------------------------------
-BaseTreeAnalyzer::BaseTreeAnalyzer(std::string fileName, std::string treeName, int inputTreeType, size randomSeed) :
+BaseTreeAnalyzer::BaseTreeAnalyzer(std::string fileName, std::string treeName, int inputTreeType, ASTypes::size randomSeed) :
         treeType(getTreeType(inputTreeType)),tree(fileName,treeName), eventNumber(0), randGen (std::make_shared<TRandom3>(randomSeed))
 {
     //if the enviornment variable is set, use it
@@ -133,11 +133,5 @@ void BaseTreeAnalyzer::setSampleInfo(float inXSec, float inNumE)
 
 }
 //--------------------------------------------------------------------------------------------------
-
-void BaseTreeAnalyzer::setLumi(float inLumi) {
-    _lumi=inLumi;
-    std::cout << " ++  Luminosity is set to: "<< inLumi <<" [fb-1]" <<std::endl;
-}
-
 
 }

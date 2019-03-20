@@ -2,7 +2,7 @@
 #if !defined(__CINT__) || defined(__MAKECINT__)
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 #include "TreeAnalyzer/interface/BaseTreeAnalyzer.h"
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 #include "TPRegexp.h"
 
 using namespace TAna;

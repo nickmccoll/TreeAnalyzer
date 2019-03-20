@@ -4,7 +4,6 @@
 #include "DataFormats/interface/Momentum.h"
 #include "TFitter.h"
 
-using namespace std;
 namespace TAna {
 
 class HwwInfo {

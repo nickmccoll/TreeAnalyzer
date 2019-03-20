@@ -10,7 +10,7 @@
 #include "TreeReaders/interface/JetReader.h"
 #include "TreeReaders/interface/FatJetReader.h"
 
-#include "TreeReaders/interface/FillerConstants.h"
+#include "Configuration/interface/FillerConstants.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
 #include "AnalysisSupport/Utilities/interface/PhysicsUtilities.h"
@@ -31,8 +31,8 @@ public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt)
 {
-        fjProc->param.wjj_min_CSVSJCat    = BTagging::CSVSJ_INCL   ;
-        fjProc->param.wjj_max_CSVSJCat    = BTagging::CSVSJ_INCL   ;
+        fjProc->params.wjj_min_CSVSJCat    = BTagging::CSVSJ_INCL   ;
+        fjProc->params.wjj_max_CSVSJCat    = BTagging::CSVSJ_INCL   ;
 }
 
     //--------------------------------------------------------------------------------------------------
