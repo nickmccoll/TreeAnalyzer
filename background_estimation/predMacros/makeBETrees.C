@@ -58,66 +58,71 @@ public:
     virtual void bookOutputVariables() override {
 
         if(isRealData()){
-            i_dataset             =  outTree->add<size8>  ("","dataset"  ,"b",0);
-            i_dataRun             =  outTree->add<size8>  ("","dataRun"  ,"b",0);
+        	outTree->addSingle(dataset_,  "",  "dataset");
+        	outTree->addSingle(dataRun_,  "",  "dataRun");
         } else {
-            i_process     =outTree->add<size8>  ("","process","b",0);
-            i_dhType      =outTree->add<size8>  ("","dhType" ,"b",0);
-            i_xsec        =outTree->add<float>  ("","xsec"   ,"F",0);
-            i_trig_N      =outTree->add<float>  ("","trig_N" ,"F",0);
-            i_pu_N        =outTree->add<float>  ("","pu_N"   ,"F",0);
-            i_lep_N       =outTree->add<float>  ("","lep_N"  ,"F",0);
-            i_btag_N      =outTree->add<float>  ("","btag_N" ,"F",0);
+        	outTree->addSingle(process_,  "",  "process");
+        	outTree->addSingle(dhType_,  "",  "dhType");
+        	outTree->addSingle(xsec_,  "",  "xsec");
+        	outTree->addSingle(trig_N_,  "",  "trig_N");
+        	outTree->addSingle(pu_N_,  "",  "pu_N");
+        	outTree->addSingle(lep_N_,  "",  "lep_N");
+        	outTree->addSingle(btag_N_,  "",  "btag_N");
         }
-        i_passPre     =outTree->add<size8>  ("","passPre"   ,"b",0);
-        i_ht          =outTree->add<float>  ("","ht"        ,"F",0);
-        i_met         =outTree->add<float>  ("","met"       ,"F",0);
-        i_isMuon      =outTree->add<size8>  ("","isMuon"    ,"b",0);
-        i_lepPT       =outTree->add<float>  ("","lepPT"     ,"F",0);
-        i_lepETA      =outTree->add<float>  ("","lepETA"    ,"F",0);
 
-        i_hbbMass     =outTree->add<float>  ("","hbbMass"   ,"F",0);
-        i_hbbPT       =outTree->add<float>  ("","hbbPT"     ,"F",0);
-        i_hbbCSVCat   =outTree->add<size8>  ("","hbbCSVCat" ,"b",0);
-//        i_hbbBBT      =outTree->add<float>  ("","hbbBBT"    ,"F",0);
-//        i_hbbTau2o1   =outTree->add<float>  ("","hbbTau2o1" ,"F",0);
+    	outTree->addSingle(passPre_,  "",  "passPre");
+    	outTree->addSingle(ht_,  "",  "ht");
+    	outTree->addSingle(met_,  "",  "met");
+    	outTree->addSingle(isMuon_,  "",  "isMuon");
+    	outTree->addSingle(lepPT_,  "",  "lepPT");
+    	outTree->addSingle(lepETA_,  "",  "lepETA");
 
-        i_hhMass      =outTree->add<float>  ("","hhMass"    ,"F",0);
-        i_wwDM        =outTree->add<float>  ("","wwDM"      ,"F",0);
-        i_hwwPT       =outTree->add<float>  ("","hwwPT"     ,"F",0);
-//        i_hwwETA      =outTree->add<float>  ("","hwwETA"    ,"F",0);
-//        i_wjjCSVCat   =outTree->add<size8>  ("","wjjCSVCat" ,"b",0);
-        i_wjjTau2o1   =outTree->add<float>  ("","wjjTau2o1" ,"F",0);
-        i_wjjMass     =outTree->add<float>  ("","wjjMass"   ,"F",0);
-        i_wjjPT       =outTree->add<float>  ("","wjjPT"     ,"F",0);
-        i_wlnuMass    =outTree->add<float>  ("","wlnuMass"  ,"F",0);
-        i_wlnuPT      =outTree->add<float>  ("","wlnuPT"    ,"F",0);
-        i_nAK4Btags   =outTree->add<size8>  ("","nAK4Btags" ,"b",0);
+    	outTree->addSingle(hbbMass_,  "",  "hbbMass");
+    	outTree->addSingle(hbbPT_,  "",  "hbbPT");
+    	outTree->addSingle(hbbCSVCat_,  "",  "hbbCSVCat");
+
+    	outTree->addSingle(hhMass_,  "",  "hhMass");
+    	outTree->addSingle(wwDM_,  "",  "wwDM");
+    	outTree->addSingle(hwwPT_,  "",  "hwwPT");
+
+    	outTree->addSingle(wjjTau2o1_,  "",  "wjjTau2o1");
+    	outTree->addSingle(wjjMass_,  "",  "wjjMass");
+    	outTree->addSingle(wjjPT_,  "",  "wjjPT");
+    	outTree->addSingle(wlnuMass_,  "",  "wlnuMass");
+    	outTree->addSingle(wlnuPT_,  "",  "wlnuPT");
+    	outTree->addSingle(nAK4Btags_,  "",  "nAK4Btags");
 
         if(!isRealData()){
-            i_hbbWQuark   =outTree->add<size8>  ("","hbbWQuark"  ,"b",0);
-            i_hbbWEQuark  =outTree->add<size8>  ("","hbbWEQuark"  ,"b",0);
+        	outTree->addSingle(hbbWQuark_,  "",  "hbbWQuark");
+        	outTree->addSingle(hbbWEQuark_,  "",  "hbbWEQuark");
         }
 
         if(addUncVariables){
-            i_w_muIDUp        = outTree->add<float>("","w_muIDUp","F",0);
-            i_w_muISOUp       = outTree->add<float>("","w_muISOUp","F",0);
-            i_w_elRecoUp      = outTree->add<float>("","w_elRecoUp","F",0);
-            i_w_elIDUp        = outTree->add<float>("","w_elIDUp","F",0);
-            i_w_elISOUp       = outTree->add<float>("","w_elISOUp","F",0);
-            i_w_b_realUp     = outTree->add<float>("","w_b_realUp","F",0);
-            i_w_b_fakeUp      = outTree->add<float>("","w_b_fakeUp","F",0);
-            i_w_puUp          = outTree->add<float>("","w_puUp","F",0);
-            i_w_muIDDown      = outTree->add<float>("","w_muIDDown","F",0);
-            i_w_muISODown     = outTree->add<float>("","w_muISODown","F",0);
-            i_w_elRecoDown    = outTree->add<float>("","w_elRecoDown","F",0);
-            i_w_elIDDown      = outTree->add<float>("","w_elIDDown","F",0);
-            i_w_elISODown     = outTree->add<float>("","w_elISODown","F",0);
-            i_w_b_realDown   = outTree->add<float>("","w_b_realDown","F",0);
-            i_w_b_fakeDown    = outTree->add<float>("","w_b_fakeDown","F",0);
-            i_w_puDown        = outTree->add<float>("","w_puDown","F",0);
-            i_w_scale        = outTree->addMulti<float>("","w_scale",0);
-            i_w_pdf          = outTree->addMulti<float>("","w_pdf",0);
+        	outTree->addSingle(w_muIDUp_,  "",  "w_muIDUp");
+        	outTree->addSingle(w_muISOUp_,  "",  "w_muISOUp");
+        	outTree->addSingle(w_elRecoUp_,  "",  "w_elRecoUp");
+        	outTree->addSingle(w_elIDUp_,  "",  "w_elIDUp");
+        	outTree->addSingle(w_elISOUp_,  "",  "w_elISOUp");
+        	outTree->addSingle(w_b_realUp_,  "",  "w_b_realUp");
+        	outTree->addSingle(w_b_fakeUp_,  "",  "w_b_fakeUp");
+        	outTree->addSingle(w_puUp_,  "",  "w_puUp");
+        	outTree->addSingle(w_puDown_,  "",  "w_puDown");
+        	outTree->addSingle(w_muIDDown_,  "",  "w_muIDDown");
+        	outTree->addSingle(w_muISODown_,  "",  "w_muISODown");
+        	outTree->addSingle(w_elRecoDown_,  "",  "w_elRecoDown");
+        	outTree->addSingle(w_elIDDown_,  "",  "w_elIDDown");
+        	outTree->addSingle(w_elISODown_,  "",  "w_elISODown");
+
+//        	outTree->addVector(w_scale_,  "", "w_scale_N", "w_scale",10);
+//        	outTree->addVector(w_pdf_,  "", "w_pdf_N", "w_pdf",10);
+
+//            for(unsigned int i = 1; i < 9; ++i){
+//                if(i == 5 || i ==7)continue; //told to ignore
+//                outTree->addVector((*reader_event->genWeights)[i],  "",   "w_scale");
+//            }
+//            for(unsigned int i = 111; i < 211; ++i) //Number 110 is the nominal
+//                outTree->addVector((*reader_event->genWeights)[i],  "",   "w_pdf");
+
         }
 
     }
@@ -132,51 +137,50 @@ public:
         if(!wjjCand)  passPre = false;
 
         if(!addUncVariables && !passPre) return false;
-        outTree->fill(i_passPre     ,size8(passPre));
+        passPre_ = size8(passPre);
 
 
         if(isRealData()){
-            outTree->fill(i_dataset     ,reader_event->dataset);
-            outTree->fill(i_dataRun     ,reader_event->dataRun);
+        	dataset_ = size8(*reader_event->dataset);
+        	dataRun_ = size8(*reader_event->dataRun);
+
         } else {
-            outTree->fill(i_process     ,reader_event->process);
-            outTree->fill(i_dhType      ,size8(diHiggsEvt.type));
-            outTree->fill(i_xsec        ,float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi())));
-            outTree->fill(i_trig_N      ,float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_chs, (selectedLepton && selectedLepton->isMuon())) : 1.0 ));
-            outTree->fill(i_pu_N        ,float(puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL)));
-            outTree->fill(i_lep_N       ,float(leptonSFProc->getSF()));
-            outTree->fill(i_btag_N      ,float(sjbtagSFProc->getSF({hbbCand})*ak4btagSFProc->getSF(jets_HbbV)));
+        	process_ = size8(*reader_event->process);
+        	dhType_  = size8(diHiggsEvt.type);
+        	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi()));
+        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_chs, (selectedLepton && selectedLepton->isMuon())) : 1.0 );
+        	pu_N_    = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL));
+        	lep_N_   = float(leptonSFProc->getSF());
+        	btag_N_  = float(sjbtagSFProc->getSF({hbbCand})*ak4btagSFProc->getSF(jets_HbbV));
         }
 
-        outTree->fill(i_ht     ,float(ht_chs));
-        outTree->fill(i_met    ,float(reader_event->met.pt()));
+        ht_  = float(ht_chs);
+        met_ = float(reader_event->met.pt());
+
         if(selectedLepton){
-            outTree->fill(i_isMuon      ,size8(selectedLepton->isMuon()));
-            outTree->fill(i_lepPT       ,float(selectedLepton->pt()));
-            outTree->fill(i_lepETA      ,float(selectedLepton->eta()));
+        	isMuon_  = size8(selectedLepton->isMuon());
+        	lepPT_   = float(selectedLepton->pt());
+        	lepETA_  = float(selectedLepton->eta());
         }
 
-        outTree->fill(i_hbbMass     ,float(hbbMass));
-        if(hbbCand)
-            outTree->fill(i_hbbPT       ,float(hbbCand->pt()));
-        outTree->fill(i_hbbCSVCat   ,size8(hbbCSVCat));
-//        outTree->fill(i_hbbBBT       ,float(hbbCand->bbt()));
-//        outTree->fill(i_hbbTau2o1   ,float(hbbCand->tau2otau1()));
+        hbbMass_ = float(hbbMass);
 
-        outTree->fill(i_hhMass      ,float(hh.mass()));
-        outTree->fill(i_wlnuMass    ,float(wlnu.mass()));
-        outTree->fill(i_wwDM        ,float(wwDM));
-        outTree->fill(i_hwwPT       ,float(hWW.pt()));
-//        outTree->fill(i_hwwETA      ,float(hWW.eta()));
-//        outTree->fill(i_wjjCSVCat   ,size8(wjjCSVCat));
+        if(hbbCand) hbbPT_ = float(hbbCand->pt());
+        hbbCSVCat_ = size8(hbbCSVCat);
+
+        hhMass_   = float(hh.mass());
+        wlnuMass_ = float(wlnu.mass());
+        wwDM_     = float(wwDM);
+        hwwPT_    = float(hWW.pt());
+
         if(wjjCand){
-            outTree->fill(i_wjjTau2o1   ,float(wjjCand->tau2otau1()));
-            outTree->fill(i_wjjMass     ,float(wjjCand->sdMom().mass()));
-            outTree->fill(i_wjjPT       ,float(wjjCand->pt()));
+        	wjjTau2o1_ = float(wjjCand->tau2otau1());
+        	wjjMass_   = float(wjjCand->sdMom().mass());
+        	wjjPT_     = float(wjjCand->pt());
         }
 
-        outTree->fill(i_wlnuPT      ,float(wlnu.pt()));
-        outTree->fill(i_nAK4Btags   ,size8(std::min(nMedBTags_HbbV,250)));
+        wlnuPT_    = float(wlnu.pt());
+        nAK4Btags_ = size8(std::min(nMedBTags_HbbV,250));
 
         if(!isRealData() && hbbCand){
             const float matchR = 0.8*0.8;
@@ -229,110 +233,102 @@ public:
                 nExtraQuarks = (totNWQuarks - maxNWQuarks) + totNTopQuarks;
             }
 
-            outTree->fill(i_hbbWQuark   ,decayType);
-            outTree->fill(i_hbbWEQuark   ,nExtraQuarks);
+            hbbWQuark_   = size8(decayType);
+            hbbWEQuark_  = size8(nExtraQuarks);
         }
 
         if(addUncVariables){
             const float nomMu = leptonSFProc->getMuonSF();
             const float nomEl = leptonSFProc->getElectronSF();
-            outTree->fill(i_w_muIDUp     ,float(leptonSFProc->getMuonSF(NONE,UP,NOMINAL)*nomEl));
-            outTree->fill(i_w_muISOUp    ,float(leptonSFProc->getMuonSF(NONE,NOMINAL,UP)*nomEl));
-            outTree->fill(i_w_elRecoUp   ,float(leptonSFProc->getElectronSF(UP,NOMINAL,NOMINAL)*nomMu));
-            outTree->fill(i_w_elIDUp     ,float(leptonSFProc->getElectronSF(NOMINAL,UP,NOMINAL)*nomMu));
-            outTree->fill(i_w_elISOUp    ,float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,UP)*nomMu));
-            outTree->fill(i_w_b_realUp   ,float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,UP)* sjbtagSFProc->getSF({hbbCand},NOMINAL,UP)));
-            outTree->fill(i_w_b_fakeUp   ,float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL)* sjbtagSFProc->getSF({hbbCand},UP,NOMINAL)));
-            outTree->fill(i_w_puUp       ,float(puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::UP)));
 
-            outTree->fill(i_w_muIDDown   ,float(leptonSFProc->getMuonSF(NONE,DOWN,NOMINAL)*nomEl));
-            outTree->fill(i_w_muISODown  ,float(leptonSFProc->getMuonSF(NONE,NOMINAL,DOWN)*nomEl));
-            outTree->fill(i_w_elRecoDown ,float(leptonSFProc->getElectronSF(DOWN,NOMINAL,NOMINAL)*nomMu));
-            outTree->fill(i_w_elIDDown   ,float(leptonSFProc->getElectronSF(NOMINAL,DOWN,NOMINAL)*nomMu));
-            outTree->fill(i_w_elISODown  ,float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,DOWN)*nomMu));
-            outTree->fill(i_w_b_realDown ,float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN)* sjbtagSFProc->getSF({hbbCand},NOMINAL,DOWN)));
-            outTree->fill(i_w_b_fakeDown ,float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF({hbbCand},DOWN,NOMINAL)));
-            outTree->fill(i_w_puDown     ,float(puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::DOWN)));
+            w_muIDUp_     = float(leptonSFProc->getMuonSF(NONE,UP,NOMINAL)*nomEl);
+            w_muISOUp_    = float(leptonSFProc->getMuonSF(NONE,NOMINAL,UP)*nomEl);
+            w_elRecoUp_   = float(leptonSFProc->getElectronSF(UP,NOMINAL,NOMINAL)*nomMu);
+            w_elIDUp_     = float(leptonSFProc->getElectronSF(NOMINAL,UP,NOMINAL)*nomMu);
+            w_elISOUp_    = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,UP)*nomMu);
+            w_b_realUp_   = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,UP)* sjbtagSFProc->getSF({hbbCand},NOMINAL,UP));
+            w_b_fakeUp_   = float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL)* sjbtagSFProc->getSF({hbbCand},UP,NOMINAL));
+            w_puUp_       = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::UP));
 
+            w_muIDDown_   = float(leptonSFProc->getMuonSF(NONE,DOWN,NOMINAL)*nomEl);
+            w_muISODown_  = float(leptonSFProc->getMuonSF(NONE,NOMINAL,DOWN)*nomEl);
+            w_elRecoDown_ = float(leptonSFProc->getElectronSF(DOWN,NOMINAL,NOMINAL)*nomMu);
+            w_elIDDown_   = float(leptonSFProc->getElectronSF(NOMINAL,DOWN,NOMINAL)*nomMu);
+            w_elISODown_  = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,DOWN)*nomMu);
+            w_b_realDown_ = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN)* sjbtagSFProc->getSF({hbbCand},NOMINAL,DOWN));
+            w_b_fakeDown_ = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF({hbbCand},DOWN,NOMINAL));
+            w_puDown_     = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::DOWN));
 
-            for(unsigned int i = 1; i < 9; ++i){
-                if(i == 5 || i ==7)continue; //told to ignore
-                outTree->fillMulti(i_w_scale,(*reader_event->genWeights)[i]);
-            }
-            for(unsigned int i = 111; i < 211; ++i) //Number 110 is the nominal
-                outTree->fillMulti(i_w_pdf,(*reader_event->genWeights)[i]);
+//            for(unsigned int i = 1; i < 9; ++i){
+//                if(i == 5 || i ==7)continue; //told to ignore
+//                outTree->fillMulti(i_w_scale,(*reader_event->genWeights)[i]);
+//            }
+//            for(unsigned int i = 111; i < 211; ++i) //Number 110 is the nominal
+//                outTree->fillMulti(i_w_pdf,(*reader_event->genWeights)[i]);
 
 
         }
 
-
-
-
         return true;
     }
 
-
-
     //Event information and weights
-    size i_process    = 0;
-    size i_dhType     = 0;
-    size i_dataset    = 0;
-    size i_dataRun    = 0;
-    size i_xsec       = 0;
-    size i_trig_N     = 0;
-    size i_pu_N       = 0;
-    size i_lep_N      = 0;
-    size i_btag_N     = 0;
-    size i_passPre    = 0;
+    size8 process_    = 0;
+    size8 dhType_     = 0;
+    size8 dataset_    = 0;
+    size8 dataRun_    = 0;
+    float xsec_       = 0;
+    float trig_N_     = 0;
+    float pu_N_       = 0;
+    float lep_N_      = 0;
+    float btag_N_     = 0;
+    size8 passPre_    = 0;
 
     //SR variables
-    size i_ht        = 0;
-    size i_met       = 0;
-    size i_isMuon    = 0;
-    size i_lepPT     = 0;
-    size i_lepETA    = 0;
-    size i_hbbMass   = 0;
-    size i_hbbPT     = 0;
-    size i_hbbCSVCat = 0;
-//    size i_hbbBBT    = 0;
-//    size i_hbbTau2o1 = 0;
+    float ht_        = 0;
+    float met_       = 0;
+    size8 isMuon_    = 0;
+    float lepPT_     = 0;
+    float lepETA_    = 0;
+    float hbbMass_   = 0;
+    float hbbPT_     = 0;
+    size8 hbbCSVCat_ = 0;
 
-    size i_hhMass    = 0;
-    size i_wwDM      = 0;
-    size i_hwwPT     = 0;
-//    size i_hwwETA    = 0;
-//    size i_wjjCSVCat = 0;
-    size i_wjjTau2o1 = 0;
-    size i_wjjMass   = 0;
-    size i_wjjPT     = 0;
-    size i_wlnuMass  = 0;
-    size i_wlnuPT    = 0;
-    size i_nAK4Btags = 0;
+    float hhMass_    = 0;
+    float wwDM_      = 0;
+    float hwwPT_     = 0;
+
+    float wjjTau2o1_ = 0;
+    float wjjMass_   = 0;
+    float wjjPT_     = 0;
+    float wlnuMass_  = 0;
+    float wlnuPT_    = 0;
+    size8 nAK4Btags_ = 0;
 
     //BE extra variables
-    size i_hbbWQuark   =0;
-    size i_hbbWEQuark   =0;
+    size8 hbbWQuark_   =0;
+    size8 hbbWEQuark_   =0;
 
     //systematic variables
-    size i_w_muIDUp      = 0;
-    size i_w_muISOUp     = 0;
-    size i_w_elRecoUp    = 0;
-    size i_w_elIDUp      = 0;
-    size i_w_elISOUp     = 0;
-    size i_w_b_realUp    = 0;
-    size i_w_b_fakeUp    = 0;
-    size i_w_puUp        = 0;
-    size i_w_muIDDown    = 0;
-    size i_w_muISODown   = 0;
-    size i_w_elRecoDown  = 0;
-    size i_w_elIDDown    = 0;
-    size i_w_elISODown   = 0;
-    size i_w_b_realDown  = 0;
-    size i_w_b_fakeDown  = 0;
-    size i_w_puDown      = 0;
+    float w_muIDUp_      = 0;
+    float w_muISOUp_     = 0;
+    float w_elRecoUp_    = 0;
+    float w_elIDUp_      = 0;
+    float w_elISOUp_     = 0;
+    float w_b_realUp_    = 0;
+    float w_b_fakeUp_    = 0;
+    float w_puUp_        = 0;
+    float w_muIDDown_    = 0;
+    float w_muISODown_   = 0;
+    float w_elRecoDown_  = 0;
+    float w_elIDDown_    = 0;
+    float w_elISODown_   = 0;
+    float w_b_realDown_  = 0;
+    float w_b_fakeDown_  = 0;
+    float w_puDown_      = 0;
 
-    size i_w_scale       = 0;
-    size i_w_pdf         = 0;
+//    spv_float w_scale_   = make_spv_float();
+//    spv_float w_pdf_     = make_spv_float();
 
     bool addUncVariables = false;
 
