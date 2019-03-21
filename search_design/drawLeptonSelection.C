@@ -1,4 +1,5 @@
 {
+    bool print = false;
   vector<unsigned int> fullSigMasses = {
     600,
     800,
@@ -18,7 +19,7 @@
   vector<unsigned int> sigMasses = {
     // 600,
     // 800,
-    1000,
+    // 1000,
     // 1200,
     // 1400,
     // 1600,
@@ -33,11 +34,11 @@
   };
   
   vector<TString> bkgs = {
-    "ttbar",
+    // "ttbar",
     "qcd"
   };
   vector<TString> bkgNamess = {
-    "t#bar{t}",
+    // "t#bar{t}",
     "QCD"
   };
 
@@ -53,17 +54,18 @@
 for(auto p : pres){       for(unsigned int iM = 0; iM < sigMasses.size(); ++iM){
       Plotter * plots = new Plotter();
       int iF =0;
-    for(auto v : vars) {
+    for(unsigned int iV = 0; iV < vars.size();++iV) {
+      const auto& v = vars[iV];
         TH1 * h = 0;
         f->GetObject(TString::Format("m%u_%s%s_%s",sigMasses[iM],p.Data(),v.Data(),var.Data()),h);
         if(h == 0) continue;
         ++iF;
-        plots->addHistLine(h,TString::Format("#it{m}(X) %u GeV, %s",sigMasses[iM],v.Data()));
+        plots->addHistLine(h,TString::Format("#it{m}(X) %u GeV, %s",sigMasses[iM],v.Data()),StyleInfo::getLineColor(iV));
     }
     plots->rebin(nBins,rebins);
     plots->setMinMax(0,1);
     if(iF > 1){
-    plots->drawRatio(0,"stack",true,true,TString::Format("sigDist_%s_%s_%s_%u.pdf",name.Data(),p.Data(),var.Data(),sigMasses[iM]));
+    plots->drawRatio(0,"stack",true,print,TString::Format("sigDist_%s_%s_%s_%u.pdf",name.Data(),p.Data(),var.Data(),sigMasses[iM]));
     plots->yAxis()->SetTitleOffset(1.5);
   }
   }}
@@ -89,7 +91,7 @@ for(auto p : pres){       for(unsigned int iM = 0; iM < sigMasses.size(); ++iM){
         p->addHist(hists[iN],cutNames[cuts[iN]],-1,1,4,20,1,true,false);
       }
       p->setMinMax(0,1.0);
-      p->drawRatio(0,"stack",false,true,TString::Format("sigEff_%s_%s.pdf",name.Data(),pr.Data()));
+      p->drawRatio(0,"stack",false,print,TString::Format("sigEff_%s_%s.pdf",name.Data(),pr.Data()));
     }
 
             // p->draw(false);
@@ -108,7 +110,7 @@ for(auto p : pres){       for(unsigned int iM = 0; iM < bkgs.size(); ++iM){
           hd = h;                      
         } else {
         ++iF;        
-        plots->addHistLine(h,TString::Format("%s, %s",bkgNamess[iM].Data(),vars[iV].Data()));
+        plots->addHistLine(h,TString::Format("%s, %s",bkgNamess[iM].Data(),vars[iV].Data()),StyleInfo::getLineColor(iV));
       }
     }
 
@@ -116,7 +118,7 @@ for(auto p : pres){       for(unsigned int iM = 0; iM < bkgs.size(); ++iM){
       plots->rebin(nBinsBKG,rebinsBKG);
       plots->scale(1.0/hd->Integral(0,-1));
       // plots->setMinMax(0,1);
-    plots->draw(true,TString::Format("bkgEff_%s_%s_%s.pdf",p.Data(),var.Data(),bkgs[iM].Data()));
+    plots->draw(print,TString::Format("bkgEff_%s_%s_%s.pdf",p.Data(),var.Data(),bkgs[iM].Data()));
     plots->yAxis()->SetTitleOffset(1.5);
   }
   }}
@@ -168,15 +170,15 @@ std::vector<TString> sigElpres = {"","passTight_","matchedEl_","matchedEl_passTi
 std::vector<TString> sigMupres = {"","passTight_","matchedMu_","matchedMu_passTight_"};
 std::vector<TString> bkgPres = {"","passTight_"};
 //MU ID
-// std::vector<TString> muIDvars = {"incl","soft","loose","med","med16","tight","highPT"};
-// std::vector<unsigned int> muIDcuts = {0,1,2,3,4,5,6};
+// std::vector<TString> muIDvars = {"incl","soft","loose","med","tight","highPT"};
+// std::vector<unsigned int> muIDcuts = {0,1,2,3,4,5};
 // sigDistPlots("muID","muID",muIDvars,sigMupres);
 // effPlots("muID",sigMupres,muIDcuts,muIDvars);
 // bkgDistPlots("muID","muID",muIDvars,sigMupres);
 
 // //Mu ISO
-// std::vector<TString> muISOvars = {"incl","miniIso_0p1","miniIso_0p2","miniIso_0p3","miniIso_0p4","relIso_0p1","relIso_0p2","relIso_0p3","relIso_0p4"};
-// std::vector<unsigned int> muISOcuts = {0,1,2,3,4,5,6,7,8};
+// std::vector<TString> muISOvars = {"incl","miniIso_0p1","miniIso_0p2","miniIso_0p3","pfIso_0p1","pfIso_0p2","pfIso_0p3"};
+// std::vector<unsigned int> muISOcuts = {0,1,2,3,4,5,6};
 // sigDistPlots("muISO","muISO",muISOvars,sigMupres);
 // effPlots("muISO",sigMupres,muISOcuts,muISOvars);
 // bkgDistPlots("muISO","muISO",muISOvars,sigMupres);
@@ -189,8 +191,8 @@ std::vector<TString> bkgPres = {"","passTight_"};
 // bkgDistPlots("muD0","muD0",muD0vars,sigMupres);
 
 //Mu SIP3D
-// std::vector<TString> muS3vars = {"incl","2","3","4","5","6","7","8"};
-// std::vector<unsigned int> muS3cuts = {0,1,2,3,4,5,6,7};
+// std::vector<TString> muS3vars = {"incl","2","3","4","5","6"};
+// std::vector<unsigned int> muS3cuts = {0,1,2,3,4,5};
 // sigDistPlots("muS3","muS3",muS3vars,sigMupres);
 // effPlots("muS3",sigMupres,muS3cuts,muS3vars);
 // bkgDistPlots("muS3","muS3",muS3vars,sigMupres);
@@ -203,18 +205,24 @@ std::vector<TString> bkgPres = {"","passTight_"};
 // bkgDistPlots("muDZ","muDZ",muDZvars,sigMupres);
 
 //El ID
-// std::vector<TString> elIDvars = {"veto","loose","med","tight","heep","mva80","mva90"};
-// std::vector<unsigned int> elIDcuts = {0,1,2,3,4,5,6};
-// sigDistPlots("elID","elID",elIDvars,sigElpres);
-// effPlots("elID",sigElpres,elIDcuts,elIDvars);
-// bkgDistPlots("elID","elID",elIDvars,sigElpres);
+std::vector<TString> elIDvars = {"incl","loose","med","tight","heep","mvaLoose","mva80","mva90"};
 
-// // El ISO
-// std::vector<TString> elISOvars = {"incl","miniIso_0p1","miniIso_0p2","miniIso_0p3","miniIso_0p4","relIso_0p1","relIso_0p2","relIso_0p3","relIso_0p4"};
-// std::vector<unsigned int> elISOcuts = {0,1,2,3,4,5,6,7,8};
-// sigDistPlots("elISO","elISO",elISOvars,sigElpres);
+std::vector<unsigned int> elIDcuts = {0,1,2,3,4,5,6,7};
+sigDistPlots("elID","elID",elIDvars,sigElpres);
+effPlots("elID",sigElpres,elIDcuts,elIDvars);
+bkgDistPlots("elID","elID",elIDvars,sigElpres);
+
+// El ISO
+// std::vector<TString> elISOvars = {"incl","miniIso_0p1","miniIso_0p2","miniIso_0p3","miniIso_0p4","miniIso_0p5",
+//                                          "miniIsoFP_0p1","miniIsoFP_0p2","miniIsoFP_0p3","miniIsoFP_0p4","miniIsoFP_0p5",
+//                                            "pfIso_0p1","pfIso_0p2","pfIso_0p3","pfIso_0p4","pfIso_0p5",
+//                                            "trackerIso_0p1","trackerIso_0p2","trackerIso_0p3","tracekrIso_0p4","trackerIso_0p5"};
+// std::vector<TString> elISOvarsD = {"incl","miniIso_0p1","miniIso_0p2","miniIso_0p3","pfIso_0p1","pfIso_0p2","pfIso_0p3"};
+//
+// std::vector<unsigned int> elISOcuts = {0,1,2,3,11,12,13};
+// sigDistPlots("elISO","elISO",elISOvarsD,sigElpres);
 // effPlots("elISO",sigElpres,elISOcuts,elISOvars);
-// bkgDistPlots("elISO","elISO",elISOvars,sigElpres);
+// bkgDistPlots("elISO","elISO",elISOvarsD,sigElpres);
 
 //El D0
 // std::vector<TString> elD0vars = {"incl","0p01","0p02","0p05","0p10","0p20"};
@@ -232,11 +240,11 @@ std::vector<TString> bkgPres = {"","passTight_"};
 //
 
 //El SIP3D
-std::vector<TString> elDZvars = {"incl","0p1","0p2","0p3","0p4","0p5"};
-std::vector<unsigned int> elDZcuts = {0,1,2,3,4,5};
-sigDistPlots("elDZ","elDZ",elDZvars,sigElpres);
-effPlots("elDZ",sigElpres,elDZcuts,elDZvars);
-bkgDistPlots("elDZ","elDZ",elDZvars,sigElpres);
+// std::vector<TString> elDZvars = {"incl","0p1","0p2","0p3","0p4","0p5"};
+// std::vector<unsigned int> elDZcuts = {0,1,2,3,4,5};
+// sigDistPlots("elDZ","elDZ",elDZvars,sigElpres);
+// effPlots("elDZ",sigElpres,elDZcuts,elDZvars);
+// bkgDistPlots("elDZ","elDZ",elDZvars,sigElpres);
 
 
 

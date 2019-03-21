@@ -6,7 +6,6 @@
 #include <vector>
 #include <string>
 
-// Forward declarations
 namespace TAna {
 
 //--------------------------------------------------------------------------------------------------
