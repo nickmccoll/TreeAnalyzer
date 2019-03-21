@@ -390,6 +390,41 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
     c->Write();
     fo->Close();
 
+    if(!blind) chk(obs ,"obs"   );
+    chk(m2Sigma,"m2Sigma");
+    chk(m1Sigma,"m1Sigma");
+    chk(exp    ,"exp    ");
+    chk(p2Sigma,"p2Sigma");
+    chk(p1Sigma,"p1Sigma");
+    ///Printing for hepdata
+    if(!blind){
+        std::map<float,float> radionXSecMap;
+        std::map<float,float> bgXsecMap;
+        std::map<float,float> bgXsec0p3Map;
+
+        for(const auto& e : radionXSec) radionXSecMap[e.first] =e.second;
+        for(const auto& e : bgXsec) bgXsecMap[e.first] =e.second;
+        for(const auto& e : bgXsec0p3) bgXsec0p3Map[e.first] =e.second;
+
+        for(unsigned int iM = 0; iM < exp.size(); ++iM){
+            std::cout << "["<<exp[iM].first<<","<<exp[iM].second <<","<<obs[iM].second <<","
+                    <<m1Sigma[iM].second <<","<<p1Sigma[iM].second <<","
+                    <<m2Sigma[iM].second <<","<<p2Sigma[iM].second ;
+
+            if(sig == RADION){
+                std::cout <<","<< radionXSecMap[exp[iM].first];
+            } else {
+                std::cout <<","<< bgXsecMap[exp[iM].first]<<","<< bgXsec0p3Map[exp[iM].first];
+            }
+
+
+                    std::cout <<"],";
+        }
+    std::cout << std::endl;
+    }
+
+
+
 }
 
 #endif
