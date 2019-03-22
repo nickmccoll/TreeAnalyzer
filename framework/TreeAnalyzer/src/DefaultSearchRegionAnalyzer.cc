@@ -129,6 +129,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         smpName = "data";
     } else {
         mcProc = FillerConstants::MCProcess(*(reader_event->process));
+        signal_mass = *reader_event->sampParam;
         if (mcProc == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
         else smpName = FillerConstants::MCProcessNames[mcProc];
     }

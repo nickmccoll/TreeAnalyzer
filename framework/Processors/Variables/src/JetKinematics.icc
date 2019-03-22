@@ -9,8 +9,6 @@
 #include "Processors/Variables/interface/JetKinematics.h"
 #include "AnalysisSupport/Utilities/interface/PhysicsUtilities.h"
 
-using ASTypes::size;
-
 namespace TAna {
 //_____________________________________________________________________________
 template<typename Jet>
