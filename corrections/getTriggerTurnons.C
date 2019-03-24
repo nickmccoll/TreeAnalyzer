@@ -1,4 +1,3 @@
-
 #if !defined(__CINT__) || defined(__MAKECINT__)
 
 #include "TreeAnalyzer/interface/DefaultSearchRegionAnalyzer.h"
@@ -23,22 +22,17 @@ class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
-        tagLeptonProc .reset(new LeptonProcessor ()); DefaultLeptonSelections::setDefaultLeptonProcessor(*tagLeptonProc);
-        tagLeptonProc->lepSelParams.mu_getID =  &Muon::passTightID;
-        tagLeptonProc->lepSelParams.mu_minPT =  26;
-        tagLeptonProc->lepSelParams.mu_getISO =&Muon::dbRelISO;
-        tagLeptonProc->lepSelParams.mu_maxISO =  0.15;
+        tagLeptonParam.mu_minPT = 26;
+        tagLeptonParam.mu_getID = &Muon::passTightID;
+        tagLeptonParam.mu_getISO = &Lepton::pfIso;
+        tagLeptonParam.mu_maxISO = 0.15;
 
-        tagLeptonProc->lepSelParams.el_getISO =  &Electron::eaRelISO;
-        tagLeptonProc->lepSelParams.el_maxISO =  0.15;
-        tagLeptonProc->lepSelParams.el_minPT  =  30;
-        tagLeptonProc->lepSelParams_dataABCDEF = tagLeptonProc->lepSelParams;
+        tagLeptonParam.el_minPT = 30;
+        tagLeptonParam.el_getISO = &Lepton::pfIso;
+        tagLeptonParam.el_maxISO = 0.15;
 
-        leptonProc->lepSelParams.el_minPT = 5;
-        leptonProc->lepSelParams.mu_minPT = 5;
-        leptonProc->lepSelParams_dataABCDEF.el_minPT = 5;
-        leptonProc->lepSelParams_dataABCDEF.mu_minPT = 5;
-
+        parameters.leptons.el_minPT = 5;
+        parameters.leptons.mu_minPT = 5;
 
         turnOffCorr(CORR_TRIG);
         turnOffCorr(CORR_SJBTAG);
@@ -47,8 +41,7 @@ public:
         turnOffCorr(CORR_JER);
     }
 
-
-    bool passTrig(Triggers trig) {return doesPass(triggerAccepts,trig);}
+    bool passTrig(Triggers_2017 trig) {return doesPass(triggerAccepts,trig);} // !! Need to use correct trigger enum for whatever era it is !!
 
     void makeHTPlots(const TString& prefix, const TString& varname, float sel, float pt){
         plotter.getOrMake1DPre(prefix,TString::Format("ht_incl_%s",varname.Data()),";lepton p_{T} [GeV]; arbitrary units",500,0,500 )->Fill(pt,weight);
@@ -119,35 +112,55 @@ public:
         mklpr(50,100);
     }
 
-    void doElectronLeg(const TString& prefix){
-        if( !passTrig(HLT_IsoMu24) && !passTrig(HLT_IsoTkMu24)  ) return;
-        if(!tagMuons.size()) return;
-        float maxLepPT = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
+    void testEachTriggerIndividually(const TString& prefix, bool doMuon) {
+    	float maxLepPt;
+    	if (doMuon) {
+    		if (!tagElectrons.size()) return;
+    		maxLepPt = probeMuons.size() ? probeMuons.front()->pt() : 0;
+    	} else {
+    		if (!tagMuons.size()) return;
+    		maxLepPt = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
+    	}
 
+    	for (Triggers_2017 trg=HLT17_PFHT500_PFMET100_PFMHT100_IDTight; trg != HLT17_NTrig; trg++) {
+    		TString preName = prefix + "_passTrig_"+TString::Format("%i",trg);
+    		TString varname = doMuon ? "mu_pt" : "el_pt";
+    		if (passTrig(trg)) makeHTPlots(preName,varname,ht_chs,maxLepPt);
+    	}
+    }
+
+    void doElectronLeg(const TString& prefix){
+    	// trigger to take tag muon
+    	if( !passTrig(HLT17_IsoMu27) ) return;
+        if(!tagMuons.size()) return;
+
+        float maxLepPT = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
         TString preName = prefix + "_passSMu";
         makeHTPlots(preName,"el_pt",ht_chs,maxLepPT);
-        bool passECross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
 
+        bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
         if(passECross)
             makeHTPlots(preName + "_passElHT_","el_pt",ht_chs,maxLepPT);
     }
+
     void doMuonLeg(const TString& prefix){
-        if( !passTrig(HLT_Ele27_WPTight_Gsf) ) return;
+    	// triggers to take a tag electron
+        if( !passTrig(HLT17_Ele35_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG) ) return;
         if(!tagElectrons.size()) return;
 
         bool passOfflineE = false;
         float maxLepPT = probeMuons.size() ? probeMuons.front()->pt() : 0;
-
         TString preName = prefix + "_passSE";
         makeHTPlots(preName,"mu_pt",ht_chs,maxLepPT);
-        bool passMCross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
 
+        bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
         if(passMCross)
             makeHTPlots(preName + "_passMuHT_","mu_pt",ht_chs,maxLepPT);
     }
 
     void doHTLegWithMuonDenom(const TString& prefix){
-        if( !passTrig(HLT_IsoMu24) && !passTrig(HLT_IsoTkMu24)  ) return;
+    	if( !passTrig(HLT17_IsoMu27) ) return;
+
         if(!tagMuons.size()) return;
         float maxSamePT  = tagMuons.front()->pt();
         float maxOtherPT = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
@@ -155,20 +168,21 @@ public:
         TString preName = prefix + "_passSMu";
         makeLepPlots(preName,"ht","elpt",maxOtherPT,ht_chs);
         makeLepPlots(preName,"ht","mupt",maxSamePT,ht_chs);
-        bool passMCross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
-        bool passECross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
-        if(passECross)
-            makeLepPlots(preName + "_passElHT_","ht","elpt",maxOtherPT,ht_chs);
-        if(passMCross)
-            makeLepPlots(preName + "_passMuHT_","ht","mupt",maxSamePT,ht_chs);
 
-        if(passECross|| passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30))
+        bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
+        bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
+
+        if(passECross) makeLepPlots(preName + "_passElHT_","ht","elpt",maxOtherPT,ht_chs);
+        if(passMCross) makeLepPlots(preName + "_passMuHT_","ht","mupt",maxSamePT,ht_chs);
+
+        if(passECross|| passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30))
             makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxOtherPT,ht_chs);
-        if(passMCross|| passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30))
+        if(passMCross|| passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30))
             makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxSamePT,ht_chs);
     }
     void doHTLegWithElDenom(const TString& prefix){
-        if( !passTrig(HLT_Ele27_WPTight_Gsf) ) return;
+        if( !passTrig(HLT17_Ele35_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG) ) return;
+
         if(!tagElectrons.size()) return;
 
         float maxSamePT = tagElectrons.front()->pt();
@@ -177,23 +191,24 @@ public:
         TString preName = prefix + "_passSE";
         makeLepPlots(preName,"ht","mupt",maxOtherPT,ht_chs);
         makeLepPlots(preName,"ht","elpt",maxSamePT,ht_chs);
-        bool passMCross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
-        bool passECross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
+
+        bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
+        bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
 
         if(passECross)
             makeLepPlots(preName + "_passElHT_","ht","elpt",maxSamePT,ht_chs);
         if(passMCross)
             makeLepPlots(preName + "_passMuHT_","ht","mupt",maxOtherPT,ht_chs);
 
-        if(passECross|| passTrig(HLT_PFHT800) ||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30))
+        if(passECross|| passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30))
             makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxSamePT,ht_chs);
 
-        if(passMCross || passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30) )
+        if(passMCross|| passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30))
             makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxOtherPT,ht_chs);
     }
 
     void doGrandLeptonWElDenom(const TString& prefix){
-        if( !passTrig(HLT_Ele27_WPTight_Gsf) ) return;
+        if( !passTrig(HLT17_Ele35_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG) ) return;
         if(!tagElectrons.size()) return;
 
         float maxSamePT = tagElectrons.front()->pt();
@@ -201,15 +216,14 @@ public:
 
         TString preName = prefix + "_GL_passSE";
 
-        bool passSMu = passTrig(HLT_IsoTkMu24) || passTrig(HLT_IsoTkMu24);
-        bool passMCross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
+        bool passSMu = passTrig(HLT17_IsoMu27);
+        bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
         bool passSMuoHtMu = passSMu || passMCross;
-        bool passBu = passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30)|| passTrig(HLT_PFMETNoMu110_PFMHTNoMu110_IDTight) || passTrig(HLT_PFMETNoMu120_PFMHTNoMu120_IDTight);
-        bool passSMuoHtMuoBu = passSMuoHtMu || passBu ||  passTrig(HLT_TkMu50)|| passTrig(HLT_Mu50);
+        bool passBu = passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30)
+        		|| passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight) || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60) || passTrig(HLT17_PFMETNoMu140_PFMHTNoMu140_IDTight);
+        bool passSMuoHtMuoBu = passSMuoHtMu || passBu || passTrig(HLT17_Mu50);
 
         bool passMuDenNoCross = passBu || passSMu;
-
-
 
         //HT side
         makeLepPlots(preName,"ht","mupt",maxOtherPT,ht_chs);
@@ -234,22 +248,22 @@ public:
     }
 
     void doGrandLeptonWMuDenom(const TString& prefix){
-        if( !passTrig(HLT_IsoMu24) && !passTrig(HLT_IsoTkMu24)  ) return;
+        if( !passTrig(HLT17_IsoMu27) ) return;
         if(!tagMuons.size()) return;
+
         float maxSamePT  = tagMuons.front()->pt();
         float maxOtherPT = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
 
         TString preName = prefix + "_GL_passSMu";
 
-        bool passSEl = passTrig(HLT_Ele27_WPTight_Gsf);
-        bool passECross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
+        bool passSEl = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
+        bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
         bool passSEloHtEl = passSEl  || passECross;
-        bool passBu = passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30)|| passTrig(HLT_PFMETNoMu110_PFMHTNoMu110_IDTight) || passTrig(HLT_PFMETNoMu120_PFMHTNoMu120_IDTight);
-        bool passSEloHtEloBu = passSEloHtEl || passBu ||  passTrig(HLT_Ele45_WPLoose_Gsf)|| passTrig(HLT_Ele115_CaloIdVT_GsfTrkIdT);
+        bool passBu = passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30)
+        		|| passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight) || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60) || passTrig(HLT17_PFMETNoMu140_PFMHTNoMu140_IDTight);
+        bool passSEloHtEloBu = passSEloHtEl || passBu ||  passTrig(HLT17_Photon200)|| passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
 
         bool passElDenNoCross = passBu || passSEl;
-
-
 
         //HT side
         makeLepPlots(preName,"ht","elpt",maxOtherPT,ht_chs);
@@ -281,16 +295,16 @@ public:
 
         TString preName = prefix + "_MC";
 
-        bool passBu = passTrig(HLT_PFHT800)||passTrig(HLT_PFHT900) || passTrig(HLT_AK8PFJet450)|| passTrig(HLT_AK8PFJet360_TrimMass30) || passTrig(HLT_PFMETNoMu110_PFMHTNoMu110_IDTight) || passTrig(HLT_PFMETNoMu120_PFMHTNoMu120_IDTight);
-
-        bool passSMu = passTrig(HLT_IsoTkMu24) || passTrig(HLT_IsoMu24);
-        bool passMCross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Mu15_IsoVVVL_PFHT400);
+        bool passBu = passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30)
+        		|| passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight) || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60) || passTrig(HLT17_PFMETNoMu140_PFMHTNoMu140_IDTight);
+        bool passSMu = passTrig(HLT17_IsoMu27);
+        bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
         bool passSMuoHtMu = passSMu || passMCross;
-        bool passSMuoHtMuoBu = passSMuoHtMu || passBu ||  passTrig(HLT_TkMu50)|| passTrig(HLT_Mu50);
-        bool passSEl = passTrig(HLT_Ele27_WPTight_Gsf);
-        bool passECross = (isRealData() && reader_event->run < 274954) ?  passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT350):   passTrig(FillerConstants::HLT_Ele15_IsoVVVL_PFHT400);
+        bool passSMuoHtMuoBu = passSMuoHtMu || passBu || passTrig(HLT17_Mu50);
+        bool passSEl = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
+        bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
         bool passSEloHtEl = passSEl  || passECross;
-        bool passSEloHtEloBu = passSEloHtEl || passBu ||  passTrig(HLT_Ele45_WPLoose_Gsf)|| passTrig(HLT_Ele115_CaloIdVT_GsfTrkIdT);
+        bool passSEloHtEloBu = passSEloHtEl || passBu || passTrig(HLT17_Photon200) || passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
 
         bool passMuDenNoCross = passBu || passSMu;
         bool passElDenNoCross = passBu || passSEl;
@@ -338,14 +352,14 @@ public:
 
 
     void loadVariables() override {
-        reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event   );
-        reader_jet_chs       =std::make_shared<JetReader>     ("ak4Jet",isRealData());            load(reader_jet_chs );
-        reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
-        reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon    );
+        reader_event       =loadReader<EventReader>   ("event",isRealData());
+        reader_jet_chs     =loadReader<JetReader>     ("ak4Jet",isRealData());
+        reader_electron    =loadReader<ElectronReader>("electron");
+        reader_muon        =loadReader<MuonReader>    ("muon");
 
         if(!isRealData()){
-             reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");             load(reader_genpart   );
-         }
+            reader_genpart =loadReader<GenParticleReader>   ("genParticle");
+        }
 
         checkConfig();
     }
@@ -362,41 +376,35 @@ public:
         if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_HBHENoiseIsoFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(4.0,weight);
         if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_EcalDeadCellTriggerPrimitiveFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(5.0,weight);
         if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_eeBadScFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(6.0,weight);
-        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::AnaTM_badMuons) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(7.0,weight);
-        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::AnaTM_badChargedHadrons) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(8.0,weight);
-        if(reader_event->goodVtx != 0)  plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(9.0,weight);
-        if(passEventFilters)  plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(10.0,weight);
-
+        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_BadPFMuonFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(7.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_muonBadTrackFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(8.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_BadChargedCandidateFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(9.0,weight);
+        if(reader_event->goodVtx != 0)  plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(10.0,weight);
+        if(passEventFilters)  plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(11.0,weight);
 
         if(!passEventFilters) return false;
 
-
         triggerAccepts = reader_event->triggerAccepts;
 
-        tagElectrons = tagLeptonProc->getElectrons(*reader_electron);
-        tagMuons     = tagLeptonProc->getMuons(*reader_event,*reader_muon);
+        tagElectrons = LeptonProcessor::getElectrons(tagLeptonParam,*reader_electron);
+        tagMuons     = LeptonProcessor::getMuons(tagLeptonParam,*reader_muon);
 
-        probeElectrons = leptonProc->getElectrons(*reader_electron);
-        probeMuons     = leptonProc->getMuons(*reader_event,*reader_muon);
+        probeElectrons = LeptonProcessor::getElectrons(parameters.leptons,*reader_electron);
+        probeMuons     = LeptonProcessor::getMuons(parameters.leptons,*reader_muon);
 
-        if(!isRealData() || reader_event->dataset == SINGLEE){
+        if(!isRealData() || reader_event->dataset == FillerConstants::PD_SingleElectron){
+        	testEachTriggerIndividually(smpName,false);
             doMuonLeg(smpName);
             doHTLegWithElDenom(smpName);
             doGrandLeptonWElDenom(smpName);
         }
-        if(!isRealData() || reader_event->dataset == SINGLEMU){
+        if(!isRealData() || reader_event->dataset == FillerConstants::PD_SingleMuon){
+        	testEachTriggerIndividually(smpName,true);
             doElectronLeg(smpName);
             doHTLegWithMuonDenom(smpName);
             doGrandLeptonWMuDenom(smpName);
         }
         if(!isRealData()) doMCLepton(smpName);
-
-        for(unsigned int iT = 0; iT <= triggerStrings.size(); ++iT ){
-            if(FillerConstants::doesPass(reader_event->triggerAccepts, size64(1) << iT))
-                plotter.getOrMake2DPre(smpName,"trigger_prescale",";trigger;isPrescaled",64,-0.5,63.5,2,-0.5,1.5)->Fill(iT,0.0);
-            if(FillerConstants::doesPass(reader_event->triggerPrescales, size64(1) << iT))
-                plotter.getOrMake2DPre(smpName,"trigger_prescale",";trigger;isPrescaled",64,-0.5,63.5,2,-0.5,1.5)->Fill(iT,1.0);
-        }
 
         return true;
     }
@@ -405,7 +413,9 @@ public:
     void write(TString fileName){ plotter.write(fileName);}
     HistGetter plotter;
     size64 triggerAccepts =0;
-    std::unique_ptr<LeptonProcessor> tagLeptonProc ;
+
+    LeptonParameters tagLeptonParam = parameters.leptons;
+//    std::unique_ptr<LeptonProcessor> tagLeptonProc ;
     std::vector<const Electron    *> tagElectrons;
     std::vector<const Muon        *> tagMuons;
     std::vector<const Electron    *> probeElectrons;
