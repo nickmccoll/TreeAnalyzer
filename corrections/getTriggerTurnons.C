@@ -22,22 +22,26 @@ class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
-        tagLeptonParam.mu_minPT = 26;
+        tagLeptonParam = parameters.leptons;
+    	tagLeptonParam.mu_minPT = 26;
         tagLeptonParam.mu_getID = &Muon::passTightID;
-        tagLeptonParam.mu_getISO = &Lepton::pfIso;
+        tagLeptonParam.mu_getISO = &Muon::pfIso;
         tagLeptonParam.mu_maxISO = 0.15;
 
         tagLeptonParam.el_minPT = 30;
-        tagLeptonParam.el_getISO = &Lepton::pfIso;
+        tagLeptonParam.el_getISO = &Electron::pfIso;
         tagLeptonParam.el_maxISO = 0.15;
 
         parameters.leptons.el_minPT = 5;
         parameters.leptons.mu_minPT = 5;
 
         turnOffCorr(CORR_TRIG);
+        turnOffCorr(CORR_PU  );
+        turnOffCorr(CORR_LEP );
         turnOffCorr(CORR_SJBTAG);
         turnOffCorr(CORR_AK4BTAG);
         turnOffCorr(CORR_SDMASS);
+        turnOffCorr(CORR_TOPPT);
         turnOffCorr(CORR_JER);
     }
 
@@ -122,7 +126,8 @@ public:
     		maxLepPt = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
     	}
 
-    	for (Triggers_2017 trg=HLT17_PFHT500_PFMET100_PFMHT100_IDTight; trg != HLT17_NTrig; trg++) {
+    	for (Triggers_2017 trg=(Triggers_2017)0; trg != HLT17_NTrig; trg=(Triggers_2017)(trg+1)) {
+    		std::cout<<trg<<std::endl;
     		TString preName = prefix + "_passTrig_"+TString::Format("%i",trg);
     		TString varname = doMuon ? "mu_pt" : "el_pt";
     		if (passTrig(trg)) makeHTPlots(preName,varname,ht_chs,maxLepPt);
@@ -367,38 +372,56 @@ public:
     bool runEvent() override {
 
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
-        if(isRealData()) smpName = FillerConstants::DatasetNames[reader_event->dataset];
+        if(isRealData()) smpName = FillerConstants::DatasetNames[reader_event->dataset.val()];
 
         plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(0.0,weight);
-        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_goodVertices) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(1.0,weight);
-        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_globalTightHalo2016Filter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(2.0,weight);
-        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_HBHENoiseFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(3.0,weight);
-        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_HBHENoiseIsoFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(4.0,weight);
-        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_EcalDeadCellTriggerPrimitiveFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(5.0,weight);
-        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_eeBadScFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(6.0,weight);
-        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_BadPFMuonFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(7.0,weight);
-        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_muonBadTrackFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(8.0,weight);
-        if(FillerConstants::doesPass(reader_event->metFilters,FillerConstants::Flag_BadChargedCandidateFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(9.0,weight);
-        if(reader_event->goodVtx != 0)  plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(10.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters.val(),FillerConstants::Flag_goodVertices) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(1.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters.val(),FillerConstants::Flag_globalTightHalo2016Filter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(2.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters.val(),FillerConstants::Flag_HBHENoiseFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(3.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters.val(),FillerConstants::Flag_HBHENoiseIsoFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(4.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters.val(),FillerConstants::Flag_EcalDeadCellTriggerPrimitiveFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(5.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters.val(),FillerConstants::Flag_eeBadScFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(6.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters.val(),FillerConstants::Flag_BadPFMuonFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(7.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters.val(),FillerConstants::Flag_muonBadTrackFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(8.0,weight);
+        if(FillerConstants::doesPass(reader_event->metFilters.val(),FillerConstants::Flag_BadChargedCandidateFilter) ) plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(9.0,weight);
+        if(reader_event->goodVtx.val() != 0)  plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(10.0,weight);
         if(passEventFilters)  plotter.getOrMake1DPre(smpName,"checkFilters",";checkFilters",15,-0.5,14.5)->Fill(11.0,weight);
 
         if(!passEventFilters) return false;
 
-        triggerAccepts = reader_event->triggerAccepts;
+        triggerAccepts = reader_event->triggerAccepts.val();
+
+        std::cout<<"event num muons (electrons) = "<<reader_muon->muons.size()<<" ("<<reader_electron->electrons.size()<<")"<<std::endl;
+
+        if (reader_muon->muons.size()) {
+        	for (const auto& mu : reader_muon->muons) {
+        		printf("%i: pt = %.2f, eta = %.2f, mIso = %.2f, rIso = %.2f, ",mu.index(),mu.pt(),mu.eta(),mu.miniIso(),mu.pfIso());
+        		std::cout<<"passTight = "<<mu.passTightID()<<std::endl;
+        	}
+        }
+        if (reader_electron->electrons.size()) {
+        	for (const auto& el : reader_electron->electrons) {
+        		printf("%i: pt = %.2f, eta = %.2f, mIso = %.2f, rIso = %.2f, ",el.index(),el.pt(),el.eta(),el.miniIso(),el.pfIso());
+        		std::cout<<"passTight = "<<el.passTightID_noIso()<<std::endl;
+        	}
+        }
 
         tagElectrons = LeptonProcessor::getElectrons(tagLeptonParam,*reader_electron);
         tagMuons     = LeptonProcessor::getMuons(tagLeptonParam,*reader_muon);
+        std::cout<<"num tags for muons (electrons) = "<<tagMuons.size()<<" ("<<tagElectrons.size()<<")"<<std::endl;
 
         probeElectrons = LeptonProcessor::getElectrons(parameters.leptons,*reader_electron);
         probeMuons     = LeptonProcessor::getMuons(parameters.leptons,*reader_muon);
+        std::cout<<"num probes for muons (electrons) = "<<probeMuons.size()<<" ("<<probeElectrons.size()<<")"<<std::endl;
+        printf("\n");
 
-        if(!isRealData() || reader_event->dataset == FillerConstants::PD_SingleElectron){
+        if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleElectron){
         	testEachTriggerIndividually(smpName,false);
             doMuonLeg(smpName);
             doHTLegWithElDenom(smpName);
             doGrandLeptonWElDenom(smpName);
         }
-        if(!isRealData() || reader_event->dataset == FillerConstants::PD_SingleMuon){
+        if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleMuon){
         	testEachTriggerIndividually(smpName,true);
             doElectronLeg(smpName);
             doHTLegWithMuonDenom(smpName);
@@ -414,7 +437,7 @@ public:
     HistGetter plotter;
     size64 triggerAccepts =0;
 
-    LeptonParameters tagLeptonParam = parameters.leptons;
+    LeptonParameters tagLeptonParam;
 //    std::unique_ptr<LeptonProcessor> tagLeptonProc ;
     std::vector<const Electron    *> tagElectrons;
     std::vector<const Muon        *> tagMuons;
