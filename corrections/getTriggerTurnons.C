@@ -22,18 +22,6 @@ class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
-        tagLeptonParam = parameters.leptons;
-    	tagLeptonParam.mu_minPT = 26;
-        tagLeptonParam.mu_getID = &Muon::passTightID;
-        tagLeptonParam.mu_getISO = &Muon::pfIso;
-        tagLeptonParam.mu_maxISO = 0.15;
-
-        tagLeptonParam.el_minPT = 30;
-        tagLeptonParam.el_getISO = &Electron::pfIso;
-        tagLeptonParam.el_maxISO = 0.15;
-
-        parameters.leptons.el_minPT = 5;
-        parameters.leptons.mu_minPT = 5;
 
         turnOffCorr(CORR_TRIG);
         turnOffCorr(CORR_PU  );
@@ -83,7 +71,7 @@ public:
     void makeLepPlots(const TString& prefix, const TString& varname, TString selname, float sel, float ht){
         plotter.getOrMake1DPre(prefix,TString::Format("%s_incl_%s",selname.Data(),varname.Data()),";#it{H}_{T} [GeV]; arbitrary units",2000,0,2000 )->Fill(ht,weight);
         auto mklp = [&](float lepcut){
-            if(sel >= lepcut) plotter.getOrMake1DPre(prefix,TString::Format("%s_%.0f_%s",selname.Data(), lepcut,varname.Data()),";#it{H}_{T} [GeV]; arbitrary units",2000,0,2000 )->Fill(ht,weight);
+            if(sel >= lepcut) plotter.getOrMake1DPre(prefix,TString::Format("%s_%.0f_%s",selname.Data(),lepcut,varname.Data()),";#it{H}_{T} [GeV]; arbitrary units",2000,0,2000 )->Fill(ht,weight);
         };
         auto mklpr = [&](float lepcutmin, float lepcutmax){
             if(sel >= lepcutmin && sel < lepcutmax) plotter.getOrMake1DPre(prefix,TString::Format("%s_%.0fto%.0f_%s",selname.Data(), lepcutmin,lepcutmax,varname.Data()),";#it{H}_{T} [GeV]; arbitrary units",2000,0,2000 )->Fill(ht,weight);
@@ -116,8 +104,9 @@ public:
         mklpr(50,100);
     }
 
-    void testEachTriggerIndividually(const TString& prefix, bool doMuon) {
+    void testEachTriggerIndividually(const TString& prefix, bool doMuon, std::vector<const Muon*> tagMuons, std::vector<const Muon*> probeMuons, std::vector<const Electron*> tagElectrons, std::vector<const Electron*> probeElectrons) {
     	float maxLepPt;
+//    	std::cout<<"how bout herr "<<tagMuons.size()<<" - "<<tagElectrons.size()<<std::endl;
     	if (doMuon) {
     		if (!tagElectrons.size()) return;
     		maxLepPt = probeMuons.size() ? probeMuons.front()->pt() : 0;
@@ -125,16 +114,26 @@ public:
     		if (!tagMuons.size()) return;
     		maxLepPt = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
     	}
+//    	std::cout<<"or herr?"<<std::endl;
+//    	printf("MAX LEP PT IS %.2f\n",maxLepPt);
+
+		makeHTPlots(prefix+"_TrigIncl", doMuon ? "mu_pt" : "el_pt" ,ht_chs,maxLepPt);
+		makeLepPlots(prefix+"_TrigIncl","ht", doMuon ? "mupt" : "elpt" ,maxLepPt,ht_chs);
 
     	for (Triggers_2017 trg=(Triggers_2017)0; trg != HLT17_NTrig; trg=(Triggers_2017)(trg+1)) {
-    		std::cout<<trg<<std::endl;
-    		TString preName = prefix + "_passTrig_"+TString::Format("%i",trg);
+//    		std::cout<<trg<<std::endl;
+    		TString preName = prefix + "_passTrig_"+TString::Format("%i",int(trg));
+//    		std::cout<<preName<<std::endl;
     		TString varname = doMuon ? "mu_pt" : "el_pt";
-    		if (passTrig(trg)) makeHTPlots(preName,varname,ht_chs,maxLepPt);
+    		if (passTrig(trg)) {
+    			makeHTPlots(preName,varname,ht_chs,maxLepPt);
+    			makeLepPlots(preName,"ht", doMuon ? "mupt" : "elpt" ,maxLepPt,ht_chs);
+    		}
     	}
+//    	std::cout<<"triggerAccepts seems to be "<<triggerAccepts<<std::endl;
     }
 
-    void doElectronLeg(const TString& prefix){
+    void doElectronLeg(const TString& prefix, std::vector<const Muon*> tagMuons, std::vector<const Electron*> probeElectrons){
     	// trigger to take tag muon
     	if( !passTrig(HLT17_IsoMu27) ) return;
         if(!tagMuons.size()) return;
@@ -143,30 +142,37 @@ public:
         TString preName = prefix + "_passSMu";
         makeHTPlots(preName,"el_pt",ht_chs,maxLepPT);
 
+        bool passEle35 = passTrig(FillerConstants::HLT17_Ele35_WPTight_Gsf);
+        bool passEle32 = passTrig(FillerConstants::HLT17_Ele32_WPTight_Gsf);
+        bool passEle32Double = passTrig(FillerConstants::HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
         bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
-        if(passECross)
-            makeHTPlots(preName + "_passElHT_","el_pt",ht_chs,maxLepPT);
+
+        if(passEle35) makeHTPlots(preName + "_passElH35_","el_pt",ht_chs,maxLepPT);
+        if(passEle32) makeHTPlots(preName + "_passEl32_","el_pt",ht_chs,maxLepPT);
+        if(passEle32Double) makeHTPlots(preName + "_passEl32Dbl_","el_pt",ht_chs,maxLepPT);
+        if(passECross) makeHTPlots(preName + "_passElHT_","el_pt",ht_chs,maxLepPT);
     }
 
-    void doMuonLeg(const TString& prefix){
+    void doMuonLeg(const TString& prefix, std::vector<const Electron*> tagElectrons, std::vector<const Muon*> probeMuons){
     	// triggers to take a tag electron
         if( !passTrig(HLT17_Ele35_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG) ) return;
         if(!tagElectrons.size()) return;
 
-        bool passOfflineE = false;
         float maxLepPT = probeMuons.size() ? probeMuons.front()->pt() : 0;
         TString preName = prefix + "_passSE";
         makeHTPlots(preName,"mu_pt",ht_chs,maxLepPT);
 
+        bool passMu27 = passTrig(FillerConstants::HLT17_IsoMu27);
         bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
-        if(passMCross)
-            makeHTPlots(preName + "_passMuHT_","mu_pt",ht_chs,maxLepPT);
+
+        if(passMu27) makeHTPlots(preName + "_passMu27_","mu_pt",ht_chs,maxLepPT);
+        if(passMCross) makeHTPlots(preName + "_passMuHT_","mu_pt",ht_chs,maxLepPT);
     }
 
-    void doHTLegWithMuonDenom(const TString& prefix){
+    void doHTLegWithMuonDenom(const TString& prefix,std::vector<const Muon*> tagMuons, std::vector<const Electron*> probeElectrons){
     	if( !passTrig(HLT17_IsoMu27) ) return;
-
         if(!tagMuons.size()) return;
+
         float maxSamePT  = tagMuons.front()->pt();
         float maxOtherPT = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
 
@@ -174,20 +180,26 @@ public:
         makeLepPlots(preName,"ht","elpt",maxOtherPT,ht_chs);
         makeLepPlots(preName,"ht","mupt",maxSamePT,ht_chs);
 
+        bool passHighE = passTrig(FillerConstants::HLT17_Photon200) || passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
+        bool passMu50 = passTrig(FillerConstants::HLT17_Mu50);
         bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
         bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
+        bool passJet = passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30);
 
         if(passECross) makeLepPlots(preName + "_passElHT_","ht","elpt",maxOtherPT,ht_chs);
         if(passMCross) makeLepPlots(preName + "_passMuHT_","ht","mupt",maxSamePT,ht_chs);
 
-        if(passECross|| passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30))
-            makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxOtherPT,ht_chs);
-        if(passMCross|| passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30))
-            makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxSamePT,ht_chs);
-    }
-    void doHTLegWithElDenom(const TString& prefix){
-        if( !passTrig(HLT17_Ele35_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG) ) return;
+        if(passHighE) makeLepPlots(preName + "_passHighE_","ht","mupt",maxSamePT,ht_chs);
+        if(passMu50) makeLepPlots(preName + "_passMu50_","ht","mupt",maxSamePT,ht_chs);
 
+        if(passECross|| passJet) makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxOtherPT,ht_chs);
+        if(passMCross|| passJet) makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxSamePT,ht_chs);
+
+        if(passECross || passHighE || passJet) makeLepPlots(preName + "_passElHToHEoHad_","ht","elpt",maxOtherPT,ht_chs);
+        if(passMCross || passMu50 || passJet) makeLepPlots(preName + "_passMuHToMu50oHad_","ht","mupt",maxSamePT,ht_chs);
+    }
+    void doHTLegWithElDenom(const TString& prefix,std::vector<const Electron*> tagElectrons, std::vector<const Muon*> probeMuons){
+        if( !passTrig(HLT17_Ele35_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG) ) return;
         if(!tagElectrons.size()) return;
 
         float maxSamePT = tagElectrons.front()->pt();
@@ -197,22 +209,26 @@ public:
         makeLepPlots(preName,"ht","mupt",maxOtherPT,ht_chs);
         makeLepPlots(preName,"ht","elpt",maxSamePT,ht_chs);
 
+        bool passHighE = passTrig(FillerConstants::HLT17_Photon200) || passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
+        bool passMu50 = passTrig(FillerConstants::HLT17_Mu50);
         bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
         bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
+        bool passJet = passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30);
 
-        if(passECross)
-            makeLepPlots(preName + "_passElHT_","ht","elpt",maxSamePT,ht_chs);
-        if(passMCross)
-            makeLepPlots(preName + "_passMuHT_","ht","mupt",maxOtherPT,ht_chs);
+        if(passECross) makeLepPlots(preName + "_passElHT_","ht","elpt",maxOtherPT,ht_chs);
+        if(passMCross) makeLepPlots(preName + "_passMuHT_","ht","mupt",maxSamePT,ht_chs);
 
-        if(passECross|| passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30))
-            makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxSamePT,ht_chs);
+        if(passHighE) makeLepPlots(preName + "_passHighE_","ht","mupt",maxSamePT,ht_chs);
+        if(passMu50) makeLepPlots(preName + "_passMu50_","ht","mupt",maxSamePT,ht_chs);
 
-        if(passMCross|| passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30))
-            makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxOtherPT,ht_chs);
+        if(passECross|| passJet) makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxOtherPT,ht_chs);
+        if(passMCross|| passJet) makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxSamePT,ht_chs);
+
+        if(passECross || passHighE || passJet) makeLepPlots(preName + "_passElHToHEoHad_","ht","elpt",maxOtherPT,ht_chs);
+        if(passMCross || passMu50 || passJet) makeLepPlots(preName + "_passMuHToMu50oHad_","ht","mupt",maxSamePT,ht_chs);
     }
 
-    void doGrandLeptonWElDenom(const TString& prefix){
+    void doGrandLeptonWElDenom(const TString& prefix,std::vector<const Electron*> tagElectrons, std::vector<const Muon*> probeMuons){
         if( !passTrig(HLT17_Ele35_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG) ) return;
         if(!tagElectrons.size()) return;
 
@@ -222,37 +238,47 @@ public:
         TString preName = prefix + "_GL_passSE";
 
         bool passSMu = passTrig(HLT17_IsoMu27);
+        bool passHighMu = passTrig(HLT17_Mu50);
         bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
-        bool passSMuoHtMu = passSMu || passMCross;
         bool passBu = passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30)
         		|| passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight) || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60) || passTrig(HLT17_PFMETNoMu140_PFMHTNoMu140_IDTight);
-        bool passSMuoHtMuoBu = passSMuoHtMu || passBu || passTrig(HLT17_Mu50);
+
+        bool passSMuoHM = passSMu || passHighMu;
+        bool passSMuoHtMu = passSMu || passMCross;
+        bool passSMuoHtMuoHM = passSMuoHtMu || passHighMu;
+        bool passSMuoHtMuoHMoBu = passSMuoHtMuoHM || passBu;
 
         bool passMuDenNoCross = passBu || passSMu;
 
         //HT side
         makeLepPlots(preName,"ht","mupt",maxOtherPT,ht_chs);
-        if(passSMu ) makeLepPlots(preName +"_passSMu_","ht","mupt",maxOtherPT,ht_chs);
-        if(passSMuoHtMu) makeLepPlots(preName +"_passSMuoHtMu_","ht","mupt",maxOtherPT,ht_chs);
-        if(passSMuoHtMuoBu) makeLepPlots(preName +"_passSMuoHtMuoBu_","ht","mupt",maxOtherPT,ht_chs);
-        if(passMuDenNoCross) makeLepPlots(preName +"_passMuDenNoCross_","ht","mupt",maxOtherPT,ht_chs);
+        if(passSMu )           makeLepPlots(preName +"_passSMu","ht","mupt",maxOtherPT,ht_chs);
+        if(passSMuoHtMu)       makeLepPlots(preName +"_passSMuoHtMu","ht","mupt",maxOtherPT,ht_chs);
+        if(passSMuoHM)         makeLepPlots(preName +"_passSMuoHM","ht","mupt",maxOtherPT,ht_chs);
+        if(passSMuoHtMuoHM)    makeLepPlots(preName +"_passSMuoHtMuoHM","ht","mupt",maxOtherPT,ht_chs);
+        if(passSMuoHtMuoHMoBu) makeLepPlots(preName +"_passSMuoHtMuoHMoBu","ht","mupt",maxOtherPT,ht_chs);
+        if(passMuDenNoCross)   makeLepPlots(preName +"_passMuDenNoCross","ht","mupt",maxOtherPT,ht_chs);
 
         //Mu side
         makeHTPlots(preName,"mu_pt",ht_chs,maxOtherPT);
-        if(passSMu )        makeHTPlots(preName+"_passSMu_"         ,"mu_pt",ht_chs,maxOtherPT);
-        if(passSMuoHtMu)    makeHTPlots(preName+"_passSMuoHtMu_"    ,"mu_pt",ht_chs,maxOtherPT);
-        if(passSMuoHtMuoBu) makeHTPlots(preName+"_passSMuoHtMuoBu_","mu_pt",ht_chs,maxOtherPT);
+        if(passSMu )           makeHTPlots(preName+"_passSMu"         ,"mu_pt",ht_chs,maxOtherPT);
+        if(passSMuoHtMu)       makeHTPlots(preName+"_passSMuoHtMu"    ,"mu_pt",ht_chs,maxOtherPT);
+        if(passSMuoHM)         makeHTPlots(preName+"_passSMuoHM"    ,"mu_pt",ht_chs,maxOtherPT);
+        if(passSMuoHtMuoHM)    makeHTPlots(preName+"_passSMuoHtMuoHM"    ,"mu_pt",ht_chs,maxOtherPT);
+        if(passSMuoHtMuoHMoBu) makeHTPlots(preName+"_passSMuoHtMuoHMoBu","mu_pt",ht_chs,maxOtherPT);
 
         //2D
         if(maxOtherPT > 0){
             plotter.getOrMake2DPre(preName,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
-            if(passSMu )         plotter.getOrMake2DPre(preName+"_passSMu_"         ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
-            if(passSMuoHtMu)     plotter.getOrMake2DPre(preName+"_passSMuoHtMu_"    ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
-            if(passSMuoHtMuoBu)  plotter.getOrMake2DPre(preName+"_passSMuoHtMuoBu_","mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSMu )            plotter.getOrMake2DPre(preName+"_passSMu_"         ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSMuoHtMu)        plotter.getOrMake2DPre(preName+"_passSMuoHtMu_"    ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSMuoHM)          plotter.getOrMake2DPre(preName+"_passSMuoHM_"    ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSMuoHtMuoHM)     plotter.getOrMake2DPre(preName+"_passSMuoHtMuoHM_"    ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSMuoHtMuoHMoBu)  plotter.getOrMake2DPre(preName+"_passSMuoHtMuoHMoBu_","mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
         }
     }
 
-    void doGrandLeptonWMuDenom(const TString& prefix){
+    void doGrandLeptonWMuDenom(const TString& prefix,std::vector<const Muon*> tagMuons, std::vector<const Electron*> probeElectrons){
         if( !passTrig(HLT17_IsoMu27) ) return;
         if(!tagMuons.size()) return;
 
@@ -263,38 +289,47 @@ public:
 
         bool passSEl = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
         bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
-        bool passSEloHtEl = passSEl  || passECross;
+        bool passHighE = passTrig(FillerConstants::HLT17_Photon200) || passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
         bool passBu = passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30)
         		|| passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight) || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60) || passTrig(HLT17_PFMETNoMu140_PFMHTNoMu140_IDTight);
-        bool passSEloHtEloBu = passSEloHtEl || passBu ||  passTrig(HLT17_Photon200)|| passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
 
+        bool passSEloHtEl = passSEl  || passECross;
+        bool passSEloHE = passSEl  || passHighE;
+        bool passSEloHtEloHE = passSEloHtEl || passSEloHE;
+        bool passSEloHtEloHEoBu = passSEloHtEloHE || passBu;
         bool passElDenNoCross = passBu || passSEl;
 
         //HT side
         makeLepPlots(preName,"ht","elpt",maxOtherPT,ht_chs);
-        if(passSEl ) makeLepPlots(preName +"_passSEl_","ht","elpt",maxOtherPT,ht_chs);
-        if(passSEloHtEl) makeLepPlots(preName +"_passSEloHtEl_","ht","elpt",maxOtherPT,ht_chs);
-        if(passSEloHtEloBu) makeLepPlots(preName +"_passSEloHtEloBu_","ht","elpt",maxOtherPT,ht_chs);
-        if(passElDenNoCross) makeLepPlots(preName +"_passElDenNoCross_","ht","elpt",maxOtherPT,ht_chs);
+        if(passSEl )           makeLepPlots(preName +"_passSEl","ht","elpt",maxOtherPT,ht_chs);
+        if(passSEloHtEl)       makeLepPlots(preName +"_passSEloHtEl","ht","elpt",maxOtherPT,ht_chs);
+        if(passSEloHE)         makeLepPlots(preName +"_passSEloHE","ht","elpt",maxOtherPT,ht_chs);
+        if(passSEloHtEloHE)    makeLepPlots(preName +"_passSEloHtEloHE","ht","elpt",maxOtherPT,ht_chs);
+        if(passSEloHtEloHEoBu) makeLepPlots(preName +"_passSEloHtEloHEoBu","ht","elpt",maxOtherPT,ht_chs);
+        if(passElDenNoCross)   makeLepPlots(preName +"_passElDenNoCross","ht","elpt",maxOtherPT,ht_chs);
 
-        //Mu side
+        //El side
         makeHTPlots(preName,"el_pt",ht_chs,maxOtherPT);
-        if(passSEl )        makeHTPlots(preName+"_passSEl_"        ,"el_pt",ht_chs,maxOtherPT);
-        if(passSEloHtEl)    makeHTPlots(preName+"_passSEloHtEl_"   ,"el_pt",ht_chs,maxOtherPT);
-        if(passSEloHtEloBu) makeHTPlots(preName+"_passSEloHtEloBu_","el_pt",ht_chs,maxOtherPT);
+        if(passSEl )           makeHTPlots(preName+"_passSEl"        ,"el_pt",ht_chs,maxOtherPT);
+        if(passSEloHtEl)       makeHTPlots(preName+"_passSEloHtEl"   ,"el_pt",ht_chs,maxOtherPT);
+        if(passSEloHE)         makeHTPlots(preName+"_passSEloHE"   ,"el_pt",ht_chs,maxOtherPT);
+        if(passSEloHtEloHE)    makeHTPlots(preName+"_passSEloHtEloHE"   ,"el_pt",ht_chs,maxOtherPT);
+        if(passSEloHtEloHEoBu) makeHTPlots(preName+"_passSEloHtEloHEoBu","el_pt",ht_chs,maxOtherPT);
 
         //2D
         if(maxOtherPT > 0){
             plotter.getOrMake2DPre(preName,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
-            if(passSEl )        plotter.getOrMake2DPre(preName+"_passSEl_"        ,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
-            if(passSEloHtEl)    plotter.getOrMake2DPre(preName+"_passSEloHtEl_"   ,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
-            if(passSEloHtEloBu) plotter.getOrMake2DPre(preName+"_passSEloHtEloBu_","el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSEl )           plotter.getOrMake2DPre(preName+"_passSEl_"        ,"el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSEloHtEl)       plotter.getOrMake2DPre(preName+"_passSEloHtEl_"   ,"el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSEloHE)         plotter.getOrMake2DPre(preName+"_passSEloHE_"   ,"el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSEloHtEloHE)    plotter.getOrMake2DPre(preName+"_passSEloHtEloHE_"   ,"el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
+            if(passSEloHtEloHEoBu) plotter.getOrMake2DPre(preName+"_passSEloHtEloHEoBu_","el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxOtherPT,ht_chs,weight);
         }
 
     }
 
 
-    void doMCLepton(const TString& prefix){
+    void doMCLepton(const TString& prefix, std::vector<const Muon*> probeMuons, std::vector<const Electron*> probeElectrons){
         float maxMu = probeMuons.size() ? probeMuons.front()->pt() : 0;
         float maxEl = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
 
@@ -302,14 +337,22 @@ public:
 
         bool passBu = passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30)
         		|| passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight) || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60) || passTrig(HLT17_PFMETNoMu140_PFMHTNoMu140_IDTight);
+
         bool passSMu = passTrig(HLT17_IsoMu27);
         bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
+        bool passHighMu = passTrig(FillerConstants::HLT17_Mu50);
         bool passSMuoHtMu = passSMu || passMCross;
-        bool passSMuoHtMuoBu = passSMuoHtMu || passBu || passTrig(HLT17_Mu50);
+        bool passSMuoHM = passSMu || passHighMu;
+        bool passSMuoHtMuoHM = passSMuoHtMu || passHighMu;
+        bool passSMuoHtMuoHMoBu = passSMuoHtMuoHM || passBu;
+
         bool passSEl = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
         bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
-        bool passSEloHtEl = passSEl  || passECross;
-        bool passSEloHtEloBu = passSEloHtEl || passBu || passTrig(HLT17_Photon200) || passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
+        bool passHighE = passTrig(FillerConstants::HLT17_Photon200) || passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
+        bool passSEloHtEl = passSEl || passECross;
+        bool passSEloHE = passSEl  || passHighE;
+        bool passSEloHtEloHE = passSEloHtEl || passSEloHE;
+        bool passSEloHtEloHEoBu = passSEloHtEloHE || passBu;
 
         bool passMuDenNoCross = passBu || passSMu;
         bool passElDenNoCross = passBu || passSEl;
@@ -319,39 +362,51 @@ public:
         makeLepPlots(preName,"ht","mupt",maxMu,ht_chs);
         if(passSMu ) makeLepPlots(preName +"_passSMu_","ht","mupt",maxMu,ht_chs);
         if(passSMuoHtMu) makeLepPlots(preName +"_passSMuoHtMu_","ht","mupt",maxMu,ht_chs);
-        if(passSMuoHtMuoBu) makeLepPlots(preName +"_passSMuoHtMuoBu_","ht","mupt",maxMu,ht_chs);
+        if(passSMuoHM) makeLepPlots(preName +"_passSMuoHM_","ht","mupt",maxMu,ht_chs);
+        if(passSMuoHtMuoHM) makeLepPlots(preName +"_passSMuoHtMuoHM_","ht","mupt",maxMu,ht_chs);
+        if(passSMuoHtMuoHMoBu) makeLepPlots(preName +"_passSMuoHtMuoHMoBu_","ht","mupt",maxMu,ht_chs);
         if(passMuDenNoCross) makeLepPlots(preName +"_passMuDenNoCross_","ht","mupt",maxMu,ht_chs);
 
         makeLepPlots(preName,"ht","elpt",maxEl,ht_chs);
         if(passSEl ) makeLepPlots(preName +"_passSEl_","ht","elpt",maxEl,ht_chs);
         if(passSEloHtEl) makeLepPlots(preName +"_passSEloHtEl_","ht","elpt",maxEl,ht_chs);
-        if(passSEloHtEloBu) makeLepPlots(preName +"_passSEloHtEloBu_","ht","elpt",maxEl,ht_chs);
+        if(passSEloHE) makeLepPlots(preName +"_passSEloHE_","ht","elpt",maxEl,ht_chs);
+        if(passSEloHtEloHE) makeLepPlots(preName +"_passSEloHtEloHE_","ht","elpt",maxEl,ht_chs);
+        if(passSEloHtEloHEoBu) makeLepPlots(preName +"_passSEloHtEloHEoBu_","ht","elpt",maxEl,ht_chs);
         if(passElDenNoCross) makeLepPlots(preName +"_passElDenNoCross_","ht","elpt",maxEl,ht_chs);
 
 
-        //Mu side
+        //Lep side
         makeHTPlots(preName,"mu_pt",ht_chs,maxMu);
-        if(passSMu )        makeHTPlots(preName+"_passSMu_"         ,"mu_pt",ht_chs,maxMu);
-        if(passSMuoHtMu)    makeHTPlots(preName+"_passSMuoHtMu_"    ,"mu_pt",ht_chs,maxMu);
-        if(passSMuoHtMuoBu) makeHTPlots(preName+"_passSMuoHtMuoBu_","mu_pt",ht_chs,maxMu);
+        if(passSMu )           makeHTPlots(preName+"_passSMu_"         ,"mu_pt",ht_chs,maxMu);
+        if(passSMuoHtMu)       makeHTPlots(preName+"_passSMuoHtMu_"    ,"mu_pt",ht_chs,maxMu);
+        if(passSMuoHM)         makeHTPlots(preName+"_passSMuoHM_"    ,"mu_pt",ht_chs,maxMu);
+        if(passSMuoHtMuoHM)    makeHTPlots(preName+"_passSMuoHtMuoHM_"    ,"mu_pt",ht_chs,maxMu);
+        if(passSMuoHtMuoHMoBu) makeHTPlots(preName+"_passSMuoHtMuoHMoBu_","mu_pt",ht_chs,maxMu);
 
         makeHTPlots(preName,"el_pt",ht_chs,maxEl);
-        if(passSEl )        makeHTPlots(preName+"_passSEl_"        ,"el_pt",ht_chs,maxEl);
-        if(passSEloHtEl)    makeHTPlots(preName+"_passSEloHtEl_"   ,"el_pt",ht_chs,maxEl);
-        if(passSEloHtEloBu) makeHTPlots(preName+"_passSEloHtEloBu_","el_pt",ht_chs,maxEl);
+        if(passSEl )           makeHTPlots(preName+"_passSEl_"        ,"el_pt",ht_chs,maxEl);
+        if(passSEloHtEl)       makeHTPlots(preName+"_passSEloHtEl_"   ,"el_pt",ht_chs,maxEl);
+        if(passSEloHE)         makeHTPlots(preName+"_passSEloHE_"   ,"el_pt",ht_chs,maxEl);
+        if(passSEloHtEloHE)    makeHTPlots(preName+"_passSEloHtEloHE_"   ,"el_pt",ht_chs,maxEl);
+        if(passSEloHtEloHEoBu) makeHTPlots(preName+"_passSEloHtEloHEoBu_","el_pt",ht_chs,maxEl);
 
         if(maxEl > 0){
             plotter.getOrMake2DPre(preName,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
-            if(passSMu )         plotter.getOrMake2DPre(preName+"_passSMu_"         ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
-            if(passSMuoHtMu)     plotter.getOrMake2DPre(preName+"_passSMuoHtMu_"    ,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
-            if(passSMuoHtMuoBu)  plotter.getOrMake2DPre(preName+"_passSMuoHtMuoBu_","mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
+            if(passSMu )            plotter.getOrMake2DPre(preName+"_passSMu_"         ,"mu_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
+            if(passSMuoHtMu)        plotter.getOrMake2DPre(preName+"_passSMuoHtMu_"    ,"mu_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
+            if(passSMuoHM)          plotter.getOrMake2DPre(preName+"_passSMuoHM_"    ,"mu_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
+            if(passSMuoHtMuoHM)     plotter.getOrMake2DPre(preName+"_passSMuoHtMuoHM_"    ,"mu_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
+            if(passSMuoHtMuoHMoBu)  plotter.getOrMake2DPre(preName+"_passSMuoHtMuoHMoBu_","mu_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
         }
 
         if(maxMu > 0){
             plotter.getOrMake2DPre(preName,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_chs,weight);
-            if(passSEl )        plotter.getOrMake2DPre(preName+"_passSEl_"        ,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_chs,weight);
-            if(passSEloHtEl)    plotter.getOrMake2DPre(preName+"_passSEloHtEl_"   ,"el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_chs,weight);
-            if(passSEloHtEloBu) plotter.getOrMake2DPre(preName+"_passSEloHtEloBu_","el_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_chs,weight);
+            if(passSEl )           plotter.getOrMake2DPre(preName+"_passSEl_"        ,"el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_chs,weight);
+            if(passSEloHtEl)       plotter.getOrMake2DPre(preName+"_passSEloHtEl_"   ,"el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_chs,weight);
+            if(passSEloHE)         plotter.getOrMake2DPre(preName+"_passSEloHE_"   ,"el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_chs,weight);
+            if(passSEloHtEloHE)    plotter.getOrMake2DPre(preName+"_passSEloHtEloHE_"   ,"el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_chs,weight);
+            if(passSEloHtEloHEoBu) plotter.getOrMake2DPre(preName+"_passSEloHtEloHEoBu_","el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(maxMu,ht_chs,weight);
         }
     }
 
@@ -391,58 +446,63 @@ public:
 
         triggerAccepts = reader_event->triggerAccepts.val();
 
-        std::cout<<"event num muons (electrons) = "<<reader_muon->muons.size()<<" ("<<reader_electron->electrons.size()<<")"<<std::endl;
+//        std::cout<<"event num muons (electrons) = "<<reader_muon->muons.size()<<" ("<<reader_electron->electrons.size()<<")"<<std::endl;
+//
+//        if (reader_muon->muons.size()) {
+//        	for (const auto& mu : reader_muon->muons) {
+//        		printf("%i: pt = %.2f, eta = %.2f, mIso = %.2f, rIso = %.2f, d0 = %.2f, dz = %.2f, sip = %.2f, ",mu.index(),mu.pt(),mu.eta(),mu.miniIso(),mu.pfIso(),mu.d0(),mu.dz(),mu.sip3D());
+//        		std::cout<<"passTight = "<<mu.passTightID()<<std::endl;
+//        	}
+//        }
+//        if (reader_electron->electrons.size()) {
+//        	for (const auto& el : reader_electron->electrons) {
+//        		printf("%i: pt = %.2f, eta = %.2f, mIso = %.2f, rIso = %.2f, d0 = %.2f, dz = %.2f, sip = %.2f, ",el.index(),el.pt(),el.eta(),el.miniIso(),el.pfIso(),el.d0(),el.dz(),el.sip3D());
+//        		std::cout<<"passTight = "<<el.passTightID_noIso()<<std::endl;
+//        	}
+//        }
+        LeptonParameters tagLeptonParam = parameters.leptons;
+    	tagLeptonParam.mu_minPT = 26;
+        tagLeptonParam.mu_getID = &Muon::passTightID;
+        tagLeptonParam.mu_getISO = &Muon::pfIso;
+        tagLeptonParam.mu_maxISO = 0.15;
 
-        if (reader_muon->muons.size()) {
-        	for (const auto& mu : reader_muon->muons) {
-        		printf("%i: pt = %.2f, eta = %.2f, mIso = %.2f, rIso = %.2f, ",mu.index(),mu.pt(),mu.eta(),mu.miniIso(),mu.pfIso());
-        		std::cout<<"passTight = "<<mu.passTightID()<<std::endl;
-        	}
-        }
-        if (reader_electron->electrons.size()) {
-        	for (const auto& el : reader_electron->electrons) {
-        		printf("%i: pt = %.2f, eta = %.2f, mIso = %.2f, rIso = %.2f, ",el.index(),el.pt(),el.eta(),el.miniIso(),el.pfIso());
-        		std::cout<<"passTight = "<<el.passTightID_noIso()<<std::endl;
-        	}
-        }
+        tagLeptonParam.el_minPT = 30;
+        tagLeptonParam.el_getISO = &Electron::pfIso;
+        tagLeptonParam.el_maxISO = 0.15;
 
-        tagElectrons = LeptonProcessor::getElectrons(tagLeptonParam,*reader_electron);
-        tagMuons     = LeptonProcessor::getMuons(tagLeptonParam,*reader_muon);
-        std::cout<<"num tags for muons (electrons) = "<<tagMuons.size()<<" ("<<tagElectrons.size()<<")"<<std::endl;
+        parameters.leptons.el_minPT = 5;
+        parameters.leptons.mu_minPT = 5;
 
-        probeElectrons = LeptonProcessor::getElectrons(parameters.leptons,*reader_electron);
-        probeMuons     = LeptonProcessor::getMuons(parameters.leptons,*reader_muon);
-        std::cout<<"num probes for muons (electrons) = "<<probeMuons.size()<<" ("<<probeElectrons.size()<<")"<<std::endl;
-        printf("\n");
+        auto tagElectrons = LeptonProcessor::getElectrons(tagLeptonParam,*reader_electron);
+        auto tagMuons     = LeptonProcessor::getMuons(tagLeptonParam,*reader_muon);
+//        std::cout<<"num tags for muons (electrons) = "<<tagMuons.size()<<" ("<<tagElectrons.size()<<")"<<std::endl;
+
+        auto probeElectrons = LeptonProcessor::getElectrons(parameters.leptons,*reader_electron);
+        auto probeMuons     = LeptonProcessor::getMuons(parameters.leptons,*reader_muon);
+//        std::cout<<"num probes for muons (electrons) = "<<probeMuons.size()<<" ("<<probeElectrons.size()<<")"<<std::endl;
 
         if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleElectron){
-        	testEachTriggerIndividually(smpName,false);
-            doMuonLeg(smpName);
-            doHTLegWithElDenom(smpName);
-            doGrandLeptonWElDenom(smpName);
+        	testEachTriggerIndividually(smpName,false,tagMuons,probeMuons,tagElectrons,probeElectrons);
+            doMuonLeg(smpName,tagElectrons,probeMuons);
+            doHTLegWithElDenom(smpName,tagElectrons,probeMuons);
+            doGrandLeptonWElDenom(smpName,tagElectrons,probeMuons);
         }
         if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleMuon){
-        	testEachTriggerIndividually(smpName,true);
-            doElectronLeg(smpName);
-            doHTLegWithMuonDenom(smpName);
-            doGrandLeptonWMuDenom(smpName);
+        	testEachTriggerIndividually(smpName,true,tagMuons,probeMuons,tagElectrons,probeElectrons);
+            doElectronLeg(smpName,tagMuons,probeElectrons);
+            doHTLegWithMuonDenom(smpName,tagMuons,probeElectrons);
+            doGrandLeptonWMuDenom(smpName,tagMuons,probeElectrons);
         }
-        if(!isRealData()) doMCLepton(smpName);
+        if(!isRealData()) doMCLepton(smpName,probeMuons,probeElectrons);
 
+//        printf("\n");
         return true;
     }
 
 
     void write(TString fileName){ plotter.write(fileName);}
     HistGetter plotter;
-    size64 triggerAccepts =0;
-
-    LeptonParameters tagLeptonParam;
-//    std::unique_ptr<LeptonProcessor> tagLeptonProc ;
-    std::vector<const Electron    *> tagElectrons;
-    std::vector<const Muon        *> tagMuons;
-    std::vector<const Electron    *> probeElectrons;
-    std::vector<const Muon        *> probeMuons;
+    size64 triggerAccepts=0;
 
     static const int nHTBins = 16;
     const double htBins[nHTBins+1] = {0,50,100,150,200,250,300,350,400,450,500,550,600,800,1200,1600,2000};
@@ -453,12 +513,7 @@ public:
 
 #endif
 
-void getTriggerTurnons(std::string fileName, int treeInt, int randSeed, std::string outFileName){
-    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
-    a.analyze();
-    a.write(outFileName);
-}
-void getTriggerTurnons(std::string fileName, int treeInt,  int randSeed, std::string outFileName, float xSec, float numEvent){
+void getTriggerTurnons(std::string fileName, int treeInt,  int randSeed, std::string outFileName, float xSec=-1, float numEvent=-1){
     Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     a.setSampleInfo(xSec,numEvent);
     a.analyze();
