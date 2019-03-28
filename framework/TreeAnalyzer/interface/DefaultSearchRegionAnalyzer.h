@@ -70,6 +70,9 @@ public:
     //check configuration
     virtual void checkConfig();
 
+    //Set all the reader constants
+    virtual void setupParameters();
+
     //fills class member variables....can be run before child runEvent
     virtual bool runEvent() override;
 
