@@ -76,6 +76,7 @@ public:
         auto mklpr = [&](float lepcutmin, float lepcutmax){
             if(sel >= lepcutmin && sel < lepcutmax) plotter.getOrMake1DPre(prefix,TString::Format("%s_%.0fto%.0f_%s",selname.Data(), lepcutmin,lepcutmax,varname.Data()),";#it{H}_{T} [GeV]; arbitrary units",2000,0,2000 )->Fill(ht,weight);
         };
+        mklp(10);
         mklp(15);
         mklp(20);
         mklp(25);
@@ -117,12 +118,12 @@ public:
 //    	std::cout<<"or herr?"<<std::endl;
 //    	printf("MAX LEP PT IS %.2f\n",maxLepPt);
 
-		makeHTPlots(prefix+"_TrigIncl", doMuon ? "mu_pt" : "el_pt" ,ht_chs,maxLepPt);
-		makeLepPlots(prefix+"_TrigIncl","ht", doMuon ? "mupt" : "elpt" ,maxLepPt,ht_chs);
+		makeHTPlots(prefix+"_TrigIncl_", doMuon ? "mu_pt" : "el_pt" ,ht_chs,maxLepPt);
+		makeLepPlots(prefix+"_TrigIncl_","ht", doMuon ? "mupt" : "elpt" ,maxLepPt,ht_chs);
 
     	for (Triggers_2017 trg=(Triggers_2017)0; trg != HLT17_NTrig; trg=(Triggers_2017)(trg+1)) {
 //    		std::cout<<trg<<std::endl;
-    		TString preName = prefix + "_passTrig_"+TString::Format("%i",int(trg));
+    		TString preName = prefix + "_passTrig_"+TString::Format("%i_",int(trg));
 //    		std::cout<<preName<<std::endl;
     		TString varname = doMuon ? "mu_pt" : "el_pt";
     		if (passTrig(trg)) {
@@ -139,18 +140,24 @@ public:
         if(!tagMuons.size()) return;
 
         float maxLepPT = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
-        TString preName = prefix + "_passSMu";
+        TString preName = prefix + "_passSMu_";
         makeHTPlots(preName,"el_pt",ht_chs,maxLepPT);
 
         bool passEle35 = passTrig(FillerConstants::HLT17_Ele35_WPTight_Gsf);
         bool passEle32 = passTrig(FillerConstants::HLT17_Ele32_WPTight_Gsf);
         bool passEle32Double = passTrig(FillerConstants::HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
-        bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
+        bool passECross1 = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
+        bool passECross2 = passTrig(FillerConstants::HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
+        bool passECross = passECross1 || passECross2;
 
-        if(passEle35) makeHTPlots(preName + "_passElH35_","el_pt",ht_chs,maxLepPT);
-        if(passEle32) makeHTPlots(preName + "_passEl32_","el_pt",ht_chs,maxLepPT);
-        if(passEle32Double) makeHTPlots(preName + "_passEl32Dbl_","el_pt",ht_chs,maxLepPT);
-        if(passECross) makeHTPlots(preName + "_passElHT_","el_pt",ht_chs,maxLepPT);
+        if(passEle35) makeHTPlots(preName + "passEl35_","el_pt",ht_chs,maxLepPT);
+        if(passEle32) makeHTPlots(preName + "passEl32_","el_pt",ht_chs,maxLepPT);
+        if(passEle32Double) makeHTPlots(preName + "passEl32Dbl_","el_pt",ht_chs,maxLepPT);
+        if(passEle32Double || passEle32) makeHTPlots(preName + "passEl32SngoDbl_","el_pt",ht_chs,maxLepPT);
+        if(passEle32Double || passEle32 || passEle35) makeHTPlots(preName + "passEl32SngoDblo35_","el_pt",ht_chs,maxLepPT);
+        if(passECross1) makeHTPlots(preName + "passElHT1_","el_pt",ht_chs,maxLepPT);
+        if(passECross2) makeHTPlots(preName + "passElHT2_","el_pt",ht_chs,maxLepPT);
+        if(passECross) makeHTPlots(preName + "passElHT_","el_pt",ht_chs,maxLepPT);
     }
 
     void doMuonLeg(const TString& prefix, std::vector<const Electron*> tagElectrons, std::vector<const Muon*> probeMuons){
@@ -159,14 +166,14 @@ public:
         if(!tagElectrons.size()) return;
 
         float maxLepPT = probeMuons.size() ? probeMuons.front()->pt() : 0;
-        TString preName = prefix + "_passSE";
+        TString preName = prefix + "_passSE_";
         makeHTPlots(preName,"mu_pt",ht_chs,maxLepPT);
 
         bool passMu27 = passTrig(FillerConstants::HLT17_IsoMu27);
         bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
 
-        if(passMu27) makeHTPlots(preName + "_passMu27_","mu_pt",ht_chs,maxLepPT);
-        if(passMCross) makeHTPlots(preName + "_passMuHT_","mu_pt",ht_chs,maxLepPT);
+        if(passMu27) makeHTPlots(preName + "passMu27_","mu_pt",ht_chs,maxLepPT);
+        if(passMCross) makeHTPlots(preName + "passMuHT_","mu_pt",ht_chs,maxLepPT);
     }
 
     void doHTLegWithMuonDenom(const TString& prefix,std::vector<const Muon*> tagMuons, std::vector<const Electron*> probeElectrons){
@@ -176,27 +183,41 @@ public:
         float maxSamePT  = tagMuons.front()->pt();
         float maxOtherPT = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
 
-        TString preName = prefix + "_passSMu";
+        TString preName = prefix + "_passSMu_";
         makeLepPlots(preName,"ht","elpt",maxOtherPT,ht_chs);
         makeLepPlots(preName,"ht","mupt",maxSamePT,ht_chs);
+
+        bool passEle35 = passTrig(FillerConstants::HLT17_Ele35_WPTight_Gsf);
+        bool passEle32 = passTrig(FillerConstants::HLT17_Ele32_WPTight_Gsf);
+        bool passEle32Double = passTrig(FillerConstants::HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
+        bool passECross1 = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
+        bool passECross2 = passTrig(FillerConstants::HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
+        bool passECross = passECross1 || passECross2;
 
         bool passHighE = passTrig(FillerConstants::HLT17_Photon200) || passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
         bool passMu50 = passTrig(FillerConstants::HLT17_Mu50);
         bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
-        bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
         bool passJet = passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30);
 
-        if(passECross) makeLepPlots(preName + "_passElHT_","ht","elpt",maxOtherPT,ht_chs);
-        if(passMCross) makeLepPlots(preName + "_passMuHT_","ht","mupt",maxSamePT,ht_chs);
+        if(passEle35) makeLepPlots(preName + "passEl35_","ht","elpt",maxOtherPT,ht_chs);
+        if(passEle32) makeLepPlots(preName + "passEl32_","ht","elpt",maxOtherPT,ht_chs);
+        if(passEle32Double) makeLepPlots(preName + "passEl32Dbl_","ht","elpt",maxOtherPT,ht_chs);
+        if(passEle32Double || passEle32) makeLepPlots(preName + "passEl32SngoDbl_","ht","elpt",maxOtherPT,ht_chs);
+        if(passEle32Double || passEle32 || passEle35) makeLepPlots(preName + "passEl32SngoDblo35_","ht","elpt",maxOtherPT,ht_chs);
 
-        if(passHighE) makeLepPlots(preName + "_passHighE_","ht","mupt",maxSamePT,ht_chs);
-        if(passMu50) makeLepPlots(preName + "_passMu50_","ht","mupt",maxSamePT,ht_chs);
+        if(passECross1) makeLepPlots(preName + "passElHT1_","ht","elpt",maxOtherPT,ht_chs);
+        if(passECross2) makeLepPlots(preName + "passElHT2_","ht","elpt",maxOtherPT,ht_chs);
+        if(passECross) makeLepPlots(preName + "passElHT_","ht","elpt",maxOtherPT,ht_chs);
+        if(passMCross) makeLepPlots(preName + "passMuHT_","ht","mupt",maxSamePT,ht_chs);
 
-        if(passECross|| passJet) makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxOtherPT,ht_chs);
-        if(passMCross|| passJet) makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxSamePT,ht_chs);
+        if(passHighE) makeLepPlots(preName + "passHighE_","ht","mupt",maxSamePT,ht_chs);
+        if(passMu50) makeLepPlots(preName + "passMu50_","ht","mupt",maxSamePT,ht_chs);
 
-        if(passECross || passHighE || passJet) makeLepPlots(preName + "_passElHToHEoHad_","ht","elpt",maxOtherPT,ht_chs);
-        if(passMCross || passMu50 || passJet) makeLepPlots(preName + "_passMuHToMu50oHad_","ht","mupt",maxSamePT,ht_chs);
+        if(passECross|| passJet) makeLepPlots(preName + "passElHToHad_","ht","elpt",maxOtherPT,ht_chs);
+        if(passMCross|| passJet) makeLepPlots(preName + "passMuHToHad_","ht","mupt",maxSamePT,ht_chs);
+
+        if(passECross || passHighE || passJet) makeLepPlots(preName + "passElHToHEoHad_","ht","elpt",maxOtherPT,ht_chs);
+        if(passMCross || passMu50 || passJet) makeLepPlots(preName + "passMuHToHMoHad_","ht","mupt",maxSamePT,ht_chs);
     }
     void doHTLegWithElDenom(const TString& prefix,std::vector<const Electron*> tagElectrons, std::vector<const Muon*> probeMuons){
         if( !passTrig(HLT17_Ele35_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf) && !passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG) ) return;
@@ -205,7 +226,7 @@ public:
         float maxSamePT = tagElectrons.front()->pt();
         float maxOtherPT = probeMuons.size() ? probeMuons.front()->pt() : 0;
 
-        TString preName = prefix + "_passSE";
+        TString preName = prefix + "_passSE_";
         makeLepPlots(preName,"ht","mupt",maxOtherPT,ht_chs);
         makeLepPlots(preName,"ht","elpt",maxSamePT,ht_chs);
 
@@ -215,17 +236,17 @@ public:
         bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
         bool passJet = passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30);
 
-        if(passECross) makeLepPlots(preName + "_passElHT_","ht","elpt",maxOtherPT,ht_chs);
-        if(passMCross) makeLepPlots(preName + "_passMuHT_","ht","mupt",maxSamePT,ht_chs);
+        if(passECross) makeLepPlots(preName + "passElHT_","ht","elpt",maxOtherPT,ht_chs);
+        if(passMCross) makeLepPlots(preName + "passMuHT_","ht","mupt",maxSamePT,ht_chs);
 
-        if(passHighE) makeLepPlots(preName + "_passHighE_","ht","mupt",maxSamePT,ht_chs);
-        if(passMu50) makeLepPlots(preName + "_passMu50_","ht","mupt",maxSamePT,ht_chs);
+        if(passHighE) makeLepPlots(preName + "passHighE_","ht","mupt",maxSamePT,ht_chs);
+        if(passMu50) makeLepPlots(preName + "passMu50_","ht","mupt",maxSamePT,ht_chs);
 
-        if(passECross|| passJet) makeLepPlots(preName + "_passElHToHad_","ht","elpt",maxOtherPT,ht_chs);
-        if(passMCross|| passJet) makeLepPlots(preName + "_passMuHToHad_","ht","mupt",maxSamePT,ht_chs);
+        if(passECross|| passJet) makeLepPlots(preName + "passElHToHad_","ht","elpt",maxOtherPT,ht_chs);
+        if(passMCross|| passJet) makeLepPlots(preName + "passMuHToHad_","ht","mupt",maxSamePT,ht_chs);
 
-        if(passECross || passHighE || passJet) makeLepPlots(preName + "_passElHToHEoHad_","ht","elpt",maxOtherPT,ht_chs);
-        if(passMCross || passMu50 || passJet) makeLepPlots(preName + "_passMuHToMu50oHad_","ht","mupt",maxSamePT,ht_chs);
+        if(passECross || passHighE || passJet) makeLepPlots(preName + "passElHToHEoHad_","ht","elpt",maxOtherPT,ht_chs);
+        if(passMCross || passMu50 || passJet) makeLepPlots(preName + "passMuHToHMoHad_","ht","mupt",maxSamePT,ht_chs);
     }
 
     void doGrandLeptonWElDenom(const TString& prefix,std::vector<const Electron*> tagElectrons, std::vector<const Muon*> probeMuons){
@@ -242,11 +263,14 @@ public:
         bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
         bool passBu = passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30)
         		|| passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight) || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60) || passTrig(HLT17_PFMETNoMu140_PFMHTNoMu140_IDTight);
+        bool passMetNoMu = passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight) || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60);
 
         bool passSMuoHM = passSMu || passHighMu;
         bool passSMuoHtMu = passSMu || passMCross;
         bool passSMuoHtMuoHM = passSMuoHtMu || passHighMu;
         bool passSMuoHtMuoHMoBu = passSMuoHtMuoHM || passBu;
+        bool passSMuoHtMuoHMoMetNoMu = passSMuoHtMuoHM || passBu;
+        bool passSMuoHtMuoHMoBu0MetNoMu = passSMuoHtMuoHMoBu || passMetNoMu;
 
         bool passMuDenNoCross = passBu || passSMu;
 
@@ -266,6 +290,7 @@ public:
         if(passSMuoHM)         makeHTPlots(preName+"passSMuoHM_"    ,"mu_pt",ht_chs,maxOtherPT);
         if(passSMuoHtMuoHM)    makeHTPlots(preName+"passSMuoHtMuoHM_"    ,"mu_pt",ht_chs,maxOtherPT);
         if(passSMuoHtMuoHMoBu) makeHTPlots(preName+"passSMuoHtMuoHMoBu_","mu_pt",ht_chs,maxOtherPT);
+        if(passMuDenNoCross)   makeHTPlots(preName+"passMuDenNoCross_","mu_pt",ht_chs,maxOtherPT);
 
         //2D
         if(maxOtherPT > 0){
@@ -288,8 +313,10 @@ public:
         TString preName = prefix + "_GL_passSMu_";
 
         bool passSEl = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
-        bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
-        bool passHighE = passTrig(FillerConstants::HLT17_Photon200) || passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
+        bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450) || passTrig(FillerConstants::HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
+        bool passPh200 = passTrig(FillerConstants::HLT17_Photon200);
+        bool passEle115 = passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
+        bool passHighE = passPh200 || passEle115;
         bool passBu = passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30)
         		|| passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight) || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60) || passTrig(HLT17_PFMETNoMu140_PFMHTNoMu140_IDTight);
 
@@ -307,6 +334,8 @@ public:
         if(passSEloHtEloHE)    makeLepPlots(preName +"passSEloHtEloHE_","ht","elpt",maxOtherPT,ht_chs);
         if(passSEloHtEloHEoBu) makeLepPlots(preName +"passSEloHtEloHEoBu_","ht","elpt",maxOtherPT,ht_chs);
         if(passElDenNoCross)   makeLepPlots(preName +"passElDenNoCross_","ht","elpt",maxOtherPT,ht_chs);
+        if(passSEl || passPh200) makeLepPlots(preName +"passSEloPh200_","ht","elpt",maxOtherPT,ht_chs);
+        if(passSEl || passEle115) makeLepPlots(preName +"passSEloEl115_","ht","elpt",maxOtherPT,ht_chs);
 
         //El side
         makeHTPlots(preName,"el_pt",ht_chs,maxOtherPT);
@@ -315,6 +344,9 @@ public:
         if(passSEloHE)         makeHTPlots(preName+"passSEloHE_"   ,"el_pt",ht_chs,maxOtherPT);
         if(passSEloHtEloHE)    makeHTPlots(preName+"passSEloHtEloHE_"   ,"el_pt",ht_chs,maxOtherPT);
         if(passSEloHtEloHEoBu) makeHTPlots(preName+"passSEloHtEloHEoBu_","el_pt",ht_chs,maxOtherPT);
+        if(passElDenNoCross)   makeHTPlots(preName+"passElDenNoCross_","el_pt",ht_chs,maxOtherPT);
+        if(passSEl || passPh200) makeHTPlots(preName +"passSEloPh200_","el_pt",ht_chs,maxOtherPT);
+        if(passSEl || passEle115) makeHTPlots(preName +"passSEloEl115_","el_pt",ht_chs,maxOtherPT);
 
         //2D
         if(maxOtherPT > 0){
@@ -328,7 +360,6 @@ public:
 
     }
 
-
     void doMCLepton(const TString& prefix, std::vector<const Muon*> probeMuons, std::vector<const Electron*> probeElectrons){
         float maxMu = probeMuons.size() ? probeMuons.front()->pt() : 0;
         float maxEl = probeElectrons.size() ? probeElectrons.front()->pt() : 0;
@@ -337,6 +368,7 @@ public:
 
         bool passBu = passTrig(HLT17_PFHT1050)||passTrig(HLT17_AK8PFJet500) || passTrig(HLT17_AK8PFHT850_TrimMass50)|| passTrig(HLT17_AK8PFJet400_TrimMass30)
         		|| passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight) || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60) || passTrig(HLT17_PFMETNoMu140_PFMHTNoMu140_IDTight);
+        bool passMetNoMu = passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight) || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60);
 
         bool passSMu = passTrig(HLT17_IsoMu27);
         bool passMCross = passTrig(FillerConstants::HLT17_Mu15_IsoVVVL_PFHT450);
@@ -347,12 +379,13 @@ public:
         bool passSMuoHtMuoHMoBu = passSMuoHtMuoHM || passBu;
 
         bool passSEl = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
-        bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450);
+        bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450) || passTrig(FillerConstants::HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
         bool passHighE = passTrig(FillerConstants::HLT17_Photon200) || passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
         bool passSEloHtEl = passSEl || passECross;
         bool passSEloHE = passSEl  || passHighE;
         bool passSEloHtEloHE = passSEloHtEl || passSEloHE;
         bool passSEloHtEloHEoBu = passSEloHtEloHE || passBu;
+        bool passSEloHtEloHEoMetNoMu = passSEloHtEloHE || passMetNoMu;
 
         bool passMuDenNoCross = passBu || passSMu;
         bool passElDenNoCross = passBu || passSEl;
@@ -383,6 +416,7 @@ public:
         if(passSMuoHM)         makeHTPlots(preName+"passSMuoHM_"    ,"mu_pt",ht_chs,maxMu);
         if(passSMuoHtMuoHM)    makeHTPlots(preName+"passSMuoHtMuoHM_"    ,"mu_pt",ht_chs,maxMu);
         if(passSMuoHtMuoHMoBu) makeHTPlots(preName+"passSMuoHtMuoHMoBu_","mu_pt",ht_chs,maxMu);
+        if(passMuDenNoCross)   makeHTPlots(preName+"passMuDenNoCross_","mu_pt",ht_chs,maxMu);
 
         makeHTPlots(preName,"el_pt",ht_chs,maxEl);
         if(passSEl )           makeHTPlots(preName+"passSEl_"        ,"el_pt",ht_chs,maxEl);
@@ -390,6 +424,7 @@ public:
         if(passSEloHE)         makeHTPlots(preName+"passSEloHE_"   ,"el_pt",ht_chs,maxEl);
         if(passSEloHtEloHE)    makeHTPlots(preName+"passSEloHtEloHE_"   ,"el_pt",ht_chs,maxEl);
         if(passSEloHtEloHEoBu) makeHTPlots(preName+"passSEloHtEloHEoBu_","el_pt",ht_chs,maxEl);
+        if(passElDenNoCross)   makeHTPlots(preName+"passElDenNoCross_","el_pt",ht_chs,maxEl);
 
         if(maxEl > 0){
             plotter.getOrMake2DPre(preName,"mu_pt_v_ht","lepton p_{T} [GeV]; #it{H}_{T} [GeV]; arbitrary units",nLepBins,lepBins,nHTBins,htBins )->Fill(maxEl,ht_chs,weight);
