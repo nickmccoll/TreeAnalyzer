@@ -460,7 +460,7 @@ public:
                     gStyle->SetHatchesSpacing(.5);
                     //                    p->addGraph(cont.toyErr,"fit unc.",fillColor,1,1,20,1,false,true,false,"3");
 
-                    auto * g = p->addGraph(cont.toyErr,"Fit unc.",fillColor,1,1,20,1,false,true,false,"2");
+                    auto * g = p->addGraph(cont.toyErr,"Fit unc.",fillColor,1,0,20,1,false,true,false,"2");
                     legEntries.push_back(std::make_tuple(2,g,"Fit unc.","F"));
                 }
                 if(cont.add){
@@ -473,10 +473,10 @@ public:
                 }
 
 
-
+                std::vector<int> signalColors ={kSpring+5,634};
                 for(unsigned int iSig = 0; iSig < cont.sig.size(); ++iSig){
                     if(cont.sig[iSig]){
-                        auto * g = p->addHistLine(cont.sig[iSig],prefs.signalTitles[iSig],StyleInfo::getLineColor(iSig+1));
+                        auto * g = p->addHistLine(cont.sig[iSig],prefs.signalTitles[iSig],signalColors[iSig]);
                         legEntries.push_back(std::make_tuple(100+iSig,g,prefs.signalTitles[iSig],"L"));
                     }
                 }
@@ -518,7 +518,7 @@ public:
                 double yV =0.63;;
 
                 p->setXTitle( (prefs.binInY ? hbbMCS : hhMCS) .title.c_str());
-                p->setYTitle((std::string("Data / ") + flt2Str(binWidth) +" GeV").c_str() );
+                p->setYTitle((std::string("Events / ") + flt2Str(binWidth) +" GeV").c_str() );
                 if(prefs.isSupp || preliminary){
                     p->setCMSLumi(0);
                     if( prefs.isSupp) p->setCMSLumiExtraText("Supplementary");
@@ -1349,6 +1349,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.minTop =0.2;
         hhPlot.maxTop =2000;
         hhPlot.rebinFactor = 4;
+        hhPlot.minBot =0.05;
+        hhPlot.maxBot= 3.45;
         //        hhPlot.rebinFactor = -1;
         //        hhPlot.rebins = {700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,2000,2200,2400,3000,4000};
 
@@ -1362,6 +1364,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hbbPlot.doLog = false;
         hbbPlot.minTop =0;
         hbbPlot.maxTop =0;
+        hbbPlot.minBot =-1;
+        hbbPlot.maxBot= -1;
 //        hbbPlot.maxTops = {140,90,35, 20,25,15,200,100,40,30};
         hbbPlot.rebinFactor = 3;
         //        if(inreg == REG_SR) hbbPlot.blindRange ={100,150};

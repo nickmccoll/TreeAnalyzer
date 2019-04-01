@@ -15,7 +15,7 @@ CutStr blindCut = CutStr("blindCut",std::string("(1.0)"));
 std::vector<PlotVar> vars;
 std::vector<std::string> varUnits;
 std::vector<PlotSamp> samps;
-
+float SIG_CROSS = 2; //in pb
 bool preliminary = false;
 
 
@@ -109,10 +109,11 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
         errBand->SetFillStyle(3352);
         gStyle->SetHatchesLineWidth(1);
         gStyle->SetHatchesSpacing(.5);
-        auto * g_mcunc = p->addGraph(errBand,"MC stat. unc.",fillColor,1,1,20,1,false,true,false,"2");
-        legEntries.push_back(std::make_tuple(2,g_mcunc,"MC stat. unc.","F"));
+        auto * g_mcunc = p->addGraph(errBand,"Sim. stat. unc.",fillColor,1,0,20,1,false,true,false,"2");
+        legEntries.push_back(std::make_tuple(2,g_mcunc,"Sim. stat. unc.","F"));
         legEntries.push_back(std::make_tuple(4,(TObject*)(0),"",""));
 
+        std::vector<int> signalColors ={kSpring+5,634};
 
         for(unsigned int iS = 0; iS < signalFiles.size(); ++iS){
             TFile * f = new TFile((signalFiles[iS]).c_str(),"READ");
@@ -120,10 +121,10 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             f->GetObject((std::string("all_loose_")+vars[iV].varName+"_"+vars[iV].varName).c_str(),hm);
             if(hm == 0) continue;
             //Scale so that we get 1pb normalization
-            hm->Scale(CutConstants::HHtobbVVBF);
+            hm->Scale(CutConstants::HHtobbVVBF* SIG_CROSS);
             if(rebinFactor) hm->Rebin(rebinFactor);
             hm->SetName((signalNames[iS]+vars[iV].varName).c_str());
-            auto * g = p->addHistLine(hm,signalNames[iS],StyleInfo::getLineColor(iS+1));
+            auto * g = p->addHistLine(hm,signalNames[iS],signalColors[iS]);
             legEntries.push_back(std::make_tuple(100+iS,g,signalNames[iS],"L"));
 
         }
@@ -151,7 +152,7 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             p->setMinMax(0,575);
             break;
         case 2: //hh
-            p->setMinMax(0.1,12000);
+            p->setMinMax(0.1,20000);
             sup = true;
             break;
         case 3://nAK4Btags
@@ -188,7 +189,7 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
 
         //--------------------LEGEND AND TEXT------------------------------
         p->turnOffLegend();
-        TLegend * legend = signalNames.size() ? new TLegend(xV,yV,xV+0.457,yV+0.25) : new TLegend(xV,yV,xV+0.445,yV+0.25);
+        TLegend * legend = signalNames.size() ? new TLegend(xV,yV,xV+0.453,yV+0.25) : new TLegend(xV,yV,xV+0.445,yV+0.25);
         legend->SetFillStyle(0);
         legend->SetBorderSize(0);
         legend->SetNColumns(2);
@@ -200,19 +201,19 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
 
 
         if(signalNames.size()){
-            p->addText("#sigma#bf{#it{#Beta}}(X #rightarrow HH) = 1 pb",xV+0.0075,yV-0.04,0.042);
+            p->addText(TString::Format("#sigma#bf{#it{#Beta}}(X #rightarrow HH) = %0.f pb",SIG_CROSS),xV+0.0075,yV-0.04,0.042);
         } else {
         }
         p->setLegendNColumns(2);
 
-        std::string ytitle = "N. of events";
+        std::string ytitle = "Events";
         if(varUnits[iV]!="-1"){
             ytitle += " / " + ASTypes::flt2Str(p->getTotStack()->GetBinWidth(1)) + " " + varUnits[iV];
 
         }
         p->setBotMinMax(0.05,1.95);
         p->setYTitle(ytitle);
-        p->setYTitleBot("Data / MC");
+        p->setYTitleBot("Data / sim.");
 //        auto * c = p->draw(false,prefix+vars[iV].varName+"_srvardists.pdf");
         auto * c = p->drawSplitRatio(-1,"stack",false,false,prefix+vars[iV].varName+"_srvardists.pdf");
 //        p->yAxis()->SetTitleOffset(1.55);
@@ -347,8 +348,8 @@ void plotSRVariables( int step, int reg,std::string tree, std::string name){
     varUnits.emplace_back("GeV");
     varUnits.emplace_back("GeV");
     varUnits.emplace_back("-1");
-    varUnits.emplace_back("");
-    varUnits.emplace_back("");
+    varUnits.emplace_back("units");
+    varUnits.emplace_back("units");
     varUnits.emplace_back("GeV");
     varUnits.emplace_back("-1");
     std::cout <<vars[1].varTitle << std::endl;
