@@ -20,14 +20,11 @@ void makeBKGCRInputs(bool doTopRegion = true, int bkgToDo = BKG_QG, std::string 
 
 
         hhFilename +="_TopCR";
-        go(bkgToDo,treeDir);
-//        if (bkgToDo == -1) go(bkgToDo,treeDir);
-//        else go(bkgToDo,treeDir+"/bkgCompLMT/");
+        go(bkgToDo,treeDir+"/bkgCompLMT/");
     } else {
         btagCats = qgBtagCats;
         hhFilename +="_QGCR";
-        if (bkgToDo == -1) go(bkgToDo,treeDir);
-        else go(bkgToDo,treeDir+"/bkgCompAB/");
+        go(bkgToDo,treeDir+"/bkgCompAB/");
     }
 
 }

@@ -26,7 +26,8 @@ std::vector<CutStr > processes = {
 
 enum REGION  {REG_SR, REG_TOPCR, REG_QGCR};
 
-CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
+//CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
+CutStr nomW ("nomW"  ,  "xsec");
 
 CutStr aQCD ("aQCD"  , "process!=8");
 
