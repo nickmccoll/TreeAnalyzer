@@ -1,5 +1,6 @@
 #include "HistoPlotting/include/Plotter.h"
 #include "HistoPlotting/include/PlotTools.h"
+#include "Configuration/interface/FillerConstants.h"
 #include "TFile.h"
 #include "TH1.h"
 
@@ -41,11 +42,11 @@ TString getTrigName(int k) {
 	return trigName;
 }
 
-void plotIndTriggers(TFile *f, TString prefix, const vector<int>& trigs, TString sel, TString var, float rebin = 0) {
+void plotIndTriggers(TFile *f, TString prefix, const vector<int>& trigs, TString sel, TString var, TString canName, float rebin = 0) {
 	Plotter *p = new Plotter();
-	TH1F *hd = (TH1F*)f->Get(prefix+"_TrigIncl_"+sel+"_"+var);
+	TH1F *hd = (TH1F*)f->Get(prefix+"_TrigIncl__"+sel+"_"+var);
     if (hd==0) {
-    	cout<<"bad den: "<<prefix+"_TrigIncl_"+sel+"_"+var<<endl;
+    	cout<<"bad den: "<<prefix+"_TrigIncl__"+sel+"_"+var<<endl;
     	return;
     }
     hd = (TH1F*)hd->Clone();
@@ -54,9 +55,9 @@ void plotIndTriggers(TFile *f, TString prefix, const vector<int>& trigs, TString
     p->addHist(hd,"incl",-1,1,4,20,1,true,false);
 
     for (const auto& trg : trigs) {
-    	TH1F *hn = (TH1F*)f->Get(TString::Format("%s_passTrig_%i_%s_%s",prefix.Data(),trg,sel.Data(),var.Data()));
+    	TH1F *hn = (TH1F*)f->Get(TString::Format("%s_passTrig_%i__%s_%s",prefix.Data(),trg,sel.Data(),var.Data()));
 	    if (hn==0) {
-	    	cout<<"bad num: "<<TString::Format("%s_passTrig_%i_%s_%s",prefix.Data(),trg,sel.Data(),var.Data())<<endl;
+	    	cout<<"bad num: "<<TString::Format("%s_passTrig_%i__%s_%s",prefix.Data(),trg,sel.Data(),var.Data())<<endl;
 	    	continue;
 	    }
 	    hn = (TH1F*)hn->Clone();
@@ -64,23 +65,23 @@ void plotIndTriggers(TFile *f, TString prefix, const vector<int>& trigs, TString
 	    if (rebin > 0) PlotTools::rebin(hn,rebin);
 	    p->addHist(hn,getTrigName(trg),-1,1,4,20,1,true,false);
     }
-    p->drawRatio(0,prefix+sel+var,false,false,prefix+sel+var);
+    p->drawRatio(0,prefix+sel+var,false,false,canName);
 }
 
-void plotTurnons_Sel(TFile *f, TString prefix, const vector<TString>& sels, TString trig, TString var, float rebin = 0) {
+void plotTurnons_Sel(TFile *f, TString prefix, const vector<TString>& sels, TString trig, TString var, TString canName, float rebin = 0) {
 	Plotter *p = new Plotter();
 	for (const auto& s : sels) {
 		TH1 *hd = 0;
-	    f->GetObject(TString::Format("%s_%s_%s",prefix.Data(),s.Data(),var.Data()),hd);
+	    f->GetObject(TString::Format("%s__%s_%s",prefix.Data(),s.Data(),var.Data()),hd);
 	    TH1 *hn = 0;
-	    f->GetObject(TString::Format("%s_%s_%s_%s",prefix.Data(),trig.Data(),s.Data(),var.Data()),hn);
+	    f->GetObject(TString::Format("%s_%s__%s_%s",prefix.Data(),trig.Data(),s.Data(),var.Data()),hn);
 
 	    if (hn==0) {
-	    	cout<<"bad num: "<<TString::Format("%s_%s_%s_%s",prefix.Data(),trig.Data(),s.Data(),var.Data())<<endl;
+	    	cout<<"bad num: "<<TString::Format("%s_%s__%s_%s",prefix.Data(),trig.Data(),s.Data(),var.Data())<<endl;
 	    	continue;
 	    }
 	    if (hd==0) {
-	    	cout<<"bad den: "<<TString::Format("%s_%s_%s",prefix.Data(),s.Data(),var.Data())<<endl;
+	    	cout<<"bad den: "<<TString::Format("%s__%s_%s",prefix.Data(),s.Data(),var.Data())<<endl;
 	    	continue;
 	    }
 	    hn = (TH1*)hn->Clone();
@@ -96,23 +97,23 @@ void plotTurnons_Sel(TFile *f, TString prefix, const vector<TString>& sels, TStr
 	    hn->Divide(hd);
 	    p->addHist(hn,s,-1,1,4,20,1,true,false);
 	}
-	p->draw(false,prefix+"_"+trig+"_"+var);
+	p->draw(false,canName);
 }
 
-void plotTurnons_Trig(TFile *f, TString prefix, const TString sel, const vector<TString>& trigs, TString var, float rebin = 0) {
+void plotTurnons_Trig(TFile *f, TString prefix, const TString sel, const vector<TString>& trigs, TString var, TString canName, float rebin = 0) {
 	Plotter *p = new Plotter();
 	for (const auto& trg : trigs) {
 		TH1 *hd = 0;
-	    f->GetObject(TString::Format("%s_%s_%s",prefix.Data(),sel.Data(),var.Data()),hd);
+	    f->GetObject(TString::Format("%s__%s_%s",prefix.Data(),sel.Data(),var.Data()),hd);
 	    TH1 *hn = 0;
-	    f->GetObject(TString::Format("%s_%s_%s_%s",prefix.Data(),trg.Data(),sel.Data(),var.Data()),hn);
+	    f->GetObject(TString::Format("%s_%s__%s_%s",prefix.Data(),trg.Data(),sel.Data(),var.Data()),hn);
 
 	    if (hn==0) {
-	    	cout<<"bad num: "<<TString::Format("%s_%s_%s_%s",prefix.Data(),trg.Data(),sel.Data(),var.Data())<<endl;
+	    	cout<<"bad num: "<<TString::Format("%s_%s__%s_%s",prefix.Data(),trg.Data(),sel.Data(),var.Data())<<endl;
 	    	continue;
 	    }
 	    if (hd==0) {
-	    	cout<<"bad den: "<<TString::Format("%s_%s_%s",prefix.Data(),sel.Data(),var.Data())<<endl;
+	    	cout<<"bad den: "<<TString::Format("%s__%s_%s",prefix.Data(),sel.Data(),var.Data())<<endl;
 	    	continue;
 	    }
 	    hn = (TH1*)hn->Clone();
@@ -128,151 +129,183 @@ void plotTurnons_Trig(TFile *f, TString prefix, const TString sel, const vector<
 	    hn->Divide(hd);
 	    p->addHist(hn,trg,-1,1,4,20,1,true,false);
 	}
-	p->draw(false,prefix+"_"+sel+"_"+var);
+	p->draw(false,canName);
+}
+
+void getSF(TFile *fd, TFile *fmc, TString dataPre, TString mcPre, TString effDen, TString trigSel, TString lepSel, TString htSel, TString canName) {
+
+	int nLepBins = 33;
+	double lepBins[] = {5,10,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,50,75,100,150,200,250,300,350,400,450,500};
+	int nHTBins = 28;
+	double htBins[] = {100,125,150,175,200,225,250,275,300,325,350,375,400,425,450,475,500,525,550,575,600,700,800,900,1000,1100,1200,1600,2000};
+
+	auto getEff = [&](TFile * f, TString pn, TString prefix,TString sel, TString var, TString trig, float rebin = 0, int nR = 0, double * rebins = 0)->TH1*{
+	    TH1 * hd = 0;
+	    f->GetObject(TString::Format("%s_%s__%s_%s",pn.Data(),prefix.Data(),sel.Data(),var.Data()),hd);
+	    TH1 * hn = 0;
+	    f->GetObject(TString::Format("%s_%s_%s__%s_%s",pn.Data(),prefix.Data(),trig.Data(),sel.Data(),var.Data()),hn);
+	    if(hn == 0){
+	      cout << "Bad num: " + TString::Format("%s_%s_%s__%s_%s",pn.Data(),prefix.Data(),trig.Data(),sel.Data(),var.Data()) << endl;
+	      return 0;
+	    }
+	    if(hd == 0){
+	      cout << "Bad den: " + TString::Format("%s_%s__%s_%s",pn.Data(),prefix.Data(),sel.Data(),var.Data()) << endl;
+	      return 0;
+	    }
+	    hn = (TH1*)hn->Clone();
+	    hd = (TH1*)hd->Clone();
+	    PlotTools::toOverflow(hn);
+	    PlotTools::toOverflow(hd);
+
+	    if(rebin > 0){
+	      PlotTools::rebin(hn,rebin);
+	      PlotTools::rebin(hd,rebin);
+	    } else if(rebins){
+	      hn = PlotTools::rebin(hn,nR,rebins);
+	      hd = PlotTools::rebin(hd,nR,rebins);
+	    }
+//	    PlotTools::toOverflow(hn);
+//	    PlotTools::toOverflow(hd);
+	    hn->Divide(hn,hd,1,1,"b"); return hn;
+	    // return PlotTools::getBinomErrors(hn,hd);
+	};
+
+	auto plotSFTurnons =[&](TString name, TString prefix,TString dataName,TString mcName, TString sel, TString var, TString trig, float rebin = 0, int nR = 0, double * rebins = 0 ){
+	    Plotter * p = new Plotter();
+	    auto * mcEff = getEff(fmc,mcName,prefix,sel,var,trig,rebin,nR,rebins);
+	    auto * dataEff = getEff(fd,dataName,prefix,sel,var,trig,rebin,nR,rebins);
+	    if(mcEff == 0 || dataEff == 0) {
+	    	cout << "mc or data hist is empty" << endl;
+	    	return;
+	    }
+
+	    p->addHist(mcEff,"MC",-1,1,4,20,1,true,true, false, "E X P");
+	    p->addHist(dataEff,"data",-1,1,4,20,1,true,true, false, "E X P");
+	      // p->draw(true,TString::Format("%s.pdf",name.Data()));
+	    p->drawSplitRatio(0,"stack",true,false,TString::Format("%s.pdf",name.Data()));
+	};
+
+	TString lepVar = (lepSel.BeginsWith("m")) ? "mu_pt" : "el_pt";
+
+	plotSFTurnons("SF_"+canName+"_HT",effDen,dataPre,mcPre,lepSel,"ht",trigSel,0,nHTBins,htBins);
+	plotSFTurnons("SF_"+canName+"_"+lepVar,effDen,dataPre,mcPre,htSel,lepVar,trigSel,0,nLepBins,lepBins);
 }
 
 void drawTriggerTurnons() {
 	TString prePath = "/Users/brentstone/Dropbox/Physics/HHbbWW/plots/";
-//	TFile *fd = new TFile(prePath+"data2017_triggerTurnons.root");
+	TFile *fd = new TFile(prePath+"trigger_data.root");
+	TFile *fdb = new TFile(prePath+"trigger_dataB.root");
+	TFile *fdelse = new TFile(prePath+"trigger_dataCDEF.root");
 	TFile *fb = new TFile(prePath+"out_TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_0.root");
-//	TFile *fs = new TFile(prePath+"mcSig2017_triggerTurnons.root");
+	TFile *fmc = new TFile(prePath+"trigger_ttbar2L.root");
 
-    const vector<TString> muSels = {"mupt_incl","mupt_15","mupt_20","mupt_25","mupt_26","mupt_30"};
-    const vector<TString> elSels = {"elpt_incl","elpt_15","elpt_20","elpt_25","elpt_30","elpt_35"};
-    const vector<TString> htSels = {"ht_incl","ht_400","ht_450","ht_475","ht_500","ht_600"};
+    vector<TString> muSels = {"mupt_10","mupt_15","mupt_20","mupt_25","mupt_26","mupt_30","mupt_35"};
+    vector<TString> elSels = {"elpt_10","elpt_15","elpt_20","elpt_25","elpt_30","elpt_35","elpt_40"};
+    vector<TString> htSels = {"ht_350","ht_375","ht_400","ht_450","ht_475","ht_500","ht_600"};
+//    plotTurnons_Sel(fb,"ttbar_GL_passSE",muSels,"passSMuoHtMuoHMoBu","ht",40);
+//    plotTurnons_Sel(fb,"ttbar_GL_passSE",htSels,"passSMuoHtMuoHMoBu","mu_pt",25);
+//    plotTurnons_Sel(fb,"ttbar_GL_passSMu",elSels,"passSEloHtEloHEoBu","ht",40);
+//    plotTurnons_Sel(fb,"ttbar_GL_passSMu",htSels,"passSEloHtEloHEoBu","el_pt",25);
 
-    // comparing single triggers
-    const vector<int> mu_trigs = {24,25,26};
-    const vector<int> el_trigs = {16,17,20,21,22,23,27};
+    // comparing single triggers (consult function at top for trigger names)
+    const vector<int> mu_trigs = {24,25,26,10,11,12};
+    const vector<int> el_trigs = {17,18,19,21,22};
+    const vector<int> metht_trigs = {3,4,5,6,7,8};
+    const vector<int> oth_trigs = {0,1,2,6,7};
 
-    plotIndTriggers(fb,"ttbar",el_trigs,"elpt_incl","ht",40);
+//    plotIndTriggers(fb,"ttbar",el_trigs,"elpt_15","ht",40);
+//    plotIndTriggers(fb,"ttbar",mu_trigs,"mupt_15","ht",40);
+//    plotIndTriggers(fb,"ttbar",metht_trigs,"mupt_15","ht",40);
+//    plotIndTriggers(fb,"ttbar",metht_trigs,"elpt_15","ht",40);
+//    plotIndTriggers(fb,"ttbar",oth_trigs,"mupt_15","ht",40);
+//    plotIndTriggers(fb,"ttbar",oth_trigs,"elpt_15","ht",40);
 
     // turnons for different trigger combinations
     const TString mu_WP = "mupt_26";
     const TString el_WP = "elpt_30";
-    const vector<TString> muTrigCombs = {"passSMu","passSMuoHtMu","passSMuoHtMuoBu","passMuDenNoCross"};
-    const vector<TString> elTrigCombs = {"passSEl","passSEloHtEl","passSEloHtEloBu","passElDenNoCross"};
+    const vector<TString> muTrigCombs = {"passSMu","passSMuoHtMu","passSMuoHtMuoHMoBu","passMuDenNoCross"};
+    const vector<TString> elTrigCombs = {"passSEl","passSEloHtEl","passSEloHtEloHEoBu","passElDenNoCross"};
 
-    plotTurnons_Trig(fb,"ttbar_GL_passSE",mu_WP,muTrigCombs,"ht",50);
-    plotTurnons_Trig(fb,"ttbar_GL_passSMu",el_WP,elTrigCombs,"ht",50);
+//    plotTurnons_Trig(fb,"ttbar_GL_passSE",mu_WP,muTrigCombs,"ht",40);
+//    plotTurnons_Trig(fb,"ttbar_GL_passSMu",el_WP,elTrigCombs,"ht",40);
 
     // Triggers from MC using probes only
-    const vector<TString> muTrigs = {"passSMu","passSMuoHtMu","passSMuoHM","passSMuoHtMuoHM","passSMoHtMuoHMoBu"};
-    const vector<TString> elTrigs = {"passSEl","passSEloHtEl","passSEloHE","passSEloHtEloHE","passSElHtEloHEoBu"};
+    vector<TString> muTrigs = {"passSMu","passSMuoHtMu","passSMuoHM","passSMuoHtMuoHM","passSMuoHtMuoHMoBu"};
+    vector<TString> elTrigs = {"passSEl","passSEloHtEl","passSEloHE","passSEloHtEloHE","passSEloHtEloHEoBu"};
 
-    plotTurnons_Trig(fb,"ttbar","mupt_incl",muTrigs,"ht",50);
-    plotTurnons_Trig(fb,"ttbar","elpt_incl",elTrigs,"ht",50);
-    plotTurnons_Trig(fb,"ttbar","mupt_26",muTrigs,"ht",50);
-    plotTurnons_Trig(fb,"ttbar","elpt_30",elTrigs,"ht",50);
-
-    plotTurnons_Trig(fb,"ttbar","ht_incl",muTrigs,"mu_pt",50);
-    plotTurnons_Trig(fb,"ttbar","ht_incl",elTrigs,"el_pt",50);
+//    plotTurnons_Trig(fb,"ttbar_MC","mupt_incl",muTrigs,"ht",40);
+//    plotTurnons_Trig(fb,"ttbar_MC","elpt_incl",elTrigs,"ht",40);
+//    plotTurnons_Trig(fb,"ttbar_MC","mupt_26",muTrigs,"ht",40);
+//    plotTurnons_Trig(fb,"ttbar_MC","elpt_30",elTrigs,"ht",40);
+//
+//    plotTurnons_Trig(fb,"ttbar_MC","ht_incl",muTrigs,"mu_pt",25);
+//    plotTurnons_Trig(fb,"ttbar_MC","ht_incl",elTrigs,"el_pt",25);
+//    plotTurnons_Trig(fb,"ttbar_MC","ht_400",muTrigs,"mu_pt",25);
+//    plotTurnons_Trig(fb,"ttbar_MC","ht_400",elTrigs,"el_pt",25);
 
     // Triggers using tag and probe approach with emu ttbar
-    plotTurnons_Sel(fb,"ttbar_GL_passSE",muSels,"passSMu","ht",50);
-    plotTurnons_Sel(fb,"ttbar_GL_passSMu",elSels,"passSEl","ht",50);
-    plotTurnons_Sel(fb,"ttbar_GL_passSE",htSels,"passSMu","mu_pt",50);
-    plotTurnons_Sel(fb,"ttbar_GL_passSMu",htSels,"passSEl","el_pt",50);
+//    plotTurnons_Sel(fb,"ttbar_GL_passSE",muSels,"passSMu","ht",40);
+//    plotTurnons_Sel(fb,"ttbar_GL_passSMu",elSels,"passSEl","ht",40);
+//    plotTurnons_Sel(fb,"ttbar_GL_passSE",htSels,"passSMu","mu_pt",25);
+//    plotTurnons_Sel(fb,"ttbar_GL_passSMu",htSels,"passSEl","el_pt",25);
+//
+//    plotTurnons_Trig(fb,"ttbar_GL_passSE","mupt_15",muTrigs,"ht",40);
+//    plotTurnons_Trig(fb,"ttbar_GL_passSE","ht_incl",muTrigs,"mu_pt",25);
+//    plotTurnons_Trig(fb,"ttbar_GL_passSMu","elpt_15",elTrigs,"ht",40);
+//    plotTurnons_Trig(fb,"ttbar_GL_passSMu","ht_incl",elTrigs,"el_pt",25);
 
-    plotTurnons_Trig(fb,"ttbar_GL_passSE","mupt_incl",muTrigs,"ht",50);
-    plotTurnons_Trig(fb,"ttbar_GL_passSE","ht_incl",muTrigs,"mu_pt",50);
-    plotTurnons_Trig(fb,"ttbar_GL_passSMu","elpt_incl",elTrigs,"ht",50);
-    plotTurnons_Trig(fb,"ttbar_GL_passSMu","ht_incl",elTrigs,"el_pt",50);
+    // Main electron triggers
+    elTrigs = {"passEl32","passEl35","passEl32Dbl","passEl32SngoDbl","passEl32SngoDblo35"};
+//    plotTurnons_Trig(fb,"ttbar_passSMu","elpt_15",elTrigs,"ht",40);
+//    plotTurnons_Trig(fb,"ttbar_passSMu","ht_350",elTrigs,"el_pt",25);
+
+    // High energy electron triggers
+    elTrigs = {"passSEl","passSEloPh200","passSEloEl115","passSEloHE"};
+//    plotTurnons_Trig(fb,"ttbar_GL_passSMu","elpt_15",elTrigs,"ht",40);
+//    plotTurnons_Trig(fb,"ttbar_GL_passSMu","ht_350",elTrigs,"el_pt",25);
+
+    // Electron cross trigger comparison
+    elTrigs = {"passEl32Dbl","passElHT1","passElHT2","passElHT"};
+//    plotTurnons_Trig(fb,"ttbar_passSMu","elpt_15",elTrigs,"ht",40);
+//    plotTurnons_Trig(fb,"ttbar_passSMu","ht_350",elTrigs,"el_pt",25);
+
+    // High energy, HT, and cross triggers
+    elTrigs = {"passSEl","passSEloHE","passSEloHtEl","passSEloHtEloHE","passSEloHtEloHEoBu"};
+    muTrigs = {"passSMu","passSMuoHM","passSMuoHtMu","passSMuoHtMuoHM","passSMuoHtMuoHMoBu"};
+//    plotTurnons_Trig(fb,"ttbar_GL_passSMu","elpt_15",elTrigs,"ht",40);
+//    plotTurnons_Trig(fb,"ttbar_GL_passSMu","ht_350",elTrigs,"el_pt",25);
+//    plotTurnons_Trig(fmc,"ttbar_GL_passSE","mupt_15",muTrigs,"ht","muon trig comp (pt>15) - ht",40);
+//    plotTurnons_Trig(fmc,"ttbar_GL_passSE","ht_350",muTrigs,"mu_pt","muon trig comp (ht>350)- pt",25);
+
+    // Study other triggers such as Jet, MHT, MET_NoMu
+    elTrigs = {"passSEloHtEloHE","passNomEloJet","passNomEloJetoMHT1","passNomEloJetoMHT2","passNomEloJetoMHT"};
+    muTrigs = {"passSMuoHtMuoHM","passNomMuoJet","passNomMuoJetoMetNoMu","passNomMuoJetoMHT","passNomMuoJetoMHToMetNoMu"};
+
+//    plotTurnons_Trig(fb,"ttbar_GL_passSMu","elpt_30",elTrigs,"ht","ttbar_GL_passSMu_elpt30_MiscTrigs",40);
+//    plotTurnons_Trig(fb,"ttbar_GL_passSMu","ht_350",elTrigs,"el_pt","ttbar_GL_passSMu_ht350_MiscTrigs",25);
+//    plotTurnons_Trig(fb,"ttbar_GL_passSE","mupt_26",muTrigs,"ht","ttbar_GL_passSE_mupt26_MiscTrigs",40);
+//    plotTurnons_Trig(fb,"ttbar_GL_passSE","ht_350",muTrigs,"mu_pt","ttbar_GL_passSE_ht350_MiscTrigs",25);
+
+    // Scale factors
+    muSels = {"mupt_15","mupt_20","mupt_26","mupt_30"};
+    elSels = {"elpt_15","elpt_20","elpt_26","elpt_30"};
+    htSels = {"ht_450","ht_475","ht_500","ht_550"};
+    vector<TString> etas = {"","_maxEta1p5","_maxEta2p5"};
+
+    for (const auto& sel : elSels) {getSF(fd,fmc,"SingleMuon","ttbar","GL_passSMu","passSEloHtEloHEoBu",sel,"ht_400","ht400_"+sel);}
+    for (const auto& sel : muSels) {getSF(fd,fmc,"SingleElectron","ttbar","GL_passSE","passSMuoHtMuoHMoBu",sel,"ht_400","ht400_"+sel);}
+    for (const auto& sel : htSels) {
+    	getSF(fd,fmc,"SingleMuon","ttbar","GL_passSMu","passSEloHtEloHEoBu","elpt_25",sel,"elpt_25_"+sel);
+        getSF(fd,fmc,"SingleElectron","ttbar","GL_passSE","passSMuoHtMuoHMoBu","mupt_30",sel,"mupt_26_"+sel);
+    }
+
+    for (const auto& eta:etas) {getSF(fd,fmc,"SingleMuon","ttbar","GL_passSMu"+eta,"passSEloHtEloHEoBu","elpt_30","ht_500",eta);}
+    getSF(fdb,   fmc,"SingleMuon","ttbar","GL_passSMu","passSEloHtEloHEoBu","elpt_30","ht_500","RunB");
+    getSF(fdelse,fmc,"SingleMuon","ttbar","GL_passSMu","passSEloHtEloHEoBu","elpt_30","ht_500","RunCDEF");
 
 	return;
 }
 
-//{
-//  TFile * f = new TFile("data_triggerTurnons.root");
-//  auto plotTurnons =[&](TString name, TString prefix, const vector<TString>& sels, TString var, TString trig, float rebin = 0 ){
-//      Plotter * p = new Plotter();
-//    for(const auto& s : sels ){
-//      TH1 * hd = 0;
-//      f->GetObject(TString::Format("%s_%s_%s",prefix.Data(),s.Data(),var.Data()),hd);
-//      TH1 * hn = 0;
-//      f->GetObject(TString::Format("%s_%s__%s_%s",prefix.Data(),trig.Data(),s.Data(),var.Data()),hn);
-//
-//      if(hn == 0){
-//        cout << TString::Format("%s_%s__%s_%s",prefix.Data(),trig.Data(),s.Data(),var.Data()) << endl;
-//        continue;
-//      }
-//      if(hd == 0){
-//        cout << TString::Format("%s_%s_%s",prefix.Data(),s.Data(),var.Data()) << endl;
-//        continue;
-//      }
-//      hn = (TH1*)hn->Clone();
-//      hd = (TH1*)hd->Clone();
-//      PlotTools::toOverflow(hn);
-//      PlotTools::toOverflow(hd);
-//      if(rebin > 0){
-//        PlotTools::rebin(hn,rebin);
-//        PlotTools::rebin(hd,rebin);
-//      }
-//
-//      auto * ratio = PlotTools::getBinomErrors(hn,hd);
-//      p->addGraph(ratio,s);
-//    }
-//    p->draw(true,TString::Format("%s.pdf",name.Data()));
-//  };
-//    std::vector<TString> muSels = {"mupt_incl","mupt_15","mupt_20","mupt_25","mupt_30","mupt_35","mupt_40"};
-//    std::vector<TString> elSels = {"elpt_incl","elpt_15","elpt_20","elpt_25","elpt_30","elpt_35","elpt_40"};
-//    std::vector<TString> htSels = {"ht_incl","ht_450","ht_475","ht_500","ht_600"};
-//    //El denom, selHt, mu leg
-//    // plotTurnons("elDenom_selHT_muLeg","singlee_passSE",htSels,"mu_pt","passMuHT",5);
-//
-//
-//    //
-//    // // //Mu denom, selHt, e leg
-//    // plotTurnons("muDenom_selHT_eLeg","singlemu_passSMu",htSels,"el_pt","passElHT",5);
-//    // // //Mu denom, selMu, htLeg
-//    // plotTurnons("muDenom_selMu_htLeg","singlemu_passSMu",muSels,"ht","passMuHT",10);
-//    // // plotTurnons("muDenom_selMu_htLeg_wHad","singlemu_passSMu",muSels,"ht","passMuHToHad",10);
-//    // //
-//    // // //Mu denom, selE, htLeg
-//    // plotTurnons("muDenom_selE_htLeg","singlemu_passSMu",elSels,"ht","passElHT",25);
-//    // // plotTurnons("muDenom_selE_htLeg_wHad","singlemu_passSMu",elSels,"ht","passElHToHad",25);
-//    //
-//    // // //E denom, selMu, htLeg
-//    // plotTurnons("elDenom_selMu_htLeg","singlee_passSE",muSels,"ht","passMuHT",10);
-//    // // plotTurnons("elDenom_selMu_htLeg_wHad","singlee_passSE",muSels,"ht","passMuHToHad",10);
-//    // //
-//    // // //E denom, selE, htLeg
-//    // plotTurnons("elDenom_selE_htLeg","singlee_passSE",elSels,"ht","passElHT",25);
-//    // plotTurnons("elDenom_selE_htLeg_wHad","singlee_passSE",elSels,"ht","passElHToHad",25);
-//
-//
-//    //Single lepton time
-//
-//    //El denom
-//    // plotTurnons("elDenom_selHT_muLeg"      ,"singlee_GL_passSE",htSels,"mu_pt","passSMu"        ,5);
-//    // plotTurnons("elDenom_selHT_muLeg_di"   ,"singlee_GL_passSE",htSels,"mu_pt","passSMuoHtMu"   ,5);
-//    // plotTurnons("elDenom_selHT_muLeg_diBu" ,"singlee_GL_passSE",htSels,"mu_pt","passSMuoHtMuoBu",5);
-//    // plotTurnons("elDenom_selMu_htLeg"      ,"singlee_GL_passSE",muSels,"ht","passSMu"        ,25);
-//    // plotTurnons("elDenom_selMu_htLeg_di"   ,"singlee_GL_passSE",muSels,"ht","passSMuoHtMu"   ,25);
-//    // plotTurnons("elDenom_selMu_htLeg_diBu" ,"singlee_GL_passSE",muSels,"ht","passSMuoHtMuoBu",25);
-//    // plotTurnons("muDenom_selHT_elLeg"      ,"singlemu_GL_passSMu",htSels,"el_pt","passSEl"        ,5);
-//    // plotTurnons("muDenom_selHT_elLeg_di"   ,"singlemu_GL_passSMu",htSels,"el_pt","passSEloHtEl"   ,5);
-//    // plotTurnons("muDenom_selHT_elLeg_diBu" ,"singlemu_GL_passSMu",htSels,"el_pt","passSEloHtEloBu",5);
-//    // plotTurnons("muDenom_selMu_htLeg"      ,"singlemu_GL_passSMu",elSels,"ht","passSEl"        ,25);
-//    plotTurnons("muDenom_selMu_htLeg_di"   ,"singlemu_GL_passSMu",elSels,"ht","passSEloHtEl"   ,25);
-//    plotTurnons("muDenom_selMu_htLeg_diBu" ,"singlemu_GL_passSMu",elSels,"ht","passSEloHtEloBu",25);
-//
-//    // plotTurnons("selHT_muLeg"      ,"m1000_MC",htSels,"mu_pt","passSMu"        ,5);
-//    // plotTurnons("selHT_muLeg_di"   ,"m1000_MC",htSels,"mu_pt","passSMuoHtMu"   ,5);
-//    // plotTurnons("selHT_muLeg_diBu" ,"m1000_MC",htSels,"mu_pt","passSMuoHtMuoBu",5);
-//    // plotTurnons("selMu_htLeg"      ,"m1000_MC",muSels,"ht","passSMu"        ,25);
-//    // plotTurnons("selMu_htLeg_di"   ,"m1000_MC",muSels,"ht","passSMuoHtMu"   ,25);
-//    // plotTurnons("selMu_htLeg_diBu" ,"m1000_MC",muSels,"ht","passSMuoHtMuoBu",25);
-//    // plotTurnons("selHT_elLeg"      ,"m1000_MC",htSels,"el_pt","passSEl"        ,5);
-//    // plotTurnons("selHT_elLeg_di"   ,"m1000_MC",htSels,"el_pt","passSEloHtEl"   ,5);
-//    // plotTurnons("selHT_elLeg_diBu" ,"m1000_MC",htSels,"el_pt","passSEloHtEloBu",5);
-//    // plotTurnons("selEl_htLeg"      ,"m1000_MC",elSels,"ht","passSEl"        ,25);
-//    // plotTurnons("selEl_htLeg_di"   ,"m1000_MC",elSels,"ht","passSEloHtEl"   ,25);
-//    // plotTurnons("selEl_htLeg_diBu" ,"m1000_MC",elSels,"ht","passSEloHtEloBu",25);
-//
-//
-//
-//}
 //
 //
 ////T&P data/mc sf
