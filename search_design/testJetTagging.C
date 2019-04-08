@@ -215,46 +215,46 @@ public:
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
         if(!passEventFilters) return false;
 
-        LeptonParameters paramsNoID = parameters.leptons;
-        paramsNoID.el_getID = &Electron::passInclID;
-        auto electrons = LeptonProcessor::getElectrons(paramsNoID,*reader_electron);
-
-        for(const auto* e : electrons){
-            bool passTight = e->passTightID_noIso();
-            bool passMed   = e->passMedID_noIso();
-            bool passMVA90 =e->passMVA90ID_noIso();
-
-            auto fillBin = [&](const float bin){
-                plotter.getOrMake1DPre(smpName,"leptonSel",";leptonSel",9,-0.5,8.5)->Fill(bin,weight);
-            };
-
-            if(passMed)fillBin(0);
-            if(passTight)fillBin(1);
-            if(passMVA90)fillBin(2);
-
-            if(passMed&&passMVA90)fillBin(3);
-            if(!passMed&&passMVA90)fillBin(4);
-            if(passMed&&!passMVA90)fillBin(5);
-            if(passTight&&passMVA90)fillBin(6);
-            if(!passTight&&passMVA90)fillBin(7);
-            if(passTight&&!passMVA90)fillBin(8);
-
-        }
-
-
-
-
-
-      if(selectedLepton && selectedLepton->isElectron()){
-          const Electron * e = (const Electron*)selectedLepton;
-          std::cout << e->p4() <<" -> "<< e->passMedID_noIso() <<" "<< e->passTightID_noIso()<< " "<< e->passMVA90ID_noIso()
-                 <<" :: "<<e->miniIso()<<" "<<e->miniIsoFP()   <<" :: ";
-                 if(wjjCand) std::cout << wjjCand->p4()<<std::endl;
-                 else std::cout <<std::endl;
-          for(const auto& j : reader_fatjet->jets){
-              std::cout << j.p4()<<std::endl;
-          }
-      }
+//        LeptonParameters paramsNoID = parameters.leptons;
+//        paramsNoID.el_getID = &Electron::passInclID;
+//        auto electrons = LeptonProcessor::getElectrons(paramsNoID,*reader_electron);
+//
+//        for(const auto* e : electrons){
+//            bool passTight = e->passTightID_noIso();
+//            bool passMed   = e->passMedID_noIso();
+//            bool passMVA90 =e->passMVA90ID_noIso();
+//
+//            auto fillBin = [&](const float bin){
+//                plotter.getOrMake1DPre(smpName,"leptonSel",";leptonSel",9,-0.5,8.5)->Fill(bin,weight);
+//            };
+//
+//            if(passMed)fillBin(0);
+//            if(passTight)fillBin(1);
+//            if(passMVA90)fillBin(2);
+//
+//            if(passMed&&passMVA90)fillBin(3);
+//            if(!passMed&&passMVA90)fillBin(4);
+//            if(passMed&&!passMVA90)fillBin(5);
+//            if(passTight&&passMVA90)fillBin(6);
+//            if(!passTight&&passMVA90)fillBin(7);
+//            if(passTight&&!passMVA90)fillBin(8);
+//
+//        }
+//
+//
+//
+//
+//
+//      if(selectedLepton && selectedLepton->isElectron()){
+//          const Electron * e = (const Electron*)selectedLepton;
+//          std::cout << e->p4() <<" -> "<< e->passMedID_noIso() <<" "<< e->passTightID_noIso()<< " "<< e->passMVA90ID_noIso()
+//                 <<" :: "<<e->miniIso()<<" "<<e->miniIsoFP()   <<" :: ";
+//                 if(wjjCand) std::cout << wjjCand->p4()<<std::endl;
+//                 else std::cout <<std::endl;
+//          for(const auto& j : reader_fatjet->jets){
+//              std::cout << j.p4()<<std::endl;
+//          }
+//      }
 
         if(!passTriggerPreselection) return false;
         if(!selectedLepton) return false;
