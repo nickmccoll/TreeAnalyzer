@@ -30,7 +30,7 @@ namespace TAna {
 //--------------------------------------------------------------------------------------------------
 DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
         std::string treeName, int treeInt, size randomSeed)
-    : BaseTreeAnalyzer(fileName,treeName,treeInt, randomSeed){
+: BaseTreeAnalyzer(fileName,treeName,treeInt, randomSeed){
     TPRegexp r1(".*m(\\d+)_[0-9]*\\..*$");
     auto match = r1.MatchS(fileName);
     const Int_t nrSubStr = match->GetLast()+1;
@@ -59,7 +59,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     turnOnCorr(CORR_SJBTAG);
     turnOnCorr(CORR_AK4BTAG);
     turnOnCorr(CORR_SDMASS);
-    turnOnCorr(CORR_TOPPT);
+//    turnOnCorr(CORR_TOPPT);
     turnOnCorr(CORR_JER);
 }
 DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
@@ -67,11 +67,11 @@ DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::resetCorr() {corrections = 0;}
 bool DefaultSearchRegionAnalyzer::isCorrOn(Corrections corr) const
-    {return FillerConstants::doesPass(corrections,corr);}
+{return FillerConstants::doesPass(corrections,corr);}
 void DefaultSearchRegionAnalyzer::turnOnCorr(Corrections corr)
-    {FillerConstants::addPass(corrections,corr);}
+{FillerConstants::addPass(corrections,corr);}
 void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr)
-    {FillerConstants::removePass(corrections,corr);}
+{FillerConstants::removePass(corrections,corr);}
 
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::loadVariables()  {
@@ -123,6 +123,19 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_JES) && !reader_jet_chs) mkErr("jet_chs","CORR_JES");
 }
 //--------------------------------------------------------------------------------------------------
+void DefaultSearchRegionAnalyzer::setupParameters(){
+    switch(FillerConstants::DataEra(*reader_event->dataEra)){
+    case FillerConstants::ERA_2017:
+        parameters = ReaderConstants::set2017Parameters();
+        break;
+    default:
+        throw std::invalid_argument(
+                "DefaultSearchRegionAnalyzer -> The era needs to be set to use this class");
+    }
+    if(isCorrOn(CORR_SJBTAG)) sjbtagSFProc->setParameters(parameters.jets);
+    if(isCorrOn(CORR_AK4BTAG)) ak4btagSFProc->setParameters(parameters.jets);
+}
+//--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
     if(isRealData()){
         mcProc = FillerConstants::NOPROCESS;
@@ -138,17 +151,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     if(*reader_event->dataEra != lastEra){
         lastEra = FillerConstants::DataEra(*reader_event->dataEra);
         std::cout << " ++  Setting era: "<<FillerConstants::DataEraNames[lastEra]<<std::endl;
-        switch(lastEra){
-        case FillerConstants::ERA_2017:
-            parameters = ReaderConstants::set2017Parameters();
-            break;
-        default:
-            throw std::invalid_argument(
-                    "DefaultSearchRegionAnalyzer -> The era needs to be set to use this class");
-        }
-
-        if(isCorrOn(CORR_SJBTAG)) sjbtagSFProc->setParameters(parameters.jets);
-        if(isCorrOn(CORR_AK4BTAG)) ak4btagSFProc->setParameters(parameters.jets);
+        setupParameters();
     }
 
 
@@ -210,9 +213,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         hbbCand     = fjProc->getHBBCand();
         wjjCand     = fjProc->getWjjCand();
         hbbCSVCat   = hbbCand ? BTagging::getCSVSJCat(parameters.jets,hbbCand->subJets())
-                              : BTagging::CSVSJ_INCL ;
+        : BTagging::CSVSJ_INCL ;
         wjjCSVCat   = wjjCand ? BTagging::getCSVSJCat(parameters.jets,wjjCand->subJets())
-                              : BTagging::CSVSJ_INCL ;
+        : BTagging::CSVSJ_INCL ;
     } else {
         wjjCand    =  0;
         hbbCand    =  0;
@@ -236,8 +239,8 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     }
 
     if(hbbCand){
-        hbbMass    =   isCorrOn(CORR_SDMASS)
-                ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
+        hbbMass    =   isCorrOn(CORR_SDMASS) ?
+                hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
         hh =  wjjCand  ? (hWW.p4() + hbbCand->p4()) :  MomentumF();
     } else {
         hbbMass    = 0;

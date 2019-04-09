@@ -87,7 +87,7 @@ public:
         stdSel.reset(new TTreeFormula("stdSel", TString::Format("%s*(%s)",baseWeight.c_str(),baseSel.c_str()),tree.getTree()));
         analyze();
     }
-    void analyze(int reportFrequency = 10000, int numEvents = -1, int startEvent = -1) override {
+    void analyze(int reportFrequency = 10000, int numEvents = -1, int startEvent = 0) override {
         auto * evtAna = setupEventAnalyzer();
         evtAna->analyzeEvent(this,reportFrequency,numEvents,startEvent);
         delete evtAna;

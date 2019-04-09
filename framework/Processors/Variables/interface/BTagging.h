@@ -26,12 +26,12 @@ bool passSubjetBTagMWP(const JetParameters& params, const Jet& subjet){
 
 
 enum CSVSJ_CAT {CSVSJ_INCL, //inclusive
-                CSVSJ_FF,  // no Loose b-tags
-                CSVSJ_LF,  // One loose, not med
-                CSVSJ_LL,  // Two loose, not med
-                CSVSJ_MF,  // One med, not loose
-                CSVSJ_ML,  // One med, one loose not med
-                CSVSJ_MM,  // Two med
+    CSVSJ_FF,  // no Loose b-tags
+    CSVSJ_LF,  // One loose, not med
+    CSVSJ_LL,  // Two loose, not med
+    CSVSJ_MF,  // One med, not loose
+    CSVSJ_ML,  // One med, one loose not med
+    CSVSJ_MM,  // Two med
 };
 
 template<typename Jet>
@@ -68,6 +68,18 @@ FLAVOR jetFlavor(const Jet& jet) {
         return FLV_C;
     default:
         return FLV_L;
+    }
+}
+inline std::string jetFlavorString(const FLAVOR flv){
+    switch(flv){
+    case FLV_L :
+        return "l";
+    case FLV_C :
+        return "c";
+    case FLV_B :
+        return "b";
+    default:
+        return "err";
     }
 }
 }

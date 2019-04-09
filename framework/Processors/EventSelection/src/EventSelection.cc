@@ -56,7 +56,12 @@ bool passTriggerSuite2017(const EventReader& reader_event   ) {
     }
     return true;
 }
-
+//--------------------------------------------------------------------------------------------------
+bool alwaysTrue(const EventReader& reader_event   ) {
+    if(*reader_event.dataEra){}
+    return true;
+}
+//--------------------------------------------------------------------------------------------------
 bool passEventFilters(const EventParameters& params,const EventReader& reader_event) {
     for(const auto& filter : reader_event.realData  ? params.dataFilters : params.mcFilters){
         if(!FillerConstants::doesPass(*reader_event.metFilters,filter) ) return false;
@@ -64,9 +69,7 @@ bool passEventFilters(const EventParameters& params,const EventReader& reader_ev
     if(*(reader_event.goodVtx) == 0) return false;
     return true;
 }
-
-
-
+//--------------------------------------------------------------------------------------------------
 bool passTriggerPreselection(const EventParameters& params,
         const EventReader& reader_event,const float ht,
         const std::vector<const Lepton    *>& selectedLeptons ){

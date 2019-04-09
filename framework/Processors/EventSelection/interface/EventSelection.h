@@ -11,6 +11,8 @@ bool passMuonTriggerSuite2017(const EventReader& reader_event);
 bool passElectronTriggerSuite2017(const EventReader& reader_event);
 bool passTriggerSuite2017(const EventReader& reader_event);
 
+bool alwaysTrue(const EventReader& reader_event);
+
 bool passTriggerPreselection(const EventParameters& params, const EventReader& reader_event,const float ht, const std::vector<const Lepton    *>& selectedLeptons);
 bool passEventFilters(const EventParameters& params, const EventReader& reader_event);
 

@@ -53,7 +53,7 @@ ParameterSet set2017Parameters() {
     paramSet.leptons.el_maxD0   = 0.05;
     paramSet.leptons.el_maxSip3D   = 4   ;
     paramSet.leptons.el_maxISO  = 0.1 ;
-    paramSet.leptons.el_getID   = &Electron::passTightID_noIso;
+    paramSet.leptons.el_getID   = &Electron::passMVA90ID_noIso;
     paramSet.leptons.el_getISO  = &Electron::miniIso;
 
     paramSet.leptons.mu_minPT   = 20  ;

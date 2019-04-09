@@ -23,6 +23,8 @@ def get_num_mc_events(filelist, prefix='', selection=''):
     for filename in filelist :
         filepath = '/'.join(['%s' % prefix, '%s' % filename])
         file = TFile.Open(filepath)
+        if not file:
+            continue
         tree = file.Get(args.treeName)
         totnegentries += tree.GetEntries('event_genWeight<0' + selection)
         totposentries += tree.GetEntries('event_genWeight>0' + selection)
@@ -32,35 +34,39 @@ def get_num_data_events(filelist, prefix='', selection=''):
     for filename in filelist :
         filepath = '/'.join(['%s' % prefix, '%s' % filename])
         file = TFile.Open(filepath)
+        if not file:
+            continue
         tree = file.Get(args.treeName)
         totposentries += tree.GetEntries(selection)
     return totposentries
 
 def addSample(name,datarun,cross,dasName,configs) :
-	if(re.match(".+-ext\d*", name)) : return
-	
-	files = []
-	
-	if args.dataDir.startswith("/eos/uscms/store/user") or args.dataDir.startswith("/store/user") :
-		cmd = (" eos root://cmseos.fnal.gov find -f %s | egrep '.*%s(-ext[0-9]*|)_[0-9]*.root'" % ( args.dataDir, name))
-		prefix = "root://cmseos:1094/"
-	else:
-		cmd = ("find %s -f | egrep '.*%s(-ext[0-9]*|)_[0-9]*.root'" % (args.dataDir, name))
-		prefix = ""
-	ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-	result = ps.communicate()
-	filelist = result[0].rstrip('\n').split('\n')
-	totNumE = 0
-	if datarun.startswith("MC"):
-		nposevents, nnegevents = get_num_mc_events(filelist, prefix)
-		print "Sample " + name + " has " + str(nposevents) + " positive and " + str(nnegevents) + " negative weight events"
-		totNumE = nposevents - nnegevents
-	else :
-		nposevents = get_num_data_events(filelist, prefix)
-		print "Sample " + name + " has " + str(nposevents) + " number of events"
-		totNumE = nposevents
-	cfgLine = ("%s\t%s\t%s\t%s\t5\t%s" % (name,str(1 if datarun.startswith("MC") else 0 ),cross,str(totNumE),args.dataDir))
-	configs.append(cfgLine)
+    if(re.match(".+-ext\d*", name)) : return
+    	
+    files = []
+    	
+    if args.dataDir.startswith("/eos/uscms/store/user") or args.dataDir.startswith("/store/user") :
+    	cmd = (" eos root://cmseos.fnal.gov find -f %s | egrep '.*%s(-ext[0-9]*|)_[0-9]*.root'" % ( args.dataDir, name))
+    	prefix = "root://cmseos:1094/"
+    else:
+    	cmd = ("find %s -f | egrep '.*%s(-ext[0-9]*|)_[0-9]*.root'" % (args.dataDir, name))
+    	prefix = ""
+    ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    result = ps.communicate()
+    filelist = result[0].rstrip('\n').split('\n')
+    totNumE = 0
+    if datarun.startswith("MC"):
+    	nposevents, nnegevents = get_num_mc_events(filelist, prefix)
+    	print "Sample " + name + " has " + str(nposevents) + " positive and " + str(nnegevents) + " negative weight events"
+    	totNumE = nposevents - nnegevents
+    else :
+    	nposevents = get_num_data_events(filelist, prefix)
+    	print "Sample " + name + " has " + str(nposevents) + " number of events"
+    	totNumE = nposevents
+    
+    if totNumE > 0 :
+       cfgLine = ("%s\t%s\t%s\t%s\t5\t%s" % (name,str(1 if datarun.startswith("MC") else 0 ),cross,str(totNumE),args.dataDir))
+       configs.append(cfgLine)
 
 outputLines = []
 inputData = open(args.inputData, "r")
