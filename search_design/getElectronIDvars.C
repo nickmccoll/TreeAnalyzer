@@ -5,6 +5,7 @@
 #include "Configuration/interface/FillerConstants.h"
 #include "AnalysisSupport/Utilities/interface/HistGetter.h"
 #include "Processors/Variables/interface/LeptonSelection.h"
+#include "Processors/Variables/interface/HiggsSolver.h"
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
 #include "AnalysisSupport/Utilities/interface/PhysicsUtilities.h"
 #include "Processors/Variables/interface/JetKinematics.h"
@@ -141,26 +142,42 @@ public:
     	plotter.getOrMake1DPre(id,"missInnerHits",";missInnerHits",10,-0.5,9.5)->Fill(missInnerHits,weight);
     	plotter.getOrMake1DPre(id,"passConvVeto",";passConvVeto",10,-0.5,1.5)->Fill(passConvVeto,weight);
 
-		plotter.getOrMake1DPre(id,"pt",";pt",500,0,500)->Fill(el->pt(),weight);
+		plotter.getOrMake1DPre(id,"pt",";p_{T}",500,0,500)->Fill(el->pt(),weight);
+		plotter.getOrMake1DPre(id,"scE",";E_{SC}",500,0,500)->Fill(scE,weight);
+
     	if(passMedium) plotter.getOrMake1DPre(id+"_MedID","pt",";pt",500,0,500)->Fill(el->pt(),weight);
     	if(passTight)  plotter.getOrMake1DPre(id+"_TightID","pt",";pt",500,0,500)->Fill(el->pt(),weight);
     	if(passHEEP)   plotter.getOrMake1DPre(id+"_HEEPID","pt",";pt",500,0,500)->Fill(el->pt(),weight);
     	if(passMVA90)  plotter.getOrMake1DPre(id+"_MVAID","pt",";pt",500,0,500)->Fill(el->pt(),weight);
 
     	if (el->absEta() <= 1.479) {
-    		if (hoe < hoe_WPB) plotter.getOrMake1DPre(id+"_passHoE","pt",";pt",500,0,500)->Fill(el->pt(),weight);
+    		if (hoe < hoe_WPB) {
+    			plotter.getOrMake1DPre(id+"_passHoE","pt",";p_{T}",500,0,500)->Fill(el->pt(),weight);
+    			plotter.getOrMake1DPre(id+"_passHoE","scE",";E_{SC}",500,0,500)->Fill(scE,weight);
+    		}
     	} else {
-    		if (hoe < hoe_WPE) plotter.getOrMake1DPre(id+"_passHoE","pt",";pt",500,0,500)->Fill(el->pt(),weight);
+    		if (hoe < hoe_WPE) {
+    			plotter.getOrMake1DPre(id+"_passHoE","pt",";pt",500,0,500)->Fill(el->pt(),weight);
+    			plotter.getOrMake1DPre(id+"_passHoE","scE",";E_{SC}",500,0,500)->Fill(scE,weight);
+    		}
     	}
+		plotter.getOrMake2DPre(id,"scE_x_hoe",";E_{SC};H/E",500,0,500,500,0,1)->Fill(scE,hoe,weight);
+
+		// hh mass with this lepton
+		MomentumF nu;
+		float hhmass = 0;
+		if (wjjCand && hbbCand) {
+			nu = HiggsSolver::getInvisible(reader_event->met, (el->p4() + wjjCand->p4()) );
+			MomentumF hh_mom = el->p4() + nu.p4() + wjjCand->p4() + hbbCand->p4();
+			hhmass = hh_mom.mass();
+	    	plotter.getOrMake1DPre(id,"hhmass",";M_{HH}",110,0,5500)->Fill(hhmass,weight);
+		}
     }
 
-    bool passIPandISO(const Lepton* lep) {
+    bool passIP(const Lepton* lep) {
     	if (fabs(lep->d0()) > 0.05) return false;
     	if (fabs(lep->dz()) > 0.1 ) return false;
     	if (fabs(lep->sip3D()) > 4.0) return false;
-
-    	float maxIso = lep->isMuon() ? 0.2 : 0.1;
-    	if (lep->miniIso() > maxIso) return false;
 
     	return true;
     }
@@ -204,6 +221,42 @@ public:
         }
     }
 
+    bool passFullSel(const Electron* el) {
+    	if (!passTriggerPreselection) return false;
+    	if (!wjjCand || !hbbCand) return false;
+    	if (wwDM > 125) return false;
+    	if (nMedBTags_HbbV > 0) return false;
+
+    	MomentumF hww = el->p4() + wjjCand->p4() + HiggsSolver::getInvisible(reader_event->met, (el->p4() + wjjCand->p4()) ).p4();
+    	MomentumF hhmom = hww.p4() + hbbCand->p4();
+    	if (hww.pt() / hhmom.mass() < 0.3) return false;
+    	if (hbbCSVCat < BTagging::CSVSJ_MF) return false;
+    	if (hbbMass < 30 || hbbMass > 210) return false;
+    	if (hhmom.mass() < 700) return false;
+    	if (wjjCand->tau2otau1() > 0.75) return false;
+
+    	return true;
+    }
+
+    void testElWPs(TString prefix, const Electron* el) {
+        auto mkEtaPlot = [&](TString prefix, const Electron* el) {
+        	plotIdVars(prefix,el);
+        	if (el->absEta() < 2.1) plotIdVars(prefix+"_maxEta2p1",el);
+        	if (el->absEta() < 1.5) plotIdVars(prefix+"_maxEta1p5",el);
+        };
+
+        if (el->miniIso() < 0.1) mkEtaPlot(prefix+"_miniIso0p1",el);
+        if (el->miniIso() < 0.2) mkEtaPlot(prefix+"_miniIso0p2",el);
+        if (el->miniIsoFP() < 0.1) mkEtaPlot(prefix+"_miniIsoFP0p1",el);
+        if (el->miniIsoFP() < 0.2) mkEtaPlot(prefix+"_miniIsoFP0p2",el);
+
+        if (!passFullSel(el)) return;
+        if (el->miniIso() < 0.1) mkEtaPlot(prefix+"_FULLSEL_miniIso0p1",el);
+        if (el->miniIso() < 0.2) mkEtaPlot(prefix+"_FULLSEL_miniIso0p2",el);
+        if (el->miniIsoFP() < 0.1) mkEtaPlot(prefix+"_FULLSEL_miniIsoFP0p1",el);
+        if (el->miniIsoFP() < 0.2) mkEtaPlot(prefix+"_FULLSEL_miniIsoFP0p2",el);
+    }
+
     bool runEvent() override {
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
         if(!passEventFilters) return false;
@@ -233,20 +286,18 @@ public:
             if (!recoL->isElectron()) {cout << "matched lepton is not electron" << endl; return false;}
 
             plotIdVars(prefix, (Electron*)recoL);
-            if(passIPandISO(recoL)) {
-            	plotIdVars(prefix+"_passIPandISO", (Electron*)recoL);
+            if (!passIP(recoL)) return false;
+            prefix += "_passIP";
+            plotIdVars(prefix, (Electron*)recoL);
 
-            	if (recoL->absEta() <= 1.479) plotIdVars(prefix+"_passIPandISO_barrel", (Electron*)recoL);
-            	else                          plotIdVars(prefix+"_passIPandISO_endcap", (Electron*)recoL);
-
-            	testNm1Plots(prefix+"_passIPandISO", (Electron*)recoL);
-            }
+            testElWPs(prefix, (Electron*)recoL);
+            if (recoL->miniIso() < 0.1) testNm1Plots(prefix+"andISO", (Electron*)recoL);
 
         }
         if(!isSignal()){
         	LeptonParameters testparam = parameters.leptons;
-        	testparam.mu_getID = &Muon::passInclID;
         	testparam.el_getID = &Electron::passInclID;
+        	testparam.el_maxISO = 9999.;
 
         	vector<const Lepton*> leps;
         	const Lepton* lep;
@@ -255,12 +306,11 @@ public:
                 lep  = leps.size() ? leps.front() : 0;
             }
             if (!leps.size() || lep==0) return false;
+            if (!lep->isElectron()) return false;
 
-            if (lep->isElectron()) {
-            	plotIdVars("bkg_passIPandISO", (Electron*)lep);
-            	if (lep->absEta() <= 1.479) plotIdVars(prefix+"_passIPandISO_barrel", (Electron*)lep);
-            	else                        plotIdVars(prefix+"_passIPandISO_endcap", (Electron*)lep);
-            }
+            plotIdVars("bkg_passIP", (Electron*)lep);
+            testElWPs("bkg_passIP", (Electron*)lep);
+        	if (lep->miniIso() < 0.1) testNm1Plots("bkg_passIPandISO", (Electron*)lep);
         }
 
         return true;
