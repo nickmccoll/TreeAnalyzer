@@ -137,6 +137,7 @@ void makeSignalFittingDistributions(const std::string& name, const std::string& 
         std::string outFileName=filename+"_"+name+"_m"+ASTypes::int2Str(sM) + (doIncl ? "_inclM_distributions.root" : "_exclM_distributions.root");
         std::string inputName = inputFile;
         inputName.replace(nameIDX,3,ASTypes::int2Str(sM));
+        if(gSystem->AccessPathName(inputName.c_str())) continue;
         MakePlots a(inputName,outFileName,samps,sels,vars,cut,nomW.cut);
     }
     std::string compiledFile =  filename+"_"+name + (doIncl ? "_inclM_distributions.root" : "_exclM_distributions.root");
