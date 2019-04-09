@@ -81,7 +81,9 @@ public:
         mklp(20);
         mklp(25);
         mklp(26);
+        mklp(27);
         mklp(30);
+        mklp(31);
         mklp(35);
         mklp(40);
         mklp(50);
@@ -123,6 +125,10 @@ public:
 			makeHTPlots(prefix+"_TrigIncl_eta2p1_", doMuon ? "mu_pt" : "el_pt" ,ht_chs,maxLepPt);
 			makeLepPlots(prefix+"_TrigIncl_eta2p1_","ht", doMuon ? "mupt" : "elpt" ,maxLepPt,ht_chs);
 		}
+		if (eta < 1.5) {
+			makeHTPlots(prefix+"_TrigIncl_eta1p5_", doMuon ? "mu_pt" : "el_pt" ,ht_chs,maxLepPt);
+			makeLepPlots(prefix+"_TrigIncl_eta1p5_","ht", doMuon ? "mupt" : "elpt" ,maxLepPt,ht_chs);
+		}
 
     	for (Triggers_2017 trg=(Triggers_2017)0; trg != HLT17_NTrig; trg=(Triggers_2017)(trg+1)) {
     		if (passTrig(trg)) {
@@ -131,8 +137,12 @@ public:
     			makeHTPlots(preName,varname,ht_chs,maxLepPt);
     			makeLepPlots(preName,"ht", doMuon ? "mupt" : "elpt" ,maxLepPt,ht_chs);
     			if (eta < 2.1) {
-        			makeHTPlots(preName,varname,ht_chs,maxLepPt);
-        			makeLepPlots(preName,"ht", doMuon ? "mupt" : "elpt" ,maxLepPt,ht_chs);
+        			makeHTPlots(preName+"eta2p1_",varname,ht_chs,maxLepPt);
+        			makeLepPlots(preName+"eta2p1_","ht", doMuon ? "mupt" : "elpt" ,maxLepPt,ht_chs);
+    			}
+    			if (eta < 1.5) {
+        			makeHTPlots(preName+"eta1p5_",varname,ht_chs,maxLepPt);
+        			makeLepPlots(preName+"eta1p5_","ht", doMuon ? "mupt" : "elpt" ,maxLepPt,ht_chs);
     			}
     		}
     	}
@@ -341,6 +351,7 @@ public:
         makePlots(preName,maxOtherPT);
         if (probeMuons.size()) {
             if (probeMuons.front()->absEta() < 1.5) makePlots(preName+"maxEta1p5_",maxOtherPT);
+            if (probeMuons.front()->absEta() < 2.1) makePlots(preName+"maxEta2p1_",maxOtherPT);
             if (probeMuons.front()->absEta() < 2.5) makePlots(preName+"maxEta2p5_",maxOtherPT);
         }
     }
@@ -355,6 +366,7 @@ public:
         TString preName = prefix + "_GL_passSMu_";
 
         bool passSEl = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
+        bool passSEl_ETA = passTrig(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150) || passTrig(HLT17_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned);
         bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450) || passTrig(FillerConstants::HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
         bool passPh200 = passTrig(FillerConstants::HLT17_Photon200);
         bool passEle115 = passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
@@ -380,6 +392,8 @@ public:
         bool passNomEloJetoMet = passNomEloJet || passMet_1 || passMet_2;
         bool passNomEloJetoMHToMet = passNomEloJetoMHT || passMet_1 || passMet_2;
 
+        bool passSEloHtEloHEoBuoSEl_ETA = passSEloHtEloHEoBu || passSEl_ETA;
+
         auto makePlots = [&](TString pre, float pt) {
             //HT side
             makeLepPlots(pre,"ht","elpt",pt,ht_chs);
@@ -388,6 +402,8 @@ public:
             if(passSEloHE)         makeLepPlots(pre +"passSEloHE_","ht","elpt",pt,ht_chs);
             if(passSEloHtEloHE)    makeLepPlots(pre +"passSEloHtEloHE_","ht","elpt",pt,ht_chs);
             if(passSEloHtEloHEoBu) makeLepPlots(pre +"passSEloHtEloHEoBu_","ht","elpt",pt,ht_chs);
+            if(passSEloHtEloHEoBuoSEl_ETA) makeLepPlots(pre +"passSEloHtEloHEoBuoSEl_ETA_","ht","elpt",pt,ht_chs);
+
             if(passElDenNoCross)   makeLepPlots(pre +"passElDenNoCross_","ht","elpt",pt,ht_chs);
             if(passSEl || passPh200) makeLepPlots(pre +"passSEloPh200_","ht","elpt",pt,ht_chs);
             if(passSEl || passEle115) makeLepPlots(pre +"passSEloEl115_","ht","elpt",pt,ht_chs);
@@ -405,6 +421,8 @@ public:
             if(passSEloHE)         makeHTPlots(pre+"passSEloHE_"   ,"el_pt",ht_chs,pt);
             if(passSEloHtEloHE)    makeHTPlots(pre+"passSEloHtEloHE_"   ,"el_pt",ht_chs,pt);
             if(passSEloHtEloHEoBu) makeHTPlots(pre+"passSEloHtEloHEoBu_","el_pt",ht_chs,pt);
+            if(passSEloHtEloHEoBuoSEl_ETA) makeHTPlots(pre+"passSEloHtEloHEoBuoSEl_ETA_","el_pt",ht_chs,pt);
+
             if(passElDenNoCross)   makeHTPlots(pre+"passElDenNoCross_","el_pt",ht_chs,pt);
             if(passSEl || passPh200) makeHTPlots(pre +"passSEloPh200_","el_pt",ht_chs,pt);
             if(passSEl || passEle115) makeHTPlots(pre +"passSEloEl115_","el_pt",ht_chs,pt);
@@ -422,6 +440,8 @@ public:
                 if(passSEloHE)         plotter.getOrMake2DPre(pre+"passSEloHE_"   ,"el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(pt,ht_chs,weight);
                 if(passSEloHtEloHE)    plotter.getOrMake2DPre(pre+"passSEloHtEloHE_"   ,"el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(pt,ht_chs,weight);
                 if(passSEloHtEloHEoBu) plotter.getOrMake2DPre(pre+"passSEloHtEloHEoBu_","el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(pt,ht_chs,weight);
+                if(passSEloHtEloHEoBuoSEl_ETA) plotter.getOrMake2DPre(pre+"passSEloHtEloHEoBuoSEl_ETA_","el_pt_v_ht",";lepton p_{T} [GeV]; #it{H}_{T} [GeV]",nLepBins,lepBins,nHTBins,htBins )->Fill(pt,ht_chs,weight);
+
             }
         };
 
@@ -430,6 +450,7 @@ public:
             if (probeElectrons.front()->absEta() < 1.5) makePlots(preName+"maxEta1p5_",maxOtherPT);
             if (probeElectrons.front()->absEta() < 2.1) makePlots(preName+"maxEta2p1_",maxOtherPT);
             if (probeElectrons.front()->absEta() < 2.5) makePlots(preName+"maxEta2p5_",maxOtherPT);
+            if (probeElectrons.front()->absEta() > 2.1 && probeElectrons.front()->absEta() < 2.5) makePlots(preName+"eta2p1to2p5_",maxOtherPT);
         }
     }
 
@@ -450,7 +471,8 @@ public:
         bool passSMuoHtMuoHM = passSMuoHtMu || passHighMu;
         bool passSMuoHtMuoHMoBu = passSMuoHtMuoHM || passBu;
 
-        bool passSEl = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
+        bool passSEl_ETA = passTrig(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150) || passTrig(HLT17_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned);
+        bool passSEl = passSEl_ETA || passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
         bool passECross = passTrig(FillerConstants::HLT17_Ele15_IsoVVVL_PFHT450) || passTrig(FillerConstants::HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
         bool passHighE = passTrig(FillerConstants::HLT17_Photon200) || passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
         bool passSEloHtEl = passSEl || passECross;

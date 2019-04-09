@@ -97,7 +97,8 @@ void plotTurnons_Sel(TFile *f, TString prefix, const vector<TString>& sels, TStr
 	    hn->Divide(hd);
 	    p->addHist(hn,s,-1,1,4,20,1,true,false);
 	}
-	p->draw(false,canName);
+//	p->draw(false,canName);
+	p->drawSplitRatio(0,"stack",false,false,canName);
 }
 
 void plotTurnons_Trig(TFile *f, TString prefix, const TString sel, const vector<TString>& trigs, TString var, TString canName, float rebin = 0) {
@@ -179,10 +180,11 @@ void getSF(TFile *fd, TFile *fmc, TString dataPre, TString mcPre, TString effDen
 	    	return;
 	    }
 
-	    p->addHist(mcEff,"MC",-1,1,4,20,1,true,true, false, "E X P");
-	    p->addHist(dataEff,"data",-1,1,4,20,1,true,true, false, "E X P");
+	    p->addHist(mcEff,mcPre,-1,1,4,20,1,true,true, false, "E X P");
+	    p->addHist(dataEff,dataPre,-1,1,4,20,1,true,true, false, "E X P");
 	      // p->draw(true,TString::Format("%s.pdf",name.Data()));
 	    p->drawSplitRatio(0,"stack",true,false,TString::Format("%s.pdf",name.Data()));
+//	    p->draw(false,TString::Format("%s.pdf",name.Data()));
 	};
 
 	TString lepVar = (lepSel.BeginsWith("m")) ? "mu_pt" : "el_pt";
@@ -198,6 +200,7 @@ void drawTriggerTurnons() {
 	TFile *fdelse = new TFile(prePath+"trigger_dataCDEF.root");
 	TFile *fb = new TFile(prePath+"out_TTTo2L2Nu_TuneCP5_PSweights_13TeV-powheg-pythia8_0.root");
 	TFile *fmc = new TFile(prePath+"trigger_ttbar2L.root");
+	TFile *fs = new TFile(prePath+"trigger_blkGrav.root");
 
     vector<TString> muSels = {"mupt_10","mupt_15","mupt_20","mupt_25","mupt_26","mupt_30","mupt_35"};
     vector<TString> elSels = {"elpt_10","elpt_15","elpt_20","elpt_25","elpt_30","elpt_35","elpt_40"};
@@ -209,11 +212,12 @@ void drawTriggerTurnons() {
 
     // comparing single triggers (consult function at top for trigger names)
     const vector<int> mu_trigs = {24,25,26,10,11,12};
-    const vector<int> el_trigs = {17,18,19,21,22};
+    const vector<int> el_trigs = {18,19};
     const vector<int> metht_trigs = {3,4,5,6,7,8};
     const vector<int> oth_trigs = {0,1,2,6,7};
 
-//    plotIndTriggers(fb,"ttbar",el_trigs,"elpt_15","ht",40);
+//    plotIndTriggers(fb,"ttbar",el_trigs,"elpt_25","ht",+"el trigs pt 25 ht",40);
+//    plotIndTriggers(fmc,"ttbar",el_trigs,"ht_500","el_pt","jonson",10);
 //    plotIndTriggers(fb,"ttbar",mu_trigs,"mupt_15","ht",40);
 //    plotIndTriggers(fb,"ttbar",metht_trigs,"mupt_15","ht",40);
 //    plotIndTriggers(fb,"ttbar",metht_trigs,"elpt_15","ht",40);
@@ -287,21 +291,123 @@ void drawTriggerTurnons() {
 //    plotTurnons_Trig(fb,"ttbar_GL_passSE","ht_350",muTrigs,"mu_pt","ttbar_GL_passSE_ht350_MiscTrigs",25);
 
     // Scale factors
-    muSels = {"mupt_15","mupt_20","mupt_26","mupt_30"};
-    elSels = {"elpt_15","elpt_20","elpt_26","elpt_30"};
-    htSels = {"ht_450","ht_475","ht_500","ht_550"};
-    vector<TString> etas = {"","_maxEta1p5","_maxEta2p5"};
+    muSels = {"mupt_27","mupt_30","mupt_30to35","mupt_35to40","mupt_40to50","mupt_50to100","mupt_100"};
+    elSels = {"elpt_30","elpt_30to35","elpt_35to40","elpt_40to50","elpt_50to100","elpt_100"};
+    htSels = {"ht_475","ht_500"};
+//    vector<TString> etas = {"","_maxEta1p5","_maxEta2p5"};
 
-    for (const auto& sel : elSels) {getSF(fd,fmc,"SingleMuon","ttbar","GL_passSMu","passSEloHtEloHEoBu",sel,"ht_400","ht400_"+sel);}
-    for (const auto& sel : muSels) {getSF(fd,fmc,"SingleElectron","ttbar","GL_passSE","passSMuoHtMuoHMoBu",sel,"ht_400","ht400_"+sel);}
-    for (const auto& sel : htSels) {
-    	getSF(fd,fmc,"SingleMuon","ttbar","GL_passSMu","passSEloHtEloHEoBu","elpt_25",sel,"elpt_25_"+sel);
-        getSF(fd,fmc,"SingleElectron","ttbar","GL_passSE","passSMuoHtMuoHMoBu","mupt_30",sel,"mupt_26_"+sel);
+    elTrigs = {/*"passSEloHtEloHEoBu",*/"passSEloHtEloHEoBuoSEl_ETA"};
+    getSF(fd,fmc,"SingleMuon","ttbar","GL_passSMu_maxEta2p1","passSEloHtEloHEoBuoSEl_ETA","elpt_30","ht_400","Electron trigger SF");
+    getSF(fd,fmc,"SingleElectron","ttbar","GL_passSE","passSMuoHtMuoHMoBu","mupt_27","ht_400","Muon trigger SF");
+
+//    for (const auto& eta : etas) {
+//    	plotTurnons_Trig(fmc,"ttbar_GL_passSMu"+eta,"ht_400",elTrigs,"el_pt","PT compare eta restricted el trig "+eta);
+//    	plotTurnons_Trig(fmc,"ttbar_GL_passSMu"+eta,"elpt_27",elTrigs,"ht","HT compare eta restricted el trig "+eta,20);
+//    	for (const auto& sel : elSels) {
+//    		getSF(fd,fmc,"SingleMuon","ttbar","GL_passSMu","passSEloHtEloHEoBuoSEl_ETA",sel,"ht_400","passSEloHtEloHEoBuoSEl_ETA "+sel);
+//    	}
+//    }
+
+    // |||| SYSTEMATICS ||||||
+    // How much different are trigger efficiencies between signal and ttbar MC?
+    TString eltrig = "passSEloHtEloHEoBuoSEl_ETA";
+    TString mutrig = "passSMuoHtMuoHMoBu";
+//	getSF(fs,fmc,"m1200","ttbar","GL_passSMu","passSEloHtEloHEoBuoSEl_ETA","elpt_30","ht_400","electron - 1.2 TeV signal ttbar comp");
+//	getSF(fs,fmc,"m2000","ttbar","GL_passSMu","passSEloHtEloHEoBuoSEl_ETA","elpt_30","ht_400","electron - 2 TeV signal ttbar comp");
+//	getSF(fs,fmc,"m1200","ttbar","GL_passSE","passSMuoHtMuoHMoBu","mupt_27","ht_400","muon - 1.2 TeV signal ttbar comp");
+//	getSF(fs,fmc,"m2000","ttbar","GL_passSE","passSMuoHtMuoHMoBu","mupt_27","ht_400","muon - 2 TeV signal ttbar comp");
+
+	// How do efficiencies look for different lepton pt regimes?
+//	plotTurnons_Sel(fmc,"ttbar_GL_passSE",muSels,mutrig,"ht","Muons",40);
+//	plotTurnons_Sel(fmc,"ttbar_GL_passSMu",elSels,eltrig,"ht","Electrons",40);
+
+ /*
+    TString elPre = "ttbar_GL_passSMu";
+    TString muPre = "ttbar_GL_passSE";
+    std::vector<TString> etas = {"_maxEta1p5_","_maxEta2p5_"};
+
+    TString eltrig = "passSEloHtEloHEoBuoSEl_ETA";
+    TString mutrig = "passSMuoHtMuoHMoBu";
+
+    Plotter *pe1 = new Plotter();
+    Plotter *pe2 = new Plotter();
+    Plotter *pm1 = new Plotter();
+    Plotter *pm2 = new Plotter();
+
+	int nLepBins = 33;
+	double lepBins[] = {5,10,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,50,75,100,150,200,250,300,350,400,450,500};
+	int nHTBins = 28;
+	double htBins[] = {100,125,150,175,200,225,250,275,300,325,350,375,400,425,450,475,500,525,550,575,600,700,800,900,1000,1100,1200,1600,2000};
+
+
+
+    for (const auto& eta : etas) {
+		std::cout<<elPre+eta+eltrig+"__ht_400_el_pt"<<std::endl;
+		TH1 *pte = (TH1*)fmc->Get(elPre+eta+eltrig+"__ht_400_el_pt");
+		TH1 *hte = (TH1*)fmc->Get(elPre+eta+eltrig+"__elpt_30_ht");
+		TH1 *ptm = (TH1*)fmc->Get(muPre+eta+mutrig+"__ht_400_mu_pt");
+		TH1 *htm = (TH1*)fmc->Get(muPre+eta+mutrig+"__mupt_27_ht");
+
+		TH1 *den_pte = (TH1*)fmc->Get(elPre+eta+"_ht_400_el_pt");
+		TH1 *den_hte = (TH1*)fmc->Get(elPre+eta+"_elpt_30_ht");
+		TH1 *den_ptm = (TH1*)fmc->Get(muPre+eta+"_ht_400_mu_pt");
+		TH1 *den_htm = (TH1*)fmc->Get(muPre+eta+"_mupt_27_ht");
+
+	    PlotTools::toOverflow(den_pte);
+	    PlotTools::toOverflow(den_hte);
+	    PlotTools::toOverflow(den_ptm);
+	    PlotTools::toOverflow(den_htm);
+
+	    den_pte = PlotTools::rebin(den_pte,nLepBins,lepBins);
+	    den_hte = PlotTools::rebin(den_hte,nHTBins,htBins);
+	    den_ptm = PlotTools::rebin(den_ptm,nLepBins,lepBins);
+	    den_htm = PlotTools::rebin(den_htm,nHTBins,htBins);
+
+//		pe1->addHist(den_pte,"den",-1,1,4,20,1,true,false);
+//		pe2->addHist(den_hte,"den",-1,1,4,20,1,true,false);
+//		pm1->addHist(den_ptm,"den",-1,1,4,20,1,true,false);
+//		pm2->addHist(den_htm,"den",-1,1,4,20,1,true,false);
+
+	    pte = (TH1*)pte->Clone();
+	    hte = (TH1*)hte->Clone();
+	    ptm = (TH1*)ptm->Clone();
+	    htm = (TH1*)htm->Clone();
+
+	    PlotTools::toOverflow(pte);
+	    PlotTools::toOverflow(hte);
+	    PlotTools::toOverflow(ptm);
+	    PlotTools::toOverflow(htm);
+
+	    pte = PlotTools::rebin(pte,nLepBins,lepBins);
+	    hte = PlotTools::rebin(hte,nHTBins,htBins);
+	    ptm = PlotTools::rebin(ptm,nLepBins,lepBins);
+	    htm = PlotTools::rebin(htm,nHTBins,htBins);
+
+	    pte->Divide(den_pte);
+	    hte->Divide(den_hte);
+	    ptm->Divide(den_ptm);
+	    htm->Divide(den_htm);
+
+		pe1->addHist(pte,eta,-1,1,4,20,1,true,false);
+		pe2->addHist(hte,eta,-1,1,4,20,1,true,false);
+		pm1->addHist(ptm,eta,-1,1,4,20,1,true,false);
+		pm2->addHist(htm,eta,-1,1,4,20,1,true,false);
     }
+    pe1->drawSplitRatio(0,"stack",false,false,"electron pt");
+    pe2->drawSplitRatio(0,"stack",false,false,"ht electrons");
+    pm1->drawSplitRatio(0,"stack",false,false,"muon pt");
+    pm2->drawSplitRatio(0,"stack",false,false,"ht muons");
+*/
+//    for (const auto& sel : elSels) {getSF(fd,fmc,"SingleMuon","ttbar","GL_passSMu","passSEloHtEloHEoBu",sel,"ht_500","ht500_"+sel);}
+//    for (const auto& sel : muSels) {getSF(fd,fmc,"SingleElectron","ttbar","GL_passSE","passSMuoHtMuoHMoBu",sel,"ht_500","ht500_"+sel);}
+//    for (const auto& sel : htSels) {
+//    	getSF(fd,fmc,"SingleMuon","ttbar","GL_passSMu","passSEloHtEloHEoBu","elpt_30",sel,"elpt_30_"+sel);
+//        getSF(fd,fmc,"SingleElectron","ttbar","GL_passSE","passSMuoHtMuoHMoBu","mupt_30",sel,"mupt_30_"+sel);
+//    }
 
-    for (const auto& eta:etas) {getSF(fd,fmc,"SingleMuon","ttbar","GL_passSMu"+eta,"passSEloHtEloHEoBu","elpt_30","ht_500",eta);}
-    getSF(fdb,   fmc,"SingleMuon","ttbar","GL_passSMu","passSEloHtEloHEoBu","elpt_30","ht_500","RunB");
-    getSF(fdelse,fmc,"SingleMuon","ttbar","GL_passSMu","passSEloHtEloHEoBu","elpt_30","ht_500","RunCDEF");
+//    for (const auto& eta:etas) {getSF(fd,fmc,"SingleElectron","ttbar","GL_passSE"+eta,"passSMuoHtMuoHMoBu","mupt_26","ht_500",eta);}
+//    getSF(fdb,   fmc,"SingleElectron","ttbar","GL_passSE","passSMuoHtMuoHMoBu","mupt_30","ht_400","RunB");
+//    getSF(fdelse,fmc,"SingleElectron","ttbar","GL_passSE","passSMuoHtMuoHMoBu","mupt_30","ht_400","RunCDEF");
 
 	return;
 }
