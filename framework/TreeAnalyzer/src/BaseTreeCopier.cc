@@ -7,7 +7,8 @@ using namespace TAna;
 void CopierEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequency, int numEvents, int startEvent){
 
   std::cout << " ++  Running over " << (numEvents < 0 ? "all" : TString::Format("at most %i",numEvents).Data()) << " events";
-  if(startEvent >= 0 ) std::cout << ", starting with event: "<< startEvent;
+  if(startEvent < 0) startEvent=0;
+  std::cout << ", starting with event: "<< startEvent;
   std::cout <<std::endl;
 
   ana->loadVariables();
@@ -30,7 +31,8 @@ void CopierEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequen
 void ManualCopierEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequency, int numEvents, int startEvent){
 
   std::cout << " ++  Running over " << (numEvents < 0 ? "all" : TString::Format("at most %i",numEvents).Data()) << " events";
-  if(startEvent >= 0 ) std::cout << ", starting with event: "<< startEvent;
+  if(startEvent < 0) startEvent=0;
+  std::cout << ", starting with event: "<< startEvent;
   std::cout <<std::endl;
 
   ana->loadVariables();

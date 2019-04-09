@@ -27,7 +27,8 @@ std::string getTreeTypeName(const int inputInt) {
 
 void BaseEventAnalyzer::analyzeEvent(BaseTreeAnalyzer * ana, int reportFrequency, int numEvents, int startEvent){
     cout << " ++  Running over " << (numEvents < 0 ? "all" : TString::Format("at most %i",numEvents).Data()) << " events";
-    if(startEvent >= 0 ) cout << ", starting with event: "<< startEvent;
+    if(startEvent < 0) startEvent=0;
+    cout << ", starting with event: "<< startEvent;
     cout <<endl;
     ana->loadVariables();
     ana->setupReaders();
