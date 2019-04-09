@@ -28,7 +28,7 @@ ParameterSet set2017Parameters() {
     paramSet.event.passTrigger = &EventSelection::passTriggerSuite2017;
     paramSet.event.minHT         =400;
     paramSet.event.minTriggerEl  =30;
-    paramSet.event.minTriggerMu  =26;
+    paramSet.event.minTriggerMu  =27;
 
 
     paramSet.fatJets.cand_minPT     = 50                   ;
@@ -65,7 +65,7 @@ ParameterSet set2017Parameters() {
     paramSet.leptons.mu_getID   = &Muon::passMedID;
     paramSet.leptons.mu_getISO  = &Muon::miniIso;
 
-
+    paramSet.leptons.leptonCorrSFFile = "corrections/triggerSF_17.root";
 
     paramSet.jets.minJetPT      = 30;
     paramSet.jets.maxJetETA     = 2.4;

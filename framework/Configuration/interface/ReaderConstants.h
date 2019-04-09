@@ -83,6 +83,8 @@ struct LeptonParameters {
     float mu_maxISO ;
     LeptonProcessor::muFunBool mu_getID ;
     LeptonProcessor::muFunFloat mu_getISO;
+
+    std::string leptonCorrSFFile;
 };
 
 //--------------------------------------------------------------------------------------------------

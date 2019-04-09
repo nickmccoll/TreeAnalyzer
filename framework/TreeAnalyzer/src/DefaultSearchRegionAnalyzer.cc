@@ -134,6 +134,7 @@ void DefaultSearchRegionAnalyzer::setupParameters(){
     }
     if(isCorrOn(CORR_SJBTAG)) sjbtagSFProc->setParameters(parameters.jets);
     if(isCorrOn(CORR_AK4BTAG)) ak4btagSFProc->setParameters(parameters.jets);
+    if(isCorrOn(CORR_TRIG)) trigSFProc->setParameters(dataDirectory,parameters.leptons);
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {

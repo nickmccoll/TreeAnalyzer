@@ -9,6 +9,13 @@ TriggerScaleFactors::TriggerScaleFactors(const std::string& dataDir, const std::
     delete file;
 }
 
+void TriggerScaleFactors::setParameters(const std::string& dataDir, const LeptonParameters& lepParam, bool verbose) {
+	TFile *file = TObjectHelper::getFile(dataDir+lepParam.leptonCorrSFFile,"read",verbose);
+    electronSFs.reset(new  TObjectHelper::Hist1DContainer(file,"electronSF",verbose) );
+    muonSFs.reset(new  TObjectHelper::Hist1DContainer(file,"muonSF",verbose) );
+    delete file;
+}
+
 float TriggerScaleFactors::getElectronTriggerSF(const float ht) const{
     return electronSFs->getBinContentByValue(ht).val();
 }
