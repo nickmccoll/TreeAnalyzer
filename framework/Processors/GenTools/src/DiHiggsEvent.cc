@@ -178,15 +178,25 @@ std::vector<int> DiHiggsEvent::search_4_daughters(const GenParticle* gp, const G
     std::vector<int> items;
 
     auto mkW = [&] (const GenParticle* d11, const GenParticle* d12, const GenParticle* d21, const GenParticle* d22) {
-        items.push_back(classify_W_pair(d11,d12));
-        auto op12 = assign_gp(d11,d12);
-        w1_d1 = std::get<0>(op12);
-        w1_d2 = std::get<1>(op12);
 
+        items.push_back(classify_W_pair(d11,d12));
         items.push_back(classify_W_pair(d21,d22));
+        auto op12 = assign_gp(d11,d12);
         auto op34 = assign_gp(d21,d22);
-        w2_d1 = std::get<0>(op34);
-        w2_d2 = std::get<1>(op34);
+
+        if (ParticleInfo::isLeptonOrNeutrino(std::get<0>(op12)->pdgId())) {
+            w1_d1 = std::get<0>(op12);
+            w1_d2 = std::get<1>(op12);
+
+            w2_d1 = std::get<0>(op34);
+            w2_d2 = std::get<1>(op34);
+        } else {
+            w1_d1 = std::get<0>(op34);
+            w1_d2 = std::get<1>(op34);
+
+            w2_d1 = std::get<0>(op12);
+            w2_d2 = std::get<1>(op12);
+        }
     };
 
     auto d1 = gp->daughter(0);
