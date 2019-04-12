@@ -16,13 +16,15 @@ using namespace TAna;
 class make2DTemplateWithAdaKernAnalyzer : public BaseTreeAnalyzer {
 public:
 
-    make2DTemplateWithAdaKernAnalyzer(std::string fileName, std::string treeName,std::string arguments ) : BaseTreeAnalyzer(fileName,treeName,2)
+    make2DTemplateWithAdaKernAnalyzer(std::string fileName, std::string treeName,
+            std::string arguments ) : BaseTreeAnalyzer(fileName,treeName,2)
     {
 
 
         ParParser p;
         name      = p.addString("n","histogram name",true);
-        xIsCond   = p.addBool("xIsCond","If true, set x as the conditional variable P(X|Y)*P(Y), if false: P(Y|X)*PY(Y)");
+        xIsCond   = p.addBool("xIsCond",
+                "If true, set x as the conditional variable P(X|Y)*P(Y), if false: P(Y|X)*PY(Y)");
         auto vx   = p.addString("vx","x variable",true);
         auto vy   = p.addString("vy","y variable",true);
         auto xb   = p.addVFloat("xb","x-variable binning",true);
@@ -34,29 +36,34 @@ public:
         khxc     = p.addFloat ("khxc","KDE adaptive x-bandwidth cutoff",false,5);
         khys     = p.addFloat("khys","KDE h-y scale factor",false,1.);
         khyc     = p.addFloat ("khyc","KDE adaptive y-bandwidth cutoff",false,5);
-        kss      = p.addBool ("kss","KDE sigma scaling");
+//        kss      = p.addBool ("kss","KDE sigma scaling");
 
-        eOpt     = p.addString("eopt","Add an exponential fit, set to x if you want to fit x, y otherwise",false,"");
+        eOpt     = p.addString("eopt",
+                "Add an exponential fit, set to x if you want to fit x, y otherwise",false,"");
         emin     = p.addFloat ("emin","Exponential fit min");
         emax     = p.addFloat ("emax","Exponential fit max");
 
-        hs       = p.addFloat("hs","Conditional variable histogram scaling: x proportional scale",true);
-        hr       = p.addFloat("hr","Conditional variable histogram scaling: 1/x proportional scale",true);
+        hs       = p.addFloat("hs","Conditional variable hist scaling: x proportional",true);
+        hr       = p.addFloat("hr","Conditional variable hist scaling: 1/x proportional",true);
 
         p.parse(arguments);
 
-        if(xb->size() != 3)                     throw std::invalid_argument("Analyzer::Analyzer() -> Bad parsing");
-        if(yb->size() != 3)                     throw std::invalid_argument("Analyzer::Analyzer() -> Bad parsing");
-
+        if(xb->size() != 3) throw std::invalid_argument("Analyzer::Analyzer() -> Bad parsing");
         xAxis.reset(new TAxis((*xb)[0],(*xb)[1],(*xb)[2]));
-        yAxis.reset(new TAxis((*yb)[0],(*yb)[1],(*yb)[2]));
+        if(yb->size() != 3){
+            yAxis.reset(new TAxis((*yb).size() -1, &(*yb)[0]));
+        } else {
+            yAxis.reset(new TAxis((*yb)[0],(*yb)[1],(*yb)[2]));
+        }
 
         tree.getTree()->SetBranchStatus("*",1);
-        sForm.reset(new TTreeFormula("sForm", TString::Format("%s*(%s)",w->c_str(),s->c_str()),tree.getTree()));
+        sForm.reset(new TTreeFormula("sForm",
+                TString::Format("%s*(%s)",w->c_str(),s->c_str()),tree.getTree()));
         vxForm.reset(new TTreeFormula("vxForm", vx->c_str(),tree.getTree()));
         vyForm.reset(new TTreeFormula("vyForm", vy->c_str(),tree.getTree()));
 
-        const int nEntries =  tree.getTree()->GetEntries(TString::Format("%s*(%s)",w->c_str(),s->c_str()));
+        const int nEntries =  tree.getTree()->GetEntries(
+                TString::Format("%s*(%s)",w->c_str(),s->c_str()));
 
         nominalX .reset(new std::vector<double>);
         nominalY .reset(new std::vector<double>);
@@ -89,15 +96,22 @@ public:
         const int   nBsY   = yAxis->GetNbins();
         const float minY   = yAxis->GetXmin();
         const float maxY   = yAxis->GetXmax();
+        const bool vBinsY   = yAxis->GetXbins()->GetSize();
+        const double* fBinY = vBinsY ? yAxis->GetXbins()->GetArray() : 0;
 
-        KDEProducer2D pdfProd(nominalX.get(),nominalY.get(),weight.get(),
-                *khxs,nBsX,minX,maxX,*khxc,
-                *khys,nBsY,minY,maxY,*khyc,
-                *kss);
+        KDEProducer2D * pdfProd = vBinsY ?
+                new KDEProducer2D(nominalX.get(),nominalY.get(),weight.get(),
+                        *khxs,nBsX,minX,maxX,*khxc,
+                        *khys,nBsY,fBinY,*khyc) :
+                new KDEProducer2D(nominalX.get(),nominalY.get(),weight.get(),
+                        *khxs,nBsX,minX,maxX,*khxc,
+                        *khys,nBsY,minY,maxY,*khyc) ;
 
 //        plotter.add2D(pdfProd.getPDF(name+"_debug_KDE0","",nBsX,minX,maxX,nBsY,minY,maxY));
 
-        TH2 * data = new TH2F((name+"_fine_data").c_str(),";data",nBsX,minX,maxX,nBsY,minY,maxY);
+        TH2 * data = vBinsY ?
+                new TH2F((name+"_fine_data").c_str(),";data",nBsX,minX,maxX,nBsY,fBinY)
+                : new TH2F((name+"_fine_data").c_str(),";data",nBsX,minX,maxX,nBsY,minY,maxY);
         for(unsigned int iP = 0; iP < nominalX->size(); ++iP){
             data->Fill((*nominalX)[iP],(*nominalY)[iP],(*weight)[iP]);
         }
@@ -109,21 +123,31 @@ public:
 //        pilot->SetName((name + "_debug_pilotKDE").c_str());
 //        plotter.add2D(pilot);
 
-        plotter.add2D(pdfProd.getABandwidthsX(name+"_debug_bandwidthsX","",nBsX,minX,maxX,nBsY,minY,maxY));
-        plotter.add2D(pdfProd.getABandwidthsY(name+"_debug_bandwidthsY","",nBsX,minX,maxX,nBsY,minY,maxY));
-        plotter.add2D(pdfProd.getLocalVarX(name   +"_debug_varX","",nBsX,minX,maxX,nBsY,minY,maxY)              ) ;
-        plotter.add2D(pdfProd.getLocalVarY(name   +"_debug_varY","",nBsX,minX,maxX,nBsY,minY,maxY)              ) ;
+        if(vBinsY){
+            plotter.add2D(pdfProd->getABandwidths(name+"_debug_bandwidthsX","",
+                    nBsX,minX,maxX,nBsY,fBinY,true));
+            plotter.add2D(pdfProd->getABandwidths(name+"_debug_bandwidthsY","",
+                    nBsX,minX,maxX,nBsY,fBinY,false));
+        } else {
+            plotter.add2D(pdfProd->getABandwidths(name+"_debug_bandwidthsX","",
+                    nBsX,minX,maxX,nBsY,minY,maxY,true));
+            plotter.add2D(pdfProd->getABandwidths(name+"_debug_bandwidthsY","",
+                    nBsX,minX,maxX,nBsY,minY,maxY,false));
+        }
+//        plotter.add2D(pdfProd.getLocalVarX(name   +"_debug_varX","",nBsX,minX,maxX,nBsY,minY,maxY)              ) ;
+//        plotter.add2D(pdfProd.getLocalVarY(name   +"_debug_varY","",nBsX,minX,maxX,nBsY,minY,maxY)              ) ;
 
-        TH2 * kde = pdfProd.getAPDF(name+"_KDE","",nBsX,minX,maxX,nBsY,minY,maxY);
-        kde->Scale(data->Integral()/kde->Integral());
-
+        TH2 * kde = vBinsY ? pdfProd->getAPDF(name+"_KDE","",nBsX,minX,maxX,nBsY,fBinY) :
+                pdfProd->getAPDF(name+"_KDE","",nBsX,minX,maxX,nBsY,minY,maxY);
+        kde->Scale(1.0/kde->Integral());
         plotter.add2D(kde);
+        delete pdfProd;
         return kde;
     }
 
     const TH2 * smoothXTail(const std::string& name, const TH2* iHist){
         TH2 * oHist = (TH2*)iHist->Clone(name.c_str());
-         oHist->Scale(1.0/oHist->Integral());
+        oHist->Scale(1.0/oHist->Integral());
 
         for(int iY = 1; iY <= oHist->GetNbinsY(); ++iY){
             auto * proj = oHist->ProjectionX("q",iY,iY);
@@ -142,6 +166,7 @@ public:
 
             }
         }
+        oHist->Scale(1.0/oHist->Integral());
         plotter.add2D(oHist);
         return oHist;
 
@@ -167,6 +192,20 @@ public:
 
             }
         }
+        oHist->Scale(1.0/oHist->Integral());
+        plotter.add2D(oHist);
+        return oHist;
+    }
+    const TH2 * cloneAndWrite(const std::string& name, const TH2* iHist){
+        TH2 * oHist = (TH2*)iHist->Clone(name.c_str());
+        for(int iX = 1; iX <= iHist->GetNbinsX(); ++iX)
+            for(int iY = 1; iY <= iHist->GetNbinsY(); ++iY){
+                const double binW = iHist->GetXaxis()->GetBinWidth(iX)
+                        *iHist->GetYaxis()->GetBinWidth(iY);
+                oHist->SetBinContent(iX,iY,binW*oHist->GetBinContent(iX,iY));
+                oHist->SetBinError(iX,iY,binW*iHist->GetBinError(iX,iY));
+            }
+        oHist->Scale(1.0/oHist->Integral());
         plotter.add2D(oHist);
         return oHist;
     }
@@ -175,7 +214,6 @@ public:
         for(int iY = 1; iY <= oHist->GetNbinsY(); ++iY){
             auto * proj = oHist->ProjectionX("q",iY,iY);
             double xIntegral = oHist->Integral(1,oHist->GetNbinsX(),iY,iY);
-//            if(!xIntegral) { throw std::invalid_argument("Analyzer::Analyzer() -> Making a conditional slice with no events!!!!!");}
             if(xIntegral)
             for(int iX =1; iX <= oHist->GetNbinsX(); ++iX ){
                 oHist->SetBinContent(iX,iY,oHist->GetBinContent(iX,iY)/xIntegral);
@@ -190,30 +228,9 @@ public:
         for(int iX = 1; iX <= oHist->GetNbinsX(); ++iX){
             auto * proj = oHist->ProjectionY("q",iX,iX);
             double yIntegral = oHist->Integral(iX,iX,1,oHist->GetNbinsY());
-//            if(!yIntegral) { throw std::invalid_argument("Analyzer::Analyzer() -> Making a conditional slice with no events!!!!!");}
             if(yIntegral)
             for(int iY =1; iY <= oHist->GetNbinsY(); ++iY ){
                 oHist->SetBinContent(iX,iY,oHist->GetBinContent(iX,iY)/yIntegral);
-            }
-        }
-        plotter.add2D(oHist);
-        return oHist;
-    }
-
-    const TH2 * expandHisto(const std::string& name, const TH2* iHist){
-        const int   nBsX   = xAxis->GetNbins();
-        const float minX   = xAxis->GetXmin();
-        const float maxX   = xAxis->GetXmax();
-        const int   nBsY   = yAxis->GetNbins();
-        const float minY   = yAxis->GetXmin();
-        const float maxY   = yAxis->GetXmax();
-        TH2 * oHist = new TH2F(name.c_str(),iHist->GetTitle(),nBsX,minX,maxX,nBsY,minY,maxY);
-        for(int iX =1; iX <= oHist->GetNbinsX(); ++iX ){
-            auto * proj = iHist->ProjectionY("q",iX,iX);
-            TGraph * graph = new TGraph(proj);
-            for(int iY = 1; iY <= oHist->GetNbinsY(); ++iY){
-                const double y = oHist->GetYaxis()->GetBinCenter(iY);
-                oHist->SetBinContent(iX,iY,graph->Eval(y,0,"S"));
             }
         }
         plotter.add2D(oHist);
@@ -246,37 +263,51 @@ public:
 
     void process(std::string outFileName) {
         auto * kde = makeKDE(*name);
+        auto * nomH = cloneAndWrite(*name+"_noCond",kde);
 
-        if(ASTypes::strFind(*eOpt,"x"))
-            kde = smoothXTail(*name+ "_smooth", kde);
-        else if (ASTypes::strFind(*eOpt,"y"))
-            kde = smoothYTail(*name+ "_smooth", kde);
+        if(ASTypes::strFind(*eOpt,"x")){
+            kde = smoothXTail(*name+ "_smoothKDE", kde);
+            nomH = cloneAndWrite(*name+"_smoothNoCond",kde);
+        }
+        else if (ASTypes::strFind(*eOpt,"y")){
+            kde = smoothYTail(*name+ "_smoothKDE", kde);
+            nomH = cloneAndWrite(*name+"_smoothNoCond",kde);
+        }
+
 
         if(*xIsCond){
-            kde = XConditionalOnY(*name,kde);
+            XConditionalOnY(*name,nomH);
 
-            auto * upScale = transformX(*name+"_PTUp_debug_beforeCond",kde,[&](double x){return  (1. + *hs*x);});
+            auto * upScale = transformX(*name+"_PTUp_noCond",nomH,
+                    [&](double x){return  (1. + *hs*x);});
             XConditionalOnY(*name+"_PTUp",upScale);
-            auto * downScale = transformX(*name+"_PTDown_debug_beforeCond",kde,[&](double x){return  1./(1. + *hs*x);});
+            auto * downScale = transformX(*name+"_PTDown_noCond",nomH,
+                    [&](double x){return  1./(1. + *hs*x);});
             XConditionalOnY(*name+"_PTDown",downScale);
 
-            auto * upRes = transformX(*name+"_OPTUp_debug_beforeCond",kde,[&](double x){return  (1. + *hr/x);});
+            auto * upRes = transformX(*name+"_OPTUp_noCond",nomH,
+                    [&](double x){return  (1. + *hr/x);});
             XConditionalOnY(*name+"_OPTUp",upRes);
-            auto * downRes = transformX(*name+"_OPTDown_debug_beforeCond",kde,[&](double x){return 1./(1. + *hr/x);});
+            auto * downRes = transformX(*name+"_OPTDown_noCond",nomH,
+                    [&](double x){return 1./(1. + *hr/x);});
             XConditionalOnY(*name+"_OPTDown",downRes);
 
 
         } else {
-            kde = YConditionalOnX(*name,kde);
+            YConditionalOnX(*name,nomH);
 
-            auto * upScale = transformY(*name+"_PTUp_debug_beforeCond",kde,[&](double x){return  (1. + *hs*x);});
+            auto * upScale = transformY(*name+"_PTUp_debug_noCond",nomH,
+                    [&](double x){return  (1. + *hs*x);});
             YConditionalOnX(*name+"_PTUp",upScale);
-            auto * downScale = transformY(*name+"_PTDown_debug_beforeCond",kde,[&](double x){return  1./(1. + *hs*x);});
+            auto * downScale = transformY(*name+"_PTDown_debug_noCond",nomH,
+                    [&](double x){return  1./(1. + *hs*x);});
             YConditionalOnX(*name+"_PTDown",downScale);
 
-            auto * upRes = transformY(*name+"_OPTUp_debug_beforeCond",kde,[&](double x){return  (1. + *hr/x);});
+            auto * upRes = transformY(*name+"_OPTUp_debug_noCond",nomH,
+                    [&](double x){return  (1. + *hr/x);});
             YConditionalOnX(*name+"_OPTUp",upRes);
-            auto * downRes = transformY(*name+"_OPTDown_debug_beforeCond",kde,[&](double x){return 1./(1. + *hr/x);});
+            auto * downRes = transformY(*name+"_OPTDown_debug_noCond",nomH,
+                    [&](double x){return 1./(1. + *hr/x);});
             YConditionalOnX(*name+"_OPTDown",downRes);
         }
 
@@ -295,7 +326,7 @@ public:
     std::shared_ptr<double>       khxc;
     std::shared_ptr<double>       khys;
     std::shared_ptr<double>       khyc;
-    std::shared_ptr<bool>         kss;
+//    std::shared_ptr<bool>         kss;
     std::shared_ptr<double>       hs;
     std::shared_ptr<double>       hr;
 

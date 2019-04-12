@@ -10,8 +10,8 @@
 #include "RooDataHist.h"
 #include "RooWorkspace.h"
 
-#include "PDFAdder.h"
-
+#include "InputsHelper.h"
+using ASTypes::flt2Str;
 
 
 
@@ -29,37 +29,60 @@ public:
         auto fJS  = p.addString("fJS","Fit JSON filename",true);
         auto sS   = p.addFloat("sS"  ,"Scale systematic size",true);
         auto sR   = p.addFloat("sR"  ,"Res systematic size",true);
-        auto sA1  = p.addFloat("sA1"  ,"Alpha 1 systematic size...negative if you don't want to fit it",false,-1);
+        auto sA1  = p.addFloat("sA1" ,
+                "Alpha 1 systematic size...negative if you don't want to fit it",false,-1);
         auto mTop = p.addBool("mTop","True if you want a lower bound (100GeV) on the fit");
         auto fHN = p.addString("fH","Fitting histogram file name",true);
-        auto nH  = p.addString("nH","fitting histogram name",true);
+        auto nHN  = p.addString("nH","fitting histogram name",true);
         p.parse(arguments);
 
 
-        RooWorkspace w("w",false);
-
         auto * fH =  TObjectHelper::getFile(*fHN);
-        auto oH =TObjectHelper::getObject<TH2F>(fH,*nH);
-        TH2 * inH = 0;
+        auto oH =TObjectHelper::getObject<TH2F>(fH,*nHN);
+        std::unique_ptr<TAxis> oXAxis((TAxis*)oH->GetXaxis()->Clone());
+        std::unique_ptr<TAxis> oYAxis((TAxis*)oH->GetYaxis()->Clone());
+
+        std::unique_ptr<TAxis> nXAxis((TAxis*)oH->GetXaxis()->Clone());
+        std::unique_ptr<TAxis> nYAxis((TAxis*)oH->GetYaxis()->Clone());
+
+        RooWorkspace w("w",false);
+        TH2 * nH = 0;
         if(*mTop){
             plotter.add1D((TH2*)oH->Clone("orig_data"));
-            float binW = (maxHbbMass-minHbbMass)/float(nHbbMassBins);
-            int nBins = (maxHbbMass-100.0)/binW;
-            inH = cutHist(&*oH,nBins,100,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
-            inH->SetDirectory(0);
+
+            std::vector<double> newHbbBins;
+            for(int iB = 1; iB <= oXAxis->GetNbins(); ++iB){
+                if(oXAxis->GetBinLowEdge(iB) < 100) continue;
+                newHbbBins.push_back(oXAxis->GetBinLowEdge(iB));
+            }
+            newHbbBins.push_back(oXAxis->GetXmax());
+            nXAxis.reset(new TAxis(newHbbBins.size()-1, &newHbbBins[0]));
+            nH = cutHistogram(oH.get(),"cutHist","",nXAxis.get(),nYAxis.get());
+            nH->SetDirectory(0);
         } else {
-            inH = &*oH;
+            nH = &*oH;
         }
-        plotter.add1D((TH2*)inH->Clone("data"));
+        plotter.add1D((TH2*)nH->Clone("data"));
 
 
         //Setup axes
-        auto * xAxis = inH->GetXaxis();
-        auto * yAxis = inH->GetYaxis();
         w.factory((*varX+"[0,10000]").c_str());
         w.factory((*varY+"[0,10000]").c_str());
-        w.var(varX->c_str())->setBinning(RooBinning (xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax()));
-        w.var(varY->c_str())->setBinning(RooBinning (yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax()));
+
+        auto getBinning=[](const TAxis* axis)->RooBinning{
+            return axis->GetXbins()->GetSize()
+                    ? RooBinning(axis->GetNbins(),axis->GetXbins()->GetArray())
+                    : RooBinning(axis->GetNbins(),axis->GetXmin(),axis->GetXmax());
+        };
+
+        RooBinning oXBins =  getBinning(oXAxis.get());
+        RooBinning oYBins =  getBinning(oYAxis.get());
+        RooBinning nXBins =  getBinning(nXAxis.get());
+        RooBinning nYBins =  getBinning(nYAxis.get());
+
+
+        w.var(varX->c_str())->setBinning(nXBins);
+        w.var(varY->c_str())->setBinning(nYBins);
         RooArgSet varset;
         RooArgList varlist;
         varset.add(*w.var(varX->c_str()));
@@ -68,52 +91,53 @@ public:
         varlist.add(*w.var(varY->c_str()));
 
         //Now for binning use the non-cut version:
-        xAxis = oH->GetXaxis();
-        yAxis = oH->GetYaxis();
-
         const std::string modelName = "model";
         const std::string fitName   = "model_fit";
         const std::string kdeName   = "model_kde";
-        const std::string fitVar = *kdeX ? *varY : *varX;
-        const std::string kdeVar = *kdeX ? *varX : *varY;
-
+        const std::string fitVar    = *kdeX ? *varY : *varX;
+        const std::string kdeVar    = *kdeX ? *varX : *varY;
 
         //Data to fit to
-        RooDataHist fitDataHist((*nH+"DH").c_str(),(*nH+"DH").c_str(),varlist,&*inH);
+        RooDataHist fitDataHist((*nHN+"DH").c_str(),(*nHN+"DH").c_str(),varlist,&*nH);
         w.import(fitDataHist);
-
-
 
         //KDE dimension
         PDFAdder::addHistoShapeFromFile(&w,"model","kde",{kdeVar},*fTN,*nT,PDFAdder::InterpSysts());
 
         //Fit dimension
         CJSON json( *fJS);
-        w.factory((std::string("scaleSyst[0,-")+ASTypes::flt2Str(*sS)+","+ASTypes::flt2Str(*sS)+"]").c_str());
-        w.factory((std::string("resSyst[0,-")+ASTypes::flt2Str(*sR)+","+ASTypes::flt2Str(*sR)+"]").c_str());
+        w.factory((
+                std::string("scaleSyst[0,-")+flt2Str(*sS)+","+flt2Str(*sS)+"]"
+                ).c_str());
+        w.factory((
+                std::string("resSyst[0,-")+flt2Str(*sR)+","+flt2Str(*sR)+"]"
+                ).c_str());
 
         if(*sA1 > 0){
-            w.factory((std::string("alpha1Syst[0,-")+ASTypes::flt2Str(*sA1)+","+ASTypes::flt2Str(*sA1)+"]").c_str());
-            PDFAdder::addCB(&w,fitName, kdeVar,fitVar,"","",json,{{"scaleSyst",1}},{{"resSyst",1}},{{"alpha1Syst",1}});
+            w.factory((
+                    std::string("alpha1Syst[0,-")+flt2Str(*sA1)+","+flt2Str(*sA1)+"]"
+                    ).c_str());
+            PDFAdder::addCB(&w,fitName, kdeVar,fitVar,"","",json,
+                    {{"scaleSyst",1}},{{"resSyst",1}},{{"alpha1Syst",1}});
         }else
-            PDFAdder::addCB(&w,fitName, kdeVar,fitVar,"","",json,{{"scaleSyst",1}},{{"resSyst",1}});
+            PDFAdder::addCB(&w,fitName, kdeVar,fitVar,"","",json,
+                    {{"scaleSyst",1}},{{"resSyst",1}});
 
         //2D PDF
         PDFAdder::conditionalProduct(&w,modelName,fitName,fitVar,kdeName);
 
-
         auto original2D = w.pdf(modelName.c_str())->createHistogram("originalPDF",
-                *w.var(varX->c_str()),RooFit::Binning(RooBinning (xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax())),
-                RooFit::YVar(*w.var(varY->c_str()),RooFit::Binning(RooBinning (yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax())))) ;
+                *w.var(varX->c_str()),RooFit::Binning(oXBins),
+                RooFit::YVar(*w.var(varY->c_str()),RooFit::Binning(oYBins))) ;
         original2D->SetName("originalPDF");
         plotter.add1D(original2D);
+
         auto original1D = w.pdf(modelName.c_str())->createHistogram("nominalPDF",
-                *w.var(fitVar.c_str()),   *kdeX ? RooFit::Binning(RooBinning (yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax())) :
-                        RooFit::Binning(RooBinning (xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax())));
+                *w.var(fitVar.c_str()),*kdeX ? RooFit::Binning(oYBins):RooFit::Binning(oXBins));
         original1D->SetName(("originalPDF_"+ fitVar).c_str());
         plotter.add1D(original1D);
 
-        w.pdf(modelName.c_str())->fitTo(*w.data((*nH+"DH").c_str()),RooFit::SumW2Error(kTRUE));
+        w.pdf(modelName.c_str())->fitTo(*w.data((*nHN+"DH").c_str()),RooFit::SumW2Error(kTRUE));
 
         std::cout <<"Doing "<< outFileName <<" Fit"<<std::endl;
         std::cout << "scaleSyst -> "<< w.var("scaleSyst")->getVal()<<std::endl;
@@ -121,49 +145,37 @@ public:
         if(*sA1 > 0)std::cout << "alpha1Syst -> "<< w.var("alpha1Syst")->getVal()<<std::endl;
 
 
-        std::string newMean = "(" + json.getP("mean")+")*(1+"+ASTypes::flt2Str(w.var("scaleSyst")->getVal())+")";
+        std::string newMean = "(" +
+                json.getP("mean")+")*(1+"+flt2Str(w.var("scaleSyst")->getVal())
+                +")";
         json.replaceEntry("mean", newMean );
-        std::string newSigma = "(" + json.getP("sigma")+")*(1+"+ASTypes::flt2Str(w.var("resSyst")->getVal())+")";
+        std::string newSigma = "(" +
+                json.getP("sigma")+")*(1+"+flt2Str(w.var("resSyst")->getVal())
+                +")";
         json.replaceEntry("sigma", newSigma );
         if(*sA1 > 0){
-            std::string newAlpha1 = "(" + json.getP("alpha")+")*(1+"+ASTypes::flt2Str(w.var("alpha1Syst")->getVal())+")";
+            std::string newAlpha1 = "(" +
+                    json.getP("alpha")+")*(1+"+flt2Str(w.var("alpha1Syst")->getVal())
+                    +")";
             json.replaceEntry("alpha", newAlpha1 );
         }
         json.write(outFileName);
 
         auto fit2D = w.pdf(modelName.c_str())->createHistogram("histo",
-                *w.var(varX->c_str()),RooFit::Binning(RooBinning (xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax())),
-                RooFit::YVar(*w.var(varY->c_str()),RooFit::Binning(RooBinning (yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax())))) ;
+                *w.var(varX->c_str()),RooFit::Binning(oXBins),
+                RooFit::YVar(*w.var(varY->c_str()),RooFit::Binning(oYBins))) ;
         fit2D->SetName("histo");
         plotter.add1D(fit2D);
+
         auto fit1D = w.pdf(modelName.c_str())->createHistogram("histo",
-                *w.var(fitVar.c_str()),   *kdeX ? RooFit::Binning(RooBinning (yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax())) :
-                        RooFit::Binning(RooBinning (xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax())));
+                *w.var(fitVar.c_str()),*kdeX ? RooFit::Binning(oYBins) : RooFit::Binning(oXBins));
         fit1D->SetName(("histo_"+ fitVar).c_str());
         plotter.add1D(fit1D);
 
         plotter.write(outFileName +".root");
         fH->Close();
         delete fH;
-        if(*mTop) delete inH;
-    }
-
-    TH2 * cutHist(const TH2* inHist, int nBinX, float minX, float maxX, int nBinY, float minY, float maxY){
-        auto outH = new TH2F ("cutHist","",nBinX,minX,maxX,nBinY,minY,maxY);
-
-        //first cut up conditional template
-        for(int iX = 1; iX <= inHist->GetNbinsX(); ++iX){
-            int oBinX = outH->GetXaxis()->FindFixBin(inHist->GetXaxis()->GetBinCenter(iX));
-            if(oBinX < 1 || oBinX > outH->GetNbinsX() ) continue;
-            for(int iY = 1; iY <= inHist->GetNbinsY(); ++iY){
-                int oBinY = outH->GetYaxis()->FindFixBin(inHist->GetYaxis()->GetBinCenter(iY));
-                if(oBinY < 1 || oBinY > outH->GetNbinsY() ) continue;
-                outH->SetBinContent(oBinX,oBinY,inHist->GetBinContent(iX,iY));
-                outH->SetBinError(oBinX,oBinY,inHist->GetBinError(iX,iY));
-            }
-        }
-
-        return outH;
+        if(*mTop) delete nH;
     }
 
 

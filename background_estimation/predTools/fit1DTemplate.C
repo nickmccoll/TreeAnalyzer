@@ -4,22 +4,20 @@
 #include "AnalysisSupport/Utilities/interface/ParParser.h"
 #include "AnalysisSupport/Utilities/interface/TObjectHelper.h"
 #include "HiggsAnalysis/CombinedLimit/interface/VerticalInterpHistPdf.h"
+#include "InputsHelper.h"
 #include <string.h>
 #include <regex>
 #include "RooHistPdf.h"
 #include "RooDataHist.h"
 #include "RooWorkspace.h"
 
-
-
-
-
 class fit1DTemplateAnalyzer {
 public:
     typedef std::vector<std::pair<std::string,std::string> > SystNames;
 
-    const TH1* makeFitHist(const std::string& name,const TH1 * iHist, const std::vector<double>& coefList, const std::vector<std::unique_ptr<TH1F>>& upHists
-            , const std::vector<std::unique_ptr<TH1F>>& downHists) {
+    const TH1* makeFitHist(const std::string& name,const TH1 * iHist,
+            const std::vector<double>& coefList, const std::vector<std::unique_ptr<TH1F>>& upHists,
+            const std::vector<std::unique_ptr<TH1F>>& downHists) {
 
         const double _smoothRegion =1;
         auto smoothStepFunc =[&] (double x) ->double{
@@ -81,12 +79,13 @@ public:
     fit1DTemplateAnalyzer(std::string outFileName,std::string arguments )
     {
 
-
         ParParser p;
         auto fTN = p.addString("fT","template file name",true);
         auto nT  = p.addString("nT","template histogram base name",true);
         auto s   = p.addString("s" ,"Comma separated list of systematics",true);
-        auto sA  = p.addString("sA" ,"Comma separated list of systematics to be included in te output but not fit to.",false,"");
+        auto sA  = p.addString("sA" ,
+                "Comma separated list of systematics to be included in te output but not fit to.",
+                false,"");
         auto fHN = p.addString("fH","Fitting histogram file name",true);
         auto nH  = p.addString("nH","fitting histogram name",true);
         p.parse(arguments);
@@ -107,7 +106,11 @@ public:
         RooArgSet varset;
         RooArgList varlist;
         w.factory("x[0,10000]");
-        w.var("x")->setBinning(RooBinning (xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax()));
+        auto xBins =  xAxis->GetXbins()->GetSize()
+                ? RooBinning(xAxis->GetNbins(),xAxis->GetXbins()->GetArray())
+                : RooBinning(xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax());
+
+        w.var("x")->setBinning(xBins);
         varset.add(*w.var("x"));
         varlist.add(*w.var("x"));
 
@@ -127,7 +130,8 @@ public:
             for(const auto& var : systVar){
                 auto * histV = &(var== "Up" ? upHists : downHists);
                 histV->emplace_back(TObjectHelper::getObject<TH1F>(fT,*nT+"_"+syst+var));
-                RooDataHist rSH((syst+var+"Hist").c_str(),(syst+var+"Hist").c_str(),varlist,&*histV->back());
+                RooDataHist rSH((syst+var+"Hist").c_str(),(syst+var+"Hist").c_str(),
+                        varlist,&*histV->back());
                 RooHistPdf Spdf((syst+var+"PDF").c_str(),(syst+var+"PDF").c_str(),varset,rSH,0);
                 w.import(rSH);
                 w.import(Spdf);
@@ -150,8 +154,8 @@ public:
         w.import(fitDataHist);
         w.pdf("interpPDF")->fitTo(*w.data((*nH+"DH").c_str()),RooFit::SumW2Error(kTRUE));
 
-        auto fitHist = w.pdf("interpPDF")->createHistogram((std::string("debug_") + *nT).c_str(),
-                *w.var("x"),RooFit::Binning(RooBinning (xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax()))) ;
+        auto fitHist = createTH1FromPDF(w.pdf("interpPDF"),w.var("x"),
+                std::string("debug_") + *nT,"",xAxis);;
 
         for(const auto& syst : systList){
             std::cout << syst <<" -> "<< w.var(syst.c_str())->getVal()<<std::endl;
@@ -196,9 +200,10 @@ public:
     std::vector<RooDataHist> dataHists;
     std::vector<RooHistPdf> pdfs;
 
-
     std::vector<std::string> getList(const std::string& inList){
-        std::vector<std::string> systList(std::sregex_token_iterator(inList.begin(), inList.end(), std::regex(","), -1), std::sregex_token_iterator());
+        std::vector<std::string> systList(
+                std::sregex_token_iterator(inList.begin(), inList.end(), std::regex(","), -1),
+                std::sregex_token_iterator());
         return systList;
     }
 

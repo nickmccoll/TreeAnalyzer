@@ -9,7 +9,8 @@ namespace CutConstants{
 class CutStr : public std::string{
 public:
     CutStr(std::string name,std::string cut) : std::string(name), cut(cut){}
-    CutStr(std::string name,std::string cut, std::string title) : std::string(name), cut(cut), title(title){}
+    CutStr(std::string name,std::string cut, std::string title) : std::string(name),
+            cut(cut), title(title){}
     std::string cut;
     std::string title;
 };
@@ -40,32 +41,64 @@ CutStr preSel("preSel"  , "passPre==1");
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
 CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
 
-unsigned int nHbbMassBins   =90;
+unsigned int nHbbMassBins   =30;
 double minHbbMass = 30  ;
 double maxHbbMass = 210 ;
-unsigned int nHHMassBins   =132;
+unsigned int nHHMassBins   =86;
 double minHHMass  = 700;
 double maxHHMass  = 4000;
+std::vector<double> hhMassBins = {
+        700,725,750,775,800,825,850,875,900,925,950,975,1000,1025,1050,1075,1100,1125,1150,1175,
+        1200,1225,1250,1275,1300,1325,1350,1375,1400,1425,1450,1475,1500,1525,1550,1575,1600,1625,
+        1650,1675,1700,1725,1750,1775,1800,1825,1850,1875,1900,1925,1950,1975,2000,2050,2100,2150,
+        2200,2250,2300,2350,2400,2450,2500,2550,2600,2650,2700,2750,2800,2850,2900,2950,3000,3050,
+        3100,3175,3250,3325,3400,3475,3550,3625,3700,3775,3850,3925,4000
+};
 
-unsigned int nInclHHMassBins   =200;
+
+unsigned int nInclHHMassBins   =128;
 double minInclHHMass  = 0   ;
-double maxInclHHMass  = 5000;
-
-unsigned int nInclHbbMassBins   =125;
+double maxInclHHMass  = 5050;
+std::vector<double> inclHHMassBins = {0,25,50,75,100,125,150,175,200,225,250,275,300,325,350,375,
+        400,425,450,475,500,525,550,575,600,625,650,675,
+        700,725,750,775,800,825,850,875,900,925,950,975,1000,1025,1050,1075,1100,1125,1150,1175,
+        1200,1225,1250,1275,1300,1325,1350,1375,1400,1425,1450,1475,1500,1525,1550,1575,1600,1625,
+        1650,1675,1700,1725,1750,1775,1800,1825,1850,1875,1900,1925,1950,1975,2000,2050,2100,2150,
+        2200,2250,2300,2350,2400,2450,2500,2550,2600,2650,2700,2750,2800,2850,2900,2950,3000,3050,
+        3100,3175,3250,3325,3400,3475,3550,3625,3700,3775,3850,3925,4000,
+        4075,4150,4225,4300,4375,4450,4525,4600,4675,4750,4825,4900,4975,5050
+};
+unsigned int nInclHbbMassBins   =42;
 double minInclHbbMass  = 0   ;
-double maxInclHbbMass  = 250;
+double maxInclHbbMass  = 252;
 
 
-CutStr hhRange  ("hhRange" , hhMCS.cut+">"+ASTypes::flt2Str(minHHMass)+"&&"+hhMCS.cut+"<"+ASTypes::flt2Str(maxHHMass));
-CutStr hhInclRange  ("hhInclRange" , hhMCS.cut+">"+ASTypes::flt2Str(minInclHHMass)+"&&"+hhMCS.cut+"<"+ASTypes::flt2Str(maxInclHHMass));
-CutStr hbbRange ("hbbRange", hbbMCS.cut+">"+ASTypes::flt2Str(minHbbMass)+"&&"+hbbMCS.cut+"<"+ASTypes::flt2Str(maxHbbMass));
-CutStr hbbInclRange  ("hbbInclRange" , hbbMCS.cut+">"+ASTypes::flt2Str(minInclHbbMass)+"&&"+hbbMCS.cut+"<"+ASTypes::flt2Str(maxInclHbbMass));
+CutStr hhRange  ("hhRange", hhMCS.cut+">"+ASTypes::flt2Str(minHHMass)+
+        "&&"+hhMCS.cut+"<"+ASTypes::flt2Str(maxHHMass));
+CutStr hhInclRange  ("hhInclRange" , hhMCS.cut+">"+ASTypes::flt2Str(minInclHHMass)+
+        "&&"+hhMCS.cut+"<"+ASTypes::flt2Str(maxInclHHMass));
+CutStr hbbRange ("hbbRange", hbbMCS.cut+">"+ASTypes::flt2Str(minHbbMass)+
+        "&&"+hbbMCS.cut+"<"+ASTypes::flt2Str(maxHbbMass));
+CutStr hbbInclRange  ("hbbInclRange", hbbMCS.cut+">"+ASTypes::flt2Str(minInclHbbMass)+
+        "&&"+hbbMCS.cut+"<"+ASTypes::flt2Str(maxInclHbbMass));
 
-CutStr hhBinning ("hhBinning" ,ASTypes::int2Str(nHHMassBins)+","+ASTypes::flt2Str(minHHMass)+","+ASTypes::flt2Str(maxHHMass));
-CutStr hbbBinning ("hbbBinning" ,ASTypes::int2Str(nHbbMassBins)+","+ASTypes::flt2Str(minHbbMass)+","+ASTypes::flt2Str(maxHbbMass));
-
-CutStr hhInclBinning ("hhInclBinning" ,ASTypes::int2Str(nInclHHMassBins)+","+ASTypes::flt2Str(minInclHHMass)+","+ASTypes::flt2Str(maxInclHHMass));
-CutStr hbbInclBinning ("hbbInclBinning" ,ASTypes::int2Str(nInclHbbMassBins)+","+ASTypes::flt2Str(minInclHbbMass)+","+ASTypes::flt2Str(maxInclHbbMass));
+std::string getHbbBinningString(bool inclusive){
+    using namespace ASTypes;
+    if(inclusive)
+        return int2Str(nInclHbbMassBins)+","+flt2Str(minInclHbbMass)+","+flt2Str(maxInclHbbMass);
+    else
+        return int2Str(nHbbMassBins)+","+flt2Str(minHbbMass)+","+flt2Str(maxHbbMass);
+}
+std::string getHHBinningString(bool inclusive){
+    using namespace ASTypes;
+    const std::vector<double> * bins = &(inclusive ? inclHHMassBins : hhMassBins);
+    std::string outString="";
+    for(unsigned int iB = 0; iB < bins->size(); ++iB){
+        if(iB) outString += ",";
+        outString += flt2Str((*bins)[iB]);
+    }
+    return outString;
+}
 
 enum BKGModels  {BKG_QG, BKG_LOSTTW, BKG_MW, BKG_MT};
 std::vector<CutStr > bkgSels = {
@@ -113,10 +146,63 @@ std::vector<CutStr > hadCuts = {
 
 };
 
+struct CatIterator{
+    bool firstBin = true;
+    LEPCats  l =LEP_EMU;
+    BTAGCats b =BTAG_LMT;
+    PURCats  p =PURE_I;
+    HADCuts  h =HAD_NONE;
+    bool is(const LEPCats  cl ) const {return l == cl;}
+    bool is(const BTAGCats cb ) const {return b == cb;}
+    bool is(const PURCats  cp ) const {return p == cp;}
+    bool is(const HADCuts  ch ) const {return h == ch;}
+    std::string name() const {
+        return lepCats[l] +"_"+btagCats[b]+"_"+purCats[p] +"_"+hadCuts[h];
+    }
+    std::string cut() const {
+        return "("+lepCats[l].cut+"&&"+btagCats[b].cut+"&&"+purCats[p].cut +"&&"+hadCuts[h].cut+")";
+    }
+    bool getBin() {
+        if(firstBin){
+            firstBin = false;
+            return true;
+        }
+        if(h < HAD_FULL){
+            h = HADCuts(h+1);
+            return true;
+        }
+        else if(p < PURE_HP){
+            p= PURCats(p+1);
+            h=HAD_NONE;
+            return true;
+        }
+        else if(b < BTAG_T){
+            b= BTAGCats(b+1);
+            p=PURE_I;
+            h=HAD_NONE;
+            return true;
+        }
+        else if(l < LEP_MU){
+            l= LEPCats(l+1);
+            b=BTAG_LMT;
+            p=PURE_I;
+            h=HAD_NONE;
+            return true;
+        }
+        return false;
+    }
+    void reset() {
+        firstBin = true;
+        l =LEP_EMU;
+        b =BTAG_LMT;
+        p =PURE_I;
+        h =HAD_NONE;
+    }
+};
+
 std::string getCategoryLabel(const LEPCats lep, const BTAGCats btag, const PURCats pur ){
     return lepCats[lep].title+", "+btagCats[btag].title+", "+purCats[pur].title;
 }
-
 
 
 std::string getCategoryLabel(const std::string& inStr){
@@ -147,7 +233,8 @@ std::string getCategoryLabel(const std::string& inStr){
     }
     if(pur.size()){
         title += pur;
-        if(title == lepCats[LEP_EMU].title + ", "+btagCats[BTAG_LMT].title + ", "+purCats[PURE_I].title )
+        if(title == lepCats[LEP_EMU].title + ", "+btagCats[BTAG_LMT].title +
+                ", "+purCats[PURE_I].title )
             title = "All categories";
         if(ex.size())
             title += ", ";
@@ -158,7 +245,10 @@ std::string getCategoryLabel(const std::string& inStr){
     return title;
 }
 
-std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,1750,2000,2500,3000,3500,4000};
+
+
+std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,1750,
+                                 2000,2500,3000,3500,4000};
 
 enum SIGNALS  {RADION,BLKGRAV};
 std::vector<CutStr > signals = {
@@ -181,8 +271,6 @@ const double HtoBBBF = 0.5824;
 const double HtoWWBF = 0.2137;
 const double HtoZZBF = 0.02619;
 const double HHtobbVVBF = 2*HtoBBBF*(HtoWWBF+HtoZZBF);
-
-const double HHtobbVVBF_BUGGY = 2*0.5824*(.2137+.002619);
 
 
 }

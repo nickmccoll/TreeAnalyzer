@@ -5,6 +5,7 @@
 #include "AnalysisSupport/Utilities/interface/TObjectHelper.h"
 #include "HiggsAnalysis/CombinedLimit/interface/VerticalInterpHistPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/HZZ2L2QRooPdfs.h"
+#include "PDFAdder.h"
 #include <string.h>
 #include <regex>
 #include "RooHistPdf.h"
@@ -24,6 +25,9 @@ public:
     std::vector<std::string> vars;
     std::vector<std::string> params;
     std::vector<std::unique_ptr<TF1>> varDep;
+    std::unique_ptr<TAxis> xAxis;
+    std::unique_ptr<TAxis> yAxis;
+    std::unique_ptr<TAxis> zAxis;
     //for making histograms out of a json
     int    plot_bins = -1;
     double plot_min = -1;
@@ -32,7 +36,9 @@ public:
     RooFitResult *fitResultCache=0;
     std::vector<std::string> secondaryModelNames;
 
-    FunctionFitter(const TH1* iH, const std::string postFix = "T", const std::vector<std::string>&  plotVars = {"M"}):
+    //If the input histogram is not defined, get the axes from the TAxis vector
+    FunctionFitter(const TH1* iH, const std::vector<TAxis*>& axs,
+            const std::string postFix = "T",const std::vector<std::string>&  plotVars = {"M"}):
         postFix(postFix)
     {
         w.reset(new RooWorkspace("w",false));
@@ -40,7 +46,25 @@ public:
             vars.push_back(v);
             w->factory((v+"[0,10000]").c_str());
         }
-        if(iH) setupHist(iH);
+        if(iH){
+            PDFAdder::addBinnedData(w.get(),iH,"data",vars);
+            if(vars.size()>0) xAxis.reset((TAxis*)iH->GetXaxis()->Clone());
+            if(vars.size()>1) yAxis.reset((TAxis*)iH->GetYaxis()->Clone());
+            if(vars.size()>2) zAxis.reset((TAxis*)iH->GetZaxis()->Clone());
+        } else {
+            if(vars.size()>0){
+                PDFAdder::setBinning(w.get(),vars[0],axs[0]);
+                xAxis.reset((TAxis*)axs[0]->Clone());
+            }
+            if(vars.size()>1){
+                PDFAdder::setBinning(w.get(),vars[1],axs[2]);
+                yAxis.reset((TAxis*)axs[1]->Clone());
+            }
+            if(vars.size()>2){
+                PDFAdder::setBinning(w.get(),vars[2],axs[2]);
+                zAxis.reset((TAxis*)axs[2]->Clone());
+            }
+        }
     }
     void setVar(std::string var, double val) {
         w->var(var.c_str())->setVal(val);
@@ -70,13 +94,21 @@ public:
     void fit(const std::vector<RooCmdArg>& options){
         std::string thisModel = std::string("model")+postFix;
         std::string thisData  = "data";
-        if(options.size()==0) fitResultCache =  w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()));
-        else if(options.size()==1) fitResultCache = w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0]);
-        else if(options.size()==2) fitResultCache = w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1]);
-        else if(options.size()==3) fitResultCache = w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2]);
-        else if(options.size()==4) fitResultCache = w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2],options[3]);
-        else if(options.size()==5) fitResultCache = w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2],options[3],options[4]);
-        else if(options.size()==6) fitResultCache = w->pdf(thisModel.c_str())->fitTo(*w->data(thisData.c_str()),options[0],options[1],options[2],options[3],options[4],options[5]);
+        if(options.size()==0) fitResultCache =  w->pdf(thisModel.c_str())->fitTo(
+                *w->data(thisData.c_str()));
+        else if(options.size()==1) fitResultCache = w->pdf(thisModel.c_str())->fitTo(
+                *w->data(thisData.c_str()),options[0]);
+        else if(options.size()==2) fitResultCache = w->pdf(thisModel.c_str())->fitTo(
+                *w->data(thisData.c_str()),options[0],options[1]);
+        else if(options.size()==3) fitResultCache = w->pdf(thisModel.c_str())->fitTo(
+                *w->data(thisData.c_str()),options[0],options[1],options[2]);
+        else if(options.size()==4) fitResultCache = w->pdf(thisModel.c_str())->fitTo(
+                *w->data(thisData.c_str()),options[0],options[1],options[2],options[3]);
+        else if(options.size()==5) fitResultCache = w->pdf(thisModel.c_str())->fitTo(
+                *w->data(thisData.c_str()),options[0],options[1],options[2],options[3],options[4]);
+        else if(options.size()==6) fitResultCache = w->pdf(thisModel.c_str())->fitTo(
+                *w->data(thisData.c_str()),options[0],options[1],options[2],options[3],options[4],
+                options[5]);
     }
 
     TCanvas* projection(const std::string& name, double& chi2){
@@ -86,7 +118,9 @@ public:
         w->data(data.c_str())->plotOn(frame);
 //        w->pdf(model.c_str())->fixAddCoefRange("coef");
         w->pdf(model.c_str())->plotOn(frame, RooFit::NormRange("fit"));
-        if(secondaryModelNames.size()) w->pdf(model.c_str())->plotOn(frame, RooFit::NormRange("fit"), RooFit::Components(secondaryModelNames[0].c_str()), RooFit::LineStyle(kDashed));
+        if(secondaryModelNames.size())
+            w->pdf(model.c_str())->plotOn(frame, RooFit::NormRange("fit"),
+                    RooFit::Components(secondaryModelNames[0].c_str()), RooFit::LineStyle(kDashed));
         TCanvas* can = new TCanvas(name.c_str());
         can->cd();
         frame->Draw();
@@ -99,7 +133,10 @@ public:
     TCanvas* projection2D(const std::string& name, double& chi2){
         std::string model = std::string("model")+postFix;
 //        w->pdf(model.c_str())->fixAddCoefRange("coef");
-        auto * pdf = w->pdf(model.c_str())->createHistogram(model.c_str(), *w->var(vars[0].c_str()),RooFit::YVar(*w->var(vars[1].c_str()))   );
+        auto * pdf = createTH2FromPDF( w->pdf(model.c_str()),
+                w->var(vars[0].c_str()),w->var(vars[1].c_str()),model.c_str(),"",
+                xAxis.get(),yAxis.get());
+
         TCanvas* can = new TCanvas(name.c_str());
         can->cd();
         pdf->Draw("COLZ");
@@ -110,7 +147,8 @@ public:
     }
     TH1* data2D(const std::string& name){
         std::string data  = std::string("data");
-        auto * hist = w->data(data.c_str())->createHistogram(name.c_str(), *w->var(vars[0].c_str()),RooFit::YVar(*w->var(vars[1].c_str()))   );
+        auto * hist = w->data(data.c_str())->createHistogram(name.c_str(),
+                *w->var(vars[0].c_str()),RooFit::YVar(*w->var(vars[1].c_str()))   );
         hist->GetYaxis()->SetTitle(vars[1].c_str());
         hist->GetXaxis()->SetTitle(vars[0].c_str());
         return hist;
@@ -118,7 +156,9 @@ public:
     TH1* pdf2D(const std::string& name){
         std::string model = std::string("model")+postFix;
 //        w->pdf(model.c_str())->fixAddCoefRange("coef");
-        auto * hist = w->pdf(model.c_str())->createHistogram(name.c_str(), *w->var(vars[0].c_str()),RooFit::YVar(*w->var(vars[1].c_str()))   );
+        auto * hist = createTH2FromPDF( w->pdf(model.c_str()),
+                w->var(vars[0].c_str()),w->var(vars[1].c_str()),name.c_str(),"",
+                xAxis.get(),yAxis.get());
         hist->GetYaxis()->SetTitle(vars[1].c_str());
         hist->GetXaxis()->SetTitle(vars[0].c_str());
         return hist;
@@ -126,7 +166,9 @@ public:
     TH1* pdf1D(const std::string& name){
         std::string model = std::string("model")+postFix;
 //        w->pdf(model.c_str())->fixAddCoefRange("coef");
-        auto * hist = w->pdf(model.c_str())->createHistogram(name.c_str(), *w->var(vars[0].c_str()));
+        auto * hist = createTH1FromPDF( w->pdf(model.c_str()), w->var(vars[0].c_str()),
+                name.c_str(),"",xAxis.get());
+
         hist->GetXaxis()->SetTitle(vars[0].c_str());
         return hist;
     }
@@ -138,57 +180,9 @@ protected:
         w->factory((name + bounds).c_str());
     }
 
-    void setupHist(const TH1* iH,const std::string& name="data"){
-        const unsigned int nD = vars.size();
-        RooArgList args;
-        auto doBinning =[&](const std::string& var, const TAxis* ax) {
-            args.add(*w->var(var.c_str()));
-            w->var(var.c_str())->setMin(ax->GetXmin());
-            w->var(var.c_str())->setMax(ax->GetXmax());
-            w->var(var.c_str())->setBins(ax->GetNbins());
-            w->var(var.c_str())->setVal((ax->GetXmin()+ax->GetXmax())/2.);
-        };
-        doBinning(vars[0],iH->GetXaxis());
-        if(nD > 1)doBinning(vars[1],iH->GetYaxis());
-        if(nD > 2)doBinning(vars[2],iH->GetZaxis());
-        RooDataHist dataHist(name.c_str(),name.c_str(),args,iH);
-        w->import(dataHist);
-    }
 
-
-    //    void addCB(const std::string& postFix, const std::string& modelName, const std::string& varName, bool doExpo){
-    //        auto pn =[&] (const std::string& v) ->std::string {return v+postFix;};
-    //        auto pv =[&] (const std::string& v) ->RooRealVar* {return w->var((v+postFix).c_str());};
-    //
-    //        addParam(pn("mean"  ),"[90,0,300]");
-    //        addParam(pn("sigma" ),"[8,0,100]");
-    //        addParam(pn("alpha" ),"[1,0.001,100]");
-    //        addParam(pn("alpha2"),"[1,0.001,100]");
-    //
-    //        addParam(pn("n")  ,"[5,1,100]");
-    //        addParam(pn("n2"),"[5,1,100]");
-    //
-    //        std::string cbName = doExpo ? modelName +"P" : modelName;
-    //        RooDoubleCB modelP(cbName .c_str(),cbName.c_str(),*w->var(varName.c_str())  ,
-    //                *pv("mean") ,*pv("sigma"),*pv("alpha"),*pv("n") ,*pv("alpha2"),*pv("n2"));
-    //        w->import(modelP);
-    //
-    //        if(doExpo){
-    //            addParam(pn("slope"),"[-1,-10,0]");
-    //            std::string expName =  modelName +"E";
-    //            RooExponential modelE(expName.c_str(),expName.c_str(),*w->var(varName.c_str()),*pv("slope"));
-    //            w->import(modelE);
-    //            addParam(pn("fE"),"[0.1,0,1]");
-    //            RooAddPdf modelC(modelName.c_str(),modelName.c_str(),*w->pdf(expName.c_str()),*w->pdf(cbName.c_str()),*pv("fE"));
-    //            secondaryModelNames.push_back(expName);
-    //            w->import(modelC);
-    //        }
-    //    }
-    //
-    //};
-
-
-    void addCB(const std::string& modelName, const std::string& pPFix,  const std::string& varName, bool addParams = true, RooAbsReal* meanFunc =0, RooAbsReal* sigmaFunc =0){
+    void addCB(const std::string& modelName, const std::string& pPFix,  const std::string& varName,
+            bool addParams = true, RooAbsReal* meanFunc =0, RooAbsReal* sigmaFunc =0){
         auto pn =[&] (const std::string& v) ->std::string {return v+pPFix;};
         auto pv =[&] (const std::string& v) ->RooRealVar* {return w->var((v+pPFix).c_str());};
 
@@ -204,27 +198,32 @@ protected:
 
 
         RooDoubleCB modelP(modelName .c_str(),modelName.c_str(),*w->var(varName.c_str())  ,
-                meanFunc  ? *meanFunc : *pv("mean"),sigmaFunc  ? *sigmaFunc : *pv("sigma"),*pv("alpha"),*pv("n") ,*pv("alpha2"),*pv("n2"));
+                meanFunc  ? *meanFunc : *pv("mean"), sigmaFunc  ? *sigmaFunc : *pv("sigma"),
+                *pv("alpha"),*pv("n") ,*pv("alpha2"),*pv("n2"));
         w->import(modelP);
     }
 
-    void addExpo(const std::string& modelName, const std::string& pPFix,  const std::string& varName,bool addParams = true){
+    void addExpo(const std::string& modelName, const std::string& pPFix, const std::string& varName,
+            bool addParams = true){
         auto pn =[&] (const std::string& v) ->std::string {return v+pPFix;};
         if(addParams){
             addParam(pn("slope"),"[-1,-10,0]");
         }
-        RooExponential modelE(modelName.c_str(),modelName.c_str(),*w->var(varName.c_str()), *w->var(pn("slope").c_str()));
+        RooExponential modelE(modelName.c_str(),modelName.c_str(),*w->var(varName.c_str()),
+                *w->var(pn("slope").c_str()));
         w->import(modelE);
     }
 
-    void addGaus(const std::string& modelName, const std::string& pPFix,  const std::string& varName,bool addParams = true, RooAbsReal* meanFunc =0, RooAbsReal* sigmaFunc =0){
+    void addGaus(const std::string& modelName, const std::string& pPFix, const std::string& varName,
+            bool addParams = true, RooAbsReal* meanFunc =0, RooAbsReal* sigmaFunc =0){
         auto pn =[&] (const std::string& v) ->std::string {return v+pPFix;};
         auto pv =[&] (const std::string& v) ->RooRealVar* {return w->var((v+pPFix).c_str());};
         if(addParams){
             if(meanFunc==0) addParam(pn("mean"  ),"[90,0,5000]");
             if(sigmaFunc==0) addParam(pn("sigma" ),"[8,0,1000]");;
         }
-        RooGaussian model(modelName.c_str(),modelName.c_str(),*w->var(varName.c_str()),  meanFunc  ? *meanFunc : *pv("mean"),sigmaFunc  ? *sigmaFunc : *pv("sigma"));
+        RooGaussian model(modelName.c_str(),modelName.c_str(),*w->var(varName.c_str()),
+                meanFunc  ? *meanFunc : *pv("mean"),sigmaFunc  ? *sigmaFunc : *pv("sigma"));
         w->import(model);
     }
 
@@ -233,8 +232,10 @@ protected:
 };
 class CBFunctionFitter : public FunctionFitter{
 public:
-    CBFunctionFitter(const TH1* iH, bool doExpo, const std::string postFix, const std::vector<std::string>&  plotVars = {"M"}) :
-        FunctionFitter(iH,postFix,plotVars){
+    CBFunctionFitter(const TH1* iH, const std::vector<TAxis*>& axs,
+            bool doExpo,
+            const std::string postFix,const std::vector<std::string>&  plotVars = {"M"}) :
+        FunctionFitter(iH,axs,postFix,plotVars){
         //        addCB(postFix,std::string("model")+postFix,vars[0],doExpo);
         const std::string modelName = std::string("model")+postFix;
         const std::string cbName = doExpo ?modelName +"P" : modelName;
@@ -244,7 +245,8 @@ public:
             addParam(pen("fE"),"[0.1,0,1]");
             const std::string expName =  modelName +"E";
             addExpo(expName,postFix,vars[0]);
-            RooAddPdf modelC(modelName.c_str(),modelName.c_str(),*w->pdf(expName.c_str()),*w->pdf(cbName.c_str()),*w->var(pen("fE").c_str()));
+            RooAddPdf modelC(modelName.c_str(),modelName.c_str(),
+                    *w->pdf(expName.c_str()),*w->pdf(cbName.c_str()),*w->var(pen("fE").c_str()));
             secondaryModelNames.push_back(expName);
             w->import(modelC);
         }
@@ -254,8 +256,10 @@ public:
 
 class CBFunctionFitter2DWithSepExpo : public FunctionFitter{
 public:
-    CBFunctionFitter2DWithSepExpo(const TH2* iH,bool doExpoX, const std::string postFix, const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
-        FunctionFitter(iH,postFix,plotVars){
+    CBFunctionFitter2DWithSepExpo(const TH2* iH, const std::vector<TAxis*>& axs,
+            bool doExpoX,
+            const std::string postFix,const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
+        FunctionFitter(iH,axs,postFix,plotVars){
 
         const std::string xPF = postFix+plotVars[0];
         const std::string yPF = postFix+plotVars[1];
@@ -284,17 +288,22 @@ public:
         addParam(pYN("maxS")     ,"[2.5,0,5]");
         addParam(pYN("mean_p1"  ),"[0,-5000,5000]");
         addParam(pYN("sigma_p1" ),"[0,-1000,1000]");
-        RooFormulaVar xSig  (pYN("xSig"  ).c_str(),"(@0-@1)/@2",RooArgList(*w->var((plotVars[0]).c_str()),*pXV("mean"),*pXV("sigma")));
+        RooFormulaVar xSig  (pYN("xSig"  ).c_str(),"(@0-@1)/@2",
+                RooArgList(*w->var((plotVars[0]).c_str()),*pXV("mean"),*pXV("sigma")));
         w->import(xSig  );
-        RooFormulaVar xSigC  (pYN("xSigC"  ).c_str(),"max(-1*@0,min(@1,@0))",RooArgList(*pYV("maxS"  ),*pYF("xSig"  )));
+        RooFormulaVar xSigC  (pYN("xSigC"  ).c_str(),"max(-1*@0,min(@1,@0))",
+                RooArgList(*pYV("maxS"  ),*pYF("xSig"  )));
         w->import(xSigC  );
-        RooFormulaVar meanYDepX  (pYN("meanYDepX"  ).c_str(),"@0*(1+@1*@2)"     ,RooArgList(*pYV("mean"  ),*pYV("mean_p1"  ),*pYF("xSigC"  )));
-        RooFormulaVar sigmaYDepX (pYN("sigmaYDepX" ).c_str(),"@0*(1+(@2>=0?0:@1*abs(@2)))",RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYF("xSigC"  )));
+        RooFormulaVar meanYDepX  (pYN("meanYDepX"  ).c_str(),"@0*(1+@1*@2)"     ,
+                RooArgList(*pYV("mean"  ),*pYV("mean_p1"  ),*pYF("xSigC"  )));
+        RooFormulaVar sigmaYDepX (pYN("sigmaYDepX" ).c_str(),"@0*(1+(@2>=0?0:@1*abs(@2)))",
+                RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYF("xSigC"  )));
         w->import(meanYDepX  );
         w->import(sigmaYDepX );
 
         addCB(mYNP,yPF,vars[1],false,pYF("meanYDepX"),pYF("sigmaYDepX"));
-        RooProdPdf condProdP(mNP.c_str(), (mXNP+"*"+mYNP).c_str(),*w->pdf(mXNP.c_str()),RooFit::Conditional(*w->pdf(mYNP.c_str()), *w->var(plotVars[1].c_str())) );
+        RooProdPdf condProdP(mNP.c_str(), (mXNP+"*"+mYNP).c_str(),*w->pdf(mXNP.c_str()),
+                RooFit::Conditional(*w->pdf(mYNP.c_str()), *w->var(plotVars[1].c_str())) );
         w->import(condProdP);
 
         if(doExpoX){
@@ -302,10 +311,12 @@ public:
             addExpo(mXNE,xPF,vars[0]);
             addGaus(mYNE,std::string("E")+yPF,vars[1],true);
 
-            RooProdPdf condProdE(mNE.c_str(), (mXNE+"*"+mYNE).c_str(),*w->pdf(mXNE.c_str()),*w->pdf(mYNE.c_str()));
+            RooProdPdf condProdE(mNE.c_str(), (mXNE+"*"+mYNE).c_str(),
+                    *w->pdf(mXNE.c_str()),*w->pdf(mYNE.c_str()));
             w->import(condProdE);
 
-            RooAddPdf model(mN.c_str(),mN.c_str(),*w->pdf(mNE.c_str()),*w->pdf(mNP.c_str()),*pXV("fE"));
+            RooAddPdf model(mN.c_str(),mN.c_str(),*w->pdf(mNE.c_str()),
+                    *w->pdf(mNP.c_str()),*pXV("fE"));
             w->import(model);
         }
     }
@@ -313,8 +324,10 @@ public:
 
 class CBFunctionFitter2D : public FunctionFitter{
 public:
-    CBFunctionFitter2D(const TH2* iH,bool doExpoX, const std::string postFix, const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
-        FunctionFitter(iH,postFix,plotVars){
+    CBFunctionFitter2D(const TH2* iH, const std::vector<TAxis*>& axs,
+            bool doExpoX,
+            const std::string postFix, const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
+        FunctionFitter(iH,axs,postFix,plotVars){
 
         const std::string xPF = postFix+plotVars[0];
         const std::string yPF = postFix+plotVars[1];
@@ -334,7 +347,8 @@ public:
         if(doExpoX){
             addParam(pXN("fE"),"[0.1,0,1]");
             addExpo(mXNE,xPF,vars[0]);;
-            RooAddPdf modelC(mNX.c_str(),mNX.c_str(),*w->pdf(mXNE.c_str()),*w->pdf(mXNP.c_str()),*pXV("fE"));
+            RooAddPdf modelC(mNX.c_str(),mNX.c_str(),
+                    *w->pdf(mXNE.c_str()),*w->pdf(mXNP.c_str()),*pXV("fE"));
             w->import(modelC);
         }
 
@@ -348,25 +362,23 @@ public:
         addParam(pYN("mean_p1"  ),"[0,-5000,5000]");
         addParam(pYN("sigma_p1" ),"[0,-1000,1000]");
         addParam(pYN("sigma_p2" ),"[0,-1,1]");
-        RooFormulaVar xSig  (pYN("xSig"  ).c_str(),"(@0-@1)/@2",RooArgList(*w->var((plotVars[0]).c_str()),*pXV("mean"),*pXV("sigma")));
+        RooFormulaVar xSig  (pYN("xSig"  ).c_str(),"(@0-@1)/@2",
+                RooArgList(*w->var((plotVars[0]).c_str()),*pXV("mean"),*pXV("sigma")));
         w->import(xSig  );
-        RooFormulaVar xSigC  (pYN("xSigC"  ).c_str(),"max(-1*@0,min(@1,@0))",RooArgList(*pYV("maxS"  ),*pYF("xSig"  )));
-//        w->import(xSigC  );
-
-//        RooFormulaVar xSigC  (pYN("xSigC"  ).c_str(),"max(-1*@0,min(@1,@2))",RooArgList(*pXV("alpha"  ),*pYF("xSig"  ),*pXV("alpha2"  )));
+        RooFormulaVar xSigC  (pYN("xSigC"  ).c_str(),"max(-1*@0,min(@1,@0))",
+                RooArgList(*pYV("maxS"  ),*pYF("xSig"  )));
         w->import(xSigC  );
 
 
-        RooFormulaVar meanYDepX  (pYN("meanYDepX"  ).c_str(),"@0*(1+@1*@2)"     ,RooArgList(*pYV("mean"  ),*pYV("mean_p1"  ),*pYF("xSigC"  )));
-        RooFormulaVar sigmaYDepX (pYN("sigmaYDepX" ).c_str(),"@0*(1+(@2>=0?0:@1*abs(@2)))",RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYF("xSigC"  )));
-//        RooFormulaVar sigmaYDepX (pYN("sigmaYDepX" ).c_str(),"@0*(1+@1*@2+@3*@2*@2)",RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYF("xSigC"  ),*pYV("sigma_p2" )));
-
-
+        RooFormulaVar meanYDepX  (pYN("meanYDepX"  ).c_str(),"@0*(1+@1*@2)",
+                RooArgList(*pYV("mean"  ),*pYV("mean_p1"  ),*pYF("xSigC"  )));
+        RooFormulaVar sigmaYDepX (pYN("sigmaYDepX" ).c_str(),"@0*(1+(@2>=0?0:@1*abs(@2)))",
+                RooArgList(*pYV("sigma" ),*pYV("sigma_p1" ),*pYF("xSigC"  )));
         w->import(meanYDepX  );
         w->import(sigmaYDepX );
-//        addGaus(mNY,yPF,vars[1],false,pYF("meanYDepX"),pYF("sigmaYDepX"));
         addCB(mNY,yPF,vars[1],false,pYF("meanYDepX"),pYF("sigmaYDepX"));
-        RooProdPdf condProdP(mN.c_str(), (mNX+"*"+mNY).c_str(),*w->pdf(mNX.c_str()),RooFit::Conditional(*w->pdf(mNY.c_str()), *w->var(plotVars[1].c_str())) );
+        RooProdPdf condProdP(mN.c_str(), (mNX+"*"+mNY).c_str(),*w->pdf(mNX.c_str()),
+                RooFit::Conditional(*w->pdf(mNY.c_str()), *w->var(plotVars[1].c_str())) );
         w->import(condProdP);
     }
 
@@ -375,8 +387,10 @@ public:
 
 class CBFunctionFitter2DNoCond : public FunctionFitter{
 public:
-    CBFunctionFitter2DNoCond(const TH2* iH,bool doExpoX, const std::string postFix, const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
-        FunctionFitter(iH,postFix,plotVars){
+    CBFunctionFitter2DNoCond(const TH2* iH, const std::vector<TAxis*>& axs,
+            bool doExpoX,
+            const std::string postFix,const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
+        FunctionFitter(iH,axs,postFix,plotVars){
 
         const std::string xPF = postFix+plotVars[0];
         const std::string yPF = postFix+plotVars[1];
@@ -396,12 +410,14 @@ public:
         if(doExpoX){
             addParam(pXN("fE"),"[0.1,0,1]");
             addExpo(mXNE,xPF,vars[0]);;
-            RooAddPdf modelC(mNX.c_str(),mNX.c_str(),*w->pdf(mXNE.c_str()),*w->pdf(mXNP.c_str()),*pXV("fE"));
+            RooAddPdf modelC(mNX.c_str(),mNX.c_str(),*w->pdf(mXNE.c_str()),
+                    *w->pdf(mXNP.c_str()),*pXV("fE"));
             w->import(modelC);
         }
 
         addCB(mNY,yPF,vars[1]);
-        RooProdPdf condProdP(mN.c_str(), (mNX+"*"+mNY).c_str(),RooArgSet(*w->pdf(mNX.c_str()), *w->pdf(mNY.c_str())) );
+        RooProdPdf condProdP(mN.c_str(), (mNX+"*"+mNY).c_str(),
+                RooArgSet(*w->pdf(mNX.c_str()), *w->pdf(mNY.c_str())) );
         w->import(condProdP);
     }
 
@@ -409,8 +425,10 @@ public:
 
 class CBFunctionFitter2DCondMVV : public FunctionFitter{
 public:
-    CBFunctionFitter2DCondMVV(const TH2* iH,bool doExpoX, const std::string postFix, const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
-        FunctionFitter(iH,postFix,plotVars){
+    CBFunctionFitter2DCondMVV(const TH2* iH, const std::vector<TAxis*>& axs,
+            bool doExpoX,
+            const std::string postFix,const std::vector<std::string>&  plotVars = {"MJJ","MHH"}) :
+        FunctionFitter(iH,axs,postFix,plotVars){
 
         const std::string xPF = postFix+plotVars[0];
         const std::string yPF = postFix+plotVars[1];
@@ -436,16 +454,17 @@ public:
         addParam(pXN("n2")       ,"[5,1,100]");
         addParam(pXN("maxS")     ,"[2.5,0,5]");
         addParam(pXN("mean_p1"  ),"[0,-5000,5000]");
-//        addParam(pXN("sigma_p1"  ),"[0,-5000,5000]");
-        RooFormulaVar ySig  (pXN("ySig"  ).c_str(),"(@0-@1)/@2",RooArgList(*w->var((plotVars[1]).c_str()),*pYV("mean"),*pYV("sigma")));
+
+        RooFormulaVar ySig  (pXN("ySig"  ).c_str(),"(@0-@1)/@2",
+                RooArgList(*w->var((plotVars[1]).c_str()),*pYV("mean"),*pYV("sigma")));
         w->import(ySig  );
-        RooFormulaVar ySigC  (pXN("ySigC"  ).c_str(),"max(-1*@0,min(@1,@0))",RooArgList(*pXV("maxS"  ),*pXF("ySig"  )));
+        RooFormulaVar ySigC  (pXN("ySigC"  ).c_str(),"max(-1*@0,min(@1,@0))",
+                RooArgList(*pXV("maxS"  ),*pXF("ySig"  )));
         w->import(ySigC  );
 
-        RooFormulaVar meanXDepY  (pXN("meanXDepY"  ).c_str(),"@0*(1+@1*@2)"     ,RooArgList(*pXV("mean"  ),*pXV("mean_p1"  ),*pXF("ySigC"  )));
-//        RooFormulaVar sigmaXDepY (pXN("sigmaXDepY" ).c_str(),"@0*(1+(@2>=0?0:@1*abs(@2)))",RooArgList(*pXV("sigma" ),*pXV("sigma_p1" ),*pXF("ySigC"  )));
+        RooFormulaVar meanXDepY  (pXN("meanXDepY"  ).c_str(),"@0*(1+@1*@2)",
+                RooArgList(*pXV("mean"  ),*pXV("mean_p1"  ),*pXF("ySigC"  )));
         w->import(meanXDepY  );
-//        w->import(sigmaXDepY  );
 
 
         addCB(mNX,xPF,vars[0],false,pXF("meanXDepY"));
@@ -453,10 +472,12 @@ public:
         if(doExpoX){
             addParam(pXN("fE"),"[0.1,0,1]");
             addExpo(mXNE,xPF,vars[0]);;
-            RooAddPdf modelC(mNX.c_str(),mNX.c_str(),*w->pdf(mXNE.c_str()),*w->pdf(mXNP.c_str()),*pXV("fE"));
+            RooAddPdf modelC(mNX.c_str(),mNX.c_str(),*w->pdf(mXNE.c_str()),*w->pdf(mXNP.c_str()),
+                    *pXV("fE"));
             w->import(modelC);
         }
-        RooProdPdf condProdP(mN.c_str(), (mNY+"*"+mNX).c_str(),*w->pdf(mNY.c_str()),RooFit::Conditional(*w->pdf(mNX.c_str()), *w->var(plotVars[0].c_str())) );
+        RooProdPdf condProdP(mN.c_str(), (mNY+"*"+mNX).c_str(),*w->pdf(mNY.c_str()),
+                RooFit::Conditional(*w->pdf(mNX.c_str()), *w->var(plotVars[0].c_str())) );
         w->import(condProdP);
     }
 
@@ -464,8 +485,9 @@ public:
 
 class ThreeGausExpoFunctionFitter : public FunctionFitter{
 public:
-    ThreeGausExpoFunctionFitter(const TH1* iH, const std::string postFix = "", const std::vector<std::string>&  plotVars = {"M"}) :
-        FunctionFitter(iH,postFix,plotVars){
+    ThreeGausExpoFunctionFitter(const TH1* iH,  const std::vector<TAxis*>& axs,
+            const std::string postFix = "",const std::vector<std::string>&  plotVars = {"M"}) :
+        FunctionFitter(iH,axs,postFix,plotVars){
         std::string model = std::string("model")+postFix;
         addParam("meanW","[90,80,110]");
         addParam("sigmaW","[8,2,15]");
@@ -478,11 +500,21 @@ public:
         addParam("slopeD","[-0.05,-0.2,-0.001]");
         addParam("fD","[.03,0,1]");
 
-        w->factory((std::string("RooExponential:") + model +"D("+vars[0]+",slopeD)").c_str());
-        w->factory((std::string("RooGaussian:") + model +"W("+vars[0]+",meanW,sigmaW)").c_str());
-        w->factory((std::string("RooGaussian:") + model +"Top("+vars[0]+",meanTop,sigmaTop)").c_str());
-        w->factory((std::string("RooGaussian:") + model +"Mix("+vars[0]+",meanMix,sigmaMix)").c_str());
-        RooAddPdf addModel(model.c_str(),model.c_str(),RooArgList(*w->pdf((model+"D").c_str()),*w->pdf((model+"W").c_str()),*w->pdf((model+"Mix").c_str()),*w->pdf((model+"Top").c_str())),
+        w->factory((
+                std::string("RooExponential:") + model +"D("+vars[0]+",slopeD)"
+                ).c_str());
+        w->factory((
+                std::string("RooGaussian:") + model +"W("+vars[0]+",meanW,sigmaW)"
+                ).c_str());
+        w->factory((
+                std::string("RooGaussian:") + model +"Top("+vars[0]+",meanTop,sigmaTop)"
+                ).c_str());
+        w->factory((
+                std::string("RooGaussian:") + model +"Mix("+vars[0]+",meanMix,sigmaMix)"
+                ).c_str());
+        RooAddPdf addModel(model.c_str(),model.c_str(),
+                RooArgList(*w->pdf((model+"D").c_str()),*w->pdf((model+"W").c_str()),
+                        *w->pdf((model+"Mix").c_str()),*w->pdf((model+"Top").c_str())),
                 RooArgList(*w->var("fD"),*w->var("fW"),*w->var("fMix")),true);
         w->import(addModel);
     }

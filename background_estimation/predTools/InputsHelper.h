@@ -1,5 +1,6 @@
 
-#if !defined(__CINT__) || defined(__MAKECINT__)
+#ifndef TREEANALYZER_BACKGROUNDESTIMATION_PREDTOOLS_INPUTSHELPER_H_
+#define TREEANALYZER_BACKGROUNDESTIMATION_PREDTOOLS_INPUTSHELPER_H_
 #include <string>
 #include <TSystem.h>
 
@@ -66,6 +67,122 @@ using namespace ASTypes;
 //    }
 //
 //}
+void fillTH2FromPDF(RooAbsPdf* pdf, RooRealVar* xV,RooRealVar* yV,TH2 * oH){
+    RooArgSet vars(*xV) ;
+    vars.add(*yV) ;
+    const int nXBins = oH->GetNbinsX();
+    const int nYBins = oH->GetNbinsY();
+
+    for( int iInX = 1; iInX <= nXBins; ++iInX ){
+      double centerX = oH->GetXaxis()->GetBinCenter(iInX);
+      double widthX = oH->GetXaxis()->GetBinWidth(iInX);
+      xV->setVal(centerX);
+      for( int iInY = 1; iInY <= nYBins; ++iInY ){
+        double centerY = oH->GetYaxis()->GetBinCenter(iInY);
+        double widthY = oH->GetYaxis()->GetBinWidth(iInY);
+        yV->setVal(centerY);
+        double val = pdf->getVal(vars);
+        oH->Fill(centerX,centerY,val*widthX*widthY);
+      }
+    }
+    oH->Scale(1.0/oH->Integral());
+}
+TH2* createTH2FromPDF(RooAbsPdf* pdf, RooRealVar* xV,RooRealVar* yV,
+        const std::string& name,const std::string& title,
+        const unsigned int nXBins, const double xMin, const double xMax,
+        const unsigned int nYBins, const double yMin, const double yMax){
+    TH2 * oH = new TH2F(name.c_str(),title.c_str(),nXBins,xMin,xMax,nYBins,yMin,yMax);
+    fillTH2FromPDF(pdf,xV,yV,oH);
+    return oH;
+}
+TH2* createTH2FromPDF(RooAbsPdf* pdf, RooRealVar* xV,RooRealVar* yV,
+        const std::string& name,const std::string& title,
+        const unsigned int nXBins, const double* xBins,
+        const unsigned int nYBins, const double yMin, const double yMax){
+    TH2 * oH = new TH2F(name.c_str(),title.c_str(),nXBins,xBins,nYBins,yMin,yMax);
+    fillTH2FromPDF(pdf,xV,yV,oH);
+    return oH;
+}
+TH2* createTH2FromPDF(RooAbsPdf* pdf, RooRealVar* xV,RooRealVar* yV,
+        const std::string& name,const std::string& title,
+        const unsigned int nXBins, const double xMin, const double xMax,
+        const unsigned int nYBins, const double* yBins){
+    TH2 * oH = new TH2F(name.c_str(),title.c_str(),nXBins,xMin,xMax,nYBins,yBins);
+    fillTH2FromPDF(pdf,xV,yV,oH);
+    return oH;
+}
+TH2* createTH2FromPDF(RooAbsPdf* pdf, RooRealVar* xV,RooRealVar* yV,
+        const std::string& name,const std::string& title,
+        const unsigned int nXBins, const double* xBins,
+        const unsigned int nYBins, const double* yBins){
+    TH2 * oH = new TH2F(name.c_str(),title.c_str(),nXBins,xBins,nYBins,yBins);
+    fillTH2FromPDF(pdf,xV,yV,oH);
+    return oH;
+}
+
+TH2* createTH2FromPDF(RooAbsPdf* pdf, RooRealVar* xV,RooRealVar* yV,
+        const std::string& name,const std::string& title,
+        const TAxis * xAxis,const TAxis * yAxis){
+    if(xAxis->GetXbins()->GetSize() == 0 && yAxis->GetXbins()->GetSize() == 0){
+        return  createTH2FromPDF(pdf,xV,yV,name,title,
+                xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax(),
+                yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax());
+    } else if(xAxis->GetXbins()->GetSize() == 0 && yAxis->GetXbins()->GetSize() != 0){
+        return  createTH2FromPDF(pdf,xV,yV,name,title,
+                xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax(),
+                yAxis->GetNbins(),yAxis->GetXbins()->GetArray());
+    } else if(xAxis->GetXbins()->GetSize() != 0 && yAxis->GetXbins()->GetSize() == 0){
+        return  createTH2FromPDF(pdf,xV,yV,name,title,
+                xAxis->GetNbins(),xAxis->GetXbins()->GetArray(),
+                yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax());
+    } else{
+        return  createTH2FromPDF(pdf,xV,yV,name,title,
+                xAxis->GetNbins(),xAxis->GetXbins()->GetArray(),
+                yAxis->GetNbins(),yAxis->GetXbins()->GetArray());
+    }
+}
+
+
+void fillTH1FromPDF(RooAbsPdf* pdf, RooRealVar* xV,TH1 * oH){
+    RooArgSet vars(*xV) ;
+    const int nXBins = oH->GetNbinsX();
+
+    for( int iInX = 1; iInX <= nXBins; ++iInX ){
+      double centerX = oH->GetXaxis()->GetBinCenter(iInX);
+      double widthX = oH->GetXaxis()->GetBinWidth(iInX);
+      xV->setVal(centerX);
+      double val = pdf->getVal(vars);
+      oH->Fill(centerX,val*widthX);
+    }
+    oH->Scale(1.0/oH->Integral());
+}
+TH1* createTH1FromPDF(RooAbsPdf* pdf, RooRealVar* xV,
+        const std::string& name,const std::string& title,
+        const unsigned int nXBins, const double xMin, const double xMax){
+    TH1 * oH = new TH1F(name.c_str(),title.c_str(),nXBins,xMin,xMax);
+    fillTH1FromPDF(pdf,xV,oH);
+    return oH;
+}
+TH1* createTH1FromPDF(RooAbsPdf* pdf, RooRealVar* xV,
+        const std::string& name,const std::string& title,
+        const unsigned int nXBins, const double* xBins){
+    TH1 * oH = new TH1F(name.c_str(),title.c_str(),nXBins,xBins);
+    fillTH1FromPDF(pdf,xV,oH);
+    return oH;
+}
+
+TH1* createTH1FromPDF(RooAbsPdf* pdf, RooRealVar* xV,
+        const std::string& name,const std::string& title,
+        const TAxis * xAxis){
+
+    return xAxis->GetXbins()->GetSize()
+            ? createTH1FromPDF(pdf,xV,name,title
+                    ,xAxis->GetNbins(),xAxis->GetXbins()->GetArray())
+            : createTH1FromPDF(pdf,xV,name,title
+                    ,xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax());
+}
+
+
 
 std::unique_ptr<TH1> proj(const TH2* inH, const std::string& newName, double min, double max, bool projX, bool noBounds){
     const TAxis * ax = projX ? inH->GetYaxis() : inH->GetXaxis();
@@ -108,33 +225,72 @@ double getNT(double pt){
     if(pt >= P+D) return R;
     return 0.5*(L+R + (L-R)*std::sin(S*TMath::PiOver2()*(pt-P)/D ));
 }
-TH2* cutHistogram(const TH2* inH, std::string name, double nMinX, double nMaxX, double nMinY, double nMaxY ){
-    double binWX = inH->GetXaxis()->GetBinWidth(1);
-    double binWY = inH->GetYaxis()->GetBinWidth(1);
-    auto checkBin =[&](double val, double width){
-        int binN = val/width;
-        if(binN*width != val){
-            std::cout <<  name <<" :: "<< nMinX <<" "<<nMaxX <<" "<<nMinY <<" "<<nMaxY <<" "<< val<<" "<<width <<" "<< binN <<" "<< binN*width<<std::endl;
-            throw std::invalid_argument("cutHistogram::cutHistogram() -> Bad parsing");
-        }
-    };
-    checkBin(nMinX,binWX);
-    checkBin(nMaxX,binWX);
-    checkBin(nMinY,binWY);
-    checkBin(nMaxY,binWY);
-    TH2 * outH = new TH2F(name.c_str(),TString(";")+inH->GetXaxis()->GetTitle()+";"+ inH->GetYaxis()->GetTitle() ,
-            (nMaxX-nMinX)/binWX,nMinX,nMaxX,(nMaxY-nMinY)/binWY,nMinY,nMaxY);
-
+TH2* cutHistogram(const TH2* inH, TH2* outH ){
     for(int iX =1; iX <= inH->GetNbinsX(); ++iX){
         const int outIX =outH->GetXaxis()->FindFixBin(inH->GetXaxis()->GetBinCenter(iX));
         if(outIX < 1 || outIX > outH->GetNbinsX() ) continue;
+        if(inH->GetXaxis()->GetBinWidth(iX)!=outH->GetXaxis()->GetBinWidth(outIX))
+            throw std::invalid_argument("cutHistogram::cutHistogram() -> Bad x-axis");
         for(int iY =1; iY <= inH->GetNbinsY(); ++iY){
             const int outIY = outH->GetYaxis()->FindFixBin(inH->GetYaxis()->GetBinCenter(iY));
             if(outIY < 1 || outIY > outH->GetNbinsY() ) continue;
+            if(inH->GetYaxis()->GetBinWidth(iY)!=outH->GetYaxis()->GetBinWidth(outIY))
+                throw std::invalid_argument("cutHistogram::cutHistogram() -> Bad y-axis");
             outH->SetBinContent(outIX,outIY,inH->GetBinContent(iX,iY));
             outH->SetBinError(outIX,outIY,inH->GetBinError(iX,iY));
         }
     }
     return outH;
+}
+
+TH2* cutHistogram(const TH2* inHist, const std::string& name, const std::string& title,
+        const unsigned int nXBins, const double xMin, const double xMax,
+        const unsigned int nYBins, const double yMin, const double yMax){
+    TH2 * oH = new TH2F(name.c_str(),title.c_str(),nXBins,xMin,xMax,nYBins,yMin,yMax);
+    cutHistogram(inHist,oH);
+    return oH;
+}
+TH2* cutHistogram(const TH2* inHist, const std::string& name, const std::string& title,
+        const unsigned int nXBins, const double* xBins,
+        const unsigned int nYBins, const double yMin, const double yMax){
+    TH2 * oH = new TH2F(name.c_str(),title.c_str(),nXBins,xBins,nYBins,yMin,yMax);
+    cutHistogram(inHist,oH);
+    return oH;
+}
+TH2* cutHistogram(const TH2* inHist, const std::string& name, const std::string& title,
+        const unsigned int nXBins, const double xMin, const double xMax,
+        const unsigned int nYBins, const double* yBins){
+    TH2 * oH = new TH2F(name.c_str(),title.c_str(),nXBins,xMin,xMax,nYBins,yBins);
+    cutHistogram(inHist,oH);
+    return oH;
+}
+TH2* cutHistogram(const TH2* inHist, const std::string& name, const std::string& title,
+        const unsigned int nXBins, const double* xBins,
+        const unsigned int nYBins, const double* yBins){
+    TH2 * oH = new TH2F(name.c_str(),title.c_str(),nXBins,xBins,nYBins,yBins);
+    cutHistogram(inHist,oH);
+    return oH;
+}
+
+
+TH2* cutHistogram(const TH2* inHist, const std::string& name, const std::string& title,
+        const TAxis * xAxis,const TAxis * yAxis){
+    if(xAxis->GetXbins()->GetSize() == 0 && yAxis->GetXbins()->GetSize() == 0){
+        return  cutHistogram(inHist,name,title,
+                xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax(),
+                yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax());
+    } else if(xAxis->GetXbins()->GetSize() == 0 && yAxis->GetXbins()->GetSize() != 0){
+        return  cutHistogram(inHist,name,title,
+                xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax(),
+                yAxis->GetNbins(),yAxis->GetXbins()->GetArray());
+    } else if(xAxis->GetXbins()->GetSize() != 0 && yAxis->GetXbins()->GetSize() == 0){
+        return  cutHistogram(inHist,name,title,
+                xAxis->GetNbins(),xAxis->GetXbins()->GetArray(),
+                yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax());
+    } else{
+        return  cutHistogram(inHist,name,title,
+                xAxis->GetNbins(),xAxis->GetXbins()->GetArray(),
+                yAxis->GetNbins(),yAxis->GetXbins()->GetArray());
+    }
 }
 #endif

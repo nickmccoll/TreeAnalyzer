@@ -16,12 +16,10 @@ public:
 
     CutHistos1DAnalyzer(std::string outFileName,std::string arguments )
 {
-
-
         ParParser p;
         auto name = p.addString("n","Histogram base names",true);
         auto inX  = p.addString("i" ,"file containing x template",true);
-        auto sX   = p.addString("s"  ,"Comma seperated list of systematics-> TH1Name:SystName",true);
+        auto sX   = p.addString("s" ,"Comma seperated list of systematics-> TH1Name:SystName",true);
         xb   = p.addVFloat("xb","x-variable binning",true);
         p.parse(arguments);
 
@@ -29,15 +27,12 @@ public:
         SystNames ySysts;
         getSystList(*sX,xSysts);
 
-        if(xb->size() != 3)                     throw std::invalid_argument("Analyzer::Analyzer() -> Bad parsing");
-
         fX =  TObjectHelper::getFile(*inX);
         makeHisto(*name,*name);
         for(const auto& syst: xSysts){
             makeHisto(*name +"_"+syst.second+"Up"  ,*name+"_"+syst.first+"Up"  );
             makeHisto(*name +"_"+syst.second+"Down",*name+"_"+syst.first+"Down");
         }
-
 
         plotter.write(outFileName);
         fX->Close();
@@ -47,7 +42,11 @@ public:
         TH1 * inX = 0;
         fX->GetObject(xName.c_str(),inX);
         if(inX == 0 ) return;
-        auto outH = new TH1F("temp","",(*xb)[0],(*xb)[1],(*xb)[2]);
+
+        auto outH = xb->size() != 3
+                ? new TH1F("temp","",(*xb).size() -1, &(*xb)[0])
+                : new TH1F("temp","",(*xb)[0],(*xb)[1],(*xb)[2]);
+
         for(int iX = 1; iX <= inX->GetNbinsX(); ++iX){
             int oBinX = outH->GetXaxis()->FindFixBin(inX->GetXaxis()->GetBinCenter(iX));
             if(oBinX < 1 || oBinX > outH->GetNbinsX() ) continue;
@@ -61,12 +60,17 @@ public:
 
     void getSystList(const std::string& inList, SystNames& outNames){
         outNames.clear();
-        std::vector<std::string> systList(std::sregex_token_iterator(inList.begin(), inList.end(), std::regex(","), -1), std::sregex_token_iterator());
+        std::vector<std::string> systList(
+                std::sregex_token_iterator(inList.begin(), inList.end(),
+                std::regex(","), -1), std::sregex_token_iterator());
         for(const auto& s :systList){
-            std::vector<std::string> names(std::sregex_token_iterator(s.begin(), s.end(), std::regex(":"), -1), std::sregex_token_iterator());
+            std::vector<std::string> names(
+                    std::sregex_token_iterator(s.begin(), s.end(), std::regex(":"), -1),
+                    std::sregex_token_iterator());
             if(names.size() != 2) {
                 std::cout << inList<<std::endl;
-                throw std::invalid_argument("mergeHistosToPDF2DAnalyzer::getSystList() -> Bad parsing");
+                throw std::invalid_argument(
+                        "mergeHistosToPDF2DAnalyzer::getSystList() -> Bad parsing");
             }
             outNames.emplace_back(names[0],names[1]);
         }

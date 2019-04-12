@@ -16,7 +16,8 @@ using namespace TAna;
 class make1DTemplateWithAdaKernAnalyzer : public BaseTreeAnalyzer {
 public:
 
-    make1DTemplateWithAdaKernAnalyzer(std::string fileName, std::string treeName,std::string arguments ) : BaseTreeAnalyzer(fileName,treeName,2)
+    make1DTemplateWithAdaKernAnalyzer(std::string fileName, std::string treeName,
+            std::string arguments ) : BaseTreeAnalyzer(fileName,treeName,2)
 {
 
 
@@ -35,7 +36,7 @@ public:
         kr       = p.addFloat("kr","KDE scaling: resolution");
         khs      = p.addFloat("khs","KDE h-scale factor",false,1.);
         khc      = p.addFloat("khc","KDE adaptive bandwidth cutoff",false,5);
-        kss      = p.addBool ("kss","KDE sigma scaling");
+//        kss      = p.addBool ("kss","KDE sigma scaling");
 
 
         hs       = p.addFloat("hs","Histogram scaling: x proportional scale",true);
@@ -50,19 +51,27 @@ public:
         auto asv       = p.addString("vsv","Average scale variable",true);
         p.parse(arguments);
 
-        if(b->size() != 3)                     throw std::invalid_argument("Analyzer::Analyzer() -> Bad parsing");
+        if(b->size() != 3) {
+            vAxis.reset(new TAxis((*b).size() -1, &(*b)[0]));
+        } else {
+            vAxis.reset(new TAxis((*b)[0],(*b)[1],(*b)[2]));
+        }
 
-        vAxis.reset(new TAxis((*b)[0],(*b)[1],(*b)[2]));
+
 
         tree.getTree()->SetBranchStatus("*",1);
-        sForm.reset(new TTreeFormula("sForm", TString::Format("%s*(%s)",w->c_str(),s->c_str()),tree.getTree()));
+        sForm.reset(new TTreeFormula("sForm",
+                TString::Format("%s*(%s)",w->c_str(),s->c_str()),tree.getTree()));
         if(*sw){
-            sFormUp.reset(new TTreeFormula("sFormUp", TString::Format("%s*(%s)",swUp->c_str(),s->c_str()),tree.getTree()));
-            sFormDown.reset(new TTreeFormula("sFormDown", TString::Format("%s*(%s)",swDown->c_str(),s->c_str()),tree.getTree()));
+            sFormUp.reset(new TTreeFormula("sFormUp",
+                    TString::Format("%s*(%s)",swUp->c_str(),s->c_str()),tree.getTree()));
+            sFormDown.reset(new TTreeFormula("sFormDown",
+                    TString::Format("%s*(%s)",swDown->c_str(),s->c_str()),tree.getTree()));
         }
         vForm.reset(new TTreeFormula("vForm", v->c_str(),tree.getTree()));
 
-        const int nEntries =  tree.getTree()->GetEntries(TString::Format("%s*(%s)",w->c_str(),s->c_str()));
+        const int nEntries =  tree.getTree()->GetEntries(
+                TString::Format("%s*(%s)",w->c_str(),s->c_str()));
 
         nominalX .reset(new std::vector<double>);
         upSX     .reset(new std::vector<double>);
@@ -82,7 +91,7 @@ public:
         systWeightDown   ->reserve(nEntries);
         }
 
-        needScaleFile = (kt->find('R') != std::string::npos)||(kt->find('r') != std::string::npos) ;
+        needScaleFile = (kt->find('R') != std::string::npos)||(kt->find('r') != std::string::npos);
         if( needScaleFile ){
             auto file =  TObjectHelper::getFile(*asf);
             avgScale.reset(new TObjectHelper::Hist1DContainer(file,*ash));
@@ -136,37 +145,58 @@ public:
         return true;
     }
 
-    const TH1* makeKDE(std::string name, const std::vector<double>& xvals, const std::vector<double>& weights){
+    const TH1* makeKDE(std::string name, const std::vector<double>& xvals,
+            const std::vector<double>& weights){
         const int   nBsX   = vAxis->GetNbins();
         const float minX   = vAxis->GetXmin();
         const float maxX   = vAxis->GetXmax();
+        const bool vBins   = vAxis->GetXbins()->GetSize();
+        const double* fBinX = vBins ? vAxis->GetXbins()->GetArray() : 0;
 
-        KDEProducer pdfProd(&xvals,&weights,*khs,nBsX,minX,maxX,*khc,*kss);
+        KDEProducer * pdfProd = vBins ? new KDEProducer(&xvals,&weights,*khs,nBsX,fBinX,*khc)
+            : new KDEProducer(&xvals,&weights,*khs,nBsX,minX,maxX,*khc);
 
-        plotter.add1D(pdfProd.getPDF(name+"_debug_KDE0","",nBsX,minX,maxX));
+        if(vBins)
+            plotter.add1D(pdfProd->getPDF(name+"_debug_KDE0","",nBsX,fBinX));
+        else
+            plotter.add1D(pdfProd->getPDF(name+"_debug_KDE0","",nBsX,minX,maxX));
 
-        TH1 * dataH = new TH1F((name+"_data").c_str(),"",nBsX,minX,maxX);
+        TH1 * dataH = vBins ? new TH1F((name+"_data").c_str(),"",nBsX,fBinX)
+            : new TH1F((name+"_data").c_str(),"",nBsX,minX,maxX);
+
         for(unsigned int iP = 0; iP < xvals.size(); ++iP){
             dataH->Fill((xvals)[iP],(weights)[iP]);
         }
         plotter.add1D(dataH);
 
-        auto * pilot = pdfProd.getPilotPDF();
+        auto * pilot = pdfProd->getPilotPDF();
         pilot->SetName((name + "_debug_pilotKDE").c_str());
         plotter.add1D(pilot);
 
-        plotter.add1D(pdfProd.getABandwidths(name+"_debug_bandwidths","",nBsX,minX,maxX));
-        plotter.add1D(pdfProd.getLocalVariance(name   +"_debug_var","",nBsX,minX,maxX)              ) ;
+        if(vBins){
+            plotter.add1D(pdfProd->getABandwidths(name+"_debug_bandwidths","",nBsX,fBinX));
+//            plotter.add1D(pdfProd->getLocalVariance(name   +"_debug_var","",nBsX,fBinX)) ;
+        } else{
+            plotter.add1D(pdfProd->getABandwidths(name+"_debug_bandwidths","",nBsX,minX,maxX));
+//            plotter.add1D(pdfProd->getLocalVariance(name   +"_debug_var","",nBsX,minX,maxX)) ;
+        }
 
-        TH1 * kde = pdfProd.getAPDF(name+"_KDE","",nBsX,minX,maxX);
-        kde->Scale(dataH->Integral()/kde->Integral());
 
+        TH1 * kde = vBins ?pdfProd->getAPDF(name+"_KDE","",nBsX,fBinX)
+                : pdfProd->getAPDF(name+"_KDE","",nBsX,minX,maxX);
+
+        kde->Scale(1.0/kde->Integral());
         plotter.add1D(kde);
+        delete pdfProd;
         return kde;
     }
 
     const TH1 * cloneAndWrite(const std::string& name, const TH1* iHist){
         TH1 * oHist = (TH2*)iHist->Clone(name.c_str());
+        for(int iB = 0; iB <= oHist->GetNbinsX(); ++iB){
+            oHist->SetBinContent(iB,iHist->GetBinWidth(iB)*iHist->GetBinContent(iB));
+            oHist->SetBinError(iB,iHist->GetBinWidth(iB)*iHist->GetBinError(iB));
+        }
         oHist->Scale(1.0/oHist->Integral());
         plotter.add1D(oHist);
         return oHist;
@@ -174,7 +204,7 @@ public:
 
     const TH1 * smoothTail(const std::string& name, const TH1* iHist){
         TH1 * oHistD = (TH1*)iHist->Clone((name +"_debugFitKDE") .c_str());
-        TH1 * oHist = (TH1*)iHist->Clone((name) .c_str());
+        TH1 * oHist = (TH1*)iHist->Clone((name+"_smoothKDE") .c_str());
         TF1 expo("expo","expo",*emin,*emax);
         oHistD->Fit(&expo,"","",*emin,*emax);
         for(int iX =1; iX <= oHist->GetNbinsX(); ++iX ){
@@ -199,6 +229,7 @@ public:
         TH1 * outH = (TH1*)iHist->Clone(name.c_str());
         for(int iB = 1; iB <= outH->GetNbinsX(); ++iB){
             outH->SetBinContent(iB,outH->GetBinContent(iB)*f(outH->GetBinCenter(iB)) );
+            outH->SetBinError(iB,outH->GetBinError(iB)*f(outH->GetBinCenter(iB)) );
         }
         outH->Scale(1.0/outH->Integral());
         plotter.add1D(outH);
@@ -210,27 +241,44 @@ public:
 
         if (kt->find('n') != std::string::npos) {
             auto kde = makeKDE(*name,*nominalX,*weight);
-            kde = *doS ? smoothTail(*name,kde) : cloneAndWrite(*name,kde);
-            transform(*name+"_PTDown" ,kde, [&](double x){return  1./(1. + *hs*x);})  ;
-            transform(*name+"_PTUp"   ,kde, [&](double x){return  (1. + *hs*x);})  ;
+            if(*doS){
+                cloneAndWrite(*name+"_noSmooth",kde);
+                kde = smoothTail(*name,kde);
+            }
+            auto nomHist = cloneAndWrite(*name,kde);
 
-            transform(*name+"_PT2Down" ,kde, [&](double x){return  1./(1. + *hs*x*x);})  ;
-            transform(*name+"_PT2Up"   ,kde, [&](double x){return  (1. + *hs*x*x);})  ;
+            transform(*name+"_PTDown" ,nomHist, [&](double x){return  1./(1. + *hs*x);})  ;
+            transform(*name+"_PTUp"   ,nomHist, [&](double x){return  (1. + *hs*x);})  ;
 
-            transform(*name+"_OPTDown",kde, [&](double x){return  1./(1. + *hr/x);})  ;
-            transform(*name+"_OPTUp"  ,kde, [&](double x){return  (1. + *hr/x);})  ;
+            transform(*name+"_PT2Down" ,nomHist, [&](double x){return  1./(1. + *hs*x*x);})  ;
+            transform(*name+"_PT2Up"   ,nomHist, [&](double x){return  (1. + *hs*x*x);})  ;
+
+            transform(*name+"_OPTDown",nomHist, [&](double x){return  1./(1. + *hr/x);})  ;
+            transform(*name+"_OPTUp"  ,nomHist, [&](double x){return  (1. + *hr/x);})  ;
 
             if(systWeightUp){
             auto kdeUp = makeKDE(*name+"_WeightUp",*nominalX,*systWeightUp);
-            kde = *doS ? smoothTail(*name+"_WeightUp",kdeUp) : cloneAndWrite(*name+"_WeightUp",kdeUp);
+            if(*doS){
+                cloneAndWrite(*name+"_WeightUp_noSmooth",kde);
+                kdeUp = smoothTail(*name+"_WeightUp",kdeUp);
+            }
+            cloneAndWrite(*name+"_WeightUp",kdeUp);
             auto kdeDown = makeKDE(*name+"_WeightDown",*nominalX,*systWeightDown);
-            kde = *doS ? smoothTail(*name+"_WeightDown",kdeDown) : cloneAndWrite(*name+"_WeightDown",kdeDown);
+            if(*doS){
+                cloneAndWrite(*name+"_WeightDown_noSmooth",kde);
+                kdeDown = smoothTail(*name+"_WeightDown",kdeDown);
+            }
+            cloneAndWrite(*name+"_WeightDown",kdeDown);
             }
         }
 
         auto justDoNominal = [&](std::string name, const std::vector<double>& xvals ){
             auto kde = makeKDE(name,xvals,*weight);
-            *doS ? smoothTail(name,kde) : cloneAndWrite(name,kde);
+            if(*doS) {
+                cloneAndWrite(name+"_noSmooth",kde);
+                kde = smoothTail(name,kde);
+            }
+            cloneAndWrite(name,kde);
         };
 
         if (kt->find('S') != std::string::npos) justDoNominal(*name+"_ScaleUp"  ,*upSX  );
@@ -256,7 +304,7 @@ public:
     std::shared_ptr<double>       ks;
     std::shared_ptr<double>       khs;
     std::shared_ptr<double>       khc;
-    std::shared_ptr<bool>         kss;
+//    std::shared_ptr<bool>         kss;
     std::shared_ptr<double>       hs;
     std::shared_ptr<double>       hr;
     std::shared_ptr<bool>         doS;

@@ -4,6 +4,8 @@
 #include "AnalysisSupport/Utilities/interface/ParParser.h"
 #include "AnalysisSupport/Utilities/interface/TObjectHelper.h"
 #include "HiggsAnalysis/CombinedLimit/interface/VerticalInterpHistPdf.h"
+#include "InputsHelper.h"
+
 #include <string.h>
 #include <regex>
 #include "RooHistPdf.h"
@@ -20,8 +22,9 @@ public:
 
 
 
-    const TH2* makeFitHist(const std::string& name,const TH2 * iHist, const std::vector<double>& coefList, const std::vector<std::unique_ptr<TH2F>>& upHists
-            , const std::vector<std::unique_ptr<TH2F>>& downHists) {
+    const TH2* makeFitHist(const std::string& name,const TH2 * iHist
+            ,const std::vector<double>& coefList, const std::vector<std::unique_ptr<TH2F>>& upHists
+            ,const std::vector<std::unique_ptr<TH2F>>& downHists) {
 
         const double _smoothRegion =1;
         auto smoothStepFunc =[&] (double x) ->double{
@@ -68,20 +71,22 @@ public:
         plotter.add2D(hd);
         return hd;
     }
-//    auto condTH2Up = conditional(*nT + "_"+systList[iS]+"_Up" + "__Debug_COND2D",hfit,&*h,&*upHists[iS],condOnX);
 
-    const TH2 * conditional(const std::string& name, const TH2* iHist,const TH2* nomHist,const TH2* systHist, const bool condOnX = true){
+    const TH2 * conditional(const std::string& name, const TH2* iHist,const TH2* nomHist,
+            const TH2* systHist, const bool condOnX = true){
         TH2 * oHist = (TH2*)iHist->Clone(name.c_str());
         if(condOnX){
             for(int iX = 1; iX <= oHist->GetNbinsX(); ++iX){
                 for(int iY =1; iY <= oHist->GetNbinsY(); ++iY ){
                     if(nomHist->GetBinContent(iX,iY)){
-                        const double sf = systHist->GetBinContent(iX,iY)/nomHist->GetBinContent(iX,iY);
+                        const double sf =
+                                systHist->GetBinContent(iX,iY)/nomHist->GetBinContent(iX,iY);
                         oHist->SetBinContent(iX,iY,oHist->GetBinContent(iX,iY)*sf);
                     }
                 }
                 double yIntegral = oHist->Integral(iX,iX,1,oHist->GetNbinsY());
-                if(!yIntegral) { throw std::invalid_argument("Analyzer::Analyzer() -> Making a conditional slice with no events!!!!!");}
+                if(!yIntegral) { throw std::invalid_argument(
+                        "Analyzer::Analyzer() -> Making a conditional slice with no events!!!!!");}
                 for(int iY =1; iY <= oHist->GetNbinsY(); ++iY ){
                     oHist->SetBinContent(iX,iY,oHist->GetBinContent(iX,iY)/yIntegral);
                 }
@@ -91,12 +96,14 @@ public:
                 for(int iX = 1; iX <= oHist->GetNbinsX(); ++iX){
 
                     if(nomHist->GetBinContent(iX,iY)){
-                        const double sf = systHist->GetBinContent(iX,iY)/nomHist->GetBinContent(iX,iY);
+                        const double sf =
+                                systHist->GetBinContent(iX,iY)/nomHist->GetBinContent(iX,iY);
                         oHist->SetBinContent(iX,iY,oHist->GetBinContent(iX,iY)*sf);
                     }
                 }
                 double xIntegral = oHist->Integral(1,oHist->GetNbinsX(),iY,iY);
-                if(!xIntegral) { throw std::invalid_argument("Analyzer::Analyzer() -> Making a conditional slice with no events!!!!!");}
+                if(!xIntegral) { throw std::invalid_argument(
+                        "Analyzer::Analyzer() -> Making a conditional slice with no events!!!!!");}
                 for(int iX =1; iX <= oHist->GetNbinsX(); ++iX ){
                     oHist->SetBinContent(iX,iY,oHist->GetBinContent(iX,iY)/xIntegral);
                 }
@@ -106,10 +113,17 @@ public:
         return oHist;
     }
 
-    const TH1* conditionalOn(const std::string& name, const TH2* iHist,const TH2* nomHist,const TH2* systHist, const bool condOnX = true){
-        TH1* oH1 = condOnX ?iHist->ProjectionX(name.c_str(),1,iHist->GetNbinsY())   :iHist->ProjectionY(name.c_str(),1,iHist->GetNbinsX());
-        TH1* sH1 = condOnX ?systHist->ProjectionX((name +"_syst").c_str(),1,iHist->GetNbinsY()):systHist->ProjectionY((name +"_syst").c_str(),1,iHist->GetNbinsX());
-        TH1* nH1 = condOnX ?nomHist->ProjectionX((name +"_nom").c_str(),1,iHist->GetNbinsY()) :nomHist->ProjectionY((name +"_nom").c_str(),1,iHist->GetNbinsX());
+    const TH1* conditionalOn(const std::string& name, const TH2* iHist,const TH2* nomHist,
+            const TH2* systHist, const bool condOnX = true){
+        TH1* oH1 = condOnX
+                ?iHist->ProjectionX(name.c_str(),1,iHist->GetNbinsY())
+                :iHist->ProjectionY(name.c_str(),1,iHist->GetNbinsX());
+        TH1* sH1 = condOnX
+                ?systHist->ProjectionX((name +"_syst").c_str(),1,iHist->GetNbinsY())
+                :systHist->ProjectionY((name +"_syst").c_str(),1,iHist->GetNbinsX());
+        TH1* nH1 = condOnX
+                ?nomHist->ProjectionX((name +"_nom").c_str(),1,iHist->GetNbinsY())
+                :nomHist->ProjectionY((name +"_nom").c_str(),1,iHist->GetNbinsX());
         for(int iX = 1; iX <= oH1->GetNbinsX(); ++iX){
             if(nH1->GetBinContent(iX)){
                 const double sf = sH1->GetBinContent(iX)/nH1->GetBinContent(iX);
@@ -122,14 +136,15 @@ public:
         return oH1;
     }
 
-    const TH2* mergeConditionalHistos(const std::string& name, const TH2* iConHist, const TH1* iConOnHist, const bool condOnX = true){
+    const TH2* mergeConditionalHistos(const std::string& name, const TH2* iConHist,
+            const TH1* iConOnHist, const bool condOnX = true){
         TH2 * oHist = (TH2*)iConHist->Clone(name.c_str());
         if(condOnX){
             for(int iX = 0; iX <= oHist->GetNbinsX(); ++iX){
                 const double condOnNorm = iConOnHist->GetBinContent(iX);
                 const double originalNorm = iConHist->Integral(iX,iX,0,-1);
                 for(int iY =1; iY <= oHist->GetNbinsY(); ++iY ){
-                    oHist->SetBinContent(iX,iY,    oHist->GetBinContent(iX,iY) *condOnNorm/originalNorm );
+                    oHist->SetBinContent(iX,iY,oHist->GetBinContent(iX,iY)*condOnNorm/originalNorm);
                 }
             }
         } else {
@@ -137,7 +152,7 @@ public:
                 const double condOnNorm = iConOnHist->GetBinContent(iY);
                 const double originalNorm = iConHist->Integral(0,-1,iY,iY);
                 for(int iX = 0; iX <= oHist->GetNbinsX(); ++iX){
-                    oHist->SetBinContent(iX,iY,    oHist->GetBinContent(iX,iY) *condOnNorm/originalNorm );
+                    oHist->SetBinContent(iX,iY,oHist->GetBinContent(iX,iY)*condOnNorm/originalNorm);
                 }
             }
         }
@@ -154,10 +169,13 @@ public:
         auto fTN = p.addString("fT","template file name",true);
         auto nT  = p.addString("nT","template histogram base name",true);
         auto s   = p.addString("s" ,"Comma separated list of systematics",true);
-        auto sA  = p.addString("sA" ,"Comma separated list of systematics to be included in te output but not fit to.",false,"");
+        auto sA  = p.addString("sA",
+                "Comma separated list of systematics to be included in the output but not fit to."
+                ,false,"");
         auto fHN = p.addString("fH","Fitting histogram file name",true);
         auto nH  = p.addString("nH","fitting histogram name",true);
-        auto xCy  = p.addBool("xCy","True if x is conditional on y (P(x|y)), otherwise assume P(y|x)");
+        auto xCy  = p.addBool("xCy",
+                "True if x is conditional on y (P(x|y)), otherwise assume P(y|x)");
         p.parse(arguments);
 
         std::vector<std::string> systList = getList(*s);
@@ -172,6 +190,12 @@ public:
 
         auto * xAxis = h->GetXaxis();
         auto * yAxis = h->GetYaxis();
+        auto xBins =  xAxis->GetXbins()->GetSize()
+                ? RooBinning(xAxis->GetNbins(),xAxis->GetXbins()->GetArray())
+                : RooBinning(xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax());
+        auto yBins =  yAxis->GetXbins()->GetSize()
+                ? RooBinning(yAxis->GetNbins(),yAxis->GetXbins()->GetArray())
+                : RooBinning(yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax());
 
 
         RooWorkspace w("w",false);
@@ -179,8 +203,8 @@ public:
         RooArgList varlist;
         w.factory("x[0,10000]");
         w.factory("y[0,10000]");
-        w.var("x")->setBinning(RooBinning (xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax()));
-        w.var("y")->setBinning(RooBinning (yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax()));
+        w.var("x")->setBinning(xBins);
+        w.var("y")->setBinning(yBins);
         varset.add(*w.var("x"));
         varset.add(*w.var("y"));
         varlist.add(*w.var("x"));
@@ -204,8 +228,10 @@ public:
             for(const auto& var : systVar){
                 auto * histV = &(var== "Up" ? upHists : downHists);
                 histV->emplace_back(TObjectHelper::getObject<TH2F>(fT,*nT+"_"+syst+var));
-                RooDataHist rSH((syst+var+"Hist").c_str(),(syst+var+"Hist").c_str(),varlist,&*histV->back());
-                RooHistPdf Spdf((syst+var+"PDF").c_str(),(syst+var+"PDF").c_str(),varset,rSH,0);
+                RooDataHist rSH((syst+var+"Hist").c_str(),(syst+var+"Hist").c_str()
+                        ,varlist,&*histV->back());
+                RooHistPdf Spdf((syst+var+"PDF").c_str(),(syst+var+"PDF").c_str()
+                        ,varset,rSH,0);
                 w.import(rSH);
                 w.import(Spdf);
                 pdfList.add(*w.pdf((syst+var+"PDF").c_str()));
@@ -213,7 +239,8 @@ public:
 
         }
 
-        FastVerticalInterpHistPdf2D interpPDF("interpPDF","interpPDF",*w.var("x"),*w.var("y"),false,pdfList,coeffList);
+        FastVerticalInterpHistPdf2D interpPDF("interpPDF","interpPDF"
+                ,*w.var("x"),*w.var("y"),false,pdfList,coeffList);
         w.import(interpPDF);
 
         auto inH =TObjectHelper::getObject<TH2F>(fH,*nH);
@@ -221,9 +248,10 @@ public:
         w.import(fitDataHist);
         w.pdf("interpPDF")->fitTo(*w.data((*nH+"DH").c_str()),RooFit::SumW2Error(kTRUE));
 
-        auto fitHist = w.pdf("interpPDF")->createHistogram((std::string("debug_") + *nT ).c_str(),
-                *w.var("x"),RooFit::Binning(RooBinning (xAxis->GetNbins(),xAxis->GetXmin(),xAxis->GetXmax())),
-                RooFit::YVar(*w.var("y"),RooFit::Binning(RooBinning (yAxis->GetNbins(),yAxis->GetXmin(),yAxis->GetXmax())))) ;
+        TH2 * fitHist =  createTH2FromPDF(w.pdf("interpPDF"),w.var("x"),w.var("y"),
+                std::string("debug_") + *nT,"",
+                xAxis,yAxis);
+
         for(const auto& syst : systList){
             std::cout << syst <<" -> "<< w.var(syst.c_str())->getVal()<<std::endl;
         }
@@ -240,16 +268,25 @@ public:
             const bool condOnX = !*xCy;
             const bool isCondOnSyst = (condOnX == isXSyst);
             if(isCondOnSyst){
-                auto condOnTH1Up =  conditionalOn(*nT + "_"+systList[iS]+"Up" + "_Debug_1D", hfit,&*h,&*upHists[iS],condOnX);
-                auto condOnTH1Down =  conditionalOn(*nT + "_"+systList[iS]+"Down" + "_Debug_1D", hfit,&*h,&*downHists[iS],condOnX);
-                mergeConditionalHistos(*nT + "_"+systList[iS]+"Up",hfit,condOnTH1Up,condOnX);
-                mergeConditionalHistos(*nT + "_"+systList[iS]+"Down",hfit,condOnTH1Down,condOnX);
+                auto condOnTH1Up =  conditionalOn(*nT + "_"+systList[iS]+"Up" + "_Debug_1D",
+                        hfit,&*h,&*upHists[iS],condOnX);
+                auto condOnTH1Down =  conditionalOn(*nT + "_"+systList[iS]+"Down" + "_Debug_1D",
+                        hfit,&*h,&*downHists[iS],condOnX);
+                mergeConditionalHistos(*nT + "_"+systList[iS]+"Up",
+                        hfit,condOnTH1Up,condOnX);
+                mergeConditionalHistos(*nT + "_"+systList[iS]+"Down",
+                        hfit,condOnTH1Down,condOnX);
             } else {
-                auto condOnTH1Nom =  conditionalOn(*nT + "_"+systList[iS]+"_Nom" + "_Debug_1D", hfit,&*h,&*h,condOnX);
-                auto condTH2Up = conditional(*nT + "_"+systList[iS]+"Up" + "__Debug_COND2D",hfit,&*h,&*upHists[iS],condOnX);
-                auto condTH2Down = conditional(*nT + "_"+systList[iS]+"Down" + "__Debug_COND2D",hfit,&*h,&*downHists[iS],condOnX);
-                mergeConditionalHistos(*nT + "_"+systList[iS]+"Up",condTH2Up,condOnTH1Nom,condOnX);
-                mergeConditionalHistos(*nT + "_"+systList[iS]+"Down",condTH2Down,condOnTH1Nom,condOnX);
+                auto condOnTH1Nom =  conditionalOn(*nT + "_"+systList[iS]+"_Nom" + "_Debug_1D",
+                        hfit,&*h,&*h,condOnX);
+                auto condTH2Up = conditional(*nT + "_"+systList[iS]+"Up" + "__Debug_COND2D",
+                        hfit,&*h,&*upHists[iS],condOnX);
+                auto condTH2Down = conditional(*nT + "_"+systList[iS]+"Down" + "__Debug_COND2D",
+                        hfit,&*h,&*downHists[iS],condOnX);
+                mergeConditionalHistos(*nT+"_"+systList[iS]+"Up",
+                        condTH2Up,condOnTH1Nom,condOnX);
+                mergeConditionalHistos(*nT+"_"+systList[iS]+"Down",
+                        condTH2Down,condOnTH1Nom,condOnX);
             }
         }
 
@@ -267,16 +304,25 @@ public:
             const bool condOnX = !*xCy;
             const bool isCondOnSyst = (condOnX == isXSyst);
             if(isCondOnSyst){
-                auto condOnTH1Up =  conditionalOn(*nT + "_"+extraSysts[iS]+"Up" + "_Debug_1D", hfit,&*h,&*upExtraHists[iS],condOnX);
-                auto condOnTH1Down =  conditionalOn(*nT + "_"+extraSysts[iS]+"Down" + "_Debug_1D", hfit,&*h,&*downExtraHists[iS],condOnX);
-                mergeConditionalHistos(*nT + "_"+extraSysts[iS]+"Up",hfit,condOnTH1Up,condOnX);
-                mergeConditionalHistos(*nT + "_"+extraSysts[iS]+"Down",hfit,condOnTH1Down,condOnX);
+                auto condOnTH1Up =  conditionalOn(*nT + "_"+extraSysts[iS]+"Up" + "_Debug_1D",
+                        hfit,&*h,&*upExtraHists[iS],condOnX);
+                auto condOnTH1Down =  conditionalOn(*nT + "_"+extraSysts[iS]+"Down" + "_Debug_1D",
+                        hfit,&*h,&*downExtraHists[iS],condOnX);
+                mergeConditionalHistos(*nT + "_"+extraSysts[iS]+"Up",
+                        hfit,condOnTH1Up,condOnX);
+                mergeConditionalHistos(*nT + "_"+extraSysts[iS]+"Down",
+                        hfit,condOnTH1Down,condOnX);
             } else {
-                auto condOnTH1Nom =  conditionalOn(*nT + "_"+extraSysts[iS]+"_Nom" + "_Debug_1D", hfit,&*h,&*h,condOnX);
-                auto condTH2Up = conditional(*nT + "_"+extraSysts[iS]+"Up" + "__Debug_COND2D",hfit,&*h,&*upExtraHists[iS],condOnX);
-                auto condTH2Down = conditional(*nT + "_"+extraSysts[iS]+"Down" + "__Debug_COND2D",hfit,&*h,&*downExtraHists[iS],condOnX);
-                mergeConditionalHistos(*nT + "_"+extraSysts[iS]+"Up",condTH2Up,condOnTH1Nom,condOnX);
-                mergeConditionalHistos(*nT + "_"+extraSysts[iS]+"Down",condTH2Down,condOnTH1Nom,condOnX);
+                auto condOnTH1Nom =  conditionalOn(*nT + "_"+extraSysts[iS]+"_Nom" + "_Debug_1D",
+                        hfit,&*h,&*h,condOnX);
+                auto condTH2Up = conditional(*nT + "_"+extraSysts[iS]+"Up" + "__Debug_COND2D",
+                        hfit,&*h,&*upExtraHists[iS],condOnX);
+                auto condTH2Down = conditional(*nT + "_"+extraSysts[iS]+"Down" + "__Debug_COND2D",
+                        hfit,&*h,&*downExtraHists[iS],condOnX);
+                mergeConditionalHistos(*nT + "_"+extraSysts[iS]+"Up",
+                        condTH2Up,condOnTH1Nom,condOnX);
+                mergeConditionalHistos(*nT + "_"+extraSysts[iS]+"Down",
+                        condTH2Down,condOnTH1Nom,condOnX);
             }
         }
 
@@ -293,7 +339,9 @@ public:
 
 
     std::vector<std::string> getList(const std::string& inList){
-        std::vector<std::string> systList(std::sregex_token_iterator(inList.begin(), inList.end(), std::regex(","), -1), std::sregex_token_iterator());
+        std::vector<std::string> systList(
+                std::sregex_token_iterator(inList.begin(), inList.end(), std::regex(","), -1),
+                std::sregex_token_iterator());
         return systList;
     }
 

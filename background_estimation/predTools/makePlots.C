@@ -27,6 +27,26 @@ struct PlotVar{
          varName(varName),varTitle(varTitle),varSel(varSel),nBins(nBins),min(min), max(max),
          varYName(varYName),varYTitle(varYTitle),varYSel(varYSel),nBinsY(nBinsY),minY(minY), maxY(maxY){}
 
+
+    PlotVar(std::string varName, std::string varTitle, std::string varSel,   const std::vector<double>& binsX,
+            std::string varYName, std::string varYTitle, std::string varYSel,  int nBinsY, double minY, double maxY
+            ) :
+         varName(varName),varTitle(varTitle),varSel(varSel), bins(binsX),
+         varYName(varYName),varYTitle(varYTitle),varYSel(varYSel),nBinsY(nBinsY),minY(minY), maxY(maxY){}
+
+    PlotVar(std::string varName, std::string varTitle, std::string varSel,   int nBins, double min, double max,
+            std::string varYName, std::string varYTitle, std::string varYSel, const std::vector<double>& binsY
+            ) :
+                varName(varName),varTitle(varTitle),varSel(varSel),nBins(nBins),min(min), max(max),
+         varYName(varYName),varYTitle(varYTitle),varYSel(varYSel),binsY(binsY){}
+
+    PlotVar(std::string varName, std::string varTitle, std::string varSel,   const std::vector<double>& binsX,
+            std::string varYName, std::string varYTitle, std::string varYSel,  const std::vector<double>& binsY
+            ) :
+         varName(varName),varTitle(varTitle),varSel(varSel), bins(binsX),
+         varYName(varYName),varYTitle(varYTitle),varYSel(varYSel),binsY(binsY){}
+
+
     std::string varName = "";
     std::string varTitle = "";
     std::string varSel  = "";
@@ -120,13 +140,13 @@ public:
                             plotter.getOrMake2DPre(thisPre.c_str(), varString,  vars[iV].varTitle.c_str(), vars[iV].nBins, vars[iV].min, vars[iV].max, vars[iV].nBinsY, vars[iV].minY, vars[iV].maxY   )
                             ->Fill(v,vy,bw*s*sel);
                         } else if(vars[iV].nBins >= 0 && vars[iV].nBinsY < 0){
-                            plotter.getOrMake2DPre(thisPre.c_str(), varString,  vars[iV].varTitle.c_str(), vars[iV].nBins, vars[iV].min, vars[iV].max, vars[iV].binsY.size(),&vars[iV].binsY[0]  )
+                            plotter.getOrMake2DPre(thisPre.c_str(), varString,  vars[iV].varTitle.c_str(), vars[iV].nBins, vars[iV].min, vars[iV].max, vars[iV].binsY.size()-1,&vars[iV].binsY[0]  )
                             ->Fill(v,vy,bw*s*sel);
                         } else if(vars[iV].nBins < 0 && vars[iV].nBinsY >= 0){
-                            plotter.getOrMake2DPre(thisPre.c_str(), varString,  vars[iV].varTitle.c_str(), vars[iV].bins.size(),&vars[iV].bins[0], vars[iV].nBinsY, vars[iV].minY, vars[iV].maxY )
+                            plotter.getOrMake2DPre(thisPre.c_str(), varString,  vars[iV].varTitle.c_str(), vars[iV].bins.size()-1,&vars[iV].bins[0], vars[iV].nBinsY, vars[iV].minY, vars[iV].maxY )
                             ->Fill(v,vy,bw*s*sel);
                         } else {
-                            plotter.getOrMake2DPre(thisPre.c_str(), varString,  vars[iV].varTitle.c_str(), vars[iV].bins.size(),&vars[iV].bins[0], vars[iV].binsY.size(),&vars[iV].binsY[0] )
+                            plotter.getOrMake2DPre(thisPre.c_str(), varString,  vars[iV].varTitle.c_str(), vars[iV].bins.size()-1,&vars[iV].bins[0], vars[iV].binsY.size()-1,&vars[iV].binsY[0] )
                             ->Fill(v,vy,bw*s*sel);
                         }
                     } else {
@@ -134,7 +154,7 @@ public:
                             plotter.getOrMake1DPre(thisPre.c_str(), vars[iV].varName.c_str(),  vars[iV].varTitle.c_str(), vars[iV].nBins, vars[iV].min, vars[iV].max   )
                             ->Fill(v,bw*s*sel);
                         else
-                            plotter.getOrMake1DPre(thisPre.c_str(), vars[iV].varName.c_str(),  vars[iV].varTitle.c_str(), vars[iV].bins.size(),&vars[iV].bins[0]   )
+                            plotter.getOrMake1DPre(thisPre.c_str(), vars[iV].varName.c_str(),  vars[iV].varTitle.c_str(), vars[iV].bins.size()-1,&vars[iV].bins[0]   )
                             ->Fill(v,bw*s*sel);
                     }
                 }
