@@ -721,14 +721,14 @@ void go(int modelToDo, std::string treeDir) {
         std::string name = bkgSels[BKG_MW];
         std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_MW].cut;
-//        makeFittingDistributions(name,filename,treeArea,
-//                genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
-//        makeFittingDistributions(name,filename,treeArea,
-//                genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
-//
-//        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut);
-//        cutMVVTemplate(name,filename);
-//        fitBackgroundShapesMVV(name,filename);
+        makeFittingDistributions(name,filename,treeArea,
+                genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
+        makeFittingDistributions(name,filename,treeArea,
+                genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
+
+        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut);
+        cutMVVTemplate(name,filename);
+        fitBackgroundShapesMVV(name,filename);
 
         makeResWMJJShapes1stIt(name,filename);
         makeResWMJJShapes2ndIt(name,filename);
@@ -740,14 +740,14 @@ void go(int modelToDo, std::string treeDir) {
         std::string name = bkgSels[BKG_MT];
         std::string treeArea = treeDir + "/betrees_" +name+".root";
         std::string genSel = bkgSels[BKG_MT].cut;
-//        makeFittingDistributions(name,filename,treeArea,
-//                genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
-//        makeFittingDistributions(name,filename,treeArea,
-//                genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
-//
-//        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut);
-//        cutMVVTemplate(name,filename);
-//        fitBackgroundShapesMVV(name,filename);
+        makeFittingDistributions(name,filename,treeArea,
+                genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
+        makeFittingDistributions(name,filename,treeArea,
+                genSel+ "&&"+ hhInclRange.cut+"&&"+hbbInclRange.cut,true);
+
+        makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut);
+        cutMVVTemplate(name,filename);
+        fitBackgroundShapesMVV(name,filename);
 
         makeResTopMJJShapes1stIt(name,filename);
         makeResTopMJJShapes2ndIt(name,filename);
