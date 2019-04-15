@@ -252,12 +252,12 @@ std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,175
 
 enum SIGNALS  {RADION,BLKGRAV};
 std::vector<CutStr > signals = {
-        CutStr("radHH"     ,"radion_hh_bbinc","radion"),
-        CutStr("blkHH"     ,"blkgrv_hh_bbinc","bulk graviton")
+        CutStr("radHH"     ,"Radion_hh_hVVhbb_inclusive_narrow","radion"),
+        CutStr("blkHH"     ,"BulkGravTohhTohVVhbb_narrow","bulk graviton")
 };
 std::vector<std::vector<int> > signalMassBins = {
         {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
-        {600 ,650 ,700 ,800 ,900 ,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500}
+        {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500}
 };
 
 //Constants for models when building limits

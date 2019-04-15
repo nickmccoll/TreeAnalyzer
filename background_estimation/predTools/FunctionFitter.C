@@ -114,20 +114,25 @@ public:
     TCanvas* projection(const std::string& name, double& chi2){
         std::string model = std::string("model")+postFix;
         std::string data  = std::string("data");
-        auto frame = w->var(vars[0].c_str())->frame();
-        w->data(data.c_str())->plotOn(frame);
-//        w->pdf(model.c_str())->fixAddCoefRange("coef");
-        w->pdf(model.c_str())->plotOn(frame, RooFit::NormRange("fit"));
-        if(secondaryModelNames.size())
-            w->pdf(model.c_str())->plotOn(frame, RooFit::NormRange("fit"),
-                    RooFit::Components(secondaryModelNames[0].c_str()), RooFit::LineStyle(kDashed));
+
+        auto* dataH =  w->data(data.c_str())->
+                createHistogram((name+"_data").c_str(),*w->var(vars[0].c_str()));
+        auto * pdf = createTH1FromPDF( w->pdf(model.c_str()),
+                w->var(vars[0].c_str()),model.c_str(),"",xAxis.get());
+
+        pdf->Scale(dataH->Integral()/pdf->Integral());
+//        if(secondaryModelNames.size())
+//            w->pdf(model.c_str())->plotOn(frame, RooFit::NormRange("fit"),RooFit::Binning(xBins),
+//                 RooFit::Components(secondaryModelNames[0].c_str()), RooFit::LineStyle(kDashed));
         TCanvas* can = new TCanvas(name.c_str());
         can->cd();
-        frame->Draw();
-        frame->GetYaxis()->SetTitle(name.c_str());
-        frame->GetXaxis()->SetTitle(vars[0].c_str());
-        frame->SetTitle("");
-        chi2 = frame->chiSquare();
+        dataH->Draw();
+        dataH->GetYaxis()->SetTitle(name.c_str());
+        dataH->GetXaxis()->SetTitle(vars[0].c_str());
+        dataH->SetTitle("");
+        pdf->SetLineColor(kBlue);
+        pdf->Draw("SAME HIST");
+//        chi2 = frame->chiSquare();
         return can;
     }
     TCanvas* projection2D(const std::string& name, double& chi2){
@@ -156,6 +161,7 @@ public:
     TH1* pdf2D(const std::string& name){
         std::string model = std::string("model")+postFix;
 //        w->pdf(model.c_str())->fixAddCoefRange("coef");
+
         auto * hist = createTH2FromPDF( w->pdf(model.c_str()),
                 w->var(vars[0].c_str()),w->var(vars[1].c_str()),name.c_str(),"",
                 xAxis.get(),yAxis.get());
@@ -572,8 +578,9 @@ public:
                 graphs.back()->SetName(p.c_str());
             }
         }
+
         hists.emplace_back(fitter->data2D(std::string("data_")+name));
-        hists.emplace_back(fitter->pdf2D(std::string("pdf_")+name));
+        hists.emplace_back(fitter->pdf2D(std::string("pdf_")+name+"__"+MOD_MJ+"_"+MOD_MR));
 
         for(unsigned int iV = 0; iV< fitter->params.size(); ++iV ){
             double val = fitter->w->var(fitter->params[iV].c_str())->getVal();

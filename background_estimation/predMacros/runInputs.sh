@@ -10,12 +10,12 @@ RCMD="root -b -q '${macroLoc}/makeSignalInputs.C+(4,0)'"
 eval $RCMD
 RCMD="root -b -q '${macroLoc}/makeSignalInputs.C+(0,0)' &"
 eval $RCMD
-RCMD="root -b -q '${macroLoc}/makeSignalInputs.C+(3,0)' &"
-eval $RCMD
+# RCMD="root -b -q '${macroLoc}/makeSignalInputs.C+(2,0)' &"
+# eval $RCMD
 RCMD="root -b -q '${macroLoc}/makeSignalInputs.C+(0,1)' &"
 eval $RCMD
-RCMD="root -b -q '${macroLoc}/makeSignalInputs.C+(3,1)' &"
-eval $RCMD
+# RCMD="root -b -q '${macroLoc}/makeSignalInputs.C+(2,1)' &"
+# eval $RCMD
 wait
 RCMD="root -b -q '${macroLoc}/makeSignalInputs.C+(1,0)' &"
 eval $RCMD

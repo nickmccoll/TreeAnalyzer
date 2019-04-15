@@ -5,7 +5,8 @@
 
 std::vector<TObject*> writeables;
 
-TCanvas* make2DTests(std::string plotTitle, int mass, const TH2* dH,TH2* pH, const std::vector<double>& bins, bool binInY, double rebin = -1) {
+TCanvas* make2DTests(std::string plotTitle, int mass, const TH2* dH,TH2* pH,
+        const std::vector<double>& bins, bool binInY, double rebin = -1) {
     const int binXmin = dH->GetXaxis()->FindFixBin(30);
     const int binXmax = dH->GetXaxis()->FindFixBin(210);
     const int binYmin = dH->GetYaxis()->FindFixBin(100);
@@ -55,7 +56,8 @@ TCanvas* make2DTests(std::string plotTitle, int mass, const TH2* dH,TH2* pH, con
 
 
 
-void test2DFits(std::string name, std::string filename, const std::vector<int>& signalMassBins, std::string fitName,bool binInY, const std::vector<std::string>& sels) {
+void test2DFits(std::string name, std::string filename, const std::vector<int>& signalMassBins,
+        std::string fitName,bool binInY, const std::vector<std::string>& sels) {
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<double> bins = {30,210,30,115,135,210};
 //    TFile * fit = new TFile("testSignal/HHlnujj_radHH_distributions.root");
@@ -68,7 +70,9 @@ void test2DFits(std::string name, std::string filename, const std::vector<int>& 
         auto addH = [&](const std::string& name,std::vector<TObject*>& list)->bool{
             TH2 * can= 0;
             fo->GetObject(name.c_str(),can);
-            if(can==0) return false;
+            if(can==0){
+                return false;
+            }
             list.push_back(can);
             return true;
         };
@@ -86,17 +90,21 @@ void test2DFits(std::string name, std::string filename, const std::vector<int>& 
         std::vector<TObject*> compPads;
         gROOT->SetBatch(true);
         for(const auto& sB : signalMassBins){
-            if(addH(std::string("data_m") +int2Str(sB) +"__"+MOD_MJ+"_"+MOD_MR, mcPads) && addH(std::string("pdf_m") +int2Str(sB) +"__"+MOD_MJ+"_"+MOD_MR, pdfPads)){
-//            if(addH2(std::string("radHH_m")+int2Str(sB) +"_"+s+"_hbbMass_hhMass", mcPads) && addH(std::string("pdf_m") +int2Str(sB) +"__"+MOD_MJ+"_"+MOD_MR, pdfPads)){
+            if(addH(std::string("data_m") +int2Str(sB) +"__"+MOD_MJ+"_"+MOD_MR, mcPads) &&
+                    addH(std::string("pdf_m") +int2Str(sB) +"__"+MOD_MJ+"_"+MOD_MR, pdfPads)){
+//            if(addH2(std::string("radHH_m")+int2Str(sB) +"_"+s+"_hbbMass_hhMass", mcPads)
+//                && addH(std::string("pdf_m") +int2Str(sB) +"__"+MOD_MJ+"_"+MOD_MR, pdfPads)){
                 if(binInY){
                     std::vector<double> cbins = {700,4000};
                     cbins.push_back(700);
                     cbins.push_back(float(sB)*.95);
                     cbins.push_back(float(sB)*1.05);
                     cbins.push_back(4000);
-                    compPads.push_back(make2DTests(s+"_m"+int2Str(sB),sB,(TH2*)mcPads.back(),(TH2*)pdfPads.back(),cbins,binInY,2));
+                    compPads.push_back(make2DTests(s+"_m"+int2Str(sB),sB,(TH2*)mcPads.back(),
+                            (TH2*)pdfPads.back(),cbins,binInY,2));
                 } else
-                    compPads.push_back(make2DTests(s+"_m"+int2Str(sB),sB,(TH2*)mcPads.back(),(TH2*)pdfPads.back(),bins,binInY,2));
+                    compPads.push_back(make2DTests(s+"_m"+int2Str(sB),sB,(TH2*)mcPads.back(),
+                            (TH2*)pdfPads.back(),bins,binInY,2));
             }
         }
         gROOT->SetBatch(false);
@@ -141,17 +149,22 @@ void test2DFits(std::string name, std::string filename, const std::vector<int>& 
         addGraph(vY("n2"    ), paramPads);
 
 
-        TCanvas * c =Drawing::drawAll(compPads, (s + "_COMP").c_str());
         TCanvas * c1 =Drawing::drawAll(paramPads, (s + "_params").c_str());
-        c->SetTitle((s + "_COMP").c_str());
         c1->SetTitle((s + "_params").c_str());
-        writeables.push_back(c);
         writeables.push_back(c1);
+
+        if(compPads.size()){
+            TCanvas * c =Drawing::drawAll(compPads, (s + "_COMP").c_str());
+            c->SetTitle((s + "_COMP").c_str());
+            writeables.push_back(c);
+
+        }
 
     }
 }
 
-void plotYields(std::string name, std::string filename,std::string fitName, const std::vector<std::string>& sels) {
+void plotYields(std::string name, std::string filename,std::string fitName,
+        const std::vector<std::string>& sels) {
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<TObject*> paramPads;
 
@@ -189,18 +202,9 @@ void plotEfficiencies(std::string name, std::string filename,std::string fitName
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<TObject*> paramPads;
     double inclusiveN  = 1000*35.9; //1000 fb x lumi
-    inclusiveN *= CutConstants::HHtobbVVBF_BUGGY; //BR to bbVV
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-//    inclusiveN *= CutConstants::HHtobbVVBF; //BR to bbWW or bbZZ
-//    inclusiveN *= 2*.676*(.216+.108*.3524);//BR of WW to he, hmu or htau where the tau is leptonic...for the AN
+    inclusiveN *= CutConstants::HHtobbVVBF; //BR to bbWW or bbZZ
+//    inclusiveN *= 2*.676*(.216+.108*.3524);
+    //BR of WW to he, hmu or htau where the tau is leptonic...for the AN
     for(auto& l : lepCats){
         if(l == lepCats[LEP_EMU]) continue;
         for(auto& p : purCats){
@@ -211,14 +215,16 @@ void plotEfficiencies(std::string name, std::string filename,std::string fitName
                 for(auto& b : btagCats){
                     if(b == btagCats[BTAG_LMT]) continue;
                     std::string s = l+"_"+b+"_"+p+"_"+h;
-                    TFile * fo = new TFile((filename+"_"+name+"_"+s+"_"+fitName+".json.root").c_str(),"read");
+                    TFile * fo = new TFile(
+                            (filename+"_"+name+"_"+s+"_"+fitName+".json.root").c_str(),"read");
                     if(fo == 0) continue;
                     TGraphErrors * gr= new TGraphErrors();
                     TF1 * fr= 0;
                     fo->GetObject("yield_func",fr);
                     if(fr == 0) continue;
                     gr->GetXaxis()->SetTitle(sigMCS.title.c_str());
-                    gr->GetYaxis()->SetTitle("X#rightarrowHH#rightarrowb#bar{b}VV (VV=ZZ or WW) efficiency");
+                    gr->GetYaxis()->SetTitle(
+                            "X#rightarrowHH#rightarrowb#bar{b}VV (VV=ZZ or WW) efficiency");
                     int iP = 0;
                     for(float mass = 800; mass <3500; mass+=10){
                         double y = fr->Eval(mass);
@@ -612,19 +618,18 @@ public:
 
 
 
-void plotSignalTests(int cat = 0,int sig = RADION,  bool doCond = true, std::string outName = ""){
-    std:: string inName = doCond ? "signalInputs" : "signalInputsNoCond";
+void plotSignalTests(int cat = 0,int sig = RADION, std::string outName = ""){
+    std:: string inName = "signalInputs";
     std::string filename = inName +"/"+hhFilename;
     std::string name = signals[sig];
-    if(outName.size()) outName += doCond ? std::string("/") + name : std::string("/NoCond")+name;
-
-
-
+    if(outName.size()) outName +=  std::string("/") + name;
 
     switch(cat) {
     case 0:
         if(outName.size()) outName += "_yield";
-        plotYields(name,filename,"yield",{"e_L_LP_full","e_M_LP_full","e_T_LP_full","e_L_HP_full","e_M_HP_full","e_T_HP_full","mu_L_LP_full","mu_M_LP_full","mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
+        plotYields(name,filename,"yield",{"e_L_LP_full","e_M_LP_full","e_T_LP_full",
+                "e_L_HP_full","e_M_HP_full","e_T_HP_full","mu_L_LP_full","mu_M_LP_full",
+                "mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
         plotEfficiencies(name,filename,"yield" ,sig);
         break;
     case 1:
@@ -637,8 +642,7 @@ void plotSignalTests(int cat = 0,int sig = RADION,  bool doCond = true, std::str
         break;
     case 3:
         if(outName.size()) outName += "_MVV_fit";
-        if(doCond) writeables =  testSignal1DFits(name,filename,signalMassBins[sig],MOD_MR,"MVV_fit1stIt",{"e_LMT_I_ltmb","mu_LMT_I_ltmb"});
-        else  writeables =  testSignal1DFits(name,filename,signalMassBins[sig],MOD_MR,"MVV_fit1stIt",{"e_LMT_LP_full","e_LMT_HP_full","mu_LMT_LP_full","mu_LMT_HP_full"});
+        writeables =  testSignal1DFits(name,filename,signalMassBins[sig],MOD_MR,"MVV_fit1stIt",{"e_LMT_I_ltmb","mu_LMT_I_ltmb"});
         break;
     case 4:
         if(outName.size()) outName += "_2D_fit";
@@ -658,38 +662,5 @@ void plotSignalTests(int cat = 0,int sig = RADION,  bool doCond = true, std::str
 
     Dummy d(outName);
 
-
-
-    //OLD
-    //        testSignal1DFits(radionSig,filename,"MJJ","MJJ_fit1stIt",{"emu_LMT_ltmb","emu_L_ltmb","emu_T_ltmb"});
-    //            testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit",{"emu_LMT_ltmb","emu_M_ltmb","emu_T_ltmb"});
-    //    testSignal1DFits(radionSig,filename,"MVV","MVV_fit",{"e_LMT_ltmb","mu_LMT_ltmb"});
-
-    //        compFitParams(radionSig,filename,"MVV","MVV_fit", "e v mu", {"e_LMT_ltmb","mu_LMT_ltmb"} );
-    //        compFitParams(radionSig,filename,"MVV","MVV_fit", "full v ltmb", {"mu_LMT_ltmb","mu_LMT_full","e_LMT_ltmb","e_LMT_full"} );
-    //        compFitParams(radionSig,filename,"MVV","MVV_fit", "L v M", {"mu_L_ltmb","mu_M_ltmb","mu_T_ltmb","e_L_ltmb","e_M_ltmb","e_T_ltmb"} );
-    //    test2DFits(radionSig,filename,"MVV","2D_fit1stIt");
-    //    test2DFits(radionSig,filename,"MVV","2D_fit");
-
-
-
-    //Moving to MJ cond on MR
-    //    testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit1stIt",{"e_LMT_ltmb","mu_LMT_ltmb","emu_LMT_ltmb"});
-    //    testSignal1DFits(radionSig,filename,MOD_MR,"MVV_fit",{"e_LMT_ltmb","mu_LMT_ltmb","emu_LMT_ltmb"});
-    //    testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit1stIt",{"emu_LMT_ltmb","emu_L_ltmb","emu_M_ltmb","emu_T_ltmb"});
-    //    test2DFits(radionSig,filename,"2D_fit1stIt",true,{"emu_LMT_ltmb","e_LMT_ltmb","mu_LMT_ltmb"});
-
-
-    //        test2DFits(radionSig,filename,"2D_fit1stIt",true,{"e_LMT_ltmb","mu_LMT_ltmb"});
-    //                test2DFits(radionSig,filename,"2D_fit1stIt",false,{"e_LMT_ltmb","mu_LMT_ltmb"});
-
-    //            test2DFits(radionSig,filename,"2D_fit",true,{"e_L_full","mu_L_full","e_M_full","mu_M_full","e_T_full","mu_T_full"});
-    //                    test2DFits(radionSig,filename,"2D_fit",false,{"e_L_full","mu_L_full","e_M_full","mu_M_full","e_T_full","mu_T_full"});
-
-    //    test2DFits(radionSig,filename,"2D_fit",false,{"e_L_full","mu_L_full"});
-    //    test2DFits(radionSig,filename,"2D_fit",true,{"e_M_full","mu_M_full"});
-    //
-    //    testSignal1DFits(radionSig,filename,MOD_MJ,"MJJ_fit",{"emu_LMT_ltmb"});
-    //        test2DFits(radionSig,filename,"2D_fit",false,{"e_L_full","e_M_full","e_T_full"});
 
 }

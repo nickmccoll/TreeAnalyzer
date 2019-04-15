@@ -13,6 +13,7 @@
 #include "HiggsAnalysis/CombinedLimit/interface/HZZ2L2QRooPdfs.h"
 #include "RooExponential.h"
 #include "RooGaussian.h"
+#include "RooBinning.h"
 
 #include <utility>
 

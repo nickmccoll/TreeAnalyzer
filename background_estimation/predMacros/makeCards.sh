@@ -1,10 +1,9 @@
     #!/bin/bash
-# . /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/makeCards.sh baseline 0 0 0 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/
+# . /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/makeCards.sh baseline 0 0 /Users/nmccoll/Dropbox/Work/GitRepositories/TreeAnalyzer/background_estimation/predMacros/
 catName=$1
 runSR=$2
 signal=$3
-condSignal=$4
-macroLoc=$5
+macroLoc=$4
 
 
 dirName="${catName}"
@@ -27,7 +26,7 @@ fi
 mkdir ${dirName}
 cd ${dirName}
 mkdir plots
-RCMD="root -b -q '${macroLoc}/makeCard.C+(${runSR},${signal},${condSignal})'"
+RCMD="root -b -q '${macroLoc}/makeCard.C+(${runSR},${signal})'"
 eval $RCMD
 . comp.sh
 cd ..
