@@ -27,7 +27,7 @@ std::vector<CutStr > processes = {
 enum REGION  {REG_SR, REG_TOPCR, REG_QGCR};
 
 //CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
-CutStr nomW ("nomW"  ,  "xsec");
+CutStr nomW ("nomW"  ,  "xsec*trig_N");
 
 CutStr aQCD ("aQCD"  , "process!=8");
 
@@ -35,8 +35,7 @@ CutStr wjjBC("wjjBC" , "wjjTau2o1<0.75");
 CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&wwDM<125.0");
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr abV  ("abV"   , "nAK4Btags!=0");
-CutStr preSel("preSel"  , "passPre==1");
-
+CutStr preSel("preSel"  , "passPre==1&&(isMuon==1?1.0:lepMiniIso<=0.2&&lepETA<=1.5)");
 
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
 CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
@@ -163,8 +162,8 @@ std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,175
 
 enum SIGNALS  {RADION,BLKGRAV};
 std::vector<CutStr > signals = {
-        CutStr("radHH"     ,"radion_hh_bbinc","radion"),
-        CutStr("blkHH"     ,"blkgrv_hh_bbinc","bulk graviton")
+        CutStr("radHH"     ,"Radion_hh_hVVhbb_inclusive_narrow","radion"),
+        CutStr("blkHH"     ,"BulkGravTohhTohVVhbb_narrow","bulk graviton")
 };
 std::vector<std::vector<int> > signalMassBins = {
         {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
