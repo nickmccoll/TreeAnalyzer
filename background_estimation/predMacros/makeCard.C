@@ -22,8 +22,8 @@ std::string getSystName (const std::string& prefix, const std::string& proc,cons
     return sn;
 };
 
-void go(const int insig, const std::string& filename, const std::string& mainDir,  REGION reg, bool simpleSignal) {
-    const std::string sigInputDir =  mainDir + (simpleSignal ? "/signalInputsNoCond/" : "/signalInputs/");
+void go(const int insig, const std::string& filename, const std::string& mainDir,  REGION reg){
+    const std::string sigInputDir =  mainDir +  "/signalInputs/";
     const std::string sfPF =sigInputDir + filename;
     const std::string signalName = signals[insig];
     std::string inputDir = mainDir;
@@ -150,18 +150,8 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         //---------------------------------------------------------------------------------------------------
         //Signal
         //---------------------------------------------------------------------------------------------------
-//        if(signalName==signalName){
-            //Conditional template
-            if(!simpleSignal){
-//                card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
-//                        {{"hbb_scale",1}},{{"hbb_res",1}},{{"unlc",1}},{{"hh_res",1}}, b == btagCats[BTAG_L],MOD_MS);
-                card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
-                        {{"hbb_scale",1}},{{"hbb_res",1}},{{"unclust",0.5},{"jes",1},{"jer",0.5}},{{"unclust",0.5},{"jes",2},{"jer",5}}, b == btagCats[BTAG_L],MOD_MS);
-            }else {
-                //Non conditional template
-                card.add2DSignalParametricShapeNoCond(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
-                        {{"hbb_scale",1}},{{"hbb_res",1}},{{"unclust",0.5},{"jes",1},{"jer",0.5}},{{"unclust",0.5},{"jes",2},{"jer",5}}, b == btagCats[BTAG_L],MOD_MS);
-            }
+        card.add2DSignalParametricShape(signalName,MOD_MJ,MOD_MR, signalInputName(signalName,"2D_fit.json"),
+                             {{"hbb_scale",1}},{{"hbb_res",1}},{{"unclust",0.5},{"jes",1},{"jer",0.5}},{{"unclust",0.5},{"jes",2},{"jer",5}}, b == btagCats[BTAG_L],MOD_MS);
             std::string tau21Form = "(1.0+tau21_PtDependence*"+ (p == purCats[PURE_HP] ? "log("+MOD_MS+"/1000)" : "((0.054/0.041)*(-log("+MOD_MS+"/1000)))")+")";
             std::string brealForm = "(1.0+btag_eff*";
             if(b == btagCats[BTAG_L]) brealForm+= "(0.22-4.7*10^(-4)*"+MOD_MS+"+9.4*10^(-8)*"+MOD_MS+"^(2)))";
@@ -172,8 +162,6 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             double tau21Corr = p == purCats[PURE_HP]  ? 1.03 : 0.95;
             card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),tau21Corr,uncForm,{"tau21_PtDependence","btag_eff","unclust","jer","jes"}
                             ,MOD_MS);
-//        } else throw std::invalid_argument("makeCard::go() -> Bad parsing");
-
         //---------------------------------------------------------------------------------------------------
         //QG
         //---------------------------------------------------------------------------------------------------
@@ -233,10 +221,10 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
 }
 #endif
 
-void makeCard(int inreg = REG_SR, int insig = RADION,    bool condSignal= true){
-    std::cout <<" <<<<< "<< inreg <<" "<< condSignal <<" "<<signals[insig]<<std::endl;
+void makeCard(int inreg = REG_SR, int insig = RADION){
+    std::cout <<" <<<<< "<< inreg <<" " <<" "<<signals[insig]<<std::endl;
     REGION reg = REGION(inreg);
     if(reg == REG_QGCR) btagCats = qgBtagCats;
     std::string mainDir = "../../";
-    go(insig,hhFilename,mainDir,reg,!condSignal);
+    go(insig,hhFilename,mainDir,reg);
 }

@@ -13,6 +13,7 @@
 #include "HiggsAnalysis/CombinedLimit/interface/HZZ2L2QRooPdfs.h"
 #include "RooExponential.h"
 #include "RooGaussian.h"
+#include "RooBinning.h"
 
 #include <utility>
 
@@ -54,8 +55,9 @@ public:
     }
 
     TString getTitle(const TH1* inH, bool is2D){
-        return is2D ? TString("; ")+  inH->GetXaxis()->GetTitle() + " ; "+inH->GetYaxis()->GetTitle() :
-                TString("; ")+  inH->GetXaxis()->GetTitle();
+        return is2D
+                ? TString("; ")+  inH->GetXaxis()->GetTitle() + " ; "+inH->GetYaxis()->GetTitle()
+                : TString("; ")+  inH->GetXaxis()->GetTitle();
     }
     void add1DData(const TH1* inH, TH1* outH){
         outH->Sumw2(true);
@@ -74,7 +76,8 @@ public:
             for(int inY = 1; inY <= inH->GetNbinsY(); ++inY){
                 int outY = outH->GetYaxis()->FindFixBin(inH->GetYaxis()->GetBinCenter(inY));
                 if(outY == 0 || outY > outH->GetNbinsY()) continue;
-                outH->SetBinContent(outX,outY, outH->GetBinContent(outX,outY)+inH->GetBinContent(inX,inY)  );
+                outH->SetBinContent(outX,outY,
+                        outH->GetBinContent(outX,outY)+inH->GetBinContent(inX,inY)  );
                 int outBin = outH->GetBin(outX,outY);
                 int inBin = inH->GetBin(inX,inY);
                 (*outH->GetSumw2())[outBin] += (*inH->GetSumw2())[inBin];
@@ -105,19 +108,26 @@ public:
         TH1 * outH = 0;
         if(bins.size()){
             if(inH->GetYaxis()->GetXbins()->GetSize())
-                outH = new TH2F(newName.c_str(),getTitle(inH,true),nBins,&bins[0],inH->GetNbinsY(),inH->GetYaxis()->GetXbins()->GetArray());
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),
+                        nBins,&bins[0],
+                        inH->GetNbinsY(),inH->GetYaxis()->GetXbins()->GetArray());
             else
-                outH = new TH2F(newName.c_str(),getTitle(inH,true),nBins,&bins[0],inH->GetNbinsY(),inH->GetYaxis()->GetXmin(),inH->GetYaxis()->GetXmax());
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),
+                        nBins,&bins[0],
+                        inH->GetNbinsY(),inH->GetYaxis()->GetXmin(),inH->GetYaxis()->GetXmax());
         } else {
             if(inH->GetYaxis()->GetXbins()->GetSize())
-                outH = new TH2F(newName.c_str(),getTitle(inH,true),nBins,min,max,inH->GetNbinsY(),inH->GetYaxis()->GetXbins()->GetArray());
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),
+                        nBins,min,max,
+                        inH->GetNbinsY(),inH->GetYaxis()->GetXbins()->GetArray());
             else
-                outH = new TH2F(newName.c_str(),getTitle(inH,true),nBins,min,max,inH->GetNbinsY(),inH->GetYaxis()->GetXmin(),inH->GetYaxis()->GetXmax());
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),
+                        nBins,min,max,
+                        inH->GetNbinsY(),inH->GetYaxis()->GetXmin(),inH->GetYaxis()->GetXmax());
         }
         add2DData(inH,outH);
         return outH;
     }
-
     std::vector<double> bins; //set to size 0 if using fixed width bins
     int nBins = -1;
     double min =-1;
@@ -146,14 +156,22 @@ public:
         TH1 * outH = 0;
         if(bins.size()){
             if(inH->GetXaxis()->GetXbins()->GetSize())
-                outH = new TH2F(newName.c_str(),getTitle(inH,true),inH->GetNbinsX(),inH->GetXaxis()->GetXbins()->GetArray(),nBins,&bins[0]);
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),
+                        inH->GetNbinsX(),inH->GetXaxis()->GetXbins()->GetArray(),
+                        nBins,&bins[0]);
             else
-                outH = new TH2F(newName.c_str(),getTitle(inH,true),inH->GetNbinsX(),inH->GetXaxis()->GetXmin(),inH->GetXaxis()->GetXmax(),nBins,&bins[0]);
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),
+                        inH->GetNbinsX(),inH->GetXaxis()->GetXmin(),inH->GetXaxis()->GetXmax(),
+                        nBins,&bins[0]);
         } else {
             if(inH->GetXaxis()->GetXbins()->GetSize())
-                outH = new TH2F(newName.c_str(),getTitle(inH,true),inH->GetNbinsX(),inH->GetXaxis()->GetXbins()->GetArray(),nBins,min,max);
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),
+                        inH->GetNbinsX(),inH->GetXaxis()->GetXbins()->GetArray(),
+                        nBins,min,max);
             else
-                outH = new TH2F(newName.c_str(),getTitle(inH,true),inH->GetNbinsX(),inH->GetXaxis()->GetXmin(),inH->GetXaxis()->GetXmax(),nBins,min,max);
+                outH = new TH2F(newName.c_str(),getTitle(inH,true),
+                        inH->GetNbinsX(),inH->GetXaxis()->GetXmin(),inH->GetXaxis()->GetXmax(),
+                        nBins,min,max);
         }
         add2DData(inH,outH);
         return outH;
@@ -220,10 +238,13 @@ public:
 };
 
 
-//Add a systematic to the worspace, it makes a new formula variable based on the initial expression and the systematics
+//Add a systematic to the worspace, it makes a new formula variable based on the initial
+//expression and the systematics
 //systematics are a list of the systematic variables and their multiplicative scales
-//extra params are the parameters that need to be added to the parameter list (usually what is included in the variable expression)
-void makeParamFormula (RooWorkspace* w, const std::string& newFormulaName,const std::string& varExp, const StrFlts& systematics, const std::vector<std::string>& extraParams ) {
+//extra params are the parameters that need to be added to the parameter list
+//(usually what is included in the variable expression)
+void makeParamFormula (RooWorkspace* w, const std::string& newFormulaName,const std::string& varExp,
+        const StrFlts& systematics, const std::vector<std::string>& extraParams ) {
     //First make the systematic string and the paramlist
     RooArgList paramList;
     for(const auto& p : extraParams) paramList.add(*w->var(p.c_str()));
@@ -235,7 +256,8 @@ void makeParamFormula (RooWorkspace* w, const std::string& newFormulaName,const 
     if(systematics.size()) systMathStr = "*(1+"+systMathStr+")";
     else systMathStr = "";
 
-    RooFormulaVar varF(newFormulaName.c_str(),newFormulaName.c_str(),(varExp+systMathStr).c_str(),paramList);
+    RooFormulaVar varF(newFormulaName.c_str(),newFormulaName.c_str(),(varExp+systMathStr).c_str(),
+            paramList);
     w->import(varF);
 }
 
@@ -258,10 +280,15 @@ void addExpo(RooWorkspace* w, const std::string& pdfName,const std::string& pVar
     w->import(modelE);
 }
 
-void addGaus(RooWorkspace* w,const std::string& pdfName,const std::string& pVar, const std::string& varName, const std::string& parPostFix,const std::string& JSONPostFix, const CJSON& json,const StrFlts& scale,const StrFlts& resolution){
-    auto pN = [&](const std::string& v)->std::string{return v +"_"+parPostFix;};
-    auto pJS = [&](const std::string& v)->std::string{return std::string("(0*")+pVar+"+"  +json.getP(v+JSONPostFix)+")";};
-    auto pF = [&](const std::string& v)->RooAbsReal*{return w->function(pN(v).c_str());};
+void addGaus(RooWorkspace* w,const std::string& pdfName,const std::string& pVar,
+        const std::string& varName, const std::string& parPostFix,const std::string& JSONPostFix,
+        const CJSON& json,const StrFlts& scale,const StrFlts& resolution){
+    auto pN = [&](const std::string& v)->std::string
+            {return v +"_"+parPostFix;};
+    auto pJS = [&](const std::string& v)->std::string
+            {return std::string("(0*")+pVar+"+"  +json.getP(v+JSONPostFix)+")";};
+    auto pF = [&](const std::string& v)->RooAbsReal*
+            {return w->function(pN(v).c_str());};
 
     makeParamFormula(w,pN("mean"),pJS("mean"),scale,{pVar});
     makeParamFormula(w,pN("sigma"),pJS("sigma"),resolution,{pVar});
@@ -271,10 +298,16 @@ void addGaus(RooWorkspace* w,const std::string& pdfName,const std::string& pVar,
     w->import(modelP);
 }
 
-void addCB(RooWorkspace* w,const std::string& pdfName,const std::string& pVar, const std::string& varName, const std::string& parPostFix,const std::string& JSONPostFix, const CJSON& json,const StrFlts& scale,const StrFlts& resolution,const StrFlts& alpha1 = StrFlts()){
-    auto pN = [&](const std::string& v)->std::string{return v +"_"+parPostFix;};
-    auto pJS = [&](const std::string& v)->std::string{return std::string("(0*")+pVar+"+"  +json.getP(v+JSONPostFix)+")";};
-    auto pF = [&](const std::string& v)->RooAbsReal*{return w->function(pN(v).c_str());};
+void addCB(RooWorkspace* w,const std::string& pdfName,const std::string& pVar,
+        const std::string& varName, const std::string& parPostFix,const std::string& JSONPostFix,
+        const CJSON& json,const StrFlts& scale,const StrFlts& resolution,
+        const StrFlts& alpha1 = StrFlts()){
+    auto pN = [&](const std::string& v)->std::string
+            {return v +"_"+parPostFix;};
+    auto pJS = [&](const std::string& v)->std::string
+            {return std::string("(0*")+pVar+"+"  +json.getP(v+JSONPostFix)+")";};
+    auto pF = [&](const std::string& v)->RooAbsReal*
+            {return w->function(pN(v).c_str());};
 
     makeParamFormula(w,pN("mean"),pJS("mean"),scale,{pVar});
     makeParamFormula(w,pN("sigma"),pJS("sigma"),resolution,{pVar});
@@ -404,11 +437,15 @@ void add2DCB(RooWorkspace* w, const std::string& name,const std::string& PF, con
 //PF is the post fix to everything...the final PDF name will be Name_PF
 //obs is the number of observables
 //filename is the filename to find input histograms...hName is the nominal shape
-//Systs are the shape systematics...the first entry is the name in the file....hName_FIRST(Up|Down)...the second is the vector of of the systematics and the relative scales
+//Systs are the shape systematics...the first entry is the name in the file
+//....hName_FIRST(Up|Down)...the second is the vector of of the systematics and the relative scales
 //Conditional and order are parameters in the roofit classes
-//All systematics are assumed to have already been added to the worksapce (def for shapes: addVar(s.second,0,-1,1,false);)
-void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF, const std::vector<std::string>& obs, const std::string& fileName, const std::string& hName, const InterpSysts& systs,
-        const bool conditional = false, const int order = 0, HistRebin* rebinner= 0, bool isY = false){
+//All systematics are assumed to have already been added to the worksapce
+//(def for shapes: addVar(s.second,0,-1,1,false);)
+void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF,
+        const std::vector<std::string>& obs, const std::string& fileName, const std::string& hName,
+        const InterpSysts& systs, const bool conditional = false, const int order = 0,
+        HistRebin* rebinner= 0, bool isY = false){
     //Save a few steps
     if(PF.size()) PF = "_"+PF;
     const std::string PDFName = name+PF;
@@ -471,10 +508,12 @@ void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF, con
 
     if(systs.size()){
         if(obs.size() == 1){
-            FastVerticalInterpHistPdf total(PDFName.c_str(),PDFName.c_str(),*w->var(obs[0].c_str()),pdfList,coefList);
+            FastVerticalInterpHistPdf total(PDFName.c_str(),PDFName.c_str(),
+                    *w->var(obs[0].c_str()),pdfList,coefList);
             w->import(total);
         } else if(obs.size() == 2){
-            FastVerticalInterpHistPdf2D total(PDFName.c_str(),PDFName.c_str(),*w->var(obs[0].c_str()),*w->var(obs[1].c_str()),conditional,pdfList,coefList);
+            FastVerticalInterpHistPdf2D total(PDFName.c_str(),PDFName.c_str(),
+                    *w->var(obs[0].c_str()),*w->var(obs[1].c_str()),conditional,pdfList,coefList);
             w->import(total);
         }
     }
@@ -484,20 +523,22 @@ void addHistoShapeFromFile(RooWorkspace* w, std::string name,std::string PF, con
     if(rebinner) delete h;
 }
 
+RooRealVar* setBinning(RooWorkspace* w,const std::string& var, const TAxis * ax ){
+    auto xBins =  ax->GetXbins()->GetSize()
+                        ? RooBinning(ax->GetNbins(),ax->GetXbins()->GetArray())
+                        : RooBinning(ax->GetNbins(),ax->GetXmin(),ax->GetXmax());
+    w->var(var.c_str())->setBinning(xBins);
+    w->var(var.c_str())->setVal((ax->GetXmin()+ax->GetXmax())/2.);
+    return w->var(var.c_str());
+}
 
-void addBinnedData(RooWorkspace* w, const TH1* iH, const std::string& name, const std::vector<std::string>& variables ){
+void addBinnedData(RooWorkspace* w, const TH1* iH, const std::string& name,
+        const std::vector<std::string>& variables ){
     const unsigned int nD = variables.size();
     RooArgList args;
-    auto doBinning =[&](const std::string& var, const TAxis* ax) {
-        args.add(*w->var(var.c_str()));
-        w->var(var.c_str())->setMin(ax->GetXmin());
-        w->var(var.c_str())->setMax(ax->GetXmax());
-        w->var(var.c_str())->setBins(ax->GetNbins());
-        w->var(var.c_str())->setVal((ax->GetXmin()+ax->GetXmax())/2.);
-    };
-    doBinning(variables[0],iH->GetXaxis());
-    if(nD > 1)doBinning(variables[1],iH->GetYaxis());
-    if(nD > 2)doBinning(variables[2],iH->GetZaxis());
+    args.add(*setBinning(w,variables[0],iH->GetXaxis()));
+    if(nD > 1)args.add(*setBinning(w,variables[1],iH->GetYaxis()));
+    if(nD > 2)args.add(*setBinning(w,variables[2],iH->GetZaxis()));
     if(nD > 3)throw std::invalid_argument("makeCard::importBinnedData() -> Too many observables!");
     RooDataHist dataHist(name.c_str(),name.c_str(),args,iH);
     w->import(dataHist);

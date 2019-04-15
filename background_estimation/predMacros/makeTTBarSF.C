@@ -11,9 +11,10 @@
 using namespace CutConstants;
 
 
-void fitTTBarSF(std::string inputMC,std::string inputData, std::string selection, std::string outputName){
+void fitTTBarSF(std::string inputMC,std::string inputData, std::string selection,
+        std::string outputName){
 
-    double bins[]={0,500,600,700,800,900,1000,1100,1200,1400,1600,2000,2500,3000,4000,5000};
+    double bins[]={0,500,600,700,800,900,1000,1100,1200,1400,1600,2000,2500,3000,4000,5050};
     int nBins = 15;
     HistGetter plotter;
     std::string func = "pol0";
@@ -26,9 +27,12 @@ void fitTTBarSF(std::string inputMC,std::string inputData, std::string selection
     auto ho = TObjectHelper::getObject<TH1F>(fM,"other_"+selection);
     auto ht = TObjectHelper::getObject<TH1F>(fM,"ttbar_"+selection);
 
-    TH1 * hd_c = plotter.getOrMake1D("data_binned",(std::string(";")+hhMCS.title).c_str(),nBins,bins  );
-    TH1 * ho_c = plotter.getOrMake1D("other_binned",(std::string(";")+hhMCS.title).c_str(),nBins,bins  );
-    TH1 * ht_c = plotter.getOrMake1D("ttbar_binned",(std::string(";")+hhMCS.title).c_str(),nBins,bins  );
+    TH1 * hd_c = plotter.getOrMake1D("data_binned",
+            (std::string(";")+hhMCS.title).c_str(),nBins,bins  );
+    TH1 * ho_c = plotter.getOrMake1D("other_binned",
+            (std::string(";")+hhMCS.title).c_str(),nBins,bins  );
+    TH1 * ht_c = plotter.getOrMake1D("ttbar_binned",
+            (std::string(";")+hhMCS.title).c_str(),nBins,bins  );
 
     TH1 * h_tot = new TH1F("tot",(std::string(";")+hhMCS.title).c_str(),nBins,bins);
     TH1 * h_avg = new TH1F("avg",(std::string(";")+hhMCS.title).c_str(),nBins,bins);
@@ -105,7 +109,8 @@ void fitTTBarSF(std::string inputMC,std::string inputData, std::string selection
     fM->Close();
     std::string args = "-i " + outputName+"_inputDebug.root "
             + " -g RATIO:" + func +" "
-            + " -var "+ MOD_MS+ " -minX "+ ASTypes::flt2Str(minFit)+ " -maxX "+ ASTypes::flt2Str(maxFit);
+            + " -var "+ MOD_MS+ " -minX "+ ASTypes::flt2Str(minFit)+
+            " -maxX "+ ASTypes::flt2Str(maxFit);
 
     MakeJSON(outputName,args);
 }
@@ -132,9 +137,13 @@ void go(int step, std::string treeDir) {
     std::string dataTree = treeDir + "/betrees_data.root";
 
     std::vector<PlotVar> vars;
-    vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nInclHHMassBins,minInclHHMass,maxInclHHMass );
-    vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass,hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
-    vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass);
+    vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,
+            nInclHHMassBins,inclHHMassBins);
+    vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,
+            nHbbMassBins,minHbbMass,maxHbbMass,
+            hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,hhMassBins );
+    vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,
+            nHbbMassBins,minHbbMass,maxHbbMass);
 
     std::vector<PlotSamp> mcSamps =
     { {"mc","1.0"},
@@ -147,20 +156,30 @@ void go(int step, std::string treeDir) {
     { {"data","1.0"}
     };
     std::vector<PlotSel> sels;
-    sels.emplace_back("cr",abV.cut+"&&"+hbbMCS.cut+">80"+"&&"+btagCats[BTAG_LMT].cut);
-    sels.emplace_back("cr_lmass",abV.cut+"&&"+hbbMCS.cut+">80"+"&&"+hbbMCS.cut+"<150"+"&&"+btagCats[BTAG_LMT].cut);
-    sels.emplace_back("cr_hmass",abV.cut+"&&"+hbbMCS.cut+">150"+"&&"+btagCats[BTAG_LMT].cut);
-    sels.emplace_back("noHbb",abV.cut+"&&"+hbbMCS.cut+">30"+"&&"+btagCats[BTAG_LMT].cut);
-    sels.emplace_back("fullHbbHH",abV.cut+"&&"+hhRange.cut+"&&"+hbbRange.cut+"&&"+btagCats[BTAG_LMT].cut);
+    sels.emplace_back("cr"       ,abV.cut+"&&"
+            +hbbMCS.cut+">80"+"&&"+btagCats[BTAG_LMT].cut);
+    sels.emplace_back("cr_lmass" ,abV.cut+"&&"
+            +hbbMCS.cut+">80"+"&&"+hbbMCS.cut+"<150"+"&&"+btagCats[BTAG_LMT].cut);
+    sels.emplace_back("cr_hmass" ,abV.cut+"&&"
+            +hbbMCS.cut+">150"+"&&"+btagCats[BTAG_LMT].cut);
+    sels.emplace_back("noHbb"    ,abV.cut+"&&"
+            +hbbMCS.cut+">30"+"&&"+btagCats[BTAG_LMT].cut);
+    sels.emplace_back("fullHbbHH",abV.cut+"&&"
+            +hhRange.cut+"&&"+hbbRange.cut+"&&"+btagCats[BTAG_LMT].cut);
 
 
     if(step == 0){
-        MakePlots mcPlots(mcTree,filename+"_ttbarSF_mc_inputPlots.root",mcSamps,sels,vars,"1.0",nomW.cut);
-        MakePlots dataPlots(dataTree,filename+"_ttbarSF_data_inputPlots.root",dataSamps,sels,vars,"1.0","1.0");
+        MakePlots mcPlots(mcTree,filename+"_ttbarSF_mc_inputPlots.root",
+                mcSamps,sels,vars,"1.0",nomW.cut);
+        MakePlots dataPlots(dataTree,filename+"_ttbarSF_data_inputPlots.root",
+                dataSamps,sels,vars,"1.0","1.0");
 
-        fitTTBarSF(filename+"_ttbarSF_mc_inputPlots.root",filename+"_ttbarSF_data_inputPlots.root","cr_hhMass",filename+"_ttbarSF.json");
-        fitTTBarSF(filename+"_ttbarSF_mc_inputPlots.root",filename+"_ttbarSF_data_inputPlots.root","cr_lmass_hhMass",filename+"lmass_ttbarSF.json");
-        fitTTBarSF(filename+"_ttbarSF_mc_inputPlots.root",filename+"_ttbarSF_data_inputPlots.root","cr_hmass_hhMass",filename+"hmass_ttbarSF.json");
+        fitTTBarSF(filename+"_ttbarSF_mc_inputPlots.root",filename+"_ttbarSF_data_inputPlots.root",
+                "cr_hhMass",filename+"_ttbarSF.json");
+        fitTTBarSF(filename+"_ttbarSF_mc_inputPlots.root",filename+"_ttbarSF_data_inputPlots.root",
+                "cr_lmass_hhMass",filename+"lmass_ttbarSF.json");
+        fitTTBarSF(filename+"_ttbarSF_mc_inputPlots.root",filename+"_ttbarSF_data_inputPlots.root",
+                "cr_hmass_hhMass",filename+"hmass_ttbarSF.json");
     }
 
     if(step==1){
@@ -168,11 +187,15 @@ void go(int step, std::string treeDir) {
 
         std::vector<PlotSamp> mcTestSamps =
         { {"mc",ttbarSFStr},{"mc_noSF","1.0"},
-                {"ttbar",std::string("(")+processes[TTBAR].cut+")*"+ttbarSFStr},{"ttbar_noSF",processes[TTBAR].cut},{"other",std::string("!(")+processes[TTBAR].cut+")" }
+          {"ttbar",std::string("(")+processes[TTBAR].cut+")*"+ttbarSFStr},
+          {"ttbar_noSF",processes[TTBAR].cut},
+          {"other",std::string("!(")+processes[TTBAR].cut+")" }
         };
 
-        MakePlots mcTestPlots(mcTree,filename+"_ttbarSF_mc_testPlots.root",mcTestSamps,sels,vars,"1.0",nomW.cut);
-        MakePlots dataTestPlots(dataTree,filename+"_ttbarSF_data_testPlots.root",dataSamps,sels,vars,"1.0","1.0");
+        MakePlots mcTestPlots(mcTree,filename+"_ttbarSF_mc_testPlots.root",
+                mcTestSamps,sels,vars,"1.0",nomW.cut);
+        MakePlots dataTestPlots(dataTree,filename+"_ttbarSF_data_testPlots.root",
+                dataSamps,sels,vars,"1.0","1.0");
     }
 
 }

@@ -20,12 +20,15 @@ public:
 
         ParParser p;
         auto name = p.addString("n","Histogram base names",true);
-        xIsCond   = p.addBool("xIsCond","If true, set x as the conditional variable P(X|Y)*P(Y), if false: P(Y|X)*PY(Y)");
+        xIsCond   = p.addBool("xIsCond",
+                "If true, set x as the conditional variable P(X|Y)*P(Y), if false: P(Y|X)*PY(Y)");
         auto in1D      = p.addString("in1D" ,"file containing 1D template",true);
         auto in2D     = p.addString("in2D" ,"file containing 2D template");
 
-        auto sX   = p.addString("sX"  ,"Comma seperated list of systematics-> TH1Name:SystName",true);
-        auto sY   = p.addString("sY"  ,"Comma seperated list of systematics-> TH1Name:SystName",true);
+        auto sX   = p.addString("sX"  ,
+                "Comma seperated list of systematics-> TH1Name:SystName",true);
+        auto sY   = p.addString("sY"  ,
+                "Comma seperated list of systematics-> TH1Name:SystName",true);
         xb   = p.addVFloat("xb","x-variable binning",true);
         yb   = p.addVFloat("yb","y-variable binning",true);
         p.parse(arguments);
@@ -35,8 +38,8 @@ public:
         getSystList(*sX,xSysts);
         getSystList(*sY,ySysts);
 
-        if(xb->size() != 3)                     throw std::invalid_argument("Analyzer::Analyzer() -> Bad parsing");
-        if(yb->size() != 3)                     throw std::invalid_argument("Analyzer::Analyzer() -> Bad parsing");
+        if(xb->size() != 3)
+            throw std::invalid_argument("Analyzer::Analyzer() -> Bad parsing");
 
         f1D =  TObjectHelper::getFile(*in1D);
         f2D =  TObjectHelper::getFile(*in2D);
@@ -69,12 +72,15 @@ public:
 }
 
 
-    void makeHisto(const std::string& outName, const std::string& h1DName, const std::string& h2DName){
+    void makeHisto(const std::string& outName, const std::string& h1DName,
+            const std::string& h2DName){
         TH1 * h1D = 0; TH2* h2D = 0;
         f1D->GetObject(h1DName.c_str(),h1D);f2D->GetObject(h2DName.c_str(),h2D);
         if(h1D == 0 || h2D == 0) return;
 
-        auto outH = new TH2F("temp","",(*xb)[0],(*xb)[1],(*xb)[2],(*yb)[0],(*yb)[1],(*yb)[2]);
+        auto outH = yb->size() != 3
+                ? new TH2F("temp","",(*xb)[0],(*xb)[1],(*xb)[2],(*yb).size() -1, &(*yb)[0])
+                : new TH2F("temp","",(*xb)[0],(*xb)[1],(*xb)[2],(*yb)[0],(*yb)[1],(*yb)[2]);
 
         //first cut up conditional template
         for(int iX = 1; iX <= h2D->GetNbinsX(); ++iX){
@@ -114,12 +120,17 @@ public:
 
     void getSystList(const std::string& inList, SystNames& outNames){
         outNames.clear();
-        std::vector<std::string> systList(std::sregex_token_iterator(inList.begin(), inList.end(), std::regex(","), -1), std::sregex_token_iterator());
+        std::vector<std::string> systList(
+                std::sregex_token_iterator(inList.begin(), inList.end(), std::regex(","), -1),
+                std::sregex_token_iterator());
         for(const auto& s :systList){
-            std::vector<std::string> names(std::sregex_token_iterator(s.begin(), s.end(), std::regex(":"), -1), std::sregex_token_iterator());
+            std::vector<std::string> names(
+                    std::sregex_token_iterator(s.begin(), s.end(), std::regex(":"), -1),
+                    std::sregex_token_iterator());
             if(names.size() != 2) {
                 std::cout << inList<<std::endl;
-                throw std::invalid_argument("mergeHistosToPDF2DAnalyzer::getSystList() -> Bad parsing");
+                throw std::invalid_argument(
+                        "mergeHistosToPDF2DAnalyzer::getSystList() -> Bad parsing");
             }
             outNames.emplace_back(names[0],names[1]);
         }

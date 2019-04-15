@@ -59,7 +59,7 @@ std::vector<TObject*> test1DKern(std::string name, std::string filename,std::str
             hNs.push_back("KDE");
         }
         h = 0;
-        f->GetObject("histo_KDE",h);
+        f->GetObject("histo_noSmooth",h);
         if(h){
             hs.push_back(h);
             hNs.push_back("KDE w/o smoothing");
@@ -166,10 +166,15 @@ std::vector<TObject*> test1DFits(std::string name, std::string filename, std::st
     return writeables;
 }
 
-std::vector<TObject*> make2DTests(std::string plotTitle, const TH2* dH, const std::vector<TH2*>& hs,const std::vector<std::string>& hNs, const std::vector<double>& bins, bool binInY, double rebin = -1, bool doLog = true) {
+std::vector<TObject*> make2DTests(std::string plotTitle, const TH2* dH,
+        const std::vector<TH2*>& hs,const std::vector<std::string>& hNs,
+        const std::vector<double>& bins, bool binInY, double rebin = -1, bool doLog = true) {
     std::vector<TObject*> writeables;
     bool withRatio = true;
-    if(dH)for(unsigned int iH = 0; iH < hs.size(); ++iH) hs[iH]->Scale(dH->Integral()/hs[iH]->Integral());
+    if(dH)
+        for(unsigned int iH = 0; iH < hs.size(); ++iH)
+            hs[iH]->Scale(dH->Integral()/hs[iH]->Integral());
+
     const TH1 * refHist = dH ? dH : hs[0];
     const TAxis * ax =  binInY ? refHist->GetYaxis() : refHist->GetXaxis();
 
@@ -178,7 +183,8 @@ std::vector<TObject*> make2DTests(std::string plotTitle, const TH2* dH, const st
         int binH = ax->FindFixBin(bins[iB+1]) -1;
         if(binH <= binL) continue;
         auto proj =[&](const TH2* h, const std::string& title) ->TH1*{
-            return binInY ? h->ProjectionX( (title+"_"+int2Str(iB)).c_str(),binL,binH) :  h->ProjectionY( (title+"_"+int2Str(iB)).c_str(),binL,binH);
+            return binInY ? h->ProjectionX( (title+"_"+int2Str(iB)).c_str(),binL,binH)
+                    :  h->ProjectionY( (title+"_"+int2Str(iB)).c_str(),binL,binH);
         };
         Plotter * p = new Plotter();
         if(dH){
@@ -317,7 +323,9 @@ void compFitParams(const std::string& name, const std::string& filename, const s
 }
 
 
-std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filename, const std::vector<std::string>& sels,const std::vector<double>& bins, bool binInY = true, bool addData = false ) {
+std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filename,
+        const std::vector<std::string>& sels,const std::vector<double>& bins, bool binInY = true,
+        bool addData = false ) {
     std::vector<TObject*> writeables;
     std::vector<TFile*> distFiles;
     std::vector<TFile*> tempFiles;
@@ -368,14 +376,17 @@ std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filenam
         int binH = ax->FindFixBin(bins[iB+1]) -1;
         if(binH<=binL) continue;
         auto proj =[&](TH2* h, const std::string& title) ->TH1*{
-            return binInY ? h->ProjectionX(  (s + "_" + title+"_"+int2Str(iB)).c_str(),binL,binH) :  h->ProjectionY( (s + "_" + title+"_"+int2Str(iB)).c_str(),binL,binH);
+            return binInY ? h->ProjectionX(  (s + "_" + title+"_"+int2Str(iB)).c_str(),binL,binH)
+                    :  h->ProjectionY( (s + "_" + title+"_"+int2Str(iB)).c_str(),binL,binH);
         };
         Plotter * p = new Plotter();
         if(dataHist){
             auto dataHist1 = proj(dataHist,"data");
             p->addHist(dataHist1,"data");
             double max = 0;
-            for(int iB = 1; iB <= dataHist1->GetNbinsX();++iB) if(dataHist1->GetBinContent(iB) > max) max =dataHist1->GetBinContent(iB);
+            for(int iB = 1; iB <= dataHist1->GetNbinsX();++iB)
+                if(dataHist1->GetBinContent(iB) > max)
+                    max =dataHist1->GetBinContent(iB);
             p->setMinMax(.0001,3*max);
 
         } else {
@@ -390,7 +401,7 @@ std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filenam
         }
         p->setUnderflow(false);
         p->setOverflow(false);
-        p->rebin(2);
+//        p->rebin(3);
 
         p->setXTitle( (binInY ? hbbMCS : hhMCS) .title.c_str());
         p->setYTitle("N. of events");
@@ -405,7 +416,8 @@ std::vector<TObject*> test2DModel(std::vector<CutStr> types, std::string filenam
          if(!binInY)
          p->setMinMax(0.001,10000);
          p->setYTitleBot("N/N(template)");
-         auto * c = p->drawSplitRatio(-1,"stack",false,false,(s + "_"+flt2Str(bins[iB]) +"_"+flt2Str(bins[iB+1])).c_str());
+         auto * c = p->drawSplitRatio(-1,"stack",false,false,
+                 (s + "_"+flt2Str(bins[iB]) +"_"+flt2Str(bins[iB+1])).c_str());
          writeables.push_back(c);
          if(!binInY)
          c->GetPad(1)->SetLogy();

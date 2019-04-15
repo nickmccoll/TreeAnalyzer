@@ -7,7 +7,7 @@ using namespace CutConstants;
 using namespace ASTypes;
 
 std::vector<TObject*> writeables;
-void addWr(std::vector<TObject*> nw) { writeables.insert( writeables.end(), nw.begin(), nw.end() );}
+void addWr(std::vector<TObject*> nw) {writeables.insert( writeables.end(), nw.begin(), nw.end() );}
 
 
 void test2DCondTemplate(std::string name, std::string filename, std::string sel){
@@ -24,12 +24,12 @@ void test2DCondTemplate(std::string name, std::string filename, std::string sel)
         }
         if(addSmooth){
             TH2* h;
-            f->GetObject("histo_smooth",h);
+            f->GetObject("histo_smoothNoCond",h);
             hs.push_back(h); hNs.push_back(extraPre.size() ? extraPre  : std::string("KDE"));
         }
         if(addKDE){
             TH2* h;
-            f->GetObject("histo_KDE",h);
+            f->GetObject("histo_noCond",h);
             hs.push_back(h); hNs.push_back(extraPre.size() ? extraPre +"_NoSmear"  : std::string("KDE w/o smoothing"));
         }
     };
@@ -48,10 +48,13 @@ void test2DCondTemplate(std::string name, std::string filename, std::string sel)
     addWr(make2DTests(name + "_COND2D_HbbC"  ,dH,hs,hNs,hhBinning,true,5 ,false));
 }
 
-void test2DTemplate(const std::string& name, const std::string& filename, const std::vector<std::string>& sels){
-//
-    auto cutHistograms =[](const TH2* inH) -> TH2F*{ //The conditional templates have the Hbb as the y-axis..which is only done here
-        TH2F * outH = new TH2F(TString(inH->GetName()) + "_cut",(std::string(";") +hbbMCS.title+";"+hhMCS.title).c_str()  ,nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,minHHMass,maxHHMass);
+void test2DTemplate(const std::string& name, const std::string& filename,
+        const std::vector<std::string>& sels){
+
+    auto cutHistograms =[](const TH2* inH) -> TH2F*{
+        TH2F * outH = new TH2F(TString(inH->GetName()) + "_cut",
+                (std::string(";") +hbbMCS.title+";"+hhMCS.title).c_str()  ,
+                nHbbMassBins,minHbbMass,maxHbbMass,nHHMassBins,&hhMassBins[0]);
         for(int iX =1; iX <= inH->GetNbinsX(); ++iX){
             const int outIX =outH->GetXaxis()->FindFixBin(inH->GetXaxis()->GetBinCenter(iX));
             if(outIX < 1 || outIX > outH->GetNbinsX() ) continue;
@@ -72,7 +75,8 @@ void test2DTemplate(const std::string& name, const std::string& filename, const 
         std::vector<TH2*> hs;
         std::vector<std::string> hNs;
         fData->GetObject((name+"_"+s+"_"+hbbMCS+"_"+hhMCS).c_str(),dH); dH = cutHistograms(dH);
-        TFile * fT = new TFile((filename + "_"+name+"_"+s  +"_2D_merged_template.root").c_str(),"read");
+        TFile * fT = new TFile(
+                (filename + "_"+name+"_"+s  +"_2D_merged_template.root").c_str(),"read");
         fT->GetObject("histo",h);hs.push_back(h);hNs.push_back("Template");
 
 //        std::vector<double> hBBBinning = {30,40,50,60,80,100,120,140,170,210};
@@ -292,7 +296,7 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, std::
 //        test2DFits(mod,filename,srList,
 //                {30.,210},false,10);
         test2DFits(mod,filename,srList,
-                {700,4000},true,5);
+                {700,4000},true);
 
         break;
     case 6:
