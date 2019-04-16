@@ -76,14 +76,17 @@ public:
     	outTree->addSingle(isMuon_,  "",  "isMuon");
     	outTree->addSingle(lepPT_,  "",  "lepPT");
     	outTree->addSingle(lepETA_,  "",  "lepETA");
+    	outTree->addSingle(lepMiniIso_,  "",  "lepMiniIso");
+    	outTree->addSingle(lepMiniIsoFP_,  "",  "lepMiniIsoFP");
 
     	outTree->addSingle(hbbMass_,  "",  "hbbMass");
     	outTree->addSingle(hbbPT_,  "",  "hbbPT");
     	outTree->addSingle(hbbCSVCat_,  "",  "hbbCSVCat");
 
     	outTree->addSingle(hhMass_,  "",  "hhMass");
-    	outTree->addSingle(wwDM_,  "",  "wwDM");
+    	outTree->addSingle(hhMassOld_,  "",  "hhMassOld");
     	outTree->addSingle(hwwPT_,  "",  "hwwPT");
+    	outTree->addSingle(hwwChi2_,  "",  "hwwChi2");
 
     	outTree->addSingle(wjjTau2o1_,  "",  "wjjTau2o1");
     	outTree->addSingle(wjjMass_,  "",  "wjjMass");
@@ -139,7 +142,6 @@ public:
         if(!addUncVariables && !passPre) return false;
         passPre_ = size8(passPre);
 
-
         if(isRealData()){
         	dataset_ = size8(*reader_event->dataset);
         	dataRun_ = size8(*reader_event->dataRun);
@@ -149,9 +151,10 @@ public:
         	dhType_  = size8(diHiggsEvt.type);
         	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event.lumi));
         	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_chs, (selectedLepton && selectedLepton->isMuon())) : 1.0 );
-        	pu_N_    = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL));
-        	lep_N_   = float(leptonSFProc->getSF());
-        	btag_N_  = float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV));
+        	pu_N_    = 1.0 /*float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL))*/;
+        	lep_N_   = 1.0 /*float(leptonSFProc->getSF())*/;
+        	btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
+
         }
 
         ht_  = float(ht_chs);
@@ -161,6 +164,10 @@ public:
         	isMuon_  = size8(selectedLepton->isMuon());
         	lepPT_   = float(selectedLepton->pt());
         	lepETA_  = float(selectedLepton->eta());
+        	lepMiniIso_ = float(selectedLepton->miniIso());
+
+        	if (selectedLepton->isElectron()) lepMiniIsoFP_ = float(((Electron*)selectedLepton)->miniIsoFP());
+        	else lepMiniIsoFP_ = 999.99; // if muon then just set this isolation to some high value (only using for electrons)
         }
 
         hbbMass_ = float(hbbMass);
@@ -169,14 +176,15 @@ public:
         hbbCSVCat_ = size8(hbbCSVCat);
 
         hhMass_   = float(hh.mass());
+        hhMassOld_   = float(hh_old.mass());
         wlnuMass_ = float(wlnu.mass());
-        wwDM_     = float(wwDM);
         hwwPT_    = float(hWW.pt());
+        hwwChi2_  = float(hwwChi);
 
         if(wjjCand){
         	wjjTau2o1_ = float(wjjCand->tau2otau1());
         	wjjMass_   = float(wjjCand->sdMom().mass());
-        	wjjPT_     = float(wjjCand->pt());
+        	wjjPT_     = float(wqq.pt());
         }
 
         wlnuPT_    = float(wlnu.pt());
@@ -290,13 +298,16 @@ public:
     size8 isMuon_    = 0;
     float lepPT_     = 0;
     float lepETA_    = 0;
+    float lepMiniIso_   = 0;
+    float lepMiniIsoFP_ = 0;
     float hbbMass_   = 0;
     float hbbPT_     = 0;
     size8 hbbCSVCat_ = 0;
 
     float hhMass_    = 0;
-    float wwDM_      = 0;
     float hwwPT_     = 0;
+    float hhMassOld_ = 0;
+    float hwwChi2_   = 0;
 
     float wjjTau2o1_ = 0;
     float wjjMass_   = 0;
