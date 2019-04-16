@@ -1,4 +1,5 @@
 #include "Processors/Variables/interface/HiggsSolver.h"
+#include "Configuration/interface/ReaderConstants.h"
 
 namespace TAna {
 
@@ -17,9 +18,10 @@ HiggsSolver::~HiggsSolver(){
 }
 
 double HiggsSolver::hSolverFunction(
-                   const double leptonX, const double leptonY, const double leptonZ, const double neutrinoX, const double neutrinoY,const double neutrinoZ,
-                   const double jetX,    const double jetY,    const double jetZ,    const double jetM, const double jetSF,
-                   const double metX,    const double metY, HiggsSolverInfo * info
+                   const double leptonX, const double leptonY, const double leptonZ,
+                   const double neutrinoX, const double neutrinoY,const double neutrinoZ,
+                   const double jetX, const double jetY, const double jetZ, const double jetM,
+                   const double jetSF, const double metX, const double metY, HiggsSolverInfo * info
                    ) {
 
     const double hwwParX = jetX+metX+leptonX;
@@ -32,8 +34,10 @@ double HiggsSolver::hSolverFunction(
     const double hwwPerpNormX  = -1*hwwParNormY;
     const double hwwPerpNormY  = hwwParNormX;
 
-    auto getPerp =[&](const double momx, const double momy)->double{ return momx*hwwPerpNormX+momy*hwwPerpNormY;};
-    auto getPar =[&](const double momx, const double momy)->double{ return momx*hwwParNormX+momy*hwwParNormY;};
+    auto getPerp =[&](const double momx, const double momy)->double{
+        return momx*hwwPerpNormX+momy*hwwPerpNormY;};
+    auto getPar =[&](const double momx, const double momy)->double{
+        return momx*hwwParNormX+momy*hwwParNormY;};
 
     const double metPerp = getPerp(metX,metY);
     const double metPar = getPar(metX,metY);
@@ -45,28 +49,30 @@ double HiggsSolver::hSolverFunction(
     const ASTypes::CartLorentzVector lepton(leptonX,leptonY,leptonZ,leptonE);
     const double neutrinoE = std::sqrt(neutrinoX*neutrinoX+neutrinoY*neutrinoY+neutrinoZ*neutrinoZ);
     const ASTypes::CartLorentzVector neutrino(neutrinoX,neutrinoY,neutrinoZ,neutrinoE);
-    const double jetE   = std::sqrt(jetSF*jetX*jetSF*jetX+jetSF*jetY*jetSF*jetY+jetSF*jetZ*jetSF*jetZ+jetM*jetM);
+    const double jetE   = std::sqrt(jetSF*jetSF*(jetX*jetX+jetY*jetY+jetZ*jetZ)+jetM*jetM);
     const ASTypes::CartLorentzVector jet(jetSF*jetX,jetSF*jetY,jetSF*jetZ,jetE);
 
     const ASTypes::CartLorentzVector wlnu = lepton + neutrino;
     const ASTypes::CartLorentzVector hww = wlnu + jet;
 
     const double extraMetPar = (metPar-neutPar)/hwwMag;
-    const double metParErr =   extraMetPar >= 0 ? 0.064 : 0.15;
+    const double metParErr =   extraMetPar >= 0 ? posMETParErr : negMETParErr;
     const double metParChiSq =  extraMetPar*extraMetPar/(metParErr*metParErr);
 
 
     const double extraMetPerp = (metPerp-neutPerp);
-    const double metPerpError = 29;
+    const double metPerpError = metPerpErr;
     const double metPerpChiSq = extraMetPerp*extraMetPerp/(metPerpError*metPerpError);
 
-    const double jetSFChiSq = (jetSF-1.0)*(jetSF-1.0)/(0.10*0.10);
+    const double jetSFChiSq = (jetSF-1.0)*(jetSF-1.0)/(jetErr*jetErr);
 
-    const double meanWlnuMass = jetM > 60 ? 43 : 80;
-    const double wlnuMassError = jetM > 60 ? (wlnu.mass() > 43 ? 3 : 19) : 3;
+    const double meanWlnuMass = jetM > 60 ? offWlnuMeanWlnu : onWlnuMeanWlnu;
+    const double wlnuMassError = jetM > 60
+            ? (wlnu.mass() > offWlnuMeanWlnu ? offWlnuPosWlnuErr : offWnluNegWlnuErr)
+            : onWlnuWlnuErr;
     const double wlnuMassChiSq = std::pow( (wlnu.mass() -meanWlnuMass)/wlnuMassError,2  );
 
-    const double hWWMassError = jetM > 60 ? 3 : 9;
+    const double hWWMassError = jetM > 60 ? offWlnuHWWErr : onWlnuHWWErr;
     const double hWWMassChiSq = std::pow( (hww.mass() -125)/hWWMassError,2  );
 
 
@@ -86,7 +92,8 @@ double HiggsSolver::hSolverFunction(
 
 }
 
-void HiggsSolver::minuitFunctionWrapper(int& nDim, double* gout, double& result, double* par, int flg) {
+void HiggsSolver::minuitFunctionWrapper(int& nDim, double* gout, double& result, double* par,
+        int flg) {
     if(nDim){}
         if(gout){}
             if(flg){}
@@ -101,8 +108,27 @@ void HiggsSolver::minuitFunctionWrapper(int& nDim, double* gout, double& result,
 
 } // ~end of minuit function
 
-double HiggsSolver::hSolverMinimization(const ASTypes::CylLorentzVectorF& lep, const ASTypes::CylLorentzVectorF& jet, const ASTypes::CylLorentzVectorF& met, bool jetIsVirtual, HiggsSolverInfo * info) {
-    const double jetM =jetIsVirtual ? 31 : 80;
+double HiggsSolver::hSolverMinimization(const ASTypes::CylLorentzVectorF& lep,
+        const ASTypes::CylLorentzVectorF& jet, const ASTypes::CylLorentzVectorF& met,
+        bool jetIsVirtual, const HWWParameters& pars, HiggsSolverInfo * info) {
+
+
+    posMETParErr        = pars.posMETParErr    ;
+    negMETParErr        = pars.negMETParErr    ;
+    metPerpErr          = pars.metPerpErr      ;
+    jetErr              = pars.jetErr          ;
+    onWlnuMeanJet       = pars.onWlnuMeanJet   ;
+    offWlnuMeanJet      = pars.offWlnuMeanJet  ;
+    onWlnuMeanWlnu      = pars.onWlnuMeanWlnu  ;
+    offWlnuMeanWlnu     = pars.offWlnuMeanWlnu ;
+    offWlnuPosWlnuErr   = pars.offWlnuPosWlnuErr;
+    offWnluNegWlnuErr   = pars.offWnluNegWlnuErr;
+    onWlnuWlnuErr       = pars.onWlnuWlnuErr   ;
+    onWlnuHWWErr        = pars.onWlnuHWWErr    ;
+    offWlnuHWWErr       = pars.offWlnuHWWErr   ;
+
+
+    const double jetM =jetIsVirtual ? onWlnuMeanJet : offWlnuMeanJet;
 
 
 
@@ -175,8 +201,24 @@ MomentumF HiggsSolver::getInvisible(const MomentumF& met, const MomentumF& vis, 
         if(std::fabs(pos) < std::fabs(neg)) metZ = pos;
         else metZ = neg;
     }
-    ASTypes::CartLorentzVector neutrino(met.x(),met.y(),metZ,std::sqrt(met.x()*met.x()+met.y()*met.y()+metZ*metZ));
+    ASTypes::CartLorentzVector neutrino(met.x(),met.y(),metZ,
+            std::sqrt(met.x()*met.x()+met.y()*met.y()+metZ*metZ));
     return MomentumF(neutrino);
 }
+
+
+double HiggsSolver::posMETParErr     = 0.067;
+double HiggsSolver::negMETParErr     = 0.16;
+double HiggsSolver::metPerpErr       = 31;
+double HiggsSolver::jetErr           = 0.11;
+double HiggsSolver::onWlnuMeanJet    = 30;
+double HiggsSolver::offWlnuMeanJet   = 80;
+double HiggsSolver::onWlnuMeanWlnu   = 80;
+double HiggsSolver::offWlnuMeanWlnu  = 41;
+double HiggsSolver::offWlnuPosWlnuErr= 5;
+double HiggsSolver::offWnluNegWlnuErr= 16;
+double HiggsSolver::onWlnuWlnuErr    = 2.3;
+double HiggsSolver::onWlnuHWWErr     = 8.3;
+double HiggsSolver::offWlnuHWWErr    = 3;
 
 }

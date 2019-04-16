@@ -124,12 +124,30 @@ struct JetParameters {
 
 };
 
+struct HWWParameters {
+    double posMETParErr     ;
+    double negMETParErr     ;
+    double metPerpErr       ;
+    double jetErr           ;
+    double onWlnuMeanJet    ;
+    double offWlnuMeanJet   ;
+    double onWlnuMeanWlnu   ;
+    double offWlnuMeanWlnu  ;
+    double offWlnuPosWlnuErr;
+    double offWnluNegWlnuErr;
+    double onWlnuWlnuErr    ;
+    double onWlnuHWWErr     ;
+    double offWlnuHWWErr    ;
+
+};
+
 //--------------------------------------------------------------------------------------------------
 struct ParameterSet {
     EventParameters  event;
     FatJetParameters fatJets;
     LeptonParameters leptons;
     JetParameters    jets;
+    HWWParameters    hww;
 };
 //--------------------------------------------------------------------------------------------------
 namespace ReaderConstants{

@@ -29,6 +29,7 @@ class TopPTWeighting;
 class JERCorrector;
 class JESUncShifter;
 class METUncShifter;
+class HiggsSolver;
 
 class Jet               ;
 class FatJet            ;
@@ -118,13 +119,16 @@ public:
     BTagging::CSVSJ_CAT        wjjCSVCat   = BTagging::CSVSJ_INCL;
 
     float                      wwDM        = 0;
+    float                      hwwChi      = 0;
     bool                       passWWDM    = false;
 
 
     MomentumF                  neutrino           ;
     MomentumF                  wlnu               ;
+    MomentumF                  wqq                ;
     MomentumF                  hWW                ;
     MomentumF                  hh                 ;
+    MomentumF                  hh_old             ;
     float                      hbbMass     =0     ;
 
     ParameterSet parameters;
@@ -143,7 +147,8 @@ public:
     std::unique_ptr<JERCorrector>         JERAK4CHSProc ;
     std::unique_ptr<JERCorrector>         JERAK8PuppiProc ;
     std::unique_ptr<JESUncShifter>        JESUncProc ;
-    std::unique_ptr<METUncShifter>        METUncProc;
+    std::unique_ptr<METUncShifter>          METUncProc;
+    std::unique_ptr<HiggsSolver>            higgsSolver;
 };
 }
 #endif
