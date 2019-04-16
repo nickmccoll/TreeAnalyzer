@@ -14,6 +14,7 @@
 
 #include "Processors/Variables/interface/LeptonSelection.h"
 #include "Processors/Variables/interface/FatJetSelection.h"
+#include "Processors/Variables/interface/HiggsSolver.h"
 
 #include "Processors/EventSelection/interface/EventSelection.h"
 #include "Processors/Corrections/interface/TriggerScaleFactors.h"
@@ -51,6 +52,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     JERAK8PuppiProc .reset(new JERCorrector (dataDirectory, "corrections/Summer16_25nsV1_MC_PtResolution_AK8PFPuppi.txt",randGen));;
     JESUncProc . reset(new JESUncShifter());
     METUncProc . reset(new METUncShifter());
+    higgsSolver . reset(new HiggsSolver());
 
     turnOnCorr(CORR_XSEC);
     turnOnCorr(CORR_TRIG);
@@ -225,18 +227,23 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     }
 
     if(wjjCand){
-        neutrino    = HiggsSolver::getInvisible(reader_event->met,
-                (selectedLepton->p4() + wjjCand->p4()) );
-        wlnu        =  neutrino.p4() + selectedLepton->p4();
-        hWW         = wlnu.p4() + wjjCand->p4();
-        wwDM        = PhysicsUtilities::deltaR( wlnu,*wjjCand) * hWW.pt()/2.0;
-        passWWDM    = wwDM < 125.0;
+        HiggsSolverInfo hwwInfo;
+        hwwChi   = higgsSolver->hSolverMinimization(selectedLepton->p4(),wjjCand->p4(),
+                reader_event->met.p4(),wjjCand->sdMom().mass() <60,parameters.hww, &hwwInfo);
+        neutrino = hwwInfo.neutrino;
+        wlnu     = hwwInfo.wlnu;
+        wqq      = hwwInfo.wqqjet;
+        hWW      = hwwInfo.hWW;
+        wwDM     = PhysicsUtilities::deltaR( wlnu,wqq) * hWW.pt()/2.0;
+        passWWDM = wwDM < 125.0;
     } else {
+        hwwChi      =  0;
         neutrino    =  MomentumF();
         wlnu        =  MomentumF();
-        hWW         = MomentumF();
-        wwDM        = 0;
-        passWWDM    = false;
+        wqq         =  MomentumF();
+        hWW         =  MomentumF();
+        wwDM        =  0;
+        passWWDM    =  false;
     }
 
     if(hbbCand){
@@ -247,6 +254,15 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         hbbMass    = 0;
         hh         =  MomentumF();
     }
+
+    if(hbbCand && wjjCand){
+        auto oldN =  HiggsSolver::getInvisible(reader_event->met,
+                (selectedLepton->p4() + wjjCand->p4()) );
+        hh_old =  hbbCand->p4() + oldN.p4() + selectedLepton->p4() + wjjCand->p4();
+    } else {
+        hh_old     =  MomentumF();
+    }
+
 
     //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
 

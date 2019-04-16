@@ -2,11 +2,11 @@
 #include <Math/GenVector/LorentzVector.h>
 #include <TH1.h>
 #include <TMath.h>
-#include <TreeAnalyzer/framework/DataFormats/interface/FatJet.h>
-#include <TreeAnalyzer/framework/DataFormats/interface/GenParticle.h>
-#include <TreeAnalyzer/framework/DataFormats/interface/Lepton.h>
-#include <TreeAnalyzer/framework/DataFormats/interface/Momentum.h>
-#include <TreeAnalyzer/framework/Processors/GenTools/interface/DiHiggsEvent.h>
+#include "DataFormats/interface/FatJet.h"
+#include "DataFormats/interface/GenParticle.h"
+#include "DataFormats/interface/Lepton.h"
+#include "DataFormats/interface/Momentum.h"
+#include "Processors/GenTools/interface/DiHiggsEvent.h"
 #include <TString.h>
 #include <TVector2.h>
 #include <TLorentzVector.h>
@@ -47,252 +47,6 @@
 using namespace TAna;
 using namespace FillerConstants;
 
-class HSolverInfo {
-public:
-  HSolverInfo()
-{};
-  double chiSq = -1;
-  double SF = -1;
-  ASTypes::CylLorentzVector neutrino;
-  ASTypes::CylLorentzVector wlnu;
-  ASTypes::CylLorentzVector hWW;
-  ASTypes::CylLorentzVector wqqjet;
-};
-
-
-class HSolver {
- public:
-  static const double mW    ;
-  static const double mT    ;
-  static const double aW    ;
-  static const double aT    ;
-  static const double aCM   ;
-  double wLNUMass;
-  double nZP;
-  TFitter *minimizer;
-
-  HSolver();
-  ~HSolver();
-
-
-  // operations
-  static double hSolverFunction( const double leptonX, const double leptonY, const double leptonZ, const double neutrinoX, const double neutrinoY,const double neutrinoZ,
-          const double jetX,    const double jetY,    const double jetZ,    const double jetM, const double jetSF,
-          const double metX,    const double metY,const double wlnuM, HSolverInfo * info = 0
-                   );
-
-  static void minuitFunctionWrapper(int& nDim, double* gout, double& result, double *par, int flg);
-  double hSolverMinimization(const ASTypes::CylLorentzVectorF& lep, const ASTypes::CylLorentzVectorF& jet, const ASTypes::CylLorentzVectorF& met, bool jetIsVirtual, HSolverInfo * info);
-
-  double round(double num, int x){
-    return ceil( ( num * pow( 10,x ) ) - 0.5 ) / pow( 10,x );
-  }
-
-}; // end of class Topness
-
-
-const double HSolver::mW  = 81.;
-const double HSolver::mT  = 172.;
-const double HSolver::aW  = 5.;
-const double HSolver::aT  = 15.;
-const double HSolver::aCM = 1000.;
-
-HSolver::HSolver() : minimizer(new TFitter(4))
-  {
-  // less print-outs
-    cout.precision(11);
-    double p1 = -1;
-    minimizer->ExecuteCommand("SET PRINTOUT",&p1,1);
-
-    // tell minimizer about the function to be minimized
-    minimizer->SetFCN(minuitFunctionWrapper);
-  }
-
-HSolver::~HSolver(){
-  delete minimizer;
-}
-
-double HSolver::hSolverFunction(
-                   const double leptonX, const double leptonY, const double leptonZ, const double neutrinoX, const double neutrinoY,const double neutrinoZ,
-                   const double jetX,    const double jetY,    const double jetZ,    const double jetM, const double jetSF,
-                   const double metX,    const double metY,const double wlnuM, HSolverInfo * info
-                   ) {
-
-    const double hwwParX = jetX+metX+leptonX;
-    const double hwwParY = jetY+metY+leptonY;
-    const double hwwMag = std::sqrt(hwwParX*hwwParX+hwwParY*hwwParY);
-
-    const double hwwParNormX  = hwwParX/hwwMag;
-    const double hwwParNormY  = hwwParY/hwwMag;
-
-    const double hwwPerpNormX  = -1*hwwParNormY;
-    const double hwwPerpNormY  = hwwParNormX;
-
-    auto getPerp =[&](const double momx, const double momy)->double{ return momx*hwwPerpNormX+momy*hwwPerpNormY;};
-    auto getPar =[&](const double momx, const double momy)->double{ return momx*hwwParNormX+momy*hwwParNormY;};
-
-
-    const double metPerp = getPerp(metX,metY);
-    const double metPar = getPar(metX,metY);
-    const double neutPerp = getPerp(neutrinoX,neutrinoY);
-    const double neutPar = getPar(neutrinoX,neutrinoY);
-
-
-    const double leptonE = std::sqrt(leptonX*leptonX+leptonY*leptonY+leptonZ*leptonZ);
-    const ASTypes::CartLorentzVector lepton(leptonX,leptonY,leptonZ,leptonE);
-    const double neutrinoE = std::sqrt(neutrinoX*neutrinoX+neutrinoY*neutrinoY+neutrinoZ*neutrinoZ);
-    const ASTypes::CartLorentzVector neutrino(neutrinoX,neutrinoY,neutrinoZ,neutrinoE);
-    const double jetE   = std::sqrt(jetSF*jetX*jetSF*jetX+jetSF*jetY*jetSF*jetY+jetSF*jetZ*jetSF*jetZ+jetM*jetM);
-    const ASTypes::CartLorentzVector jet(jetSF*jetX,jetSF*jetY,jetSF*jetZ,jetE);
-
-    const ASTypes::CartLorentzVector wlnu = lepton + neutrino;
-    const ASTypes::CartLorentzVector hww = wlnu + jet;
-
-    const double metParOff = -0.076-0.0000165*hwwMag;
-    const double extraMetPar = (metPar-neutPar)/hwwMag;// - metParOff;
-    const double extraMetPerp = (metPerp-neutPerp);
-
-    const double metParErr =   extraMetPar >= 0 ? 0.064 : 0.15;
-
-    const double metParChiSq =  extraMetPar*extraMetPar/(metParErr*metParErr);
-
-    const double metPerpError = 29;//26.4+0.0175*hwwMag;
-    const double metPerpChiSq = extraMetPerp*extraMetPerp/(metPerpError*metPerpError);
-    const double jetSFChiSq = (jetSF-1.0)*(jetSF-1.0)/(0.10*0.10);
-
-    const double meanWlnuMass = jetM > 60 ? 43 : 80;
-    const double wlnuMassError = jetM > 60 ? (wlnu.mass() > 43 ? 3 : 19) : 3;
-
-    const double wlnuMassChiSq = std::pow( (wlnu.mass() -meanWlnuMass)/wlnuMassError,2  );
-//    const double wlnuMassChiSq = std::pow( (wlnu.mass() -wlnuM)/wlnuMassError,2  );
-
-    const double meanHWWMass = 125;
-    const double hWWMassError = jetM > 60 ? 3 : 9;
-    const double hWWMassChiSq = std::pow( (hww.mass() -meanHWWMass)/hWWMassError,2  );
-
-    const double thetaErr = std::max(0.06,0.283-0.000153*hwwMag);
-    const double thetaDiff =  neutrino.theta() - hww.theta();
-    const double thetaChiSq = thetaDiff*thetaDiff/(thetaErr*thetaErr);
-
-
-//    plotter.getOrMake1DPre(smpName,"neutThetamOT",";neutThetamOT",600,-5,5)->Fill( diHiggsEvt.w1_d2->theta() - (selectedLepton->p4() + wjjCand->p4()).theta(),weight);
-
-
-//    jetZ+leptonZ
-
-//    std::cout << neutrinoX <<","<<neutrinoY <<","<< neutrinoZ<<","<<jetSF <<","<<wlnu.mass()<<","<<hww.mass()<<": "
-//            <<metPerpChiSq <<", "<<metParChiSq <<", "<<jetSFChiSq <<", "<<wlnuMassChiSq <<", "<<hWWMassChiSq << std::endl;
-
-//    const double chisq= metPerpChiSq+metParChiSq+jetSFChiSq+wlnuMassChiSq+hWWMassChiSq;
-//    const double chisq= metPerpChiSq+metParChiSq+wlnuMassChiSq+thetaChiSq   ;
-
-    const double chisq= hWWMassChiSq +wlnuMassChiSq +metPerpChiSq +metParChiSq+jetSFChiSq ;
-
-
-
-
-//
-
-  if(info){
-      info->chiSq = chisq;
-      info->SF = jetSF;
-      info->neutrino = neutrino;
-      info->wlnu = wlnu;
-      info->hWW = hww;
-      info->wqqjet = jet;
-  }
-
-  return chisq;
-
-} // ~ end of Topness function
-
-
-
-void HSolver::minuitFunctionWrapper(int& nDim, double* gout, double& result, double* par, int flg) {
-
-
-  result = hSolverFunction(par[0],par[1],par[2],par[3],
-               par[4],par[5],par[6],par[7],
-               par[8],par[9],par[10],par[11],
-               par[12],par[13]
-               );
-
-} // ~end of minuit function
-
-
-
-double HSolver::hSolverMinimization(const ASTypes::CylLorentzVectorF& lep, const ASTypes::CylLorentzVectorF& jet, const ASTypes::CylLorentzVectorF& met, bool jetIsVirtual, HSolverInfo * info) {
-    const double jetM =jetIsVirtual ? 31 : 80;
-
-
-
-    minimizer->SetParameter(0,"leptonX"    ,lep.x(),0,lep.x()-0.001,lep.x()+0.001);
-    minimizer->SetParameter(1,"leptonY"    ,lep.y(),0,lep.y()-0.001,lep.y()+0.001);
-    minimizer->SetParameter(2,"leptonZ"    ,lep.z(),0,lep.z()-0.001,lep.z()+0.001);
-    minimizer->SetParameter(3,"neutrinoX"  ,met.x(),500,-3000,3000);
-    minimizer->SetParameter(4,"neutrinoY"  ,met.y(),500,-3000,3000);
-    minimizer->SetParameter(5,"neutrinoZ"  ,0,500,-3000,3000);
-    minimizer->SetParameter(6,"jetX"       ,jet.x(),0,jet.x()-0.001,jet.x()+0.001);
-    minimizer->SetParameter(7,"jetY"       ,jet.y(),0,jet.y()-0.001,jet.y()+0.001);
-    minimizer->SetParameter(8,"jetZ"       ,jet.z(),0,jet.z()-0.001,jet.z()+0.001);
-    minimizer->SetParameter(9,"jetM"       ,jetM,0,jetM-0.001,jetM+0.0010);
-    minimizer->SetParameter(10,"jetSF"      ,1,2    ,-5,5);
-    minimizer->SetParameter(11,"metX"       ,met.x(),0,met.x()-0.001,met.x()+0.001);
-    minimizer->SetParameter(12,"metY"       ,met.y(),0,met.y()-0.001,met.y()+0.001);
-    minimizer->SetParameter(13,"wlnuM"      ,wLNUMass,0,wLNUMass-0.001,wLNUMass+0.001);
-
-
-
-  minimizer->FixParameter(0);
-  minimizer->FixParameter(1);
-  minimizer->FixParameter(2);
-  minimizer->FixParameter(6);
-  minimizer->FixParameter(7);
-  minimizer->FixParameter(8);
-  minimizer->FixParameter(9);
-  minimizer->FixParameter(11);
-  minimizer->FixParameter(12);
-  minimizer->FixParameter(13);
-
-//  minimizer->FixParameter(10);
-//  minimizer->FixParameter(3);
-//  minimizer->FixParameter(4);
-
-
-//  minimizer->SetParameter(3,"neutrinoX"  ,met.x(),0,-3000,3000);
-//  minimizer->SetParameter(4,"neutrinoY"  ,met.y(),0,-3000,3000);
-//  minimizer->FixParameter(3);
-//  minimizer->FixParameter(4);
-//  minimizer->SetParameter(5,"neutrinoZ"  ,nZP,0,-3000,3000);
-//    minimizer->FixParameter(5);
-
-  // Run the simplex minimizer to get close to the minimum [no good precision]
-  minimizer->ExecuteCommand("SIMPLEX",0,0);
-
-  // Run the migrad minimizer to precisely estimate the minimum
-  //    minimizer->ExecuteCommand("MIGRAD",0,0);
-
-  return  hSolverFunction(
-  minimizer->GetParameter(0 ),
-  minimizer->GetParameter(1 ),
-  minimizer->GetParameter(2 ),
-  minimizer->GetParameter(3 ),
-  minimizer->GetParameter(4 ),
-  minimizer->GetParameter(5 ),
-  minimizer->GetParameter(6 ),
-  minimizer->GetParameter(7 ),
-  minimizer->GetParameter(8 ),
-  minimizer->GetParameter(9 ),
-  minimizer->GetParameter(10),
-  minimizer->GetParameter(11),
-  minimizer->GetParameter(12),
-  minimizer->GetParameter(13),
-  info);
-
-
-} // ~ end of Topness Minimization()
-
-
 
 
 
@@ -300,7 +54,8 @@ double HSolver::hSolverMinimization(const ASTypes::CylLorentzVectorF& lep, const
 class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt, randSeed){
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) :
+        DefaultSearchRegionAnalyzer(fileName,treeName,treeInt, randSeed){
     }
 
 
@@ -429,14 +184,6 @@ public:
          plt(smpName);
          if(wjjCand->tau2otau1() < 0.55) plt(smpName+"_lt0p55");
          if(wjjCand->tau2otau1() < 0.75) plt(smpName+"_lt0p75");
-
-
-
-
-
-
-
-
 
     }
 
@@ -594,46 +341,47 @@ public:
         return bestSol;
     }
 
-    void oldGo(){
-
-
-        auto wqqjet = diHiggsEvt.w2_d1->p4() + diHiggsEvt.w2_d2->p4();
-        auto wlnu = diHiggsEvt.w1_d1->p4() + diHiggsEvt.w1_d2->p4();
-
-            HiggsSolverInfo info;
-            double chisq = solver.hSolverMinimization(selectedLepton->p4(),wjjCand->p4(), reader_event->met.p4(),wjjCand->sdMom().mass() < 60,&info);
-            double masSol = (info.hWW + hbbCand->p4()).mass();
-
-            auto stupidNeutrino = neutrino;
-            stupidNeutrino.setP4(reader_event->met.pt(),float(0.0),reader_event->met.mass(),float(0.0));
-
-
-
-        plotter.getOrMake1DPre(smpName,"orig_mass",";mass",500,0,8000)->Fill(hh.mass(),weight);
-        plotter.getOrMake1DPre(smpName,"new_mass",";mass",500,0,8000)->Fill( ( info.wlnu + wjjCand->p4()+  hbbCand->p4()).mass(),weight);
-        plotter.getOrMake1DPre(smpName,"perfect_mass",";mass",500,0,8000)->Fill( ( diHiggsEvt.w1_d2->p4()+  selectedLepton->p4() + wjjCand->p4()+  hbbCand->p4()).mass(),weight);
-        plotter.getOrMake1DPre(smpName,"stupid_mass",";mass",500,0,8000)->Fill( ( stupidNeutrino.p4()+  selectedLepton->p4() + wjjCand->p4()+  hbbCand->p4()).mass(),weight);
-
-        auto testR = [&](TString prefix, const ASTypes::CylLorentzVectorF val){
-            plotter.getOrMake1DPre(prefix,"nzR",";nzR",200,-5,5)->Fill(val.pz()/diHiggsEvt.w1_d2->pz() -1,weight);
-            plotter.getOrMake1DPre(prefix,"nPTR",";nPTR",200,-5,5)->Fill(val.pt()/diHiggsEvt.w1_d2->pt() -1,weight);
-            plotter.getOrMake1DPre(prefix,"nDPhi",";nDPhi",200,-5,5)->Fill(PhysicsUtilities::deltaPhi(val,*diHiggsEvt.w1_d2),weight);
-
-        };
-        testR(smpName+"_oldSol",neutrino.p4());
-        testR(smpName+"_newSol",ASTypes::CylLorentzVectorF(info.neutrino));
-
-
+//    void oldGo(){
 //
-//        plotter.getOrMake1DPre(smpName,"massRbb",";massRbb",500,0,2000)->Fill((hWW.p4() + diHiggsEvt.hbb->p4()).mass(),weight);
-//        plotter.getOrMake1DPre(smpName,"massRN",";massRN",500,0,2000)->Fill((diHiggsEvt.w1_d2->p4()+ wjjCand->p4() + selectedLepton->p4() + hbbCand->p4()).mass(),weight);
-//        plotter.getOrMake1DPre(smpName,"massRJ",";massRJ",500,0,2000)->Fill((neutrino.p4()+ wqqjet + selectedLepton->p4() + hbbCand->p4()).mass(),weight);
-//        plotter.getOrMake1DPre(smpName,"massRJN",";massRJN",500,0,2000)->Fill((diHiggsEvt.w1_d2->p4()+ wqqjet + selectedLepton->p4() + hbbCand->p4()).mass(),weight);
-    }
+//
+//        auto wqqjet = diHiggsEvt.w2_d1->p4() + diHiggsEvt.w2_d2->p4();
+//        auto wlnu = diHiggsEvt.w1_d1->p4() + diHiggsEvt.w1_d2->p4();
+//
+//            HiggsSolverInfo info;
+//            double chisq = solver.hSolverMinimization(selectedLepton->p4(),wjjCand->p4(), reader_event->met.p4(),wjjCand->sdMom().mass() < 60,&info);
+//            double masSol = (info.hWW + hbbCand->p4()).mass();
+//
+//            auto stupidNeutrino = neutrino;
+//            stupidNeutrino.setP4(reader_event->met.pt(),float(0.0),reader_event->met.mass(),float(0.0));
+//
+//
+//
+//        plotter.getOrMake1DPre(smpName,"orig_mass",";mass",500,0,8000)->Fill(hh.mass(),weight);
+//        plotter.getOrMake1DPre(smpName,"new_mass",";mass",500,0,8000)->Fill( ( info.wlnu + wjjCand->p4()+  hbbCand->p4()).mass(),weight);
+//        plotter.getOrMake1DPre(smpName,"perfect_mass",";mass",500,0,8000)->Fill( ( diHiggsEvt.w1_d2->p4()+  selectedLepton->p4() + wjjCand->p4()+  hbbCand->p4()).mass(),weight);
+//        plotter.getOrMake1DPre(smpName,"stupid_mass",";mass",500,0,8000)->Fill( ( stupidNeutrino.p4()+  selectedLepton->p4() + wjjCand->p4()+  hbbCand->p4()).mass(),weight);
+//
+//        auto testR = [&](TString prefix, const ASTypes::CylLorentzVectorF val){
+//            plotter.getOrMake1DPre(prefix,"nzR",";nzR",200,-5,5)->Fill(val.pz()/diHiggsEvt.w1_d2->pz() -1,weight);
+//            plotter.getOrMake1DPre(prefix,"nPTR",";nPTR",200,-5,5)->Fill(val.pt()/diHiggsEvt.w1_d2->pt() -1,weight);
+//            plotter.getOrMake1DPre(prefix,"nDPhi",";nDPhi",200,-5,5)->Fill(PhysicsUtilities::deltaPhi(val,*diHiggsEvt.w1_d2),weight);
+//
+//        };
+//        testR(smpName+"_oldSol",neutrino.p4());
+//        testR(smpName+"_newSol",ASTypes::CylLorentzVectorF(info.neutrino));
+//
+//
+////
+////        plotter.getOrMake1DPre(smpName,"massRbb",";massRbb",500,0,2000)->Fill((hWW.p4() + diHiggsEvt.hbb->p4()).mass(),weight);
+////        plotter.getOrMake1DPre(smpName,"massRN",";massRN",500,0,2000)->Fill((diHiggsEvt.w1_d2->p4()+ wjjCand->p4() + selectedLepton->p4() + hbbCand->p4()).mass(),weight);
+////        plotter.getOrMake1DPre(smpName,"massRJ",";massRJ",500,0,2000)->Fill((neutrino.p4()+ wqqjet + selectedLepton->p4() + hbbCand->p4()).mass(),weight);
+////        plotter.getOrMake1DPre(smpName,"massRJN",";massRJN",500,0,2000)->Fill((diHiggsEvt.w1_d2->p4()+ wqqjet + selectedLepton->p4() + hbbCand->p4()).mass(),weight);
+//    }
 
     void goTest() {
         HiggsSolverInfo info;
-        double chisq = solver.hSolverMinimization(selectedLepton->p4(),wjjCand->p4(), reader_event->met.p4(),wjjCand->sdMom().mass() <60 ,&info);
+        double chisq = solver.hSolverMinimization(selectedLepton->p4(),wjjCand->p4(),
+                reader_event->met.p4(),wjjCand->sdMom().mass() <60,parameters.hww ,&info);
 
         auto plotgrp = [&](TString prefix, const ASTypes::CylLorentzVectorF& hh,const ASTypes::CylLorentzVectorF& hWW,const ASTypes::CylLorentzVectorF& wlnu, const ASTypes::CylLorentzVectorF& neutrino){
             plotter.getOrMake1DPre(prefix,"hh_mass" ,";hh_mass",500,0,4000)->Fill(hh.mass(),weight);
@@ -728,22 +476,193 @@ public:
 
     }
 
+    void plotTerms(const std::string& prefix, const HiggsSolverInfo& info){
+        const double jetX = wjjCand->px();
+        const double jetY = wjjCand->py();
+        const double jetZ = wjjCand->pz();
+        const double jetM =(wjjCand->sdMom().mass() <60)
+                ? parameters.hww.onWlnuMeanJet : parameters.hww.offWlnuMeanJet;
+        const double jetSF = info.SF;
+        const double metX = reader_event->met.px();
+        const double metY = reader_event->met.py();
+        const double leptonX = selectedLepton->px();
+        const double leptonY = selectedLepton->py();
+        const double leptonZ = selectedLepton->pz();
+        const double neutrinoX = info.neutrino.px();
+        const double neutrinoY = info.neutrino.py();
+        const double neutrinoZ = info.neutrino.pz();
+
+
+        const double hwwParX = jetX+metX+leptonX;
+        const double hwwParY = jetY+metY+leptonY;
+        const double hwwMag = std::sqrt(hwwParX*hwwParX+hwwParY*hwwParY);
+
+        const double hwwParNormX  = hwwParX/hwwMag;
+        const double hwwParNormY  = hwwParY/hwwMag;
+
+        const double hwwPerpNormX  = -1*hwwParNormY;
+        const double hwwPerpNormY  = hwwParNormX;
+
+        auto getPerp =[&](const double momx, const double momy)->double{
+            return momx*hwwPerpNormX+momy*hwwPerpNormY;};
+        auto getPar =[&](const double momx, const double momy)->double{
+            return momx*hwwParNormX+momy*hwwParNormY;};
+
+        const double metPerp = getPerp(metX,metY);
+        const double metPar = getPar(metX,metY);
+        const double neutPerp = getPerp(neutrinoX,neutrinoY);
+        const double neutPar = getPar(neutrinoX,neutrinoY);
+
+
+        const double leptonE = std::sqrt(leptonX*leptonX+leptonY*leptonY+leptonZ*leptonZ);
+        const ASTypes::CartLorentzVector lepton(leptonX,leptonY,leptonZ,leptonE);
+        const double neutrinoE = std::sqrt(neutrinoX*neutrinoX+neutrinoY*neutrinoY+neutrinoZ*neutrinoZ);
+        const ASTypes::CartLorentzVector neutrino(neutrinoX,neutrinoY,neutrinoZ,neutrinoE);
+        const double jetE   = std::sqrt(jetSF*jetSF*(jetX*jetX+jetY*jetY+jetZ*jetZ)+jetM*jetM);
+        const ASTypes::CartLorentzVector jet(jetSF*jetX,jetSF*jetY,jetSF*jetZ,jetE);
+
+        const ASTypes::CartLorentzVector wlnu = lepton + neutrino;
+        const ASTypes::CartLorentzVector hww = wlnu + jet;
+
+        const double extraMetPar = (metPar-neutPar)/hwwMag;
+        const double metParErr =   extraMetPar >= 0
+                ? parameters.hww.posMETParErr : parameters.hww.negMETParErr;
+
+
+        const double extraMetPerp = (metPerp-neutPerp);
+        const double metPerpError = parameters.hww.metPerpErr;
+        const double metPerpChiSq = extraMetPerp*extraMetPerp/(metPerpError*metPerpError);
+
+        const double meanWlnuMass = jetM > 60 ? parameters.hww.offWlnuMeanWlnu : parameters.hww.onWlnuMeanWlnu;
+        const double wlnuMassError = jetM > 60
+                ? (wlnu.mass() > parameters.hww.offWlnuMeanWlnu ? parameters.hww.offWlnuPosWlnuErr : parameters.hww.offWnluNegWlnuErr)
+                : parameters.hww.onWlnuWlnuErr;
+
+        const double hWWMassError = jetM > 60 ? parameters.hww.offWlnuHWWErr : parameters.hww.onWlnuHWWErr;
+
+        const double chi_hww=(hww.mass() -125)/hWWMassError;
+        const double chi_wlnu=(wlnu.mass() -meanWlnuMass)/wlnuMassError;
+        const double chi_jetS = (jetSF-1.0)/parameters.hww.jetErr;
+        const double chi_metE = extraMetPerp/metPerpError;
+        const double chi_metA = extraMetPar/metParErr;
+
+        plotter.getOrMake1DPre(prefix.c_str(),"chiTerm_hWW",";hWW term",100,-10,10)         ->Fill(chi_hww,weight);
+        plotter.getOrMake1DPre(prefix.c_str(),"chiTerm_Wlnu",";Wlnu term",100,-10,10)       ->Fill(chi_wlnu,weight);
+        plotter.getOrMake1DPre(prefix.c_str(),"chiTerm_jetSF",";Jet SF term",100,-10,10)    ->Fill(chi_jetS,weight);
+        plotter.getOrMake1DPre(prefix.c_str(),"chiTerm_metPerp",";MET perp term",100,-10,10)->Fill(chi_metE,weight);
+        plotter.getOrMake1DPre(prefix.c_str(),"chiTerm_metPar",";MET par term",100,-10,10)  ->Fill(chi_metA,weight);
+
+        plotter.getOrMake2DPre(prefix.c_str(),"chiTerm_hWW_v_Wlnu",";hWW term; Wlnu term",100,-10,10,100,-10,10)         ->Fill(chi_hww,chi_wlnu*2,weight);
+        plotter.getOrMake2DPre(prefix.c_str(),"chiTerm_hWW_v_jetSF",";hWW term; JetSF term",100,-10,10,100,-10,10)       ->Fill(chi_hww,chi_jetS,weight);
+        plotter.getOrMake2DPre(prefix.c_str(),"chiTerm_hWW_v_metPerp",";hWW term; MET perp term",100,-10,10,100,-10,10)  ->Fill(chi_hww,chi_metE,weight);
+        plotter.getOrMake2DPre(prefix.c_str(),"chiTerm_hWW_v_metPar",";hWW term; MET par term",100,-10,10,100,-10,10)    ->Fill(chi_hww,chi_metA,weight);
+
+        plotter.getOrMake2DPre(prefix.c_str(),"chiTerm_Wlnu_v_jetSF"  ,";Wlnu term; JetSF term",100,-10,10,100,-10,10)     ->Fill(chi_wlnu,chi_jetS,weight);
+        plotter.getOrMake2DPre(prefix.c_str(),"chiTerm_Wlnu_v_metPerp",";Wlnu term; MET perp term",100,-10,10,100,-10,10)  ->Fill(chi_wlnu,chi_metE,weight);
+        plotter.getOrMake2DPre(prefix.c_str(),"chiTerm_Wlnu_v_metPar" ,";Wlnu term; MET par term",100,-10,10,100,-10,10)   ->Fill(chi_wlnu,chi_metA,weight);
+
+        plotter.getOrMake2DPre(prefix.c_str(),"chiTerm_jetSF_v_metPerp",";Jet SF term; MET perp term",100,-10,10,100,-10,10)  ->Fill(chi_jetS,chi_metE,weight);
+        plotter.getOrMake2DPre(prefix.c_str(),"chiTerm_jetSF_v_metPar" ,";Jet SF term; MET par term",100,-10,10,100,-10,10)   ->Fill(chi_jetS,chi_metA,weight);
+        plotter.getOrMake2DPre(prefix.c_str(),"chiTerm_metPerp_v_metPar" ,";MET perp term; MET par term",100,-10,10,100,-10,10)   ->Fill(chi_metE,chi_metA,weight);
+
+
+    }
+
+    void goTest2() {
+         HiggsSolverInfo info;
+         double chisq = solver.hSolverMinimization(selectedLepton->p4(),wjjCand->p4(),
+                 reader_event->met.p4(),wjjCand->sdMom().mass() <60,parameters.hww ,&info);
+
+         double newMass = (info.hWW + hbbCand->p4()).mass();
+
+
+         auto doChiPlt =[&](const std::string& prefix) {
+             plotter.getOrMake1DPre(prefix.c_str(),"chisq",";chisq",500,0,100)->Fill(chisq,weight);
+         };
+         auto doMDPlt =[&](const std::string& prefix) {
+             plotter.getOrMake1DPre(prefix.c_str(),"md",";md",500,0,500)->Fill(wwDM,weight);
+         };
+         auto doOHHPlt =[&](const std::string& prefix) {
+             plotter.getOrMake1DPre(prefix.c_str(),"orig_hh_mass" ,";hh_mass",500,0,4000)->Fill(hh.mass(),weight);
+         };
+         auto doNHHPlt =[&](const std::string& prefix) {
+             plotter.getOrMake1DPre(prefix.c_str(),"new_hh_mass" ,";hh_mass",500,0,4000)->Fill(newMass,weight);
+         };
+
+
+         auto doMassPlots = [&](const std::string& prefix) {
+             doOHHPlt(prefix + "_incl");
+             if(wwDM <125) doOHHPlt(prefix + "_dmlt125");
+
+             doNHHPlt(prefix + "_incl");
+             if(chisq < 14) doNHHPlt(prefix + "_chilt14");
+             if(chisq < 13.5) doNHHPlt(prefix + "_chilt13p5");
+             if(chisq < 13) doNHHPlt(prefix + "_chilt13");
+             if(chisq < 12.5) doNHHPlt(prefix + "_chilt12p5");
+             if(chisq < 12) doNHHPlt(prefix + "_chilt12");
+             if(chisq < 11.5) doNHHPlt(prefix + "_chilt11p5");
+             if(chisq < 11) doNHHPlt(prefix + "_chilt11");
+             if(chisq < 10.5) doNHHPlt(prefix + "_chilt10p5");
+             if(chisq < 10) doNHHPlt(prefix + "_chilt10");
+             if(chisq < 9.5) doNHHPlt(prefix + "_chilt9p5");
+             if(chisq < 9) doNHHPlt(prefix + "_chilt9");
+             if(chisq < 8.5) doNHHPlt(prefix + "_chilt8p5");
+             if(chisq < 8) doNHHPlt(prefix + "_chilt8");
+             if(chisq < 7.5) doNHHPlt(prefix + "_chilt7p5");
+             if(chisq < 7) doNHHPlt(prefix + "_chilt7");
+             if(chisq < 6.5) doNHHPlt(prefix + "_chilt6p5");
+             if(chisq < 6) doNHHPlt(prefix + "_chilt6");
+             if(chisq < 5.5) doNHHPlt(prefix + "_chilt5p5");
+             if(chisq < 5) doNHHPlt(prefix + "_chilt5");
+             if(chisq < 4.5) doNHHPlt(prefix + "_chilt4p5");
+             if(chisq < 4) doNHHPlt(prefix + "_chilt4");
+             if(chisq < 3.5) doNHHPlt(prefix + "_chilt3p5");
+             if(chisq < 3) doNHHPlt(prefix + "_chilt3");
+         };
+
+         auto doVarPlots = [&](const std::string& prefix) {
+             if(hh.mass() > 700) doMDPlt(prefix + "_hhgt700");
+             if(hh.mass() > 700 && hh.mass() < 1000) doMDPlt(prefix + "_hh700to1000");
+             if(hh.mass() > 1000 && hh.mass() < 2000) doMDPlt(prefix + "_hh1000to2000");
+             if(hh.mass() > 2000) doMDPlt(prefix + "_hhgt2000");
+
+             if(newMass > 700) doChiPlt(prefix + "_hhgt700");
+             if(newMass > 700 && newMass < 1000) doChiPlt(prefix + "_hh700to1000");
+             if(newMass > 1000 && newMass < 2000) doChiPlt(prefix + "_hh1000to2000");
+             if(newMass > 2000) doChiPlt(prefix + "_hhgt2000");
+
+         };
+
+         doMassPlots(smpName.Data());
+         doVarPlots(smpName.Data());
+         plotTerms(smpName.Data(),info);
+
+     }
+
 
 
 
     bool runEvent() override {
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
-        if(!passTriggerPreselection) return false;
+//        if(!passTriggerPreselection) return false;
+        if(selectedLeptons.size()!=1) return false;
+        if(selectedLepton->pt() < (selectedLepton->isMuon() ? 27 : 30 ) ) return false;
+        if(ht_chs < 400) return false;
         if(!passEventFilters) return false;
-        if(selectedLeptons.size() != 1) return false;
         if(!hbbCand || !wjjCand) return false;
         if(wjjCand->tau2otau1() >0.75) return false;
         if(hbbCSVCat <4) return false;
         if(isSignal() && diHiggsEvt.type < DiHiggsEvent::MU) return false;
+        if(hbbMass < 30 || hbbMass > 210) return false;
+        if(isSignal()){
+            smpName=SignalTypeNames[*reader_event->signalType]+"_"
+            +TString::Format("m%i",signal_mass).Data();
+        }
+
 //        if(isSignal())getRes();
 //        if(isSignal()) oldGo();
-
-        goTest();
+//        goTest();
+        goTest2();
 
 
         return true;
@@ -757,14 +676,10 @@ public:
 
 #endif
 
-void tryNewHiggsSolver(std::string fileName, int treeInt,int randSeed, std::string outFileName){
-    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
-    a.analyze();
-    a.write(outFileName);
-}
-void tryNewHiggsSolver(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec, float numEvent){
+void tryNewHiggsSolver(std::string fileName, int treeInt, int randSeed, std::string outFileName,
+        float xSec=-1, float numEvent=-1){
     Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     a.setSampleInfo(xSec,numEvent);
-    a.analyze(10000);
+    a.analyze();
     a.write(outFileName);
 }

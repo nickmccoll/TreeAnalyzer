@@ -91,6 +91,20 @@ ParameterSet set2017Parameters() {
     paramSet.jets.sjBtagCorrSFFile     = "corrections/subjet_CSVv2_Moriond17_B_H.csv";
     paramSet.jets.sjBtagCorrEffFile    = "corrections/sj_csvEff.root";
 
+    paramSet.hww.posMETParErr     = 0.067;
+    paramSet.hww.negMETParErr     = 0.16;
+    paramSet.hww.metPerpErr       = 31;
+    paramSet.hww.jetErr           = 0.11;
+    paramSet.hww.onWlnuMeanJet    = 30;
+    paramSet.hww.offWlnuMeanJet   = 80;
+    paramSet.hww.onWlnuMeanWlnu   = 80;
+    paramSet.hww.offWlnuMeanWlnu  = 41;
+    paramSet.hww.offWlnuPosWlnuErr= 5;
+    paramSet.hww.offWnluNegWlnuErr= 16;
+    paramSet.hww.onWlnuWlnuErr    = 2.3;
+    paramSet.hww.onWlnuHWWErr     = 8.3;
+    paramSet.hww.offWlnuHWWErr    = 3;
+
 
     return paramSet;
 }
