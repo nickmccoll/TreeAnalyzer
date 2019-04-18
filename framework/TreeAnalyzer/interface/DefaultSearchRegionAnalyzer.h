@@ -94,14 +94,20 @@ public:
 
     std::vector<const Jet*> jets;
     std::vector<const Jet*> jets_HbbV;
+    std::vector<const Jet*> jets_HbbV_2l;
     int nMedBTags = 0;
     int nMedBTags_HbbV = 0;
+    int nMedBTags_HbbV_2l = 0;
 
     std::vector<const Jet*> jets_chs;
     float                   ht_chs    =0;
 
+    std::vector<const Jet*> jets_NoDilepOverlap;
+    float                   ht_NoDilepOverlap = 0;
+
     ASTypes::size   corrections=0; //list of corrections to carry out
     float           weight     =0; //std weight after all corrections
+    float           weight_2l  =0;
 
     bool            passEventFilters = false;
     bool            passTriggerPreselection = false;
@@ -112,11 +118,18 @@ public:
     std::vector<const Lepton    *> selectedLeptons;
     const Lepton *                 selectedLepton=0;
 
+    std::vector<const Lepton    *> selectedDileptons;
+    enum DilepChan {ee, mumu, emu};
+    DilepChan dilepChan;
+    std::map<DilepChan,TString> dilepMap = { {ee, "_ee_"}, {mumu,"_mumu_"}, {emu,"_emu_"}};
 
     const FatJet*              wjjCand     =0;
     const FatJet*              hbbCand     =0;
     BTagging::CSVSJ_CAT        hbbCSVCat   = BTagging::CSVSJ_INCL;
     BTagging::CSVSJ_CAT        wjjCSVCat   = BTagging::CSVSJ_INCL;
+
+    const FatJet*       hbbCand_2l       =0;
+    BTagging::CSVSJ_CAT hbbCSVCat_2l     = BTagging::CSVSJ_INCL;
 
     float                      wwDM        = 0;
     float                      hwwChi      = 0;
@@ -130,6 +143,10 @@ public:
     MomentumF                  hh                 ;
     MomentumF                  hh_old             ;
     float                      hbbMass     =0     ;
+
+    MomentumF                  hWW_2l             ;
+    MomentumF                  hh_2l              ;
+    float                      hbbMass_2l  =0     ;
 
     ParameterSet parameters;
     FillerConstants::DataEra lastEra = FillerConstants::NOERA; //See if we need to load new params.

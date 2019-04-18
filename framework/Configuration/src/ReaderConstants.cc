@@ -29,7 +29,7 @@ ParameterSet set2017Parameters() {
     paramSet.event.minHT         =400;
     paramSet.event.minTriggerEl  =30;
     paramSet.event.minTriggerMu  =27;
-
+    paramSet.event.leptonCorrSFFile = "corrections/triggerSF_17.root";
 
     paramSet.fatJets.cand_minPT     = 50                   ;
     paramSet.fatJets.cand_maxETA    = 2.4                  ;
@@ -48,11 +48,11 @@ ParameterSet set2017Parameters() {
     paramSet.fatJets.hbbLL_minDRbbLL   = 2.0;
 
     paramSet.leptons.el_minPT   = 20  ;
-    paramSet.leptons.el_maxETA  = 2.5 ;
+    paramSet.leptons.el_maxETA  = 1.5 ;
     paramSet.leptons.el_maxDZ   = 0.1 ;
     paramSet.leptons.el_maxD0   = 0.05;
     paramSet.leptons.el_maxSip3D   = 4   ;
-    paramSet.leptons.el_maxISO  = 0.1 ;
+    paramSet.leptons.el_maxISO  = 0.2 ;
     paramSet.leptons.el_getID   = &Electron::passMVA90ID_noIso;
     paramSet.leptons.el_getISO  = &Electron::miniIso;
 
@@ -65,7 +65,25 @@ ParameterSet set2017Parameters() {
     paramSet.leptons.mu_getID   = &Muon::passMedID;
     paramSet.leptons.mu_getISO  = &Muon::miniIso;
 
-    paramSet.leptons.leptonCorrSFFile = "corrections/triggerSF_17.root";
+    paramSet.dileptons.el_minPT   = 10  ;
+    paramSet.dileptons.el_maxETA  = 1.5 ;
+    paramSet.dileptons.el_maxDZ   = 0.1 ;
+    paramSet.dileptons.el_maxD0   = 0.05;
+    paramSet.dileptons.el_maxSip3D   = 4   ;
+    paramSet.dileptons.el_maxISO  = 0.2 ;
+    paramSet.dileptons.el_getID1   = &Electron::passMVA90ID_noIso;
+    paramSet.dileptons.el_getID2   = &Electron::passMVA90ID_noIso;
+    paramSet.dileptons.el_getISO  = &Electron::miniIso;
+
+    paramSet.dileptons.mu_minPT   = 10  ;
+    paramSet.dileptons.mu_maxETA  = 2.4 ;
+    paramSet.dileptons.mu_maxDZ   = 0.1 ;
+    paramSet.dileptons.mu_maxD0   = 0.05;
+    paramSet.dileptons.mu_maxSip3D   = 4   ;
+    paramSet.dileptons.mu_maxISO  = 0.2 ;
+    paramSet.dileptons.mu_getID1   = &Muon::passMedID;
+    paramSet.dileptons.mu_getID2   = &Muon::passMedID;
+    paramSet.dileptons.mu_getISO  = &Muon::miniIso;
 
     paramSet.jets.minJetPT      = 30;
     paramSet.jets.maxJetETA     = 2.4;
@@ -76,17 +94,17 @@ ParameterSet set2017Parameters() {
     paramSet.jets.minBtagJetPT  = 30;
     paramSet.jets.maxBTagJetETA = 2.4;
 
-    paramSet.jets.getJetBTagVal = &BaseRecoJet::csv;
-    paramSet.jets.jetBTagWP     = paramSet.jets.CSV_WP [BTagging::BTAG_M];
-    paramSet.jets.getSJBTagVal =&BaseRecoJet::csv;
-    paramSet.jets.sjBTagLWP = paramSet.jets.CSV_WP [BTagging::BTAG_L];
-    paramSet.jets.sjBTagMWP = paramSet.jets.CSV_WP [BTagging::BTAG_M];
+    paramSet.jets.getJetBTagVal = &BaseRecoJet::deep_csv;
+    paramSet.jets.jetBTagWP     = paramSet.jets.DeepCSV_WP [BTagging::BTAG_M];
+    paramSet.jets.getSJBTagVal =&BaseRecoJet::deep_csv;
+    paramSet.jets.sjBTagLWP = paramSet.jets.DeepCSV_WP [BTagging::BTAG_L];
+    paramSet.jets.sjBTagMWP = paramSet.jets.DeepCSV_WP [BTagging::BTAG_M];
 
     paramSet.jets.jetBtagCorrSFFile ="corrections/CSVv2_Moriond17_B_H.csv";
     paramSet.jets.jetBtagCorrEffFile ="corrections/ak4_csvEff.root";
-    paramSet.jets.jetBtagCorrWP       = paramSet.jets.CSV_WP      ;
+    paramSet.jets.jetBtagCorrWP       = paramSet.jets.DeepCSV_WP      ;
     paramSet.jets.jetBtagCorrGetBTagVal = paramSet.jets.getJetBTagVal;
-    paramSet.jets.sjBtagCorrWP         = paramSet.jets.CSV_WP      ;
+    paramSet.jets.sjBtagCorrWP         = paramSet.jets.DeepCSV_WP      ;
     paramSet.jets.sjBtagCorrGetBTagVal = paramSet.jets.getSJBTagVal;
     paramSet.jets.sjBtagCorrSFFile     = "corrections/subjet_CSVv2_Moriond17_B_H.csv";
     paramSet.jets.sjBtagCorrEffFile    = "corrections/sj_csvEff.root";

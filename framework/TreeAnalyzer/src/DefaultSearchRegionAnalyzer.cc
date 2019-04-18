@@ -13,6 +13,7 @@
 #include "Processors/Variables/interface/JetKinematics.h"
 
 #include "Processors/Variables/interface/LeptonSelection.h"
+#include "Processors/Variables/interface/DileptonSelection.h"
 #include "Processors/Variables/interface/FatJetSelection.h"
 #include "Processors/Variables/interface/HiggsSolver.h"
 
@@ -136,7 +137,7 @@ void DefaultSearchRegionAnalyzer::setupParameters(){
     }
     if(isCorrOn(CORR_SJBTAG)) sjbtagSFProc->setParameters(parameters.jets);
     if(isCorrOn(CORR_AK4BTAG)) ak4btagSFProc->setParameters(parameters.jets);
-    if(isCorrOn(CORR_TRIG)) trigSFProc->setParameters(dataDirectory,parameters.leptons);
+    if(isCorrOn(CORR_TRIG)) trigSFProc->setParameters(dataDirectory,parameters.event);
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
@@ -201,6 +202,8 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         selectedLeptons = LeptonProcessor::getLeptons(parameters.leptons,
                 *reader_muon,*reader_electron);
         selectedLepton = selectedLeptons.size() ? selectedLeptons.front() : 0;
+
+        selectedDileptons = DileptonProcessor::getLeptons(parameters.dileptons,*reader_muon,*reader_electron);
     }
 
 
@@ -263,6 +266,35 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         hh_old     =  MomentumF();
     }
 
+    if(reader_fatjet && selectedDileptons.size() == 2){
+
+        fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,selectedDileptons.front(),selectedDileptons.back());
+        hbbCand_2l  = fjProc->getDilepHbbCand();
+        hbbCSVCat   = hbbCand_2l ? BTagging::getCSVSJCat(parameters.jets,hbbCand_2l->subJets())
+        : BTagging::CSVSJ_INCL ;
+
+    	double pz = reader_event->met.pt() / TMath::Tan((selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).theta());
+    	pz = ((pz < 0) == ((selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).pz() < 0)) ? pz : (-1)*pz;
+    	ASTypes::CartLorentzVector pnunu(reader_event->met.px(),reader_event->met.py(),pz,sqrt(pow(reader_event->met.px(),2)+pow(reader_event->met.py(),2)+pz*pz+40*40));
+
+        hWW_2l = selectedDileptons[0]->p4() + selectedDileptons[1]->p4() + pnunu;
+
+        if (selectedDileptons[0]->isMuon() && selectedDileptons[1]->isMuon()) dilepChan = mumu;
+        else if (selectedDileptons[0]->isElectron() && selectedDileptons[1]->isElectron()) dilepChan = ee;
+        else dilepChan = emu;
+    } else {
+        hbbCand_2l    =  0;
+        hbbCSVCat_2l  = BTagging::CSVSJ_INCL;
+        hWW_2l        = MomentumF();
+    }
+
+    if(hbbCand_2l){
+        hbbMass_2l =   isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand_2l) : hbbCand_2l->sdMom().mass();
+        hh_2l = hWW_2l.p4() + hbbCand_2l->p4();
+    } else {
+        hbbMass_2l    = 0;
+        hh_2l         = MomentumF();
+    }
 
     //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
 
@@ -283,34 +315,62 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
             jets_HbbV = jets;
             nMedBTags_HbbV = nMedBTags;
         }
+
+        if (hbbCand_2l) {
+            jets_NoDilepOverlap = PhysicsUtilities::selObjsMom(reader_jet->jets,30,2.4,[&](const Jet* j){return (PhysicsUtilities::deltaR2(*j,*selectedDileptons[0]) > 0.4*0.4
+                		&& PhysicsUtilities::deltaR2(*j,*selectedDileptons[1]) > 0.4*0.4);} );
+            ht_NoDilepOverlap = JetKinematics::ht(jets_NoDilepOverlap);
+
+            jets_HbbV_2l = PhysicsUtilities::selObjsD(jets,
+                    [&](const Jet* j){return  PhysicsUtilities::deltaR2(*j,*hbbCand_2l ) >= 1.2*1.2;});
+            nMedBTags_HbbV_2l = PhysicsUtilities::selObjsMomD(jets_HbbV_2l,
+                    parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
+                    [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
+        } else {
+        	jets_HbbV_2l = jets;
+        	nMedBTags_HbbV_2l = nMedBTags;
+        }
     }
 
 
     //|||||||||||||||||||||||||||||| EVENT WEIGHTS ||||||||||||||||||||||||||||||
     weight = 1;
+    weight_2l = 1;
     if(!isRealData()){
-        if(isCorrOn(CORR_XSEC))
+        if(isCorrOn(CORR_XSEC)) {
             weight *= EventWeights::getNormalizedEventWeight(
                     *reader_event,xsec(),nSampEvt(),parameters.event.lumi);
-        if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size()))
+            weight_2l *= weight;
+        }
+        if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size())) {
             weight *= trigSFProc->getLeptonTriggerSF(
                     ht_chs, (selectedLepton && selectedLepton->isMuon()));
-        if(isCorrOn(CORR_PU) )
-            weight *= puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);
+            weight_2l *= trigSFProc->getLeptonTriggerSF(
+                    ht_chs, (selectedDileptons.size() && selectedDileptons.front()->isMuon()));
+        }
+        if(isCorrOn(CORR_PU) ) {
+        	float pucorr = puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);
+            weight *= pucorr;
+            weight_2l *= pucorr;
+        }
         if(isCorrOn(CORR_LEP)){
             leptonSFProc->load(smDecayEvt,selectedLeptons);
             weight *= leptonSFProc->getSF();
         }
         if(isCorrOn(CORR_SJBTAG)){
-            weight *= sjbtagSFProc->getSF(parameters.jets,{hbbCand});
+            weight    *= sjbtagSFProc->getSF(parameters.jets,{hbbCand});
+            weight_2l *= sjbtagSFProc->getSF(parameters.jets,{hbbCand_2l});
         }
         if(isCorrOn(CORR_AK4BTAG)){
-            weight *= ak4btagSFProc->getSF(jets_HbbV);
+            weight    *= ak4btagSFProc->getSF(jets_HbbV);
+            weight_2l *= ak4btagSFProc->getSF(jets_HbbV_2l);
+
         }
         if(isCorrOn(CORR_TOPPT)){
             weight *= topPTProc->getCorrection(mcProc,smDecayEvt);
         }
 
+        // how do I want to incorporate the dileptons into these event weights????
     }
     return true;
 }

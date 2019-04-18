@@ -22,6 +22,8 @@ struct EventParameters{
     float minHT;
     float minTriggerEl;
     float minTriggerMu;
+
+    std::string leptonCorrSFFile;
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -83,11 +85,38 @@ struct LeptonParameters {
     float mu_maxISO ;
     LeptonProcessor::muFunBool mu_getID ;
     LeptonProcessor::muFunFloat mu_getISO;
-
-    std::string leptonCorrSFFile;
 };
 
 //--------------------------------------------------------------------------------------------------
+namespace DileptonProcessor {
+    typedef  bool (Muon::*muFunBool)() const;
+    typedef  bool (Electron::*elFunBool)() const;
+    typedef  float (Muon::*muFunFloat)() const;
+    typedef  float (Electron::*elFunFloat)() const;
+}
+struct DileptonParameters {
+    float el_minPT  ;
+    float el_maxETA ;
+    float el_maxDZ  ;
+    float el_maxD0  ;
+    float el_maxSip3D  ;
+    float el_maxISO ;
+    DileptonProcessor::elFunBool el_getID1 ;
+    DileptonProcessor::elFunBool el_getID2 ;
+    DileptonProcessor::elFunFloat el_getISO;
+
+    float mu_minPT  ;
+    float mu_maxETA ;
+    float mu_maxDZ  ;
+    float mu_maxD0  ;
+    float mu_maxSip3D  ;
+    float mu_maxISO ;
+    DileptonProcessor::muFunBool mu_getID1 ;
+    DileptonProcessor::muFunBool mu_getID2 ;
+    DileptonProcessor::muFunFloat mu_getISO;
+
+};//--------------------------------------------------------------------------------------------------
+
 class BaseRecoJet;
 class Jet;
 namespace BTagging {
@@ -148,6 +177,7 @@ struct ParameterSet {
     EventParameters  event;
     FatJetParameters fatJets;
     LeptonParameters leptons;
+    DileptonParameters dileptons;
     JetParameters    jets;
     HWWParameters    hww;
 };
