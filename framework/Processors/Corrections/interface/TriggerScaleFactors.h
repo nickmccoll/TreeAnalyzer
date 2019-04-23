@@ -9,8 +9,8 @@
 namespace TAna {
 class TriggerScaleFactors {
 public:
-    TriggerScaleFactors(const std::string& dataDir, const std::string& triggerSFFile = "corrections/triggerSF.root", bool verbose = false);
-    void setParameters(const std::string& dataDir, const LeptonParameters& lepParam, bool verbose=false);
+    TriggerScaleFactors(const std::string& dataDir);
+    void setParameters(const EventParameters& evtParam, bool verbose=false);
     float getElectronTriggerSF(const float ht) const;
     float getMuonTriggerSF(const float ht) const;
     float getLeptonTriggerSF(const float ht, const bool leadingLepIsMuon) const;
@@ -18,6 +18,7 @@ public:
 private:
     std::unique_ptr<TObjectHelper::Hist1DContainer> electronSFs;
     std::unique_ptr<TObjectHelper::Hist1DContainer> muonSFs;
+    std::string dataDirectory;
 };
 }
 

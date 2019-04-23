@@ -137,7 +137,7 @@ void DefaultSearchRegionAnalyzer::setupParameters(){
     }
     if(isCorrOn(CORR_SJBTAG)) sjbtagSFProc->setParameters(parameters.jets);
     if(isCorrOn(CORR_AK4BTAG)) ak4btagSFProc->setParameters(parameters.jets);
-    if(isCorrOn(CORR_TRIG)) trigSFProc->setParameters(dataDirectory,parameters.event);
+    if(isCorrOn(CORR_TRIG)) trigSFProc->setParameters(parameters.event);
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
@@ -270,7 +270,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
         fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,selectedDileptons.front(),selectedDileptons.back());
         hbbCand_2l  = fjProc->getDilepHbbCand();
-        hbbCSVCat   = hbbCand_2l ? BTagging::getCSVSJCat(parameters.jets,hbbCand_2l->subJets())
+        hbbCSVCat_2l   = hbbCand_2l ? BTagging::getCSVSJCat(parameters.jets,hbbCand_2l->subJets())
         : BTagging::CSVSJ_INCL ;
 
     	double pz = reader_event->met.pt() / TMath::Tan((selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).theta());
