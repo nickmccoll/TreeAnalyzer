@@ -1186,7 +1186,6 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
 
         DataPlotPrefs hhPlot;
         hhPlot.modelType = MOD_PRE;
-        hhPlot.addType = MOD_MC;
         hhPlot.bins = {30,210,100,150};
         hhPlot.binInY = false;
         hhPlot.sels = srList;

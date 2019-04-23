@@ -3,7 +3,7 @@
 #include "makeBKGInputs.C"
 #endif
 
-void makeBKGCRInputs(bool doTopRegion = true, int bkgToDo = BKG_QG, std::string treeDir = "/Users/brentstone/Dropbox/Physics/HHbbWW/BEtrees/SingleLepton17/"){
+void makeBKGCRInputs(bool doTopRegion = true, int bkgToDo = BKG_QG, std::string treeDir = "../trees/"){
     if(doTopRegion){
         hadCuts[HAD_NONE].cut = preSel.cut;
         hadCuts[HAD_LB].cut   = preSel.cut+"&&"+wjjBC.cut;
