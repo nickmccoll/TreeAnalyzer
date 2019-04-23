@@ -16,6 +16,7 @@
 #include "TreeReaders/interface/EventReader.h"
 #include "TreeReaders/interface/JetReader.h"
 #include "TreeReaders/interface/FatJetReader.h"
+#include "Processors/Variables/interface/FatJetSelection.h"
 
 using namespace TAna;
 using namespace std;
@@ -100,86 +101,43 @@ public:
     	makeNm1_Tight(id,4);
     }
 
-    void plotIdVars(TString id, const Electron* el) {
-
+    void addPlots(TString id, const Electron* el) {
     	int idx = el->index();
-    	float rho = reader_event->rho.val();
+//    	float rho = reader_event->rho.val();
     	float scE = (reader_electron->scE)[idx];
 
-    	// electron vars
-    	float hoe                   = (reader_electron->HoE)[idx];
-    	float hoe_bc                = (reader_electron->HoE_BC)[idx];
-    	float abs_dEtaSeed          = (reader_electron->abs_dEtaSeed)[idx];
-    	float abs_dPhiIn            = (reader_electron->abs_dPhiIn)[idx];
-    	float full5x5_sigmaIetaIeta = (reader_electron->full5x5_sigmaIetaIeta)[idx];
-    	float abs_1oEm1op           = (reader_electron->abs_1oEm1op)[idx];
-    	float e2x5OverE5x5          = (reader_electron->e2x5OverE5x5)[idx];
-    	float e1x5OverE5x5          = (reader_electron->e1x5OverE5x5)[idx];
-    	size8 missInnerHits         = (reader_electron->missInnerHits)[idx];
-    	size8 passConvVeto          = (reader_electron->passConvVeto)[idx];
+		MomentumF nu = HiggsSolver::getInvisible(reader_event->met, (el->p4() + wjj.p4()) );
+		MomentumF hh_mom = el->p4() + nu.p4() + wjj.p4() + hbb->p4();
+		float hhmass =hh_mom.mass();
 
-    	// electron ids
-    	bool passMedium = el->passMedID_noIso();
-    	bool passTight = el->passTightID_noIso();
-    	bool passHEEP = el->passHEEPID_noIso();
-    	bool passMVA90 = el->passMVA90ID_noIso();
+        // electron vars
+//    	float hoe                   = (reader_electron->HoE)[idx];
+//    	float hoe_bc                = (reader_electron->HoE_BC)[idx];
+//    	float abs_dEtaSeed          = (reader_electron->abs_dEtaSeed)[idx];
+//    	float abs_dPhiIn            = (reader_electron->abs_dPhiIn)[idx];
+//    	float full5x5_sigmaIetaIeta = (reader_electron->full5x5_sigmaIetaIeta)[idx];
+//    	float abs_1oEm1op           = (reader_electron->abs_1oEm1op)[idx];
+//    	float e2x5OverE5x5          = (reader_electron->e2x5OverE5x5)[idx];
+//    	float e1x5OverE5x5          = (reader_electron->e1x5OverE5x5)[idx];
+//    	size8 missInnerHits         = (reader_electron->missInnerHits)[idx];
+//    	size8 passConvVeto          = (reader_electron->passConvVeto)[idx];
+//
+//    	plotter.getOrMake1DPre(id,"hoe",";hoe",500,0,0.2)->Fill(hoe,weight);
+//    	plotter.getOrMake1DPre(id,"hoe_bc",";hoe_bc",500,0,0.2)->Fill(hoe_bc,weight);
+//    	plotter.getOrMake1DPre(id,"abs_dEtaSeed",";abs_dEtaSeed",500,0,0.3)->Fill(abs_dPhiIn,weight);
+//    	plotter.getOrMake1DPre(id,"abs_dPhiIn",";abs_dPhiIn",500,0,0.3)->Fill(abs_dPhiIn,weight);
+//    	plotter.getOrMake1DPre(id,"full5x5_sigmaIetaIeta",";full5x5_sigmaIetaIeta",500,0,0.1)->Fill(full5x5_sigmaIetaIeta,weight);
+//    	plotter.getOrMake1DPre(id,"abs_1oEm1op",";abs_1oEm1op",500,0,0.2)->Fill(abs_1oEm1op,weight);
+//    	plotter.getOrMake1DPre(id,"e2x5OverE5x5",";e2x5OverE5x5",500,0,1)->Fill(e2x5OverE5x5,weight);
+//    	plotter.getOrMake1DPre(id,"e1x5OverE5x5",";e1x5OverE5x5",500,0,1)->Fill(e1x5OverE5x5,weight);
+//
+//    	plotter.getOrMake1DPre(id,"missInnerHits",";missInnerHits",10,-0.5,9.5)->Fill(missInnerHits,weight);
+//    	plotter.getOrMake1DPre(id,"passConvVeto",";passConvVeto",10,-0.5,1.5)->Fill(passConvVeto,weight);
 
-    	// working points for electron Tight ID 2017
-    	float hoe_WPB = 0.026 + 1.15/scE + 0.0324*rho/scE;
-    	float hoe_WPE = 0.0188 + 2.06/scE + 0.183*rho/scE;
-    	float sigmaietaieta5x5_WPB = 0.0104;
-    	float sigmaietaieta5x5_WPE = 0.0353;
-
-    	plotter.getOrMake1DPre(id,"hoe",";hoe",200,0,1)->Fill(hoe,weight);
-    	plotter.getOrMake1DPre(id,"hoe_bc",";hoe_bc",100,0,1)->Fill(hoe_bc,weight);
-    	plotter.getOrMake1DPre(id,"abs_dEtaSeed",";abs_dEtaSeed",100,0,0.75)->Fill(abs_dPhiIn,weight);
-    	plotter.getOrMake1DPre(id,"abs_dPhiIn",";abs_dPhiIn",100,0,0.75)->Fill(abs_dPhiIn,weight);
-    	plotter.getOrMake1DPre(id,"full5x5_sigmaIetaIeta",";full5x5_sigmaIetaIeta",100,0,0.1)->Fill(full5x5_sigmaIetaIeta,weight);
-    	plotter.getOrMake1DPre(id,"abs_1oEm1op",";abs_1oEm1op",100,0,1)->Fill(abs_1oEm1op,weight);
-    	plotter.getOrMake1DPre(id,"e2x5OverE5x5",";e2x5OverE5x5",100,0,1)->Fill(e2x5OverE5x5,weight);
-    	plotter.getOrMake1DPre(id,"e1x5OverE5x5",";e1x5OverE5x5",100,0,1)->Fill(e1x5OverE5x5,weight);
-
-    	plotter.getOrMake1DPre(id,"missInnerHits",";missInnerHits",10,-0.5,9.5)->Fill(missInnerHits,weight);
-    	plotter.getOrMake1DPre(id,"passConvVeto",";passConvVeto",10,-0.5,1.5)->Fill(passConvVeto,weight);
-
-		plotter.getOrMake1DPre(id,"pt",";p_{T}",500,0,500)->Fill(el->pt(),weight);
-		plotter.getOrMake1DPre(id,"scE",";E_{SC}",500,0,500)->Fill(scE,weight);
-
-    	if(passMedium) plotter.getOrMake1DPre(id+"_MedID","pt",";pt",500,0,500)->Fill(el->pt(),weight);
-    	if(passTight)  plotter.getOrMake1DPre(id+"_TightID","pt",";pt",500,0,500)->Fill(el->pt(),weight);
-    	if(passHEEP)   plotter.getOrMake1DPre(id+"_HEEPID","pt",";pt",500,0,500)->Fill(el->pt(),weight);
-    	if(passMVA90)  plotter.getOrMake1DPre(id+"_MVAID","pt",";pt",500,0,500)->Fill(el->pt(),weight);
-
-    	if (el->absEta() <= 1.479) {
-    		if (hoe < hoe_WPB) {
-    			plotter.getOrMake1DPre(id+"_passHoE","pt",";p_{T}",500,0,500)->Fill(el->pt(),weight);
-    			plotter.getOrMake1DPre(id+"_passHoE","scE",";E_{SC}",500,0,500)->Fill(scE,weight);
-    		}
-    	} else {
-    		if (hoe < hoe_WPE) {
-    			plotter.getOrMake1DPre(id+"_passHoE","pt",";pt",500,0,500)->Fill(el->pt(),weight);
-    			plotter.getOrMake1DPre(id+"_passHoE","scE",";E_{SC}",500,0,500)->Fill(scE,weight);
-    		}
-    	}
-		plotter.getOrMake2DPre(id,"scE_x_hoe",";E_{SC};H/E",500,0,500,500,0,1)->Fill(scE,hoe,weight);
-
-		// hh mass with this lepton
-		MomentumF nu;
-		float hhmass = 0;
-		if (wjjCand && hbbCand) {
-			nu = HiggsSolver::getInvisible(reader_event->met, (el->p4() + wjjCand->p4()) );
-			MomentumF hh_mom = el->p4() + nu.p4() + wjjCand->p4() + hbbCand->p4();
-			hhmass = hh_mom.mass();
-	    	plotter.getOrMake1DPre(id,"hhmass",";M_{HH}",110,0,5500)->Fill(hhmass,weight);
-		}
-    }
-
-    bool passIP(const Lepton* lep) {
-    	if (fabs(lep->d0()) > 0.05) return false;
-    	if (fabs(lep->dz()) > 0.1 ) return false;
-    	if (fabs(lep->sip3D()) > 4.0) return false;
-
-    	return true;
+        plotter.getOrMake1DPre(id,"pt",";p_{T}",500,0,500)->Fill(el->pt(),weight);
+        plotter.getOrMake1DPre(id,"scE",";E_{SC}",500,0,500)->Fill(scE,weight);
+        plotter.getOrMake1DPre(id,"ht",";H_{T}",2000,0,2000)->Fill(ht_chs,weight);
+        plotter.getOrMake1DPre(id,"hhmass",";M_{HH}",110,0,5500)->Fill(hhmass,weight);
     }
 
     bool passGEN_requirements(const GenParticle* lep, const GenParticle* q1, const GenParticle* q2) {
@@ -221,47 +179,141 @@ public:
         }
     }
 
-    bool passFullSel(const Electron* el) {
-    	if (!passTriggerPreselection) return false;
-    	if (!wjjCand || !hbbCand) return false;
-    	if (wwDM > 125) return false;
-    	if (nMedBTags_HbbV > 0) return false;
+    bool getFatJets(const Electron* el) {
+    	wjj.setP4(0.1,0.1,0.1,0.1);
+        if(reader_fatjet && reader_fatjet_noLep && el){
+        	std::unique_ptr<FatJetProcessor> Proc;
+            Proc.reset(new FatJetProcessor ());
+            auto fjs = FatJetSelHelpers::selectFatJets(parameters.fatJets,*reader_fatjet);
+            auto fjs_noLep = FatJetSelHelpers::selectFatJets(parameters.fatJets,*reader_fatjet_noLep);
 
-    	MomentumF hww = el->p4() + wjjCand->p4() + HiggsSolver::getInvisible(reader_event->met, (el->p4() + wjjCand->p4()) ).p4();
-    	MomentumF hhmom = hww.p4() + hbbCand->p4();
-    	if (hww.pt() / hhmom.mass() < 0.3) return false;
-    	if (hbbCSVCat < BTagging::CSVSJ_MF) return false;
-    	if (hbbMass < 30 || hbbMass > 210) return false;
-    	if (hhmom.mass() < 700) return false;
-    	if (wjjCand->tau2otau1() > 0.75) return false;
+            double minDR = 100000;
+            int fjIDX = PhysicsUtilities::findNearestDRDeref(*el,fjs_noLep,minDR,parameters.fatJets.wjj_minPT);
+            if(fjIDX >= 0 ) {
+            	wjj = fjs_noLep[fjIDX]->p4();
+            	if (!el->passMVA90ID_noIso() && minDR < 0.8) wjj.p4() -= el->p4();
+                if(wjj.pt() < parameters.fatJets.wjj_minPT) wjj.setP4(0.1,0.1,0.1,0.1);
+                minDR = PhysicsUtilities::deltaR(wjj,*el);
+                if(parameters.fatJets.wjj_maxLepDR > 0 && minDR > parameters.fatJets.wjj_maxLepDR) wjj.setP4(0.1,0.1,0.1,0.1);
+            }
+            const FatJet wjjFJ(wjj.p4(),0);
+            hbb = FatJetSelHelpers::getHbbCand(parameters.fatJets,&wjjFJ,el,fjs);
 
-    	return true;
+        	if (hbb) hbbCat = BTagging::getCSVSJCat(parameters.jets,hbb->subJets());
+        } else {
+        	hbb = 0;
+        }
+    	if (hbb && wjj.pt() > 10) return true;
+    	else return false;
     }
 
-    void testElWPs(TString prefix, const Electron* el) {
-        auto mkEtaPlot = [&](TString prefix, const Electron* el) {
-        	plotIdVars(prefix,el);
-        	if (el->absEta() < 2.1) plotIdVars(prefix+"_maxEta2p1",el);
-        	if (el->absEta() < 1.5) plotIdVars(prefix+"_maxEta1p5",el);
+    void prepPlots(TString id, const Electron* el) {
+
+    	if (!getFatJets(el)) return; // inside this function, the hbb and wjj objects are selected
+
+    	float massHbb = hbb->sdMom().mass();
+    	addPlots(id,el);
+    	if (massHbb > 30 && massHbb < 210) {
+    		addPlots(id+"_Mbb30to210",el);
+    		if (hbbCat >= BTagging::CSVSJ_MF) addPlots(id+"_Mbb30to210_BTag",el);
+    	}
+    }
+
+    void testElWorkingPointsBKG(TString prefix) {
+
+    	vector<double> etaWPs = {2.5,2.1,1.5};
+    	vector<TString> etaStrs = {"maxEta2p5","maxEta2p1","maxEta1p5"};
+
+    	vector<double> isoWPs = {0.1, 0.2};
+    	vector<LeptonProcessor::elFunFloat> isos = {&Electron::miniIso, &Electron::miniIsoFP};
+    	vector<TString> isoStrs = {"miniIso","miniIsoFP"};
+
+    	vector<LeptonProcessor::elFunBool> ids = {&Electron::passInclID, &Electron::passMedID_noIso, &Electron::passTightID_noIso, &Electron::passMVA90ID_noIso};
+    	vector<TString> idStrs = {"InclID","MedID","TightID","MVAID"};
+
+    	for (unsigned int ieta=0; ieta<etaWPs.size(); ieta++) {
+
+    		LeptonParameters testparam = parameters.leptons;
+    		testparam.el_maxETA = etaWPs[ieta];
+    		testparam.el_getISO = &Electron::inclIso;
+    		testparam.el_getID  = &Electron::passInclID;
+
+    		const auto leps = LeptonProcessor::getLeptons(testparam,*reader_muon,*reader_electron);
+    		const auto lep = leps.size() ? leps.front() : 0;
+
+    		if (lep && lep->isElectron()) prepPlots(prefix+"_passIP_"+etaStrs[ieta],(Electron*)lep);
+
+    		for(unsigned int iD=0; iD<ids.size(); iD++) for(unsigned int iS=0; iS<isos.size(); iS++) for(unsigned int iWP=0; iWP<isoWPs.size(); iWP++) {
+        		testparam.el_maxISO = isoWPs[iWP];
+        		testparam.el_getISO = isos[iS];
+        		testparam.el_getID  = ids[iD];
+
+        		const auto leps_ = LeptonProcessor::getLeptons(testparam,*reader_muon,*reader_electron);
+        		const auto lep_ = leps_.size() ? leps_.front() : 0;
+        		if (lep_ == 0 || lep_->isMuon()) continue;
+
+        		TString isoVal = TString::Format("%.1f",isoWPs[iWP]); isoVal.ReplaceAll(".","p");
+
+        		prepPlots(prefix+"_passIP_"+etaStrs[ieta]+"_"+isoStrs[iS]+isoVal+"_"+idStrs[iD], (Electron*)lep_);
+
+    		}
+    	}
+    }
+
+    void testElWorkingPointsSIG(TString prefix, const Electron* el) {
+
+        auto passIP = [&](const Lepton* lep)->bool {
+        	if (fabs(lep->d0()) > 0.05) return false;
+        	if (fabs(lep->dz()) > 0.1 ) return false;
+        	if (fabs(lep->sip3D()) > 4.0) return false;
+        	return true;
         };
 
-        if (el->miniIso() < 0.1) mkEtaPlot(prefix+"_miniIso0p1",el);
-        if (el->miniIso() < 0.2) mkEtaPlot(prefix+"_miniIso0p2",el);
-        if (el->miniIsoFP() < 0.1) mkEtaPlot(prefix+"_miniIsoFP0p1",el);
-        if (el->miniIsoFP() < 0.2) mkEtaPlot(prefix+"_miniIsoFP0p2",el);
+        if (!passIP(el)) return;
+        prefix += "_passIP_";
 
-        if (!passFullSel(el)) return;
-        if (el->miniIso() < 0.1) mkEtaPlot(prefix+"_FULLSEL_miniIso0p1",el);
-        if (el->miniIso() < 0.2) mkEtaPlot(prefix+"_FULLSEL_miniIso0p2",el);
-        if (el->miniIsoFP() < 0.1) mkEtaPlot(prefix+"_FULLSEL_miniIsoFP0p1",el);
-        if (el->miniIsoFP() < 0.2) mkEtaPlot(prefix+"_FULLSEL_miniIsoFP0p2",el);
+    	vector<double> etaWPs = {2.5,2.1,1.5};
+    	vector<TString> etaStrs = {"maxEta2p5","maxEta2p1","maxEta1p5"};
+
+    	vector<double> isoWPs = {0.1, 0.2};
+    	vector<TString> isoStrs = {"miniIso","miniIsoFP"};
+
+    	vector<TString> idStrs = {"InclID","MedID","TightID","MVAID"};
+
+    	for (unsigned int ieta=0; ieta<etaWPs.size(); ieta++) {
+
+    		if (el->absEta() > etaWPs[ieta]) continue;
+    		prepPlots(prefix+etaStrs[ieta],el);
+
+    		for(unsigned int iD=0; iD<idStrs.size(); iD++) for(unsigned int iS=0; iS<isoStrs.size(); iS++) for(unsigned int iWP=0; iWP<isoWPs.size(); iWP++) {
+
+    			bool pass = true;
+    			double maxISO = isoWPs[iWP];
+
+    			if(iS==0 && el->miniIso() > maxISO)   pass = false;
+    			if(iS==1 && el->miniIsoFP() > maxISO) pass = false;
+
+    			if(iD==0 && !el->passInclID())        pass = false;
+    			if(iD==1 && !el->passMedID_noIso())   pass = false;
+    			if(iD==2 && !el->passTightID_noIso()) pass = false;
+    			if(iD==3 && !el->passMVA90ID_noIso()) pass = false;
+
+    			if(!pass) continue;
+
+        		TString isoVal = TString::Format("%.1f",isoWPs[iWP]); isoVal.ReplaceAll(".","p");
+        		prepPlots(prefix+etaStrs[ieta]+"_"+isoStrs[iS]+isoVal+"_"+idStrs[iD], el);
+    		}
+    	}
     }
 
     bool runEvent() override {
+        islurm++;
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
         if(!passEventFilters) return false;
         if(ht_chs < 400) return false;
         TString prefix = smpName;
+
+    	if (!reader_muon || !reader_electron) return false;
 
         if(isSignal() && diHiggsEvt.type == DiHiggsEvent::E){
             const GenParticle *genlep, *q1, *q2;
@@ -279,44 +331,45 @@ public:
 
             const auto muons = PhysicsUtilities::selObjsMom(reader_muon->muons,20,2.4);
             const auto electrons = PhysicsUtilities::selObjsMom(reader_electron->electrons,20,2.4);
-            const auto* recoL = getMatchedLepton(*genlep,muons,electrons);
+            const auto *recoL = getMatchedLepton(*genlep,muons,electrons);
 
             if (!recoL) return false;
             if (recoL->pt() < 30 || recoL->absEta() > 2.5) return false;
             if (!recoL->isElectron()) {cout << "matched lepton is not electron" << endl; return false;}
 
-            plotIdVars(prefix, (Electron*)recoL);
-            if (!passIP(recoL)) return false;
-            prefix += "_passIP";
-            plotIdVars(prefix, (Electron*)recoL);
+            plotter.getOrMake1DPre(prefix,"slurm",";M_{HH}",500,0,5000)->Fill(recoL->pt(),weight);
+            if(recoL->passInclID()) plotter.getOrMake1DPre(prefix+"_InclID","slurm",";M_{HH}",500,0,5000)->Fill(recoL->pt(),weight);
+            if(((Electron*)recoL)->passMedID_noIso())  plotter.getOrMake1DPre(prefix+"_MedID","slurm",";M_{HH}",500,0,5000)->Fill(recoL->pt(),weight);
+            if(((Electron*)recoL)->passTightID_noIso())   plotter.getOrMake1DPre(prefix+"_TightID","slurm",";M_{HH}",500,0,5000)->Fill(recoL->pt(),weight);
+            if(((Electron*)recoL)->passMVA90ID_noIso())  plotter.getOrMake1DPre(prefix+"_MVAID","slurm",";M_{HH}",500,0,5000)->Fill(recoL->pt(),weight);
 
-            testElWPs(prefix, (Electron*)recoL);
-            if (recoL->miniIso() < 0.1) testNm1Plots(prefix+"andISO", (Electron*)recoL);
+            TH1* hi = plotter.getOrMake1DPre(smpName+"_passIP_maxEta2p5_miniIso0p1_InclID","pt",";p_{T}",500,0,500);
+            TH1* hm = plotter.getOrMake1DPre(smpName+"_passIP_maxEta2p5_miniIso0p1_MVAID","pt",";p_{T}",500,0,500);
+
+
+            if (hi->GetEntries() < hm->GetEntries() && itsHappened == false) {
+            	cout<<islurm<<endl;
+            	itsHappened = true;
+            }
+
+            testElWorkingPointsSIG(prefix,(Electron*)recoL);
+//            if (recoL->miniIso() < 0.1) testNm1Plots(prefix+"andISO", (Electron*)recoL);
 
         }
         if(!isSignal()){
-        	LeptonParameters testparam = parameters.leptons;
-        	testparam.el_getID = &Electron::passInclID;
-        	testparam.el_maxISO = 9999.;
 
-        	vector<const Lepton*> leps;
-        	const Lepton* lep;
-            if(reader_electron && reader_muon){
-                leps = LeptonProcessor::getLeptons(testparam,*reader_muon,*reader_electron);
-                lep  = leps.size() ? leps.front() : 0;
-            }
-            if (!leps.size() || lep==0) return false;
-            if (!lep->isElectron()) return false;
-
-            plotIdVars("bkg_passIP", (Electron*)lep);
-            testElWPs("bkg_passIP", (Electron*)lep);
-        	if (lep->miniIso() < 0.1) testNm1Plots("bkg_passIPandISO", (Electron*)lep);
+        	testElWorkingPointsBKG(prefix);
+//        	if (lep->miniIso() < 0.1) testNm1Plots("bkg_passIPandISO", (Electron*)lep);
         }
 
         return true;
     }
 
-
+    bool itsHappened = false;
+    int islurm = 0;
+    const FatJet *hbb = 0;
+    MomentumF wjj;
+    BTagging::CSVSJ_CAT        hbbCat   = BTagging::CSVSJ_INCL;
     void write(TString fileName){ plotter.write(fileName);}
     HistGetter plotter;
 
