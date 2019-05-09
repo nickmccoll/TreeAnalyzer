@@ -17,19 +17,26 @@ using namespace CutConstants;
 
 const float minX = 700;
 const float maxX = 3600;
-const float minY = 5;
+const float minY = 1;
 const float maxY = 500;
 const bool doLog = true;
     std::string titleX = "#it{m}_{X} [GeV]";
     std::string titleY = "#sigma#bf{#it{#Beta}}(X #rightarrow HH) [fb]";
 std::vector<std::string> partLabels = {"Spin-0 X","Spin-2 X"};
 std::vector<std::string> fileLabel = {"radion","blkgrav"};
-std::string lumiText = "35.9 fb^{-1} (13 TeV)";
+std::vector<std::string> inputLabel = {"rad","blk"};
+//std::string lumiText = "35.9 fb^{-1} (13 TeV)";
+//std::string lumiText = "41.5 fb^{-1} (13 TeV)";
+std::string lumiText = "13 TeV";
 const bool prelim = true;
-const float limitScale = 1000 * HHtobbVVBF_BUGGY/HHtobbVVBF;
+
+const double HHtobbVVBF_BUGGY = 2*0.5824*(.2137+.002619);
+const double sfFor2016= HHtobbVVBF_BUGGY/HHtobbVVBF;
+const float limitScale = 1000;
+const bool scaleUp2016 = true;
 
 //expected/observed
-std::pair<TGraph*,TGraph*> getValues(const std::string& filename, bool blind){
+std::pair<TGraph*,TGraph*> getValues(const std::string& filename, bool blind, float scale){
 
     std::vector<std::pair<float,float>> masses ;
     std::vector<std::pair<float,float>> obs    ;
@@ -51,19 +58,22 @@ std::pair<TGraph*,TGraph*> getValues(const std::string& filename, bool blind){
     t->SetBranchAddress("mh",&mh);
     int eventNumber = 0;
     while(t->GetEntry(eventNumber)){
-        if(mh < minX || mh > maxX) continue;
+        if(mh < minX || mh > maxX){
+            ++eventNumber;
+            continue;
+        }
         if(quantileExpected<0)
-            obs.emplace_back(mh,limit*limitScale);
+            obs.emplace_back(mh,limit*scale);
         else if(quantileExpected>0.02 && quantileExpected<0.03)
-            m2Sigma.emplace_back(mh,limit*limitScale);
+            m2Sigma.emplace_back(mh,limit*scale);
         else if(quantileExpected>0.15 && quantileExpected<0.17)
-            m1Sigma.emplace_back(mh,limit*limitScale);
+            m1Sigma.emplace_back(mh,limit*scale);
         else if(quantileExpected>0.49 && quantileExpected<0.51)
-            exp.emplace_back(mh,limit*limitScale);
+            exp.emplace_back(mh,limit*scale);
         else if(quantileExpected>0.974 && quantileExpected<0.976)
-            p2Sigma.emplace_back(mh,limit*limitScale);
+            p2Sigma.emplace_back(mh,limit*scale);
         else if(quantileExpected>0.83  && quantileExpected<0.85)
-            p1Sigma.emplace_back(mh,limit*limitScale);
+            p1Sigma.emplace_back(mh,limit*scale);
         ++eventNumber;
     }
     f->Close();
@@ -122,16 +132,18 @@ void go(const bool blind, const int sig, const std::vector<std::pair<std::string
     frame->GetYaxis()->SetTitleOffset(1.15);
 
 
-    std::vector<EColor> colors = {kBlack, kBlue, kRed, kGreen};
+    std::vector<EColor> colors = {kBlack, kBlue, kRed, kMagenta};
+
+
 
     auto leg = new TLegend(0.58,0.66,0.91,0.83,"","NDC");
     leg->SetBorderSize(0);
 
     c->cd();
     frame->Draw();
-
     for(unsigned int iF = 0; iF < inFiles.size(); ++iF){
-        auto limitValues = getValues(inFiles[iF].first,blind);
+        auto limitValues = getValues(inFiles[iF].first,blind,
+                (!iF && scaleUp2016) ? sfFor2016* limitScale : limitScale);
         auto bandExp = limitValues.first;
 
         bandExp->SetLineWidth(3);
@@ -185,28 +197,24 @@ void go(const bool blind, const int sig, const std::vector<std::pair<std::string
 }
 
 #endif
-void compareLimits(bool blind, int sig = RADION, std::string inName = "higgsCombineTest.AsymptoticLimits.root", std::string outName = "limitPlot"){
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
-    std::cout <<std::endl<< "WARNING! We are assuming that you made the inputs with the incorrect efficiency!"<<std::endl;
+void compareLimits(bool blind, int sig = RADION, std::string outName = "limitPlot"){
     std:: vector<std::pair<std::string,std::string>> inputs;
-    inputs = {
-            {"silepton_rad/higgsCombineTest.AsymptoticLimits.root","1l"},
-            {"dilepton_rad/higgsCombineTest.AsymptoticLimits.root","2l"},
-            {"combined_rad/higgsCombineTest.AsymptoticLimits.root","1l+2l"}
-    };
+
+//    //1l+2l
 //    inputs = {
-//            {"higgsCombineTest.AsymptoticLimits.testBinning_std.root","Fine binning"},
-            //            {"higgsCombineTest.AsymptoticLimits.testBinning_rebinX.root","rebinX"},
-            //            {"higgsCombineTest.AsymptoticLimits.testBinning_rebinY.root","rebinY"},
-//            {"higgsCombineTest.AsymptoticLimits.testBinning_rebinXY.root","Coarse binning"}
+//            {"limits_lnuqq_"+inputLabel[sig]+".root","1l"},
+//            {"limits_lnulnu_"+inputLabel[sig]+".root","2l"},
+//            {"limits_combChan_"+inputLabel[sig]+".root","1l+2l"}
 //    };
+
+    //2016 vs full
+    inputs = {
+            {"limits_lnulnu_2016_"+inputLabel[sig]+".root","2016 1l (35.9 fb^{-1})"},
+            {"limits_lnuqq_"+inputLabel[sig]+".root","2017 1l (41.5 fb^{-1})"},
+            {"limits_combChan_"+inputLabel[sig]+".root","2017 1l+2l (41.5 fb^{-1})"},
+            {"limits_combChan_Run2Lumi_"+inputLabel[sig]+".root","Proj. Run 2 1l+2l (137.1 fb^{-1})"}
+    };
+
 
     go(blind,sig,inputs ,outName +"_"+ fileLabel[sig]);
 }
