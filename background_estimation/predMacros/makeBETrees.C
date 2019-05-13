@@ -150,14 +150,14 @@ public:
         	process_ = size8(*reader_event->process);
         	dhType_  = size8(diHiggsEvt.type);
         	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event.lumi));
-        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_chs, (selectedLepton && selectedLepton->isMuon())) : 1.0 );
+        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_puppi, (selectedLepton && selectedLepton->isMuon())) : 1.0 );
         	pu_N_    = 1.0 /*float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL))*/;
         	lep_N_   = 1.0 /*float(leptonSFProc->getSF())*/;
         	btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
 
         }
 
-        ht_  = float(ht_chs);
+        ht_  = float(ht_puppi);
         met_ = float(reader_event->met.pt());
 
         if(selectedLepton){

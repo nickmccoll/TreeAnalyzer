@@ -24,6 +24,7 @@ struct EventParameters{
     float minTriggerMu;
 
     std::string leptonCorrSFFile;
+    std::string puCorrSFFile;
 };
 
 //--------------------------------------------------------------------------------------------------

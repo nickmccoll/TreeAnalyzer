@@ -30,6 +30,7 @@ ParameterSet set2017Parameters() {
     paramSet.event.minTriggerEl  =30;
     paramSet.event.minTriggerMu  =27;
     paramSet.event.leptonCorrSFFile = "corrections/triggerSF_17.root";
+    paramSet.event.puCorrSFFile = "corrections/puSF_17.root";
 
     paramSet.fatJets.cand_minPT     = 50                   ;
     paramSet.fatJets.cand_maxETA    = 2.4                  ;
@@ -85,13 +86,13 @@ ParameterSet set2017Parameters() {
     paramSet.dileptons.mu_getID2   = &Muon::passMedID;
     paramSet.dileptons.mu_getISO  = &Muon::miniIso;
 
-    paramSet.jets.minJetPT      = 30;
+    paramSet.jets.minJetPT      = 20;
     paramSet.jets.maxJetETA     = 2.4;
     paramSet.jets.passJetID     = &Jet::passTightID;
 
     paramSet.jets.CSV_WP        = {-100,0.5803,0.8838,0.9693};
     paramSet.jets.DeepCSV_WP    = {-100,0.1522,0.4941,0.8001};
-    paramSet.jets.minBtagJetPT  = 30;
+    paramSet.jets.minBtagJetPT  = 20;
     paramSet.jets.maxBTagJetETA = 2.4;
 
     paramSet.jets.getJetBTagVal = &BaseRecoJet::deep_csv;

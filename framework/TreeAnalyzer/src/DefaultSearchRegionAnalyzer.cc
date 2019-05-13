@@ -138,6 +138,7 @@ void DefaultSearchRegionAnalyzer::setupParameters(){
     if(isCorrOn(CORR_SJBTAG)) sjbtagSFProc->setParameters(parameters.jets);
     if(isCorrOn(CORR_AK4BTAG)) ak4btagSFProc->setParameters(parameters.jets);
     if(isCorrOn(CORR_TRIG)) trigSFProc->setParameters(parameters.event);
+    if(isCorrOn(CORR_PU))  puSFProc->setParameters(parameters.event);
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
@@ -210,7 +211,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
     passEventFilters= EventSelection::passEventFilters(parameters.event,*reader_event);
     passTriggerPreselection= EventSelection::passTriggerPreselection(
-            parameters.event,*reader_event,ht_chs,selectedLeptons);
+            parameters.event,*reader_event,ht_puppi,selectedLeptons);
 
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
@@ -299,6 +300,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
 
     if(reader_jet){
+        jets_puppi = PhysicsUtilities::selObjsMom(reader_jet->jets,parameters.jets.minJetPT);
+        ht_puppi = JetKinematics::ht(jets_puppi);
+
         jets = PhysicsUtilities::selObjsMom(reader_jet->jets,
                 parameters.jets.minJetPT,parameters.jets.maxJetETA,
                 [&](const Jet* j){return (j->*parameters.jets.passJetID)();} );
@@ -344,9 +348,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         }
         if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size())) {
             weight *= trigSFProc->getLeptonTriggerSF(
-                    ht_chs, (selectedLepton && selectedLepton->isMuon()));
+                    ht_puppi, (selectedLepton && selectedLepton->isMuon()));
             weight_2l *= trigSFProc->getLeptonTriggerSF(
-                    ht_chs, (selectedDileptons.size() && selectedDileptons.front()->isMuon()));
+                    ht_puppi, (selectedDileptons.size() && selectedDileptons.front()->isMuon()));
         }
         if(isCorrOn(CORR_PU) ) {
         	float pucorr = puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);

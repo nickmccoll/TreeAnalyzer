@@ -19,14 +19,18 @@ float getNormalizedEventWeight(const EventReader& reader_event, const float cros
 }
 
 
-PUScaleFactors::PUScaleFactors(const std::string& dataDir, const std::string& sfFile,
-        bool verbose){
-    TFile * file = TObjectHelper::getFile(dataDir+sfFile,"read",verbose);
+PUScaleFactors::PUScaleFactors(const std::string& dataDir){
+	dataDirectory = dataDir;
+}
+
+void PUScaleFactors::setParameters(const EventParameters& evtParam, bool verbose) {
+    TFile * file = TObjectHelper::getFile(dataDirectory+evtParam.puCorrSFFile,"read",verbose);
     nominalSF.reset(new  TObjectHelper::Hist1DContainer(file,"puSF_nominal",verbose) );
     downSF.reset(new  TObjectHelper::Hist1DContainer(file,"puSF_down",verbose) );
     upSF.reset(new  TObjectHelper::Hist1DContainer(file,"puSF_up",verbose) );
     delete file;
 }
+
 float PUScaleFactors::getCorrection(const unsigned int trueNumInteractions,
         const CorrHelp::CORRTYPE corrType) const {
     switch(corrType) {

@@ -118,11 +118,10 @@ public:
         if(!passEventFilters) passPre = false;
         if(selectedDileptons.size() != 2) passPre = false;
         if(!hbbCand_2l) passPre = false;
-        if (ht_chs < 400) passPre = false;
+        if (ht_puppi < 400) passPre = false;
 
         if(!addUncVariables && !passPre) return false;
         passPre_ = size8(passPre);
-
 
         if(isRealData()){
         	dataset_ = size8(*reader_event->dataset);
@@ -132,14 +131,14 @@ public:
         	process_ = size8(*reader_event->process);
         	dhType_  = size8(diHiggsEvt.type);
         	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event.lumi));
-        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_chs, (selectedDileptons.size() && selectedDileptons[0]->isMuon())) : 1.0 );
+        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_puppi, (selectedDileptons.size() && selectedDileptons[0]->isMuon())) : 1.0 );
         	pu_N_    = 1.0 /*float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL))*/;
         	lep_N_   = 1.0 /*float(leptonSFProc->getSF())*/;
         	btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
 
         }
 
-        ht_ = ht_chs;
+        ht_ = ht_puppi;
         met_ = reader_event->met.pt();
 
         if(selectedDileptons.size() == 2 && selectedDileptons.front() && selectedDileptons.back()){
@@ -227,12 +226,12 @@ public:
             }
             hbbDecayTypeMC_ = size8(decayType);
 
-            if (mcProc == FillerConstants::TTBAR) {
-                TPRegexp r1("(.*)(tbar)(.*)(\\d)(l)(.*)");
-                auto b = r1.MatchS(filename);
-                int nLepsTT = (((TObjString *)b->At(4))->GetString()).Atoi();
-                nLepsTT_ = size8(nLepsTT);
-            }
+//            if (mcProc == FillerConstants::TTBAR) {
+//                TPRegexp r1("(.*)(tbar)(.*)(\\d)(l)(.*)");
+//                auto b = r1.MatchS(filename);
+//                int nLepsTT = (((TObjString *)b->At(4))->GetString()).Atoi();
+//                nLepsTT_ = size8(nLepsTT);
+//            }
         }
 
         if(addUncVariables){
@@ -257,6 +256,7 @@ public:
             w_b_fakeDown_ = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},DOWN,NOMINAL));
             w_puDown_     = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::DOWN));
         }
+
         return true;
     }
 
