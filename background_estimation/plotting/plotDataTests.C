@@ -60,11 +60,14 @@ struct DataPlotPrefs {
     bool doLog = false;
     bool addRatio = false;
     bool addErrorBars = false;
+    bool removeTrailingZeros = false;
+
     unsigned int nToys = 100;
 
     bool isSupp = false;
 
     std::vector<float> maxTops; //override maxTop
+    std::vector<float> minTops; //override minTop
 
     double minTop = -1;
     double maxTop = -1;
@@ -473,7 +476,7 @@ public:
                 }
 
 
-                std::vector<int> signalColors ={kSpring+5,634};
+                std::vector<int> signalColors ={kSpring+10,634};
                 for(unsigned int iSig = 0; iSig < cont.sig.size(); ++iSig){
                     if(cont.sig[iSig]){
                         auto * g = p->addHistLine(cont.sig[iSig],prefs.signalTitles[iSig],signalColors[iSig]);
@@ -562,12 +565,16 @@ public:
                     legend->AddEntry(std::get<1>(l),std::get<2>(l),std::get<3>(l));
                 }
                 //--------------------LEGEND AND TEXT------------------------------
+                if(prefs.removeTrailingZeros == true) p->turnOffTrailingPoissonZeros();
 
                 if(prefs.doLog) p->setMinMax(0.1,1000 );
                 if(prefs.minTop != prefs.maxTop){
                     p->setMinMax(prefs.minTop,prefs.maxTop);
-                } else if(prefs.maxTops.size()){
-                    p->setMinMax(prefs.minTop,prefs.maxTops[iB]);
+                } else if(prefs.maxTops.size()|| prefs.minTops.size()){
+                    double tempMax = prefs.maxTops.size() ? prefs.maxTops[iS] : prefs.maxTop;
+                    double tempMin = prefs.minTops.size() ? prefs.minTops[iS] : prefs.minTop;
+
+                    p->setMinMax(tempMin,tempMax);
                 }
                 else if(cont.data) p->setMinMax(0,(cont.data->GetMaximum()  + std::sqrt(cont.data->GetMaximum()))*1.75);
                 if(prefs.addRatio){
@@ -918,8 +925,6 @@ TCanvas * makeUncPlot(const std::vector<std::string>& uncs, const std::string& l
             if(h) h->SetBinContent(nP+1,x);
             if(h) h->SetBinError(nP+1,e);
             if(h) h->GetXaxis()->SetBinLabel(nP+1,unc.c_str());
-            std::cout << unc <<"\t" << v->getVal() <<"\t"<< v->getError()<<"\n";
-
         };
         if(fit_b) fillPt(fit_b_uncsize,fit_b_uncs,nuis_b);
         if(fit_s) fillPt(fit_s_uncsize,fit_s_uncs,nuis_s);
@@ -1007,6 +1012,7 @@ TCanvas * makeUncPlot(const std::vector<std::string>& uncs, const std::string& l
             h_fit_e_s->SetBinError(iB,0)                                                      ;
         }
         if(fit_b){
+            std::cout << uncs[iB-1] <<" "<< fit_b_uncsize->GetBinError(iB)/prefit_uncsize->GetBinError(iB)<<std::endl;
             h_fit_e_b->SetBinContent(iB,fit_b_uncsize->GetBinError(iB)/prefit_uncsize->GetBinError(iB)) ;
             h_fit_e_b->SetBinError(iB,0)                                                      ;
         }
@@ -1322,6 +1328,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.addErrorBars = true;
         hhPlot.doLog = true;
         hhPlot.rebinFactor = 4;
+        hhPlot.removeTrailingZeros = true;
         writeables = doDataPlot(hhPlot,filename,limitBaseName +"/postFit_comp.root");
         DataPlotPrefs hbbPlot = hhPlot;
         hbbPlot.binInY = true;
@@ -1330,6 +1337,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hbbPlot.minTop =0;
         hbbPlot.maxTop =reg==REG_TOPCR ?  1100 :2000;
         hbbPlot.rebinFactor = 3;
+        hbbPlot.removeTrailingZeros = false;
         auto writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root");
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         Dummy d(outName);
@@ -1346,11 +1354,20 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.titles = srListTitles;
         hhPlot.signals = {"1000","2500"};
         hhPlot.signalTitles = {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"};
-        hhPlot.minTop =0.2;
-        hhPlot.maxTop =2000;
+        hhPlot.minTop =10;
+        hhPlot.maxTop =10;
+
+        float muMax = 3600; float muMin = 0.015;
+        float elMax = 3400; float elMin = 0.003;
+
+        hhPlot.maxTops = {elMax,elMax,elMax,elMax,elMax,elMax,muMax,muMax,muMax,muMax,muMax,muMax};
+        hhPlot.minTops = {elMin,elMin,elMin,elMin,elMin,elMin,muMin,muMin,muMin,muMin,muMin,muMin};
+
+
         hhPlot.rebinFactor = 4;
         hhPlot.minBot =0.05;
         hhPlot.maxBot= 3.45;
+        hhPlot.removeTrailingZeros = true;
         //        hhPlot.rebinFactor = -1;
         //        hhPlot.rebins = {700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,2000,2200,2400,3000,4000};
 
@@ -1366,6 +1383,9 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hbbPlot.maxTop =0;
         hbbPlot.minBot =-1;
         hbbPlot.maxBot= -1;
+        hbbPlot.maxTops.clear();
+        hbbPlot.minTops.clear();
+        hbbPlot.removeTrailingZeros = false;
 //        hbbPlot.maxTops = {140,90,35, 20,25,15,200,100,40,30};
         hbbPlot.rebinFactor = 3;
         //        if(inreg == REG_SR) hbbPlot.blindRange ={100,150};
