@@ -113,7 +113,7 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
         legEntries.push_back(std::make_tuple(2,g_mcunc,"Sim. stat. unc.","F"));
         legEntries.push_back(std::make_tuple(4,(TObject*)(0),"",""));
 
-        std::vector<int> signalColors ={kSpring+5,634};
+        std::vector<int> signalColors ={kSpring+10,634};
 
         for(unsigned int iS = 0; iS < signalFiles.size(); ++iS){
             TFile * f = new TFile((signalFiles[iS]).c_str(),"READ");
