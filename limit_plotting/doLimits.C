@@ -341,16 +341,25 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
     bandObs->SetLineColor(kBlack);
     bandObs->SetMarkerStyle(20);
 
-    auto leg = new TLegend(0.58,0.66,0.91,0.83,"","NDC");
+    float startX = 0.50;
+    float endX = 0.95;
+//    float startY = (sig == RADION) ? 0.55 : 0.53;
+//    float endY = 0.79;
+    float startY = (sig == RADION) ? 0.57 : 0.55;
+    float endY = 0.81;
+
+    auto leg = new TLegend(startX,startY,endX,endY,"","NDC");
     leg->SetBorderSize(0);
 
-    leg->AddEntry(sigXSec, sig == RADION ? "Radion (#Lambda_{R}=3 TeV)" : "Bulk graviton (#tilde{k}=0.3)");
-    if(sig != RADION)
-        leg->AddEntry(sigXSec2,  "Bulk graviton (#tilde{k}=0.1)");
+
     if(!blind)leg->AddEntry(bandObs, "Observed");
     leg->AddEntry(bandExp, "Median expected","L");
     leg->AddEntry(band68, "68% expected","F");
     leg->AddEntry(band95, "95% expected","F");
+    leg->AddEntry((TObject*)(0), "","");
+    leg->AddEntry(sigXSec, sig == RADION ? "Radion (#Lambda_{R}=3 TeV)" : "Bulk graviton (#tilde{k}=0.3)");
+    if(sig != RADION)
+        leg->AddEntry(sigXSec2,  "Bulk graviton (#tilde{k}=0.1)");
 
 
     c->cd();
@@ -371,8 +380,10 @@ void go(const bool blind, const int sig, const std::string& inName, const std::s
         latex->DrawLatex(x,y,txt.c_str());
     };
 
-    addText(partLabels[sig],0.03,0.59,0.88);
-    addText("95% CL upper limits",0.03,0.59,0.84);
+//    addText(partLabels[sig],0.035,startX+0.01,endY+0.05);
+//    addText("95% CL upper limits",0.035,startX+0.01,endY+0.01);
+        addText(partLabels[sig],0.035,0.16,endY+0.01);
+        addText("95% CL upper limits",0.035,startX+0.01,endY+0.01);
 
 
 
