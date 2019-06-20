@@ -15,42 +15,59 @@
 #include "TreeReaders/interface/GenParticleReader.h"
 #include "TreeReaders/interface/EventReader.h"
 #include "TreeReaders/interface/FatJetReader.h"
+#include "TreeReaders/interface/JetReader.h"
 
 using namespace TAna;
 
 class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
-    }
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {}
 
 //    bool runEvent() override {
 //        if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
-//        if(selectedLeptons.size() != 1) return false;
 //        if(diHiggsEvt.type < DiHiggsEvent::MU) return false;
+//
+//        bool passTrigger = EventSelection::passTriggerSuite(*reader_event);
+//        bool passLepSel = false;
 //
 //        const float minHT = 400;
 //        const float minElePT = 30;
 //        const float minMuPT = 26;
-//
-//        if(ht_chs < minHT) return false;
-//
-//        float maxElePT = 0;
-//        float maxMuPT = 0;
-//        for(const auto * l : selectedLeptons ) {
-//            if(l->isMuon()) maxMuPT = std::max(maxMuPT, l->pt());
-//            else maxElePT = std::max(maxElePT, l->pt());
+//        if(selectedLeptons.size() > 0 && ht_chs >= minHT) {
+//            float maxElePT = 0;
+//            float maxMuPT = 0;
+//            for(const auto * l : selectedLeptons ) {
+//                if(l->isMuon()) maxMuPT = std::max(maxMuPT, l->pt());
+//                else maxElePT = std::max(maxElePT, l->pt());
+//            }
+//            if(maxElePT >= minElePT || maxMuPT >= minMuPT ) passLepSel = true;
 //        }
-//        if(maxElePT < minElePT && maxMuPT < minMuPT ) return false;
 //
+//        auto doPlts = [&](const std::string prefix){
+//            plotter.getOrMake1DPre(prefix.c_str(),"counts",";events",5,-0.5,4.5)->Fill(0.,weight);
+//            plotter.getOrMake1DPre(prefix.c_str(),"incl",";HT",36,400,4000)->Fill(ht_chs,weight);
+//            if(passTrigger){
+//                plotter.getOrMake1DPre(prefix.c_str(),"passT",";HT",36,400,4000)->Fill(ht_chs,weight);
+//                plotter.getOrMake1DPre(prefix.c_str(),"counts",";events",5,-0.5,4.5)->Fill(1.,weight);
+//            }
 //
-//        std::string prefix = std::string(diHiggsEvt.type == DiHiggsEvent::MU ? "mu" : "e") + "_"+ smpName.Data();
+//            if(passLepSel){
+//                plotter.getOrMake1DPre(prefix.c_str(),"passR",";HT",36,400,4000)->Fill(ht_chs,weight);
+//                plotter.getOrMake1DPre(prefix.c_str(),"counts",";events",5,-0.5,4.5)->Fill(2.,weight);
+//            }
+//            if(passTrigger && passLepSel){
+//                plotter.getOrMake1DPre(prefix.c_str(),"passTR",";HT",36,400,4000)->Fill(ht_chs,weight);
+//                plotter.getOrMake1DPre(prefix.c_str(),"counts",";events",5,-0.5,4.5)->Fill(3.,weight);
+//            }
+//        };
 //
-//        plotter.getOrMake1DPre(prefix.c_str(),"incl",";HT",36,400,4000)->Fill(ht_chs,weight);
-//
-//        if(!EventSelection::passTriggerSuite(*reader_event)) return false;
-//
-//        plotter.getOrMake1DPre(prefix.c_str(),"pass",";HT",36,400,4000)->Fill(ht_chs,weight);
+//        std::string prefix = smpName.Data();
+//        doPlts(prefix);
+//        if(diHiggsEvt.type == DiHiggsEvent::MU)
+//            doPlts(prefix+"_mu");
+//        else
+//            doPlts(prefix+"_e");
 //
 //        return true;
 //    }
