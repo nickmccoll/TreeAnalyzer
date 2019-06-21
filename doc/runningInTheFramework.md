@@ -1,5 +1,4 @@
 ##Running a macro
-
 All macros take the same command line arguments, this allows them to be run at the command line or in the batch system:  
 
     rr -b -q 'background_estimation/predMacros/makeBETrees.C+("FILE",1,1,"test.root")'  

@@ -1,13 +1,13 @@
 # TreeAnalyzer
 
 ## Documentation pages
-[__Instructions for setting up the framework__](docs/settingUpTheFramework.md)  
+[__Instructions for setting up the framework__](doc/settingUpTheFramework.md)  
 How to build the code in Linux or MacOS.  
  
-[__Instructions for running on the trees__](docs/runningInTheFramework.md)  
+[__Instructions for running on the trees__](doc/runningInTheFramework.md)  
 How to run on the standard trees, interactively or with the batch system. 
 
-[__Instructions for the background estimation__](docs/backgroundEstimation.md)  
+[__Instructions for the background estimation__](doc/backgroundEstimation.md)  
 Steps to run the background estimation.
 
 ## Directory structure
