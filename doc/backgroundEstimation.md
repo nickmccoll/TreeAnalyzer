@@ -39,10 +39,10 @@ It is that easy! Wait a few minutes and you will have all of your background and
 This macro makes all of the signal inputs.  
 __Parameters__
 
-1. Step of the estimation
-    0. Make the histograms to be fit and the yields
-    1. Fit the histograms and make templates
-    4. Empty, just compile
+1. Step of the estimation  
+    * __0__ Make the histograms to be fit and the yields
+    * __1__ Fit the histograms and make templates
+    * __4__ Empty, just compile
 2. Signal type enum
 3. Where to find the trees
     
@@ -51,9 +51,9 @@ Make the ttbar normalization scale factor. There is a single scale factor for al
 
 __Parameters__    
 
-1. Step of the estimation
-    0. Make the histograms to be fit and then fit them
-    1. Test the scale factors
+1. Step of the estimation  
+    * __0__ Make the histograms to be fit and then fit them
+    * __1__ Test the scale factors
 2. Where to find the trees
     
 ### makeBKGInputs.C
@@ -120,16 +120,16 @@ Most of the tests are done with `plotDataTests.C`. We pretty much assume that yo
 __Parameters__ 
 
 1. Step of the test  
-    0. Run the post-fit so you can make post-fit plots (takes some time)
-    1. Test the pre-fit model
-    2. Test the post-fit model, as used in the AN
-    3. Do the saturated GOF test for projections of the model
-    4. Make summary plots, this is the global GOF test and the systematic pulls. This requires that you have run GoodnessOfFit and FitDiagnostic steps of the statistical tests.
-    5. Plot the bias test results. Requires that you run the bias tests.
-    6. Post-fit CR plots for the paper
-    7. Post-fit SR plots for the paper
-    8. Supplemental post-fit SR plots
-    9. More Supplemental post-fit SR plots
+    *__0__ Run the post-fit so you can make post-fit plots (takes some time)
+    *__1__ Test the pre-fit model
+    *__2__ Test the post-fit model, as used in the AN
+    *__3__ Do the saturated GOF test for projections of the model
+    *__4__ Make summary plots, this is the global GOF test and the systematic pulls. This requires that you have run GoodnessOfFit and FitDiagnostic steps of the statistical tests.
+    *__5__ Plot the bias test results. Requires that you run the bias tests.
+    *__6__ Post-fit CR plots for the paper
+    *__7__ Post-fit SR plots for the paper
+    *__8__ Supplemental post-fit SR plots
+    *__9__ More Supplemental post-fit SR plots
 2. What region you are running
 3. Data card directory
 
