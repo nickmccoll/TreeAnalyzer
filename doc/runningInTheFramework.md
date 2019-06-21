@@ -1,4 +1,4 @@
-##Running a macro
+## Running a macro  
 All macros take the same command line arguments, this allows them to be run at the command line or in the batch system:  
 
     rr -b -q 'background_estimation/predMacros/makeBETrees.C+("FILE",1,1,"test.root")'  
@@ -18,7 +18,7 @@ Example file:
 
 
 
-##Running from a configuration file
+## Running from a configuration file
     ./running/runBatchJobs.py  -m TreeAnalyzer/background_estimation/predMacros/makeBETrees.C -b -i procdatasets.conf  -j jobs/4_30_beTreees -o out 
 
 __Parameters:__  
@@ -29,7 +29,7 @@ __Parameters:__
 * -j : job directory to make all of the temporary files needed to setup the jobs
 * -o : output directory to store job output. If you run interactively the output goes here, if not it goes to the job dir
 
-##Configuration files
+## Configuration files
 
 Configuration files are stored under the running directory (eg. procdatasets_2017.conf)
 
