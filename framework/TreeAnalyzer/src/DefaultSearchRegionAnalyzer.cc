@@ -103,7 +103,7 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isRealData()) return;
 
     if(isCorrOn(CORR_XSEC) && !reader_event) mkErr("event","CORR_XSEC");
-    if(isCorrOn(CORR_TRIG) && !reader_jet_chs) mkErr("ak4Jet","CORR_TRIG");
+    if(isCorrOn(CORR_TRIG) && !reader_jet) mkErr("ak4Jet","CORR_TRIG");
     if(isCorrOn(CORR_TRIG) && !reader_electron) mkErr("electron","CORR_TRIG");
     if(isCorrOn(CORR_TRIG) && !reader_muon) mkErr("muon","CORR_TRIG");
     if(isCorrOn(CORR_TRIG) && !reader_genpart) mkErr("genParticle","CORR_TRIG");
@@ -189,14 +189,27 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     if(reader_genpart){
         if(mcProc == FillerConstants::SIGNAL) diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
         smDecayEvt.setDecayInfo(reader_genpart->genParticles);
+
+    	if (mcProc == FillerConstants::TTBAR && smDecayEvt.topDecays.size() == 2) {
+    		genMtt = (smDecayEvt.topDecays[0].top->p4() + smDecayEvt.topDecays[1].top->p4()).mass();
+
+    		nLepsTT = 0;
+    		if (reader_event->sampParam.val() > 2) {
+    			if (smDecayEvt.topDecays[0].type > TopDecay::HAD) nLepsTT++;
+    			if (smDecayEvt.topDecays[1].type > TopDecay::HAD) nLepsTT++;
+    		} else {
+    			nLepsTT = reader_event->sampParam.val();
+    		}
+    	}
     }
 
     //|||||||||||||||||||||||||||||| CHS JETS ||||||||||||||||||||||||||||||
     if(reader_jet_chs){
-        jets_chs = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,30);
-        ht_chs = JetKinematics::ht(jets_chs);
+        jets_chs_30 = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,30);
+        ht_chs_30 = JetKinematics::ht(jets_chs_30);
+        jets_chs_20 = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,20);
+        ht_chs_20 = JetKinematics::ht(jets_chs_20);
     }
-
 
     //|||||||||||||||||||||||||||||| LEPTONS ||||||||||||||||||||||||||||||
     if(reader_electron && reader_muon){
@@ -206,13 +219,6 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
         selectedDileptons = DileptonProcessor::getLeptons(parameters.dileptons,*reader_muon,*reader_electron);
     }
-
-
-    //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
-    passEventFilters= EventSelection::passEventFilters(parameters.event,*reader_event);
-    passTriggerPreselection= EventSelection::passTriggerPreselection(
-            parameters.event,*reader_event,ht_puppi,selectedLeptons);
-
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
     if(reader_fatjet && reader_fatjet_noLep &&  selectedLepton){
@@ -300,12 +306,15 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
 
     if(reader_jet){
-        jets_puppi = PhysicsUtilities::selObjsMom(reader_jet->jets,parameters.jets.minJetPT);
-        ht_puppi = JetKinematics::ht(jets_puppi);
+        jets_puppi_30 = PhysicsUtilities::selObjsMom(reader_jet->jets,30);
+        ht_puppi_30 = JetKinematics::ht(jets_puppi_30);
+        jets_puppi_20 = PhysicsUtilities::selObjsMom(reader_jet->jets,20);
+        ht_puppi_20 = JetKinematics::ht(jets_puppi_20);
 
         jets = PhysicsUtilities::selObjsMom(reader_jet->jets,
                 parameters.jets.minJetPT,parameters.jets.maxJetETA,
                 [&](const Jet* j){return (j->*parameters.jets.passJetID)();} );
+        ht = JetKinematics::ht(jets);
         nMedBTags = PhysicsUtilities::selObjsMomD(jets,
                 parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
                 [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
@@ -337,25 +346,25 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     }
 
 
+    //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
+    passEventFilters= EventSelection::passEventFilters(parameters.event,*reader_event);
+    passTriggerPreselection= EventSelection::passTriggerPreselection(
+            parameters.event,*reader_event,ht_puppi_30,selectedLeptons);
+
     //|||||||||||||||||||||||||||||| EVENT WEIGHTS ||||||||||||||||||||||||||||||
     weight = 1;
-    weight_2l = 1;
     if(!isRealData()){
         if(isCorrOn(CORR_XSEC)) {
             weight *= EventWeights::getNormalizedEventWeight(
-                    *reader_event,xsec(),nSampEvt(),parameters.event.lumi);
-            weight_2l *= weight;
+                    *reader_event,xsec(),nSampEvt(),parameters.event,genMtt,nLepsTT);
         }
         if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size())) {
             weight *= trigSFProc->getLeptonTriggerSF(
-                    ht_puppi, (selectedLepton && selectedLepton->isMuon()));
-            weight_2l *= trigSFProc->getLeptonTriggerSF(
-                    ht_puppi, (selectedDileptons.size() && selectedDileptons.front()->isMuon()));
+                    ht, (selectedLepton && selectedLepton->isMuon()));
         }
         if(isCorrOn(CORR_PU) ) {
         	float pucorr = puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);
             weight *= pucorr;
-            weight_2l *= pucorr;
         }
         if(isCorrOn(CORR_LEP)){
             leptonSFProc->load(smDecayEvt,selectedLeptons);
@@ -363,18 +372,15 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         }
         if(isCorrOn(CORR_SJBTAG)){
             weight    *= sjbtagSFProc->getSF(parameters.jets,{hbbCand});
-            weight_2l *= sjbtagSFProc->getSF(parameters.jets,{hbbCand_2l});
         }
         if(isCorrOn(CORR_AK4BTAG)){
             weight    *= ak4btagSFProc->getSF(jets_HbbV);
-            weight_2l *= ak4btagSFProc->getSF(jets_HbbV_2l);
 
         }
         if(isCorrOn(CORR_TOPPT)){
             weight *= topPTProc->getCorrection(mcProc,smDecayEvt);
         }
 
-        // how do I want to incorporate the dileptons into these event weights????
     }
     return true;
 }

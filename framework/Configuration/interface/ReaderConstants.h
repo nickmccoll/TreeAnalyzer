@@ -22,6 +22,12 @@ struct EventParameters{
     float minHT;
     float minTriggerEl;
     float minTriggerMu;
+    float ttbarXSecSF_1000toInf_nLep0;
+    float ttbarXSecSF_1000toInf_nLep1;
+    float ttbarXSecSF_1000toInf_nLep2;
+    float ttbarXSecSF_700to1000_nLep0;
+    float ttbarXSecSF_700to1000_nLep1;
+    float ttbarXSecSF_700to1000_nLep2;
 
     std::string leptonCorrSFFile;
     std::string puCorrSFFile;

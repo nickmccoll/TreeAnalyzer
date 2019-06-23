@@ -98,25 +98,31 @@ public:
     int nMedBTags = 0;
     int nMedBTags_HbbV = 0;
     int nMedBTags_HbbV_2l = 0;
+    float ht = 0;
 
-    std::vector<const Jet*> jets_chs;
-    float                   ht_chs    =0;
+    std::vector<const Jet*> jets_chs_30;
+    float                   ht_chs_30    =0;
+    std::vector<const Jet*> jets_chs_20;
+    float                   ht_chs_20    =0;
 
-    std::vector<const Jet*> jets_puppi;
-    float                   ht_puppi    =0;
+    std::vector<const Jet*> jets_puppi_30;
+    float                   ht_puppi_30    =0;
+    std::vector<const Jet*> jets_puppi_20;
+    float                   ht_puppi_20    =0;
 
     std::vector<const Jet*> jets_NoDilepOverlap;
     float                   ht_NoDilepOverlap = 0;
 
     ASTypes::size   corrections=0; //list of corrections to carry out
     float           weight     =0; //std weight after all corrections
-    float           weight_2l  =0;
 
     bool            passEventFilters = false;
     bool            passTriggerPreselection = false;
 
     DiHiggsEvent    diHiggsEvt;
     SMDecayEvent    smDecayEvt;
+    float           genMtt = 0;
+	int nLepsTT = -1;
 
     std::vector<const Lepton    *> selectedLeptons;
     const Lepton *                 selectedLepton=0;

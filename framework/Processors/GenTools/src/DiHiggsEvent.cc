@@ -261,14 +261,15 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
         }
         else {
             hww = gp;
-    // Here is where I will organize the daughters of the Hww appropriately
+
+            // Here is where I will organize the daughters of the Hww appropriately
             std::vector<int> zbosons;
             std::vector<const GenParticle*> quarleps;
             std::vector<WDecay> wDecays;
 
             // iterate over the daughters of this Higgs
             for (int k = 0; k < hww->numberOfDaughters(); k++) {
-		auto dau = hww->daughter(k);
+            	auto dau = hww->daughter(k);
                 if (dau->absPdgId() == ParticleInfo::p_Z0) {
                     zbosons.push_back(Z);
                 } else if (dau->absPdgId() == ParticleInfo::p_Wplus) {
@@ -278,8 +279,9 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
                 } else {continue;}
             }
 
-    // Now analyze the combinations of sizes of each of these vectors as different cases
+            // Now analyze the combinations of sizes of each of these vectors as different cases
             std::vector<int> fermIDs;
+
             // if zbosons is of size 2 already, then it must have two Z bosons and we can immediately write down the class variable type
             if (zbosons.size() == 2) {type = bbZZ;}
 
@@ -399,7 +401,30 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
                     w2_d1 = wDecays[1].d1;
                     w2_d2 = wDecays[1].d2;
                 }
+            }
+            // classify bbtautau dilepton decays
+            else if (quarleps.size() == 2 && (wDecays.size() + zbosons.size() == 0)) {
+            	// make sure here that the only two higgs daughters are tau leptons
+            	if (quarleps[0]->absPdgId() == 15 && quarleps[1]->absPdgId() == 15) {
+            		w1 = quarleps[0];
+            		w2 = quarleps[1];
+
+            		for (unsigned int k=0; k < w1->numberOfDaughters(); k++) {
+            			auto dau = w1->daughter(k);
+            			if (ParticleInfo::isLepton(dau->pdgId())) w1_d1 = dau;
+            			else if (ParticleInfo::isANeutrino(dau->pdgId()) && dau->absPdgId() != 16) w1_d2 = dau;
+            		}
+            		for (unsigned int k=0; k < w2->numberOfDaughters(); k++) {
+            			auto dau = w2->daughter(k);
+            			if (ParticleInfo::isLepton(dau->pdgId())) w2_d1 = dau;
+            			else if (ParticleInfo::isANeutrino(dau->pdgId()) && dau->absPdgId() != 16) w2_d2 = dau;
+            		}
+
+            		if (w1_d1 && w2_d1 && w2_d1 && w2_d2) type = DILEP;
+            	}
+
             } else {type = BAD;}
+
 
             if (hbb && hww) {break;}
         }
