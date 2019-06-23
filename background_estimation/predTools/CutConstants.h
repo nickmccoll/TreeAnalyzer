@@ -14,7 +14,8 @@ public:
     std::string cut;
     std::string title;
 };
-std::string hhFilename = "HHlnujj";
+std::string hhFilename    = "HHlnujj";
+std::string hhFilename_2l = "HHlnulnu";
 
 
 enum PROC  {TTBAR,WJETS,QCD,OTHER};
@@ -28,15 +29,21 @@ std::vector<CutStr > processes = {
 enum REGION  {REG_SR, REG_TOPCR, REG_QGCR};
 
 //CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
-CutStr nomW ("nomW"  ,  "xsec*trig_N");
+CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N");
 
 CutStr aQCD ("aQCD"  , "process!=8");
 
 CutStr wjjBC("wjjBC" , "wjjTau2o1<0.75");
-CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&wwDM<125.0");
+CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&(hwwChi2<=11)");
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr abV  ("abV"   , "nAK4Btags!=0");
-CutStr preSel("preSel"  , "passPre==1&&(isMuon==1?1.0:lepMiniIso<=0.2&&lepETA<=1.5)");
+
+CutStr dR   ("dR"    , "dilepDR<1.6");
+CutStr dPhi ("dPhi"  , "abs(dPhi_metll)<(3.14159/2)");
+CutStr mllV ("mllV"  , "(dilepMass>12)&&(dilepMass<75)");
+CutStr metC ("metC"  , "met>40");
+
+CutStr preSel("preSel"  , "passPre==1");
 
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
 CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
@@ -103,9 +110,15 @@ std::string getHHBinningString(bool inclusive){
 enum BKGModels  {BKG_QG, BKG_LOSTTW, BKG_MW, BKG_MT};
 std::vector<CutStr > bkgSels = {
         CutStr("qg"    ,"hbbWQuark==0","q/g bkg."),
-        CutStr("losttw","hbbWQuark>0&&hbbWQuark<=3","Lost t/W bkg."),
+        CutStr("losttw","(hbbWQuark>0)&&(hbbWQuark<=3)","Lost t/W bkg."),
         CutStr("mw"     ,"hbbWQuark==4","#it{m}_{W} bkg."),
         CutStr("mt"     ,"hbbWQuark==5","#it{m}_{t} bkg.")
+};
+
+enum BKGModels2L  {BKG_MISB,BKG_REALB};
+std::vector<CutStr > llBkgSels = {
+		CutStr("misB","numBinHbb==0","MisID b"),
+		CutStr("trueB","numBinHbb>=1","Good b")
 };
 
 enum LEPCats  {LEP_EMU, LEP_E, LEP_MU};
@@ -113,6 +126,13 @@ std::vector<CutStr> lepCats = {
         CutStr("emu","isMuon>=0","e#mu"),
         CutStr("e"  ,"isMuon==0","e"),
         CutStr("mu" ,"isMuon==1","#mu")
+};
+
+enum DILEPCats  {LEP_INCL, LEP_SF, LEP_OF};
+std::vector<CutStr> dilepCats = {
+        CutStr("IF","((isMuon1>=0)&&(isMuon2>=0))","incl flavor"),
+        CutStr("SF","((isMuon1==0)==(isMuon2==0))","same flavor"),
+        CutStr("OF"  ,"((isMuon1==0)!=(isMuon2==0))","opposite flavor"),
 };
 
 enum BTAGCats  {BTAG_LMT, BTAG_L, BTAG_M, BTAG_T};
@@ -146,6 +166,14 @@ std::vector<CutStr > hadCuts = {
 
 };
 
+enum SELCuts  {SEL_NONE,SEL_RPhiB,SEL_FULL};
+std::vector<CutStr > selCuts = {
+        CutStr("none",preSel.cut,"-ExB -#it{m}_{D} -#it{p}_{T}/#it{m} -#tau_{0.75}"),
+		CutStr("R_phi_b",preSel.cut+"&&"+dR.cut+"&&"+mllV.cut+"&&"+metC.cut,"full relax B, phi"),
+        CutStr("full",preSel.cut+"&&"+bV.cut+"&&"+dR.cut+"&&"+dPhi.cut+"&&"+mllV.cut+"&&"+metC.cut,"")
+
+};
+
 struct CatIterator{
     bool firstBin = true;
     LEPCats  l =LEP_EMU;
@@ -167,22 +195,22 @@ struct CatIterator{
             firstBin = false;
             return true;
         }
-        if(h < HAD_FULL){
+        if(h < hadCuts.size()-1){
             h = HADCuts(h+1);
             return true;
         }
-        else if(p < PURE_HP){
+        else if(p < purCats.size()-1){
             p= PURCats(p+1);
             h=HAD_NONE;
             return true;
         }
-        else if(b < BTAG_T){
+        else if(b < btagCats.size()-1){
             b= BTAGCats(b+1);
             p=PURE_I;
             h=HAD_NONE;
             return true;
         }
-        else if(l < LEP_MU){
+        else if(l < lepCats.size()-1){
             l= LEPCats(l+1);
             b=BTAG_LMT;
             p=PURE_I;
@@ -197,6 +225,50 @@ struct CatIterator{
         b =BTAG_LMT;
         p =PURE_I;
         h =HAD_NONE;
+    }
+};
+
+struct DilepCatIterator{
+    bool firstBin = true;
+    DILEPCats  l =LEP_INCL;
+    BTAGCats b =BTAG_LMT;
+    SELCuts  s =SEL_NONE;
+    bool is(const DILEPCats  cl ) const {return l == cl;}
+    bool is(const BTAGCats cb ) const {return b == cb;}
+    bool is(const SELCuts  cs ) const {return s == cs;}
+    std::string name() const {
+        return dilepCats[l] +"_"+btagCats[b] +"_"+selCuts[s];
+    }
+    std::string cut() const {
+        return "("+dilepCats[l].cut+"&&"+btagCats[b].cut +"&&"+selCuts[s].cut+")";
+    }
+    bool getBin() {
+        if(firstBin){
+            firstBin = false;
+            return true;
+        }
+        if(s < selCuts.size()-1){
+            s = SELCuts(s+1);
+            return true;
+        }
+        else if(b < btagCats.size()-1){
+            b= BTAGCats(b+1);
+            s=SEL_NONE;
+            return true;
+        }
+        else if(l < dilepCats.size()-1){
+            l= DILEPCats(l+1);
+            b=BTAG_LMT;
+            s=SEL_NONE;
+            return true;
+        }
+        return false;
+    }
+    void reset() {
+        firstBin = true;
+        l =LEP_INCL;
+        b =BTAG_LMT;
+        s =SEL_NONE;
     }
 };
 

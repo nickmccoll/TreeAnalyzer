@@ -74,8 +74,8 @@ public:
         outTree->addSingle(met_, "", "met");
         outTree->addSingle(isMuon1_, "", "isMuon1");
         outTree->addSingle(isMuon2_, "", "isMuon2");
-        outTree->addSingle(lep1PT_, "", "lep1PT_");
-        outTree->addSingle(lep2PT_, "", "lep2PT_");
+        outTree->addSingle(lep1PT_, "", "lep1PT");
+        outTree->addSingle(lep2PT_, "", "lep2PT");
         outTree->addSingle(dilepPT_, "", "dilepPT");
         outTree->addSingle(dilepMass_, "", "dilepMass");
         outTree->addSingle(dilepDR_, "", "dilepDR");
@@ -89,6 +89,7 @@ public:
 
         if(!isRealData()){
             outTree->addSingle(hbbDecayTypeMC_, "", "hbbDecayTypeMC");
+            outTree->addSingle(numBinHbb_, "", "numBinHbb");
             outTree->addSingle(nLepsTT_, "", "nLepsTT");
         }
 
@@ -118,7 +119,19 @@ public:
         if(!passEventFilters) passPre = false;
         if(selectedDileptons.size() != 2) passPre = false;
         if(!hbbCand_2l) passPre = false;
-        if (ht_puppi < 400) passPre = false;
+
+        // muon ID preselection
+        if(selectedDileptons.size() == 2) {
+        	if (selectedDileptons[0]->isMuon() && selectedDileptons[1]->isMuon()) {
+        		bool pass1 = ((Muon*)selectedDileptons[0])->passMedID() && selectedDileptons[0]->pt() > 27;
+        		bool pass2 = ((Muon*)selectedDileptons[1])->passMedID() && selectedDileptons[1]->pt() > 27;
+        		if (!pass1 && !pass2) passPre = false;
+        	}
+        }
+        if (selectedDileptons.size() == 2) {
+            float ptthresh = (selectedDileptons[0]->isMuon() ? 27 : 30);
+            if (selectedDileptons[0]->pt() < ptthresh) passPre = false;
+        }
 
         if(!addUncVariables && !passPre) return false;
         passPre_ = size8(passPre);
@@ -130,15 +143,15 @@ public:
         } else {
         	process_ = size8(*reader_event->process);
         	dhType_  = size8(diHiggsEvt.type);
-        	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event.lumi));
-        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_puppi, (selectedDileptons.size() && selectedDileptons[0]->isMuon())) : 1.0 );
+        	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event,genMtt,nLepsTT));
+        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_puppi_30, (selectedDileptons.size() && selectedDileptons[0]->isMuon())) : 1.0 );
         	pu_N_    = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL));
         	lep_N_   = 1.0 /*float(leptonSFProc->getSF())*/;
         	btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
 
         }
 
-        ht_ = ht_puppi;
+        ht_ = ht_puppi_30;
         met_ = reader_event->met.pt();
 
         if(selectedDileptons.size() == 2 && selectedDileptons.front() && selectedDileptons.back()){
@@ -170,13 +183,14 @@ public:
             int maxQuarksFromTop = 0;
             int totQuarksFromTops = 0;
             int numB = 0;
+            int numB_ll = 0;
 
             for (const auto& d : smDecayEvt.topDecays) {
             	if (d.type == TopDecay::BAD) continue;
             	if (d.type > TopDecay::HAD) {
             		if (PhysicsUtilities::deltaR2(*d.b,*hbbCand_2l) < maxDR2) {
             			totQuarksFromTops++;
-            			numB++;
+            			numB++; numB_ll++;
             			if (maxQuarksFromTop == 0) maxQuarksFromTop = 1;
             		}
             	} else {
@@ -187,6 +201,7 @@ public:
             		int nT = nW + passB;
             		totQuarksFromTops += nT;
             		numB += passB;
+            		numB_ll += passB;
             		if (nT > maxQuarksFromTop) maxQuarksFromTop = nT;
             	}
             }
@@ -210,6 +225,9 @@ public:
             for (const auto& d : smDecayEvt.bosonDecays) {
                 if(d.type != BosonDecay::Z_HAD && d.type != BosonDecay::W_HAD ) continue;
                 int nW = (PhysicsUtilities::deltaR2(*d.dau1,*hbbCand_2l) < maxDR2) +  (PhysicsUtilities::deltaR2(*d.dau2,*hbbCand_2l) < maxDR2);
+                if (d.dau1->absPdgId() == ParticleInfo::p_b && PhysicsUtilities::deltaR2(*d.dau1,*hbbCand_2l) < maxDR2) numB_ll++;
+                if (d.dau2->absPdgId() == ParticleInfo::p_b && PhysicsUtilities::deltaR2(*d.dau2,*hbbCand_2l) < maxDR2) numB_ll++;
+
                 totQuarksFromWs += nW;
                 if (nW > maxQuarksFromW) maxQuarksFromW = nW;
             }
@@ -225,13 +243,10 @@ public:
                 decayType = WDecayType;
             }
             hbbDecayTypeMC_ = size8(decayType);
+            numBinHbb_ = size8(numB_ll);
+            if (nLepsTT == -1) nLepsTT_ = 255;
+            else               nLepsTT_ = size8(nLepsTT);
 
-//            if (mcProc == FillerConstants::TTBAR) {
-//                TPRegexp r1("(.*)(tbar)(.*)(\\d)(l)(.*)");
-//                auto b = r1.MatchS(filename);
-//                int nLepsTT = (((TObjString *)b->At(4))->GetString()).Atoi();
-//                nLepsTT_ = size8(nLepsTT);
-//            }
         }
 
         if(addUncVariables){
@@ -288,7 +303,7 @@ public:
 
     float hbbMass_   = 0;
     float hbbPT_     = 0;
-    float hbbCSVCat_ = 0;
+    size8 hbbCSVCat_ = 0;
 
     float hhMass_    = 0;
     float hwwPT_     = 0;
@@ -297,7 +312,8 @@ public:
 
     //BE extra variables
     size8 hbbDecayTypeMC_   =0;
-    size8 nLepsTT_  =0;
+    size8 numBinHbb_        =0;
+    size8 nLepsTT_ = 0;
 
     //systematic variables
     float w_muIDUp_      = 0;

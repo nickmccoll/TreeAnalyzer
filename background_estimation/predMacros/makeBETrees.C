@@ -70,6 +70,17 @@ public:
         	outTree->addSingle(btag_N_,  "",  "btag_N");
         }
 
+        outTree->addSingle(ht_chs_30_,  "",  "ht_chs_30");
+        outTree->addSingle(ht_pup_30_,  "",  "ht_pup_30");
+        outTree->addSingle(passTrigCHS_30,  "",  "passTrigCHS_30");
+        outTree->addSingle(passTrigPUP_30,  "",  "passTrigPUP_30");
+        outTree->addSingle(ht_chs_20_,  "",  "ht_chs_20");
+        outTree->addSingle(ht_pup_20_,  "",  "ht_pup_20");
+        outTree->addSingle(passTrigCHS_20,  "",  "passTrigCHS_20");
+        outTree->addSingle(passTrigPUP_20,  "",  "passTrigPUP_20");
+
+        outTree->addSingle(passTrigPUP_tight,  "",  "passTrigPUP_tight");
+
     	outTree->addSingle(passPre_,  "",  "passPre");
     	outTree->addSingle(ht_,  "",  "ht");
     	outTree->addSingle(met_,  "",  "met");
@@ -77,7 +88,7 @@ public:
     	outTree->addSingle(lepPT_,  "",  "lepPT");
     	outTree->addSingle(lepETA_,  "",  "lepETA");
     	outTree->addSingle(lepMiniIso_,  "",  "lepMiniIso");
-    	outTree->addSingle(lepMiniIsoFP_,  "",  "lepMiniIsoFP");
+//    	outTree->addSingle(lepMiniIsoFP_,  "",  "lepMiniIsoFP");
 
     	outTree->addSingle(hbbMass_,  "",  "hbbMass");
     	outTree->addSingle(hbbPT_,  "",  "hbbPT");
@@ -133,7 +144,7 @@ public:
     bool runEvent() override {
         bool passPre = true;
         if(!DefaultSearchRegionAnalyzer::runEvent()) passPre = false;
-        if(!passTriggerPreselection) passPre = false;
+//        if(!passTriggerPreselection) passPre = false;
         if(!passEventFilters) passPre = false;
         if(selectedLeptons.size() != 1) passPre = false;
         if(!hbbCand)  passPre = false;
@@ -149,15 +160,26 @@ public:
         } else {
         	process_ = size8(*reader_event->process);
         	dhType_  = size8(diHiggsEvt.type);
-        	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event.lumi));
-        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_puppi, (selectedLepton && selectedLepton->isMuon())) : 1.0 );
+        	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event.lumi,genMtt,nLepsTT));
+        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht, (selectedLepton && selectedLepton->isMuon())) : 1.0 );
         	pu_N_    = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL));
         	lep_N_   = 1.0 /*float(leptonSFProc->getSF())*/;
         	btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
 
         }
 
-        ht_  = float(ht_puppi);
+        ht_pup_30_  = float(ht_puppi_30);
+        ht_chs_30_ = float(ht_chs_30);
+        passTrigCHS_30 = size8(EventSelection::passTriggerPreselection(parameters.event,*reader_event,ht_chs_30,selectedLeptons));
+        passTrigPUP_30 = size8(EventSelection::passTriggerPreselection(parameters.event,*reader_event,ht_puppi_30,selectedLeptons));
+        ht_pup_20_  = float(ht_puppi_20);
+        ht_chs_20_ = float(ht_chs_20);
+        passTrigCHS_20 = size8(EventSelection::passTriggerPreselection(parameters.event,*reader_event,ht_chs_20,selectedLeptons));
+        passTrigPUP_20 = size8(EventSelection::passTriggerPreselection(parameters.event,*reader_event,ht_puppi_20,selectedLeptons));
+
+        ht_ = float(ht);
+        passTrigPUP_tight = size8(EventSelection::passTriggerPreselection(parameters.event,*reader_event,ht,selectedLeptons));
+
         met_ = float(reader_event->met.pt());
 
         if(selectedLepton){
@@ -166,8 +188,8 @@ public:
         	lepETA_  = float(selectedLepton->eta());
         	lepMiniIso_ = float(selectedLepton->miniIso());
 
-        	if (selectedLepton->isElectron()) lepMiniIsoFP_ = float(((Electron*)selectedLepton)->miniIsoFP());
-        	else lepMiniIsoFP_ = 999.99; // if muon then just set this isolation to some high value (only using for electrons)
+//        	if (selectedLepton->isElectron()) lepMiniIsoFP_ = float(((Electron*)selectedLepton)->miniIsoFP());
+//        	else lepMiniIsoFP_ = 999.99; // if muon then just set this isolation to some high value (only using for electrons)
         }
 
         hbbMass_ = float(hbbMass);
@@ -299,7 +321,7 @@ public:
     float lepPT_     = 0;
     float lepETA_    = 0;
     float lepMiniIso_   = 0;
-    float lepMiniIsoFP_ = 0;
+//    float lepMiniIsoFP_ = 0;
     float hbbMass_   = 0;
     float hbbPT_     = 0;
     size8 hbbCSVCat_ = 0;
@@ -343,7 +365,16 @@ public:
 
     bool addUncVariables = false;
 
+    float ht_chs_30_ = 0;
+    float ht_pup_30_ = 0;
+    size8 passTrigCHS_30 = 0;
+    size8 passTrigPUP_30 =0;
+    float ht_chs_20_ = 0;
+    float ht_pup_20_ = 0;
+    size8 passTrigCHS_20 = 0;
+    size8 passTrigPUP_20 =0;
 
+    size8 passTrigPUP_tight =0;
 
 };
 
