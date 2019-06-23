@@ -37,6 +37,8 @@ public:
 
     void plotSpectra(TString sn, const Lepton* recolep1, const Lepton* recolep2, const FatJet* hbb) {
     	if (!hbb) return;
+		if (BTagging::getCSVSJCat(parameters.jets,hbb->subJets()) < BTagging::CSVSJ_MF) return;
+
     	MomentumF dilepMOM = recolep1->p4() + recolep2->p4();
     	MomentumF bbllMOM = dilepMOM.p4() + hbb->p4();
     	double dR_ll = PhysicsUtilities::deltaR(*recolep1,*recolep2);
@@ -54,6 +56,7 @@ public:
     	};
 
     	double mhh = getHHMass(hbb,dilepMOM);
+    	if (mhh < 700) return;
 
     	auto plt = [&](TString pre) {
         	plotter.getOrMake1DPre(pre,"Mll",";m_{ll}",100,0,200)->Fill(dilepMOM.mass(),weight);
@@ -61,12 +64,31 @@ public:
         	plotter.getOrMake1DPre(pre,"dPhi_ll",";#Delta#Phi_{ll}",50,-3.14,3.14)->Fill(dPhi_ll,weight);
         	plotter.getOrMake1DPre(pre,"pt1",";p_{T} lep1",100,0,1000)->Fill(recolep1->pt(),weight);
         	plotter.getOrMake1DPre(pre,"pt2",";p_{T} lep2",100,0,1000)->Fill(recolep2->pt(),weight);
-        	plotter.getOrMake1DPre(pre,"ht",";H_{T}",3000,0,3000)->Fill(ht_chs,weight);
+        	plotter.getOrMake1DPre(pre,"ht",";H_{T}",5000,0,5000)->Fill(ht_puppi_30,weight);
         	plotter.getOrMake1DPre(pre,"mhh",";M_{HH}",3000,0,3000)->Fill(mhh,weight);
+        	plotter.getOrMake1DPre(pre,"met",";MET",100,0,1000)->Fill(reader_event->met.pt(),weight);
+
+        	plotter.getOrMake1DPre(pre,"sip1",";sip",500,0,100)->Fill(recolep1->sip3D(),weight);
+        	plotter.getOrMake1DPre(pre,"sip2",";sip",500,0,100)->Fill(recolep2->sip3D(),weight);
     	};
 
     	plt(sn);
-    	plt("bkg");
+//    	plt("bkg");
+
+    	if (dR_ll > 1.6) return;
+    	if (reader_event->met.pt() < 40) return;
+    	if (dilepMOM.mass() < 12 || dilepMOM.mass() > 75) return;
+
+        const auto jetsVeto = PhysicsUtilities::selObjsD(jets,
+                [&](const Jet* j){return  PhysicsUtilities::deltaR2(*j,*hbb ) >= 1.2*1.2;});
+        const auto nBtags = PhysicsUtilities::selObjsMomD(jetsVeto,
+                parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
+                [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
+
+    	if (nBtags > 0) return;
+    	if (PhysicsUtilities::absDeltaPhi(dilepMOM,reader_event->met.p4()) > TMath::PiOver2()) return;
+
+    	plt(sn+"_pass2lSel");
     }
     void printDebugInfo(TString sn, const GenParticle* genlep1, const GenParticle* genlep2, int idx1, int idx2) {
     	ParticleInfo::printGenInfo(reader_genpart->genParticles,-1);
@@ -89,17 +111,26 @@ public:
 
 	bool passSel(int relax, const Lepton* lep1, const Lepton* lep2) {
 		bool pass = false;
-		bool passIP1 = fabs(lep1->d0()) < 0.05 && fabs(lep1->dz()) < 0.1 && fabs(lep1->sip3D()) < 4.0;
-		bool passIP2 = fabs(lep2->d0()) < 0.05 && fabs(lep2->dz()) < 0.1 && fabs(lep2->sip3D()) < 4.0;
+		bool passIP1 = fabs(lep1->d0()) < 0.05 && fabs(lep1->dz()) < 0.1 && fabs(lep1->sip3D()) < 9999.0;
+		bool passIP2 = fabs(lep2->d0()) < 0.05 && fabs(lep2->dz()) < 0.1 && fabs(lep2->sip3D()) < 9999.0;
 		bool passIso1 = lep1->miniIso() < 0.2;
 		bool passIso2 = lep2->miniIso() < 0.2;
-		bool passID1 = lep1->isElectron() ? ((Electron*)lep1)->passMVA90ID_noIso() : ((Muon*)lep1)->passMedID();
-		bool passID2 = lep2->isElectron() ? ((Electron*)lep2)->passMVA90ID_noIso() : ((Muon*)lep2)->passMedID();
+
+		bool passID1 = lep1->isElectron() ? ((Electron*)lep1)->passMVA90ID_noIso() : ((Muon*)lep1)->passLooseID();
+		bool passID2 = lep2->isElectron() ? ((Electron*)lep2)->passMVA90ID_noIso() : ((Muon*)lep2)->passLooseID();
+		bool passID = passID1 && passID2;
+
+		if (lep1->isMuon() && lep2->isMuon() && passID == true) {
+			bool pass1 = (((Muon*)lep1)->passMedID() && lep1->pt() > 27);
+			bool pass2 = (((Muon*)lep2)->passMedID() && lep2->pt() > 27);
+
+			if (!pass1 && !pass2) passID = false;
+		}
 
 		// 0 = relax IP; 1 = relax ID; 2 = relax ISO ////////
-		if (relax==0)      pass = passID1 && passID2 && passIso1 && passIso2;
+		if (relax==0)      pass = passID && passIso1 && passIso2;
 		else if (relax==1) pass = passIP1 && passIP2 && passIso1 && passIso2;
-		else if (relax==2) pass = passIP1 && passIP2 && passID1 && passID2;
+		else if (relax==2) pass = passIP1 && passIP2 && passID;
 		else {cout<<"passSel arg needs to be 0, 1, or 2"<<endl;}
 
 		return pass;
@@ -119,6 +150,7 @@ public:
 
 		if (isSignal) {
 	    	if (!passSel(2,sigLep1,sigLep2)) return;
+			plotSpectra(sn+"_passIP_ID_eMVA_mM_inclIso",sigLep1,sigLep2,hbbJet);
 			plotSpectra(sn+getDilepChan(sigLep1,sigLep2)+"passIP_ID_eMVA_mM_inclIso",sigLep1,sigLep2,hbbJet);
 		} else {
 			param.mu_getISO = &Muon::inclIso;
@@ -127,12 +159,20 @@ public:
     		if (leps.size() == 2) {
     			const Lepton *lep1 = leps.front();
     			const Lepton *lep2 = leps.back();
+	    		float pt = lep1->isMuon() ? 27 : 30;
+	    		if (lep1->pt() < pt) return;
 
     			fjProc.reset(new FatJetProcessor ());
     			fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,lep1,lep2);
     			const FatJet *bbjet = fjProc->getDilepHbbCand();
 
-    			if (bbjet) plotSpectra(sn+getDilepChan(lep1,lep2)+id,lep1,lep2,bbjet);
+    			if (bbjet) {
+    				auto bbmass = isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(bbjet) : bbjet->sdMom().mass();
+    				if (bbmass > 30 && bbmass < 210) {
+    					plotSpectra(sn+"_"+id,lep1,lep2,bbjet);
+    					plotSpectra(sn+getDilepChan(lep1,lep2)+id,lep1,lep2,bbjet);
+    				}
+    			}
     		}
 		}
 
@@ -151,9 +191,12 @@ public:
 					passIso1 = sigLep1->isMuon() ? (((Muon*)sigLep1)->*muIsos[iS])() < isoWPs[im] : (((Electron*)sigLep1)->*elIsos[iS])() < isoWPs[ie];
 					passIso2 = sigLep2->isMuon() ? (((Muon*)sigLep2)->*muIsos[iS])() < isoWPs[im] : (((Electron*)sigLep2)->*elIsos[iS])() < isoWPs[ie];
 
-    				if (passIso1) plotter.getOrMake1DPre(sn+getDilepChan(sigLep1,sigLep2)+id,"ht_lep1",";H_{T}",3000,0,3000)->Fill(ht_chs,weight);
-    				if (passIso2) plotter.getOrMake1DPre(sn+getDilepChan(sigLep1,sigLep2)+id,"ht_lep2",";H_{T}",3000,0,3000)->Fill(ht_chs,weight);
-    				if (passIso1 && passIso2) plotSpectra(sn+getDilepChan(sigLep1,sigLep2)+id,sigLep1,sigLep2,hbbJet);
+    				if (passIso1) plotter.getOrMake1DPre(sn+getDilepChan(sigLep1,sigLep2)+id,"ht_lep1",";H_{T}",5000,0,5000)->Fill(ht_puppi_30,weight);
+    				if (passIso2) plotter.getOrMake1DPre(sn+getDilepChan(sigLep1,sigLep2)+id,"ht_lep2",";H_{T}",5000,0,5000)->Fill(ht_puppi_30,weight);
+    				if (passIso1 && passIso2) {
+    					plotSpectra(sn+"_"+id,sigLep1,sigLep2,hbbJet);
+    					plotSpectra(sn+getDilepChan(sigLep1,sigLep2)+id,sigLep1,sigLep2,hbbJet);
+    				}
 
     			} else {
     				param.el_maxISO = isoWPs[ie];
@@ -162,17 +205,24 @@ public:
     				param.el_getISO = elIsos[iS];
 
     	    		const auto leps = DileptonProcessor::getLeptons(param,*reader_muon,*reader_electron);
-        	    	if (leps.size() >  2) plotter.getOrMake1DPre(sn+"_"+id+"_LepsGt2","ht",";H_{T}",3000,0,3000)->Fill(ht_chs,weight);
+        	    	if (leps.size() >  2) plotter.getOrMake1DPre(sn+"_"+id+"_LepsGt2","ht",";H_{T}",5000,0,5000)->Fill(ht_puppi_30,weight);
     	    		if (leps.size() != 2) continue;
     	    		const Lepton *lep1 = leps.front();
     	    		const Lepton *lep2 = leps.back();
+    	    		float pt = lep1->isMuon() ? 27 : 30;
+    	    		if (lep1->pt() < pt) continue;
 
     	    	    fjProc.reset(new FatJetProcessor ());
     	            fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,lep1,lep2);
     	            const FatJet *bbjet = fjProc->getDilepHbbCand();
 
-    	    		if (!bbjet) continue;
-    	    		plotSpectra(sn+getDilepChan(lep1,lep2)+id,lep1,lep2,bbjet);
+        			if (bbjet) {
+        				auto bbmass = isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(bbjet) : bbjet->sdMom().mass();
+        				if (bbmass > 30 && bbmass < 210) {
+        					plotSpectra(sn+"_"+id,lep1,lep2,bbjet);
+        					plotSpectra(sn+getDilepChan(lep1,lep2)+id,lep1,lep2,bbjet);
+        				}
+        			}
     			}
     		}
     	}
@@ -180,10 +230,9 @@ public:
 
 	void testID(TString sn, bool isSignal, const Lepton *sigLep1=0, const Lepton *sigLep2=0, const FatJet* hbbJet=0) {
 
-    	static const vector<LeptonProcessor::elFunBool> elIds = {&Electron::passLooseID_noIso, &Electron::passMedID_noIso, &Electron::passTightID_noIso, &Electron::passMVA90ID_noIso,
-    			&Electron::passHEEPID_noIso};
+    	static const vector<LeptonProcessor::elFunBool> elIds = {&Electron::passLooseID_noIso, &Electron::passMedID_noIso, &Electron::passTightID_noIso, &Electron::passMVA90ID_noIso};
     	static const vector<LeptonProcessor::muFunBool> muIds = {&Muon::passLooseID, &Muon::passMedID, &Muon::passTightID};
-    	vector<TString> elNames = {"L","M","T","MVA","H"};
+    	vector<TString> elNames = {"L","M","T","MVA"};
     	vector<TString> muNames = {"L","M","T"};
 
     	DileptonParameters param = parameters.dileptons;
@@ -192,7 +241,9 @@ public:
 
 		if (isSignal) {
 	    	if (!passSel(1,sigLep1,sigLep2)) return;
+			plotSpectra(sn+"_"+id,sigLep1,sigLep2,hbbJet);
 			plotSpectra(sn+getDilepChan(sigLep1,sigLep2)+id,sigLep1,sigLep2,hbbJet);
+
 		} else {
 			param.el_getID1 = &Electron::passInclID;
 			param.el_getID2 = &Electron::passInclID;
@@ -203,12 +254,20 @@ public:
 	    	if (leps.size() == 2) {
 	    		const Lepton *lep1 = leps.front();
 	    		const Lepton *lep2 = leps.back();
+	    		float pt = lep1->isMuon() ? 27 : 30;
+	    		if (lep1->pt() < pt) return;
 
 	    		fjProc.reset(new FatJetProcessor ());
 	    		fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,lep1,lep2);
 	    		const FatJet *bbjet = fjProc->getDilepHbbCand();
 
-	    		if (bbjet) plotSpectra(sn+getDilepChan(lep1,lep2)+id,lep1,lep2,bbjet);
+    			if (bbjet) {
+    				auto bbmass = isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(bbjet) : bbjet->sdMom().mass();
+    				if (bbmass > 30 && bbmass < 210) {
+    					plotSpectra(sn+"_"+id,lep1,lep2,bbjet);
+    					plotSpectra(sn+getDilepChan(lep1,lep2)+id,lep1,lep2,bbjet);
+    				}
+    			}
 	    	}
 		}
 
@@ -228,9 +287,12 @@ public:
     			passId1 = sigLep1->isMuon() ? (((Muon*)sigLep1)->*muIds[im1])() : (((Electron*)sigLep1)->*elIds[ie1])();
     			passId2 = sigLep2->isMuon() ? (((Muon*)sigLep2)->*muIds[im2])() : (((Electron*)sigLep2)->*elIds[ie2])();
 
-    			if (passId1) plotter.getOrMake1DPre(sn+getDilepChan(sigLep1,sigLep2)+id,"ht_lep1",";H_{T}",3000,0,3000)->Fill(ht_chs,weight);
-    			if (passId2) plotter.getOrMake1DPre(sn+getDilepChan(sigLep1,sigLep2)+id,"ht_lep2",";H_{T}",3000,0,3000)->Fill(ht_chs,weight);
-    			if (passId1 && passId2) plotSpectra(sn+getDilepChan(sigLep1,sigLep2)+id,sigLep1,sigLep2,hbbJet);
+    			if (passId1) plotter.getOrMake1DPre(sn+getDilepChan(sigLep1,sigLep2)+id,"ht_lep1",";H_{T}",5000,0,5000)->Fill(ht_puppi_30,weight);
+    			if (passId2) plotter.getOrMake1DPre(sn+getDilepChan(sigLep1,sigLep2)+id,"ht_lep2",";H_{T}",5000,0,5000)->Fill(ht_puppi_30,weight);
+    			if (passId1 && passId2) {
+    				plotSpectra(sn+"_"+id,sigLep1,sigLep2,hbbJet);
+    				plotSpectra(sn+getDilepChan(sigLep1,sigLep2)+id,sigLep1,sigLep2,hbbJet);
+    			}
 
     		} else {
     			param.el_getID1 = elIds[ie1];
@@ -239,10 +301,12 @@ public:
     			param.mu_getID2 = muIds[im2];
 
     	    	const auto leps = DileptonProcessor::getLeptons(param,*reader_muon,*reader_electron);
-    	    	if (leps.size() >  2) plotter.getOrMake1DPre(sn+"_"+id+"_LepsGt2","ht",";H_{T}",3000,0,3000)->Fill(ht_chs,weight);
+    	    	if (leps.size() >  2) plotter.getOrMake1DPre(sn+"_"+id+"_LepsGt2","ht",";H_{T}",5000,0,5000)->Fill(ht_puppi_30,weight);
     	    	if (leps.size() != 2) continue;
     	    	const Lepton *lep1 = leps.front();
     	    	const Lepton *lep2 = leps.back();
+	    		float pt = lep1->isMuon() ? 27 : 30;
+	    		if (lep1->pt() < pt) continue;
 
     	    	bool goodSel = true;
     	    	if (lep1->isMuon()) {
@@ -261,17 +325,70 @@ public:
     	        fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,lep1,lep2);
     	        const FatJet *bbjet = fjProc->getDilepHbbCand();
 
-    	        if (!bbjet) continue;
-    	    	plotSpectra(sn+getDilepChan(lep1,lep2)+id,lep1,lep2,bbjet);
+    			if (bbjet) {
+    				auto bbmass = isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(bbjet) : bbjet->sdMom().mass();
+    				if (bbmass > 30 && bbmass < 210) {
+    					plotSpectra(sn+"_"+id,lep1,lep2,bbjet);
+    					plotSpectra(sn+getDilepChan(lep1,lep2)+id,lep1,lep2,bbjet);
+    				}
+    			}
     		}
     	}
 	}
 
+	void testSpecialID(TString sn, bool isSignal, const Lepton *sigLep1=0, const Lepton *sigLep2=0, const FatJet* hbbJet=0) {
+
+		bool passId = false;
+		TString id = "passIP_ID_e1_MVA_e2_MVA_m1_S_m2_S_miniIso0p2";
+
+		if (isSignal) {
+			if (sigLep1->isElectron() || sigLep2->isElectron()) return;
+	    	if (!passSel(1,sigLep1,sigLep2)) return;
+
+			if ( ((Muon*)sigLep1)->passLooseID() && ((Muon*)sigLep2)->passLooseID() ) {
+				bool pass21 = ((Muon*)sigLep1)->passMedID() && sigLep1->pt() > 27;
+				bool pass22 = ((Muon*)sigLep2)->passMedID() && sigLep2->pt() > 27;
+
+				if (pass21 || pass22) plotSpectra(sn+getDilepChan(sigLep1,sigLep2)+id,sigLep1,sigLep2,hbbJet);
+			}
+		} else {
+	    	DileptonParameters param = parameters.dileptons;
+			param.mu_getID1 = &Muon::passLooseID;
+			param.mu_getID2 = &Muon::passLooseID;
+
+	    	const auto leps = DileptonProcessor::getLeptons(param,*reader_muon,*reader_electron);
+	    	if (leps.size() != 2) return;
+	    	const Lepton *lep1 = leps.front();
+	    	const Lepton *lep2 = leps.back();
+    		float pt = lep1->isMuon() ? 27 : 30;
+    		if (lep1->pt() < pt) return;
+
+	    	if (lep1->isElectron() || lep2->isElectron()) return;
+
+			bool pass21 = ((Muon*)lep1)->passMedID() && lep1->pt() > 27;
+			bool pass22 = ((Muon*)lep2)->passMedID() && lep2->pt() > 27;
+
+			if (!pass21 && !pass22) return;
+
+	    	fjProc.reset(new FatJetProcessor ());
+	        fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,lep1,lep2);
+	        const FatJet *bbjet = fjProc->getDilepHbbCand();
+
+			if (bbjet) {
+				auto bbmass = isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(bbjet) : bbjet->sdMom().mass();
+				if (bbmass > 30 && bbmass < 210) {
+					plotSpectra(sn+getDilepChan(lep1,lep2)+id,lep1,lep2,bbjet);
+				}
+			}
+
+		}
+	}
+
 	void testIP(TString sn, bool isSignal, const Lepton *sigLep1=0, const Lepton *sigLep2=0, const FatJet* hbbJet=0) {
 
-		vector<double> dzWPs = {0.05,0.1,0.15,0.2,0.25,0.3,0.4};
-		vector<double> d0WPs = {0.05,0.1,0.15,0.2,0.25,0.3,0.4};
-		vector<double> sipWPs = {1,2,3,4,5,6};
+		vector<double> dzWPs = {0.05,0.1,0.15,0.2,0.25,0.3,0.4,9999};
+		vector<double> d0WPs = {0.05,0.1,0.15,0.2,0.25,0.3,0.4,9999};
+		vector<double> sipWPs = {1,2,3,4,5,6,9999};
 		static const vector<lepFunFloat> ipVars = {&Lepton::dz, &Lepton::d0, &Lepton::sip3D};
 		vector<vector<double>> wps = {dzWPs, d0WPs, sipWPs};
 		vector<TString> ipstrs = {"dz","d0","sip"};
@@ -282,6 +399,7 @@ public:
 
 		if (isSignal) {
 	    	if (!passSel(0,sigLep1,sigLep2)) return;
+			plotSpectra(sn+"_"+ipid+constIdIso,sigLep1,sigLep2,hbbJet);
 			plotSpectra(sn+getDilepChan(sigLep1,sigLep2)+ipid+constIdIso,sigLep1,sigLep2,hbbJet);
 		} else {
 			param.mu_maxDZ = 9999;
@@ -300,10 +418,24 @@ public:
 	    		fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,lep1,lep2);
 	    		const FatJet *bbjet = fjProc->getDilepHbbCand();
 
-	    		if (bbjet) plotSpectra(sn+getDilepChan(lep1,lep2)+ipid+constIdIso,lep1,lep2,bbjet);
+    			if (bbjet) {
+    				auto bbmass = isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(bbjet) : bbjet->sdMom().mass();
+    				if (bbmass > 30 && bbmass < 210) {
+    					plotSpectra(sn+"_"+ipid+constIdIso,lep1,lep2,bbjet);
+    					plotSpectra(sn+getDilepChan(lep1,lep2)+ipid+constIdIso,lep1,lep2,bbjet);
+    				}
+    			}
 	    	}
 		}
     	for (unsigned int var = 0; var < ipVars.size(); var++) {
+
+			if (isSignal) {
+	    		if (!passIPsel(var,sigLep1,sigLep2)) continue;
+				plotSpectra(sn+"_incl_"+ipstrs[var]+"_"+constIdIso,
+						sigLep1,sigLep2,hbbJet);
+				plotSpectra(sn+getDilepChan(sigLep1,sigLep2)+"incl_"+ipstrs[var]+"_"+constIdIso,
+						sigLep1,sigLep2,hbbJet);
+			}
 
     		vector<double>& wps_ = wps[var];
     		for (unsigned int wp = 0; wp < wps_.size(); wp++) {
@@ -311,10 +443,10 @@ public:
     			ipid = ipstrs[var]+TString::Format("_%.2f_",wps_[wp]); ipid.ReplaceAll(".","p");
     			if (isSignal) {
 
-        			if (!passIPsel(var,sigLep1,sigLep2)) continue;
         			if(std::fabs( ((sigLep1)->*ipVars[var])() ) > wps_[wp]) continue;
         			if(std::fabs( ((sigLep2)->*ipVars[var])() ) > wps_[wp]) continue;
 
+        			plotSpectra(sn+"_"+ipid+constIdIso,sigLep1,sigLep2,hbbJet);
         			plotSpectra(sn+getDilepChan(sigLep1,sigLep2)+ipid+constIdIso,sigLep1,sigLep2,hbbJet);
 
     			} else {
@@ -333,13 +465,20 @@ public:
         	    	if (leps.size() != 2) continue;
         	    	const Lepton *lep1 = leps.front();
         	    	const Lepton *lep2 = leps.back();
+    	    		float pt = lep1->isMuon() ? 27 : 30;
+    	    		if (lep1->pt() < pt) continue;
 
         	    	fjProc.reset(new FatJetProcessor ());
         	        fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,lep1,lep2);
         	        const FatJet *bbjet = fjProc->getDilepHbbCand();
 
-        	        if (!bbjet) continue;
-        	    	plotSpectra(sn+getDilepChan(lep1,lep2)+ipid+constIdIso,lep1,lep2,bbjet);
+        			if (bbjet) {
+        				auto bbmass = isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(bbjet) : bbjet->sdMom().mass();
+        				if (bbmass > 30 && bbmass < 210) {
+        					plotSpectra(sn+"_"+ipid+constIdIso,lep1,lep2,bbjet);
+        					plotSpectra(sn+getDilepChan(lep1,lep2)+ipid+constIdIso,lep1,lep2,bbjet);
+        				}
+        			}
     			}
     		}
     	}
@@ -352,8 +491,8 @@ public:
 		bool passDZ2 = fabs(lep2->dz()) < 0.1;
 		bool passD01 = fabs(lep1->d0()) < 0.05;
 		bool passD02 = fabs(lep2->d0()) < 0.05;
-		bool passSip1 = fabs(lep1->sip3D()) < 4.0;
-		bool passSip2 = fabs(lep2->sip3D()) < 4.0;
+		bool passSip1 = fabs(lep1->sip3D()) < 9999.0;
+		bool passSip2 = fabs(lep2->sip3D()) < 9999.0;
 
 		if (relax==0)      pass = passD01 && passD02 && passSip1 && passSip2;
 		else if (relax==1) pass = passDZ1 && passDZ2 && passSip1 && passSip2;
@@ -454,8 +593,10 @@ public:
     bool runEvent() override {
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
         if(!passEventFilters) return false;
-        if(ht_puppi < 400) return false;
+        if(ht_puppi_30 < 400) return false;
         TString sn = smpName;
+
+
         // SIGNAL
         if(isSignal() && diHiggsEvt.type == DiHiggsEvent::DILEP) {
 
@@ -475,7 +616,7 @@ public:
 
 			plotter.getOrMake1DPre(sn+"_gen_dilep_passPt","evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
             const auto muons = PhysicsUtilities::selObjsMom(reader_muon->muons,10,2.4);
-            const auto electrons = PhysicsUtilities::selObjsMom(reader_electron->electrons,10,2.5);
+            const auto electrons = PhysicsUtilities::selObjsMom(reader_electron->electrons,10,1.479);
             const Lepton* matchLep1 = getMatchedLepton(glep1,muons,electrons,0.1,true);
             const Lepton* matchLep2 = getMatchedLepton(glep2,muons,electrons,0.1,true);
 
@@ -495,17 +636,25 @@ public:
 			plotter.getOrMake1DPre(sn+"_validHbb","evts",";M_{X}",5000,0,5000)->Fill(signal_mass,weight);
 			plotter.getOrMake1DPre(sn+getDilepChan(matchLep1,matchLep2)+"validHbb","evts",";M_{X}",50,600,4600)->Fill(signal_mass,weight);
 
+			plotSpectra(sn+"_base",matchLep1,matchLep2,matchHbb);
+			plotSpectra(sn+getDilepChan(matchLep1,matchLep2)+"base",matchLep1,matchLep2,matchHbb);
+
 			testIP(sn,isSignal(),matchLep1,matchLep2,matchHbb);
 			testID(sn,isSignal(),matchLep1,matchLep2,matchHbb);
 			testISO(sn,isSignal(),matchLep1,matchLep2,matchHbb);
+
+			testSpecialID(sn,isSignal(),matchLep1,matchLep2,matchHbb);
+
+
         }
         // BKG
         if (!isSignal()) {
-        	plotter.getOrMake1DPre(sn+"_baseline","evts",";H_{T}",3000,0,3000)->Fill(ht_chs,weight);
+        	plotter.getOrMake1DPre(sn+"_baseline","evts",";H_{T}",3000,0,3000)->Fill(ht_puppi_30,weight);
 
 			testIP (sn,isSignal(),0,0,0);
 			testID (sn,isSignal(),0,0,0);
 			testISO(sn,isSignal(),0,0,0);
+			testSpecialID(sn,isSignal(),0,0,0);
         }
         return true;
     }
