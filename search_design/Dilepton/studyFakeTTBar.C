@@ -159,7 +159,7 @@ public:
     	if (!bjet1 || !bjet2) return;
     	if (bjet1->pt() < 25 || bjet2->pt() < 25) return;
 
-		plotter.getOrMake1DPre(sn,"pt_fakelep",";#DeltaR",50,0,500)->Fill(fakelep->pt(),weight);
+		plotter.getOrMake1DPre(sn+"base","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
 
 		if (BTagging::passJetBTagWP(parameters.jets,*bjet1)) {
 		    plotter.getOrMake1DPre(sn+"base_passWP","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
@@ -181,8 +181,8 @@ public:
     		plotter.getOrMake1DPre(sn+"bMatched","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
 
     		if (BTagging::passJetBTagWP(parameters.jets,*bjet1)) {
-        		plotter.getOrMake1DPre(sn+"passWP","dr_FakeB",";#DeltaR",20,0,0.4)->Fill(drFakeb1,weight);
-        		plotter.getOrMake1DPre(sn+"passWP","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
+        		plotter.getOrMake1DPre(sn+"bMatched_passWP","dr_FakeB",";#DeltaR",20,0,0.4)->Fill(drFakeb1,weight);
+        		plotter.getOrMake1DPre(sn+"bMatched_passWP","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
 
     		}
     	} else if (drFakeb2 < 0.4) {
@@ -190,8 +190,8 @@ public:
     		plotter.getOrMake1DPre(sn+"bMatched","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
 
     		if (BTagging::passJetBTagWP(parameters.jets,*bjet2)) {
-        		plotter.getOrMake1DPre(sn+"passWP","dr_FakeB",";#DeltaR",20,0,0.4)->Fill(drFakeb2,weight);
-        		plotter.getOrMake1DPre(sn+"passWP","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
+        		plotter.getOrMake1DPre(sn+"bMatched_passWP","dr_FakeB",";#DeltaR",20,0,0.4)->Fill(drFakeb2,weight);
+        		plotter.getOrMake1DPre(sn+"bMatched_passWP","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
 
     		}
     	}
