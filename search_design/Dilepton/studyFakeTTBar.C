@@ -39,18 +39,14 @@ public:
     }
 
     const Lepton* getFakeLep(const Lepton* lep1, const Lepton* lep2) {
-        printf("glurm0\n");
 
-    	const Lepton* unmatchedLep=0;
     	if (smDecayEvt.topDecays.size() != 2) return 0;
 
+    	const Lepton* unmatchedLep=0;
         const GenParticle *genLep=0;
         const GenParticle *firstLep=0;
-        printf("glurm1\n");
 
         for (const auto& t : smDecayEvt.topDecays) {
-        	cout<<"type is "<<t.type<<endl;
-        	cout<<"TAU_MU is "<<TopDecay::TAU_MU<<endl;
         	if (t.type < TopDecay::TAU_MU) continue;
 
         	if (ParticleInfo::isLepton(t.W_decay.dau1->pdgId())) {
@@ -59,38 +55,22 @@ public:
         	}
         }
         if (!firstLep) return 0;
-        printf("glurm2\n");
-
-
-        cout<<"first lep id = "<<firstLep<<endl;
 
     	if (firstLep->absPdgId() == ParticleInfo::p_muminus || firstLep->absPdgId() == ParticleInfo::p_eminus) {
     		genLep = firstLep;
-    		cout<<"is it here?"<<endl;
     	}
     	else if (firstLep->absPdgId() == ParticleInfo::p_tauminus) {
-    		printf("glurm2.01\n");
-    		cout<<firstLep->pt()<<endl;
-    		cout<<firstLep->numberOfDaughters()<<endl;
-            printf("glurm2.1\n");
-        	ParticleInfo::printGenInfo(reader_genpart->genParticles,-1);
     		for (unsigned int k=0; k < firstLep->numberOfDaughters(); k++) {
-    			cout<<"pdgid = "<<firstLep->daughter(k)->pdgId()<<endl;
     			if (!ParticleInfo::isLepton(firstLep->daughter(k)->pdgId())) continue;
     			genLep = firstLep->daughter(k);
     		}
     	}
-        printf("glurm2.2\n");
     	if (!genLep) return 0;
-        printf("glurm3\n");
-
 
     	float dr1 = PhysicsUtilities::deltaR(*genLep,*lep1);
     	float dr2 = PhysicsUtilities::deltaR(*genLep,*lep2);
 
     	unmatchedLep = (dr1 < dr2) ? lep2 : lep1;
-        printf("glurm4\n");
-
 
     	return unmatchedLep;
     }
@@ -172,13 +152,10 @@ public:
     }
 
     void studyBtagging(TString sn, const Lepton* lep1, const Lepton* lep2) {
-        printf("flurm0\n");
-
 
     	const Lepton *fakelep = getFakeLep(lep1,lep2);
     	const auto b1 = smDecayEvt.topDecays[0].b;
     	const auto b2 = smDecayEvt.topDecays[1].b;
-        printf("flurm1\n");
 
         if (!fakelep) return;
     	if (b1->pt() < 25 || b2->pt() < 25) return;
@@ -195,7 +172,6 @@ public:
 		if (BTagging::passJetBTagWP(parameters.jets,*bjet2)) {
 		    plotter.getOrMake1DPre(sn+"base_passWP","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
 		}
-        printf("flurm2\n");
 
     	double drFakeb1 = PhysicsUtilities::deltaR(*bjet1,*fakelep);
     	double drFakeb2 = PhysicsUtilities::deltaR(*bjet2,*fakelep);
@@ -204,7 +180,6 @@ public:
     		plotter.getOrMake1DPre(sn+"doubleMatched","pt_fakelep",";#DeltaR",50,0,500)->Fill(fakelep->pt(),weight);
     		return;
     	}
-        printf("flurm3\n");
 
     	if (drFakeb1 < 0.4) {
     		plotter.getOrMake1DPre(sn+"bMatched","dr_FakeB",";#DeltaR",20,0,0.4)->Fill(drFakeb1,weight);
@@ -225,7 +200,6 @@ public:
 
     		}
     	}
-        printf("flurm4\n");
 
 
     }
@@ -249,14 +223,8 @@ public:
         if (hbbMass_2l < 30 || hbbMass_2l > 210) return false;
         if (hh_2l.mass() < 700) return false;
 
-        printf("slurm0\n");
         plot(prefix,selectedDileptons.front(), selectedDileptons.back());
-        printf("slurm1\n");
-
         studyBtagging(prefix+"_",selectedDileptons.front(),selectedDileptons.back());
-        printf("slurm2\n");
-
-
 
         return true;
     }
