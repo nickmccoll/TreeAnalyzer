@@ -358,14 +358,14 @@ public:
         std::sort(ak8jets.begin(),ak8jets.end(), PhysicsUtilities::greaterPTDeref<FatJet>());
         std::sort(ak8LSjets.begin(),ak8LSjets.end(), PhysicsUtilities::greaterPTDeref<FatJet>());
 
-        event = size8(reader_event->event.val());
-        lumiSec = size8(reader_event->lumi.val());
+        event = size64(reader_event->event.val());
+        lumiSec = size(reader_event->lumi.val());
 
-        n_mu = size8(muons.size());
-        n_el = size8(electrons.size());
-        n_ak4 = size8(ak4jets.size());
-        n_ak8 = size8(ak8jets.size());
-        n_ak8LS = size8(ak8LSjets.size());
+        n_mu = size(muons.size());
+        n_el = size(electrons.size());
+        n_ak4 = size(ak4jets.size());
+        n_ak8 = size(ak8jets.size());
+        n_ak8LS = size(ak8LSjets.size());
 
         pu_weight = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL));
         mc_weight = float(*reader_event->genWeight);
@@ -546,14 +546,14 @@ public:
     }
 
     //Event information
-    size8 event       = 0;
-    size8 lumiSec     = 0;
+    size64 event       = 0;
+    size lumiSec     = 0;
     size8 run         = 1;
-    size8 n_mu = 0;
-    size8 n_el = 0;
-    size8 n_ak4     = 0;
-    size8 n_ak8    = 0;
-    size8 n_ak8LS = 0;
+    size n_mu = 0;
+    size n_el = 0;
+    size n_ak4     = 0;
+    size n_ak8    = 0;
+    size n_ak8LS = 0;
     float pu_weight=0;
     float mc_weight=0;
 

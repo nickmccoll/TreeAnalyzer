@@ -595,6 +595,7 @@ public:
         if(!passEventFilters) return false;
         if(ht_puppi_30 < 400) return false;
         TString sn = smpName;
+        if (nLepsTT >= 0 && nLepsTT <= 2) sn += TString::Format("%d",nLepsTT);
 
 
         // SIGNAL
