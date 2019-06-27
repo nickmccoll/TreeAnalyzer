@@ -16,7 +16,8 @@ float getNormalizedEventWeight(const EventReader& reader_event, const float cros
     if(cross < 0 ||numE < 0) return reader_event.weight;
 
     float sgn = (reader_event.weight > 0 ? 1.0 : -1.0);
-    if (reader_event.process.val() == FillerConstants::TTBAR) {
+
+    if (evtParam.doTTBarStitching && reader_event.process.val() == FillerConstants::TTBAR) {
     	if (reader_event.sampParam.val() == 1000) {
     		if (genMtt >= 1010) {
     			if      (nLepsTT==0) return evtParam.ttbarXSecSF_1000toInf_nLep0 * evtParam.lumi * sgn;

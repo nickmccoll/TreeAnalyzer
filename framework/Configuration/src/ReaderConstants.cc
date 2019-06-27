@@ -31,12 +31,13 @@ ParameterSet set2017Parameters() {
     paramSet.event.minTriggerMu  =27;
     paramSet.event.leptonCorrSFFile = "corrections/triggerSF_17.root";
     paramSet.event.puCorrSFFile = "corrections/puSF_17.root";
-    paramSet.event.ttbarXSecSF_1000toInf_nLep0 = 0.000733337335616;
-    paramSet.event.ttbarXSecSF_1000toInf_nLep1 = 0.000753728219771;
-    paramSet.event.ttbarXSecSF_1000toInf_nLep2 = 0.000521443799447;
-    paramSet.event.ttbarXSecSF_700to1000_nLep0 = 0.00127836640308;
-    paramSet.event.ttbarXSecSF_700to1000_nLep1 = 0.00134114251896;
-    paramSet.event.ttbarXSecSF_700to1000_nLep2 = 0.000761846313167;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep0 = 0.000000718573;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep1 = 0.000000739261;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep2 = 0.000000523889;
+    paramSet.event.ttbarXSecSF_700to1000_nLep0 = 0.00000123404;
+    paramSet.event.ttbarXSecSF_700to1000_nLep1 = 0.00000129566;
+    paramSet.event.ttbarXSecSF_700to1000_nLep2 = 0.000000767859;
+    paramSet.event.doTTBarStitching = true;
 
     paramSet.fatJets.cand_minPT     = 50                   ;
     paramSet.fatJets.cand_maxETA    = 2.4                  ;

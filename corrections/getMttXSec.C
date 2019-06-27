@@ -57,22 +57,50 @@ public:
 
             TString nlep = TString::Format("%dlep",nLepDecays);
             plotter.getOrMake1D("mtt_hand_"+nlep,";M_{tt}",5000,0,5000)->Fill(genMtt,defWt);
+
+            plotter.getOrMake1D("mtt_sgnwt_hand_"+nlep,";M_{tt}",5000,0,5000)->Fill(genMtt,sgn);
             plotter.getOrMake1D("mtt_hand",";M_{tt}",5000,0,5000)->Fill(genMtt,defWt);
 
-            plotter.getOrMake1D("mhh_defwt",";M_{HH}",100,700,4000)->Fill(hh_2l.mass(),defWt);
-            plotter.getOrMake1D("mhh_norwt",";M_{HH}",100,700,4000)->Fill(hh_2l.mass(),weight);
+            plotter.getOrMake1D("mhh_sgnwt",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),sgn);
+            plotter.getOrMake1D("mhh_defwt",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),defWt);
+            plotter.getOrMake1D("mhh_norwt",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),weight);
+
+            plotter.getOrMake1D("mhh_sgnwt_"+nlep,";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),sgn);
+            plotter.getOrMake1D("mhh_defwt_"+nlep,";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),defWt);
+            plotter.getOrMake1D("mhh_norwt_"+nlep,";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),weight);
+
             if (genMtt < 710) {
-                plotter.getOrMake1D("mhh_defwt_0to710",";M_{HH}",100,700,4000)->Fill(hh_2l.mass(),defWt);
-                plotter.getOrMake1D("mhh_norwt_0to710",";M_{HH}",100,700,4000)->Fill(hh_2l.mass(),weight);
+                plotter.getOrMake1D("mhh_defwt_0to710",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),defWt);
+                plotter.getOrMake1D("mhh_norwt_0to710",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),weight);
+
+                plotter.getOrMake1D("mhh_sgnwt_"+nlep+"_0to710",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),sgn);
+                plotter.getOrMake1D("mhh_defwt_"+nlep+"_0to710",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),defWt);
+                plotter.getOrMake1D("mhh_norwt_"+nlep+"_0to710",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),weight);
+
             } else if (genMtt < 960) {
-                plotter.getOrMake1D("mhh_defwt_710to960",";M_{HH}",100,700,4000)->Fill(hh_2l.mass(),defWt);
-                plotter.getOrMake1D("mhh_norwt_710to960",";M_{HH}",100,700,4000)->Fill(hh_2l.mass(),weight);
+                plotter.getOrMake1D("mhh_defwt_710to960",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),defWt);
+                plotter.getOrMake1D("mhh_norwt_710to960",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),weight);
+
+                plotter.getOrMake1D("mhh_sgnwt_"+nlep+"_710to960",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),sgn);
+                plotter.getOrMake1D("mhh_defwt_"+nlep+"_710to960",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),defWt);
+                plotter.getOrMake1D("mhh_norwt_"+nlep+"_710to960",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),weight);
+
             } else if (genMtt < 1010) {
-                plotter.getOrMake1D("mhh_defwt_960to1010",";M_{HH}",100,700,4000)->Fill(hh_2l.mass(),defWt);
-                plotter.getOrMake1D("mhh_norwt_960to1010",";M_{HH}",100,700,4000)->Fill(hh_2l.mass(),weight);
+                plotter.getOrMake1D("mhh_defwt_960to1010",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),defWt);
+                plotter.getOrMake1D("mhh_norwt_960to1010",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),weight);
+
+                plotter.getOrMake1D("mhh_sgnwt_"+nlep+"_960to1010",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),sgn);
+                plotter.getOrMake1D("mhh_defwt_"+nlep+"_960to1010",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),defWt);
+                plotter.getOrMake1D("mhh_norwt_"+nlep+"_960to1010",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),weight);
+
             } else {
-                plotter.getOrMake1D("mhh_defwt_1010toInf",";M_{HH}",100,700,4000)->Fill(hh_2l.mass(),defWt);
-                plotter.getOrMake1D("mhh_norwt_1010toInf",";M_{HH}",100,700,4000)->Fill(hh_2l.mass(),weight);
+                plotter.getOrMake1D("mhh_defwt_1010toInf",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),defWt);
+                plotter.getOrMake1D("mhh_norwt_1010toInf",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),weight);
+
+                plotter.getOrMake1D("mhh_sgnwt_"+nlep+"_1010toInf",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),sgn);
+                plotter.getOrMake1D("mhh_defwt_"+nlep+"_1010toInf",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),defWt);
+                plotter.getOrMake1D("mhh_norwt_"+nlep+"_1010toInf",";M_{HH}",100,0,4000)->Fill(hh_2l.mass(),weight);
+
             }
         }
 
@@ -80,10 +108,8 @@ public:
         return true;
     }
 
-
     void write(TString fileName){ plotter.write(fileName);}
     HistGetter plotter;
-    size64 triggerAccepts=0;
 
 };
 

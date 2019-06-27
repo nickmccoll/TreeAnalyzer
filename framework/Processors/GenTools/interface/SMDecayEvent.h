@@ -25,7 +25,7 @@ struct TopDecay {
 };
 class SMDecayEvent {
 public:
-    void setDecayInfo(const GenParticleCollection& genparts);
+    void setDecayInfo(const GenParticleCollection& genparts, int ttSampParam);
     void reset();
     std::vector<BosonDecay> bosonDecays;
     std::vector<TopDecay>   topDecays;
@@ -33,6 +33,8 @@ public:
     std::vector<const GenParticle *>   nonPromptElectrons;
     std::vector<const GenParticle *>   promptMuons       ;
     std::vector<const GenParticle *>   nonPromptMuons    ;
+    float  genMtt = 0;
+	int    nLepsTT = -1;
 };
 
 

@@ -15,6 +15,8 @@ typedef bool (*TriggerSel)(const EventReader& reader_event);
 }
 struct EventParameters{
     float lumi = -1;
+    bool  doTTBarStitching = true;
+
     std::vector<FillerConstants::METFilters> dataFilters;
     std::vector<FillerConstants::METFilters> mcFilters;
     EventSelection::TriggerSel  passTrigger =0 ;

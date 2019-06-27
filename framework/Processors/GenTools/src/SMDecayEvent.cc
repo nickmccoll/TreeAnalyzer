@@ -3,6 +3,7 @@
 #include "DataFormats/interface/GenParticle.h"
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
 #include "AnalysisSupport/Utilities/interface/PhysicsUtilities.h"
+
 namespace TAna {
 
 void SMDecayEvent::reset() {
@@ -15,7 +16,7 @@ void SMDecayEvent::reset() {
 
 }
 
-void SMDecayEvent::setDecayInfo(const GenParticleCollection& genparts) {
+void SMDecayEvent::setDecayInfo(const GenParticleCollection& genparts, int ttSampParam) {
     reset();
 
     auto classifyLepW = [](const GenParticle* lep) -> BosonDecay::DECAYTYPE {
@@ -155,6 +156,18 @@ void SMDecayEvent::setDecayInfo(const GenParticleCollection& genparts) {
             bosonDecays.push_back(getBosonDecay(gp));
         }
     }
+    if (topDecays.size() == 2) {
+    	genMtt = (topDecays[0].top->p4() + topDecays[1].top->p4()).mass();
+    	nLepsTT = 0;
+    	if (ttSampParam > 2) {
+    		if (topDecays[0].type > TopDecay::HAD) nLepsTT++;
+    		if (topDecays[1].type > TopDecay::HAD) nLepsTT++;
+    	} else {
+    		nLepsTT = ttSampParam;
+    	}
+    }
+
+
 }
 
 }

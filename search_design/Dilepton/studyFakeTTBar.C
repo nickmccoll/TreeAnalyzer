@@ -188,8 +188,12 @@ public:
     		if (BTagging::passJetBTagWP(parameters.jets,*bjet1)) {
         		plotter.getOrMake1DPre(sn+"bMatched_passWP","dr_FakeB",";#DeltaR",20,0,0.4)->Fill(drFakeb1,weight);
         		plotter.getOrMake1DPre(sn+"bMatched_passWP","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
-
     		}
+    		if (BTagging::passJetBTagWP(parameters.jets,*bjet2)) {
+        		plotter.getOrMake1DPre(sn+"otherB_passWP","dr_FakeB",";#DeltaR",20,0,0.4)->Fill(drFakeb2,weight);
+        		plotter.getOrMake1DPre(sn+"otherB_passWP","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
+    		}
+
     	} else if (drFakeb2 < 0.4) {
     		plotter.getOrMake1DPre(sn+"bMatched","dr_FakeB",";#DeltaR",20,0,0.4)->Fill(drFakeb2,weight);
     		plotter.getOrMake1DPre(sn+"bMatched","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
@@ -198,6 +202,10 @@ public:
         		plotter.getOrMake1DPre(sn+"bMatched_passWP","dr_FakeB",";#DeltaR",20,0,0.4)->Fill(drFakeb2,weight);
         		plotter.getOrMake1DPre(sn+"bMatched_passWP","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
 
+    		}
+    		if (BTagging::passJetBTagWP(parameters.jets,*bjet1)) {
+        		plotter.getOrMake1DPre(sn+"otherB_passWP","dr_FakeB",";#DeltaR",20,0,0.4)->Fill(drFakeb1,weight);
+        		plotter.getOrMake1DPre(sn+"otherB_passWP","pt_fakelep",";pt",50,0,500)->Fill(fakelep->pt(),weight);
     		}
     	}
 
@@ -219,18 +227,19 @@ public:
         float ptthresh = (selectedDileptons[0]->isMuon() ? 27 : 30);
         if (selectedDileptons[0]->pt() < ptthresh) return false;
 
-        if (hbbCSVCat_2l < BTagging::CSVSJ_MF) return false;
         if (hbbMass_2l < 30 || hbbMass_2l > 210) return false;
         if (hh_2l.mass() < 700) return false;
 
+        studyBtagging(prefix+"_noHbbBT_",selectedDileptons.front(),selectedDileptons.back());
+
+        if (hbbCSVCat_2l < BTagging::CSVSJ_MF) return false;
         plot(prefix,selectedDileptons.front(), selectedDileptons.back());
-        studyBtagging(prefix+"_",selectedDileptons.front(),selectedDileptons.back());
+        studyBtagging(prefix+"_wHbbBT_",selectedDileptons.front(),selectedDileptons.back());
 
         return true;
     }
 
     std::unique_ptr<FatJetProcessor>        proc     ;
-    size64 triggerAccepts = 0;
     void write(TString fileName){ plotter.write(fileName);}
     HistGetter plotter;
 
