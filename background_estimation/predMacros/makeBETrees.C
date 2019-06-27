@@ -70,25 +70,12 @@ public:
         	outTree->addSingle(btag_N_,  "",  "btag_N");
         }
 
-        outTree->addSingle(ht_chs_30_,  "",  "ht_chs_30");
-        outTree->addSingle(ht_pup_30_,  "",  "ht_pup_30");
-        outTree->addSingle(passTrigCHS_30,  "",  "passTrigCHS_30");
-        outTree->addSingle(passTrigPUP_30,  "",  "passTrigPUP_30");
-        outTree->addSingle(ht_chs_20_,  "",  "ht_chs_20");
-        outTree->addSingle(ht_pup_20_,  "",  "ht_pup_20");
-        outTree->addSingle(passTrigCHS_20,  "",  "passTrigCHS_20");
-        outTree->addSingle(passTrigPUP_20,  "",  "passTrigPUP_20");
-
-        outTree->addSingle(passTrigPUP_tight,  "",  "passTrigPUP_tight");
-
     	outTree->addSingle(passPre_,  "",  "passPre");
     	outTree->addSingle(ht_,  "",  "ht");
     	outTree->addSingle(met_,  "",  "met");
     	outTree->addSingle(isMuon_,  "",  "isMuon");
     	outTree->addSingle(lepPT_,  "",  "lepPT");
     	outTree->addSingle(lepETA_,  "",  "lepETA");
-    	outTree->addSingle(lepMiniIso_,  "",  "lepMiniIso");
-//    	outTree->addSingle(lepMiniIsoFP_,  "",  "lepMiniIsoFP");
 
     	outTree->addSingle(hbbMass_,  "",  "hbbMass");
     	outTree->addSingle(hbbPT_,  "",  "hbbPT");
@@ -144,7 +131,7 @@ public:
     bool runEvent() override {
         bool passPre = true;
         if(!DefaultSearchRegionAnalyzer::runEvent()) passPre = false;
-//        if(!passTriggerPreselection) passPre = false;
+        if(!passTriggerPreselection) passPre = false;
         if(!passEventFilters) passPre = false;
         if(selectedLeptons.size() != 1) passPre = false;
         if(!hbbCand)  passPre = false;
@@ -153,6 +140,7 @@ public:
         if(!addUncVariables && !passPre) return false;
         passPre_ = size8(passPre);
 
+        ht_ = float(ht_puppi);
         if(isRealData()){
         	dataset_ = size8(*reader_event->dataset);
         	dataRun_ = size8(*reader_event->dataRun);
@@ -160,25 +148,13 @@ public:
         } else {
         	process_ = size8(*reader_event->process);
         	dhType_  = size8(diHiggsEvt.type);
-        	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event.lumi,genMtt,nLepsTT));
-        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht, (selectedLepton && selectedLepton->isMuon())) : 1.0 );
+        	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT) );
+        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_, (selectedLepton && selectedLepton->isMuon())) : 1.0 );
         	pu_N_    = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL));
         	lep_N_   = 1.0 /*float(leptonSFProc->getSF())*/;
         	btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
 
         }
-
-        ht_pup_30_  = float(ht_puppi_30);
-        ht_chs_30_ = float(ht_chs_30);
-        passTrigCHS_30 = size8(EventSelection::passTriggerPreselection(parameters.event,*reader_event,ht_chs_30,selectedLeptons));
-        passTrigPUP_30 = size8(EventSelection::passTriggerPreselection(parameters.event,*reader_event,ht_puppi_30,selectedLeptons));
-        ht_pup_20_  = float(ht_puppi_20);
-        ht_chs_20_ = float(ht_chs_20);
-        passTrigCHS_20 = size8(EventSelection::passTriggerPreselection(parameters.event,*reader_event,ht_chs_20,selectedLeptons));
-        passTrigPUP_20 = size8(EventSelection::passTriggerPreselection(parameters.event,*reader_event,ht_puppi_20,selectedLeptons));
-
-        ht_ = float(ht);
-        passTrigPUP_tight = size8(EventSelection::passTriggerPreselection(parameters.event,*reader_event,ht,selectedLeptons));
 
         met_ = float(reader_event->met.pt());
 
@@ -364,17 +340,6 @@ public:
 //    spv_float w_pdf_     = make_spv_float();
 
     bool addUncVariables = false;
-
-    float ht_chs_30_ = 0;
-    float ht_pup_30_ = 0;
-    size8 passTrigCHS_30 = 0;
-    size8 passTrigPUP_30 =0;
-    float ht_chs_20_ = 0;
-    float ht_pup_20_ = 0;
-    size8 passTrigCHS_20 = 0;
-    size8 passTrigPUP_20 =0;
-
-    size8 passTrigPUP_tight =0;
 
 };
 

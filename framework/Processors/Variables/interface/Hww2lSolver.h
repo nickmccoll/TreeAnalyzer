@@ -36,6 +36,8 @@ public:
 						const double metX, const double metY, const double Wmass, const double WstarMass, HwwInfo* info = 0
 						);
 
+	static MomentumF getSimpleHiggsMom(MomentumF llMom, MomentumF met, float massinv);
+
 };
 
 }

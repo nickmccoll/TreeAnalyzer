@@ -8,7 +8,7 @@
 #include "Configuration/interface/FillerConstants.h"
 #include "Configuration/interface/ReaderConstants.h"
 #include "Processors/Variables/interface/BTagging.h"
-
+#include "Processors/Variables/interface/DileptonSelection.h"
 
 namespace TAna{
 class EventReader       ;
@@ -98,17 +98,13 @@ public:
     int nMedBTags = 0;
     int nMedBTags_HbbV = 0;
     int nMedBTags_HbbV_2l = 0;
-    float ht = 0;
 
-    std::vector<const Jet*> jets_chs_30;
-    float                   ht_chs_30    =0;
-    std::vector<const Jet*> jets_chs_20;
-    float                   ht_chs_20    =0;
+    std::vector<const Jet*> jets_chs;
+    float                   ht_chs    =0;
 
-    std::vector<const Jet*> jets_puppi_30;
-    float                   ht_puppi_30    =0;
-    std::vector<const Jet*> jets_puppi_20;
-    float                   ht_puppi_20    =0;
+    std::vector<const Jet*> jets_puppi;
+    float                   ht_puppi    =0;
+
 
     std::vector<const Jet*> jets_NoDilepOverlap;
     float                   ht_NoDilepOverlap = 0;
@@ -121,16 +117,12 @@ public:
 
     DiHiggsEvent    diHiggsEvt;
     SMDecayEvent    smDecayEvt;
-    float           genMtt = 0;
-	int nLepsTT = -1;
 
     std::vector<const Lepton    *> selectedLeptons;
     const Lepton *                 selectedLepton=0;
 
     std::vector<const Lepton    *> selectedDileptons;
-    enum DilepChan {ee, mumu, emu};
-    DilepChan dilepChan;
-    std::map<DilepChan,TString> dilepMap = { {ee, "_ee_"}, {mumu,"_mumu_"}, {emu,"_emu_"}};
+    DileptonProcessor::DilepChan dilepChan = DileptonProcessor::LL_BAD;
 
     const FatJet*              wjjCand     =0;
     const FatJet*              hbbCand     =0;

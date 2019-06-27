@@ -10,10 +10,10 @@
 
 #include "Processors/Corrections/interface/EventWeights.h"
 #include "Processors/Variables/interface/HiggsSolver.h"
+#include "Processors/Variables/interface/Hww2lSolver.h"
 #include "Processors/Variables/interface/JetKinematics.h"
 
 #include "Processors/Variables/interface/LeptonSelection.h"
-#include "Processors/Variables/interface/DileptonSelection.h"
 #include "Processors/Variables/interface/FatJetSelection.h"
 #include "Processors/Variables/interface/HiggsSolver.h"
 
@@ -188,27 +188,13 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //|||||||||||||||||||||||||||||| GEN PARTICLES ||||||||||||||||||||||||||||||
     if(reader_genpart){
         if(mcProc == FillerConstants::SIGNAL) diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
-        smDecayEvt.setDecayInfo(reader_genpart->genParticles);
-
-    	if (mcProc == FillerConstants::TTBAR && smDecayEvt.topDecays.size() == 2) {
-    		genMtt = (smDecayEvt.topDecays[0].top->p4() + smDecayEvt.topDecays[1].top->p4()).mass();
-
-    		nLepsTT = 0;
-    		if (reader_event->sampParam.val() > 2) {
-    			if (smDecayEvt.topDecays[0].type > TopDecay::HAD) nLepsTT++;
-    			if (smDecayEvt.topDecays[1].type > TopDecay::HAD) nLepsTT++;
-    		} else {
-    			nLepsTT = reader_event->sampParam.val();
-    		}
-    	}
+        smDecayEvt.setDecayInfo(reader_genpart->genParticles,reader_event->sampParam.val());
     }
 
     //|||||||||||||||||||||||||||||| CHS JETS ||||||||||||||||||||||||||||||
     if(reader_jet_chs){
-        jets_chs_30 = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,30);
-        ht_chs_30 = JetKinematics::ht(jets_chs_30);
-        jets_chs_20 = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,20);
-        ht_chs_20 = JetKinematics::ht(jets_chs_20);
+        jets_chs = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,30);
+        ht_chs = JetKinematics::ht(jets_chs);
     }
 
     //|||||||||||||||||||||||||||||| LEPTONS ||||||||||||||||||||||||||||||
@@ -280,15 +266,11 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         hbbCSVCat_2l   = hbbCand_2l ? BTagging::getCSVSJCat(parameters.jets,hbbCand_2l->subJets())
         : BTagging::CSVSJ_INCL ;
 
-    	double pz = reader_event->met.pt() / TMath::Tan((selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).theta());
-    	pz = ((pz < 0) == ((selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).pz() < 0)) ? pz : (-1)*pz;
-    	ASTypes::CartLorentzVector pnunu(reader_event->met.px(),reader_event->met.py(),pz,sqrt(pow(reader_event->met.px(),2)+pow(reader_event->met.py(),2)+pz*pz+40*40));
+        hWW_2l = Hww2lSolver::getSimpleHiggsMom(selectedDileptons[0]->p4()+selectedDileptons[1]->p4(),
+        		reader_event->met,40);
 
-        hWW_2l = selectedDileptons[0]->p4() + selectedDileptons[1]->p4() + pnunu;
+        dilepChan = DileptonProcessor::getDilepChan(selectedDileptons[0],selectedDileptons[1]);
 
-        if (selectedDileptons[0]->isMuon() && selectedDileptons[1]->isMuon()) dilepChan = mumu;
-        else if (selectedDileptons[0]->isElectron() && selectedDileptons[1]->isElectron()) dilepChan = ee;
-        else dilepChan = emu;
     } else {
         hbbCand_2l    =  0;
         hbbCSVCat_2l  = BTagging::CSVSJ_INCL;
@@ -306,15 +288,13 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
 
     if(reader_jet){
-        jets_puppi_30 = PhysicsUtilities::selObjsMom(reader_jet->jets,30);
-        ht_puppi_30 = JetKinematics::ht(jets_puppi_30);
-        jets_puppi_20 = PhysicsUtilities::selObjsMom(reader_jet->jets,20);
-        ht_puppi_20 = JetKinematics::ht(jets_puppi_20);
+        jets_puppi = PhysicsUtilities::selObjsMom(reader_jet->jets,30);
+        ht_puppi = JetKinematics::ht(jets_puppi);
+
 
         jets = PhysicsUtilities::selObjsMom(reader_jet->jets,
                 parameters.jets.minJetPT,parameters.jets.maxJetETA,
                 [&](const Jet* j){return (j->*parameters.jets.passJetID)();} );
-        ht = JetKinematics::ht(jets);
         nMedBTags = PhysicsUtilities::selObjsMomD(jets,
                 parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
                 [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
@@ -349,18 +329,18 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
     passEventFilters= EventSelection::passEventFilters(parameters.event,*reader_event);
     passTriggerPreselection= EventSelection::passTriggerPreselection(
-            parameters.event,*reader_event,ht_puppi_30,selectedLeptons);
+            parameters.event,*reader_event,ht_puppi,selectedLeptons);
 
     //|||||||||||||||||||||||||||||| EVENT WEIGHTS ||||||||||||||||||||||||||||||
     weight = 1;
     if(!isRealData()){
         if(isCorrOn(CORR_XSEC)) {
             weight *= EventWeights::getNormalizedEventWeight(
-                    *reader_event,xsec(),nSampEvt(),parameters.event,genMtt,nLepsTT);
+                    *reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT);
         }
         if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size())) {
             weight *= trigSFProc->getLeptonTriggerSF(
-                    ht, (selectedLepton && selectedLepton->isMuon()));
+                    ht_puppi, (selectedLepton && selectedLepton->isMuon()));
         }
         if(isCorrOn(CORR_PU) ) {
         	float pucorr = puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);

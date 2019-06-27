@@ -175,4 +175,16 @@ double Hww2lSolver::HwwMinimization(const ASTypes::CylLorentzVectorF& lep1, cons
 	  minimizer->GetParameter(15),
 	  info);
 }
+
+MomentumF Hww2lSolver::getSimpleHiggsMom(MomentumF llMom, MomentumF met, float massinv) {
+
+	double pz = met.pt() / TMath::Tan(llMom.theta());
+	pz = ( (pz < 0) == (llMom.pz() < 0) ) ? pz : (-1)*pz;
+	double E = sqrt( pow(met.px(),2) + pow(met.py(),2) + pz*pz + massinv*massinv);
+	ASTypes::CartLorentzVector pnunu(met.px(),met.py(),pz,E);
+
+	return (llMom.p4() + pnunu);
+
+}
+
 }

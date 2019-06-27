@@ -135,6 +135,7 @@ public:
 
         if(!addUncVariables && !passPre) return false;
         passPre_ = size8(passPre);
+        ht_ = float(ht_puppi);
 
         if(isRealData()){
         	dataset_ = size8(*reader_event->dataset);
@@ -143,15 +144,14 @@ public:
         } else {
         	process_ = size8(*reader_event->process);
         	dhType_  = size8(diHiggsEvt.type);
-        	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event,genMtt,nLepsTT));
-        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_puppi_30, (selectedDileptons.size() && selectedDileptons[0]->isMuon())) : 1.0 );
+        	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT));
+        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_, (selectedDileptons.size() && selectedDileptons[0]->isMuon())) : 1.0 );
         	pu_N_    = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL));
         	lep_N_   = 1.0 /*float(leptonSFProc->getSF())*/;
         	btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
 
         }
 
-        ht_ = ht_puppi_30;
         met_ = reader_event->met.pt();
 
         if(selectedDileptons.size() == 2 && selectedDileptons.front() && selectedDileptons.back()){
@@ -244,8 +244,8 @@ public:
             }
             hbbDecayTypeMC_ = size8(decayType);
             numBinHbb_ = size8(numB_ll);
-            if (nLepsTT == -1) nLepsTT_ = 255;
-            else               nLepsTT_ = size8(nLepsTT);
+            if (smDecayEvt.nLepsTT == -1) nLepsTT_ = 255;
+            else               nLepsTT_ = smDecayEvt.nLepsTT;
 
         }
 

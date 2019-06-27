@@ -10,6 +10,23 @@
 namespace TAna {
 namespace DileptonProcessor {
 //_____________________________________________________________________________
+DilepChan getDilepChan(const Lepton* lep1, const Lepton* lep2) {
+	if (!lep1 || !lep2) return LL_BAD;
+	if (lep1->isMuon() && lep2->isMuon()) return LL_MUMU;
+	if (lep1->isElectron() && lep2->isElectron()) return LL_EE;
+	if (lep1->isMuon() != lep2->isMuon()) return LL_EMU;
+	return LL_BAD;
+}
+//_____________________________________________________________________________
+TString getDilepStr(const Lepton* lep1, const Lepton* lep2) {
+	DilepChan chan = getDilepChan(lep1,lep2);
+
+	if (chan == LL_EE)   return "_ee_";
+	if (chan == LL_MUMU) return "_mumu_";
+	if (chan == LL_EMU)  return "_emu_";
+	return "_bad_";
+}
+//_____________________________________________________________________________
 bool isGoodMuon(const Muon* lep, const float minPT, const float maxETA, const float maxDZ, const float maxD0,const float maxSIP3D, const float maxISO, muFunBool getID1, muFunBool getID2, muFunFloat getISO) {
     if(lep->pt() < minPT) return false;
     if(lep->absEta() >= maxETA) return false;

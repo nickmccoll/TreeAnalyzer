@@ -2,6 +2,8 @@
 #ifndef PROCESSORS_VARIABLES_DILEPTONSELECTION_H
 #define PROCESSORS_VARIABLES_DILEPTONSELECTION_H
 #include <vector>
+#include "TString.h"
+
 #include "Configuration/interface/ReaderConstants.h"
 
 namespace TAna {
@@ -13,6 +15,11 @@ class MuonReader;
 class ElectronReader;
 
 namespace DileptonProcessor {
+
+enum DilepChan {LL_BAD, LL_EE, LL_MUMU, LL_EMU};
+DilepChan getDilepChan(const Lepton* lep1, const Lepton* lep2);
+TString   getDilepStr (const Lepton* lep1, const Lepton* lep2);
+
 bool isGoodMuon(const Muon* lep, const float minPT, const float maxETA, const float maxDZ,
         const float maxD0,const float maxSIP3D,  const float maxISO, muFunBool getID,
         muFunFloat getISO);

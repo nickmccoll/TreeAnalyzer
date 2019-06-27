@@ -14,9 +14,7 @@ public:
     std::string cut;
     std::string title;
 };
-std::string hhFilename    = "HHlnujj";
-std::string hhFilename_2l = "HHlnulnu";
-
+std::string hhFilename    = "HHbb1o2l";
 
 enum PROC  {TTBAR,WJETS,QCD,OTHER};
 std::vector<CutStr > processes = {
@@ -38,8 +36,8 @@ CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&(hwwChi2<=11)");
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr abV  ("abV"   , "nAK4Btags!=0");
 
-CutStr dR   ("dR"    , "dilepDR<1.6");
-CutStr dPhi ("dPhi"  , "abs(dPhi_metll)<(3.14159/2)");
+CutStr dRC   ("dRC"    , "dilepDR<1.6");
+CutStr dPhiC ("dPhiC"  , "abs(dPhi_metll)<(3.14159/2)");
 CutStr mllV ("mllV"  , "(dilepMass>12)&&(dilepMass<75)");
 CutStr metC ("metC"  , "met>40");
 
@@ -168,9 +166,9 @@ std::vector<CutStr > hadCuts = {
 
 enum SELCuts  {SEL_NONE,SEL_RPhiB,SEL_FULL};
 std::vector<CutStr > selCuts = {
-        CutStr("none",preSel.cut,"-ExB -#it{m}_{D} -#it{p}_{T}/#it{m} -#tau_{0.75}"),
-		CutStr("R_phi_b",preSel.cut+"&&"+dR.cut+"&&"+mllV.cut+"&&"+metC.cut,"full relax B, phi"),
-        CutStr("full",preSel.cut+"&&"+bV.cut+"&&"+dR.cut+"&&"+dPhi.cut+"&&"+mllV.cut+"&&"+metC.cut,"")
+        CutStr("none",preSel.cut,"-ExB -#it{#DeltaR}_{ll} -#it{M}_{ll} -#it{MET} -#it{#Delta#Phi}_{met,ll}"),
+		CutStr("R_phi_b",preSel.cut+"&&"+dRC.cut+"&&"+mllV.cut+"&&"+metC.cut,"full relax B, phi"),
+        CutStr("full",preSel.cut+"&&"+bV.cut+"&&"+dRC.cut+"&&"+dPhiC.cut+"&&"+mllV.cut+"&&"+metC.cut,"")
 
 };
 
