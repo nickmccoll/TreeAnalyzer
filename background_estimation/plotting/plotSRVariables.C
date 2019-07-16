@@ -152,7 +152,8 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             p->setMinMax(0,575);
             break;
         case 2: //hh
-            p->setMinMax(0.1,20000);
+            p->setMinMax(0.7,7500);
+            p->turnOffTrailingPoissonZeros();
             sup = true;
             break;
         case 3://nAK4Btags

@@ -157,7 +157,7 @@ void doExtraPlots(){
         p->setCMSLumi(10);
         p->setCMSLumiExtraText("Simulation Supplementary");
         p->setCMSLumiLumiText("13 TeV");
-        p->setYTitle("Normalized events / 0.01");
+        p->setYTitle("Normalized events / 0.01 units");
         double xV = 0.6;
         double yV = 0.75;
         p->setLegendPos(xV,yV,xV+0.3,yV+0.15);
