@@ -1412,10 +1412,15 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.sels =  srList;
         hhPlot.titles = srListTitles;
         hhPlot.isSupp = true;
-        hhPlot.botTitles = {"","","","100 < #it{m}_{bb} < 150 GeV"};
+        hhPlot.botTitles = {"","","","100 < #it{m}_{b#bar{b}} < 150 GeV"};
 
-        hhPlot.minTop =0.5;
-        hhPlot.maxTop =5000;
+        hhPlot.minTop =0.1;
+        hhPlot.maxTop =6700;
+
+        hhPlot.minBot =0.05;
+        hhPlot.maxBot= 1.95;
+        hhPlot.removeTrailingZeros = true;
+
         hhPlot.rebinFactor=4;
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
@@ -1426,9 +1431,17 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hbbPlot.binInY = true;
         hbbPlot.bins = {700,4000,4000,700,1000,2000,4000};
         hbbPlot.doLog = false;
+
+
         hbbPlot.minTop =0;
-        hbbPlot.maxTop =0;//reg==REG_TOPCR ?  1000 :2000;
-        hbbPlot.maxTops = {480.0,0,0,400.0,200.0,20.0};
+//        hbbPlot.maxTop =20.0;
+        hbbPlot.maxTop =0;
+        hbbPlot.minBot =-1;
+        hbbPlot.maxBot= -1;
+        hbbPlot.removeTrailingZeros = false;
+
+//        hbbPlot.maxTop =0;//reg==REG_TOPCR ?  1000 :2000;
+//        hbbPlot.maxTops = {480.0,0,0,400.0,200.0,20.0};
         hbbPlot.botTitles = {"","","","0.7 < #it{m}_{HH} < 1 TeV","1 < #it{m}_{HH} < 2 TeV","2 < #it{m}_{HH} < 4  TeV"};
         hbbPlot.rebinFactor = 3;
         auto writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root");
@@ -1448,9 +1461,18 @@ void plotDataTests(int step = 0, int inreg = REG_SR,  const std::string limitBas
         hhPlot.titles = srListTitles;
         hhPlot.isSupp = true;
         hhPlot.botTitles = {"100 < #it{m}_{b#bar{b}} < 150 GeV"};
+        hhPlot.removeTrailingZeros = true;
+        hhPlot.minTop =10;
+        hhPlot.maxTop =10;
+        float muMax = 3600; float muMin = 0.015;
+        float elMax = 3400; float elMin = 0.003;
 
-        hhPlot.minTop =0.05;
-        hhPlot.maxTop =1000;
+        hhPlot.maxTops = {elMax,elMax,elMax,elMax,elMax,elMax,muMax,muMax,muMax,muMax,muMax,muMax};
+        hhPlot.minTops = {elMin,elMin,elMin,elMin,elMin,elMin,muMin,muMin,muMin,muMin,muMin,muMin};
+
+
+        hhPlot.minBot =0.05;
+        hhPlot.maxBot= 3.45;
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
         hhPlot.doLog = true;
