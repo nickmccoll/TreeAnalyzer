@@ -139,6 +139,8 @@ struct HWWParameters {
     double onWlnuHWWErr     ;
     double offWlnuHWWErr    ;
 
+    std::string   tempalteFileName;
+
 };
 
 //--------------------------------------------------------------------------------------------------
