@@ -204,6 +204,13 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         selectedLepton = selectedLeptons.size() ? selectedLeptons.front() : 0;
 
         selectedDileptons = DileptonProcessor::getLeptons(parameters.dileptons,*reader_muon,*reader_electron);
+        if (selectedDileptons.size() >= 2) {
+        	dilep1 = selectedDileptons[0];
+        	dilep2 = selectedDileptons[1];
+        } else {
+        	dilep1 = 0;
+        	dilep2 = 0;
+        }
     }
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
@@ -259,22 +266,21 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         hh_old     =  MomentumF();
     }
 
-    if(reader_fatjet && selectedDileptons.size() == 2){
+    if(reader_fatjet && selectedDileptons.size() >= 2){
 
         fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,selectedDileptons.front(),selectedDileptons.back());
         hbbCand_2l  = fjProc->getDilepHbbCand();
         hbbCSVCat_2l   = hbbCand_2l ? BTagging::getCSVSJCat(parameters.jets,hbbCand_2l->subJets())
         : BTagging::CSVSJ_INCL ;
 
-        hWW_2l = Hww2lSolver::getSimpleHiggsMom(selectedDileptons[0]->p4()+selectedDileptons[1]->p4(),
-        		reader_event->met,40);
-
-        dilepChan = DileptonProcessor::getDilepChan(selectedDileptons[0],selectedDileptons[1]);
+        hWW_2l = Hww2lSolver::getSimpleHiggsMom(dilep1->p4()+dilep2->p4(),reader_event->met,55);
+        dilepChan = DileptonProcessor::getDilepChan(dilep1,dilep2);
 
     } else {
         hbbCand_2l    =  0;
         hbbCSVCat_2l  = BTagging::CSVSJ_INCL;
         hWW_2l        = MomentumF();
+        dilepChan = DileptonProcessor::LL_BAD;
     }
 
     if(hbbCand_2l){
@@ -310,8 +316,8 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         }
 
         if (hbbCand_2l) {
-            jets_NoDilepOverlap = PhysicsUtilities::selObjsMom(reader_jet->jets,30,2.4,[&](const Jet* j){return (PhysicsUtilities::deltaR2(*j,*selectedDileptons[0]) > 0.4*0.4
-                		&& PhysicsUtilities::deltaR2(*j,*selectedDileptons[1]) > 0.4*0.4);} );
+            jets_NoDilepOverlap = PhysicsUtilities::selObjsMom(reader_jet->jets,30,2.4,[&](const Jet* j){return (PhysicsUtilities::deltaR2(*j,*dilep1) > 0.4*0.4
+                		&& PhysicsUtilities::deltaR2(*j,*dilep2) > 0.4*0.4);} );
             ht_NoDilepOverlap = JetKinematics::ht(jets_NoDilepOverlap);
 
             jets_HbbV_2l = PhysicsUtilities::selObjsD(jets,

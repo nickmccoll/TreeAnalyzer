@@ -122,6 +122,8 @@ public:
     const Lepton *                 selectedLepton=0;
 
     std::vector<const Lepton    *> selectedDileptons;
+    const Lepton *                 dilep1=0;
+    const Lepton *                 dilep2=0;
     DileptonProcessor::DilepChan dilepChan = DileptonProcessor::LL_BAD;
 
     const FatJet*              wjjCand     =0;

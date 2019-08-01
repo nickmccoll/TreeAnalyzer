@@ -19,7 +19,7 @@ TH1* getMttSubset(TH1* h, double low, double high) {
 	return hc;
 }
 
-void stitchTTBar2() {
+void stitchTTBar() {
 	TString pre = "~/Dropbox/Physics/HHbbWW/plots/MttXsec/";
 	TFile *fl = new TFile(pre+"ttbar_lep.root");
 	TFile *f1 = new TFile(pre+"ttbar_1000toInf.root");
@@ -77,8 +77,8 @@ void stitchTTBar2() {
 		double w1 = hl_1010toIn->Integral() / ( hl_1010toIn->Integral() + h1_1010toIn->Integral() );
 
 		cout<<nleps[i]<<endl;
-		cout<<"w7_"<<i<<" = "<<w7*defwt/lumi<<endl;
-		cout<<"w1_"<<i<<" = "<<w1*defwt/lumi<<endl;
+		cout<<"w7_"<<i<<" = "<<w7*defwt*1000/lumi<<endl;
+		cout<<"w1_"<<i<<" = "<<w1*defwt*1000/lumi<<endl;
 
 		hl_710to960->Add(h7_710to960,1); hl_710to960->Scale(defwt*w7);
 		hl_1010toIn->Add(h1_1010toIn,1); hl_1010toIn->Scale(defwt*w1);

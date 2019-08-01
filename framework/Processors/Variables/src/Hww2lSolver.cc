@@ -176,7 +176,7 @@ double Hww2lSolver::HwwMinimization(const ASTypes::CylLorentzVectorF& lep1, cons
 	  info);
 }
 
-MomentumF Hww2lSolver::getSimpleHiggsMom(MomentumF llMom, MomentumF met, float massinv) {
+MomentumF Hww2lSolver::getSimpleHiggsMom(const MomentumF llMom, const MomentumF met, const float massinv) {
 
 	double pz = met.pt() / TMath::Tan(llMom.theta());
 	pz = ( (pz < 0) == (llMom.pz() < 0) ) ? pz : (-1)*pz;

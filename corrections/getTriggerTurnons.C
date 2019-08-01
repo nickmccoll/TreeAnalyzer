@@ -86,7 +86,7 @@ public:
             mkhtr(1000,1200);
     	};
 
-    	go(ht,"");
+    	go(ht_chs,"_chs");
     	go(ht_puppi,"_pup");
     }
 
@@ -134,7 +134,7 @@ public:
             mklpr(50,100);
     	};
 
-    	go(ht,"");
+    	go(ht_chs,"_chs");
     	go(ht_puppi,"_pup");
 
     }
