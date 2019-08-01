@@ -81,26 +81,6 @@ void getBEVars(int trigPreSel=0) {
     	if (isData) pltVars("data",region,fN);
     	else        pltVars("bkg" ,region,fN);
 
-
-//        plotter.getOrMake1DPre(procName+"_incl",fN+"_mbb",";M_{bb}",30,30,210)->Fill(mbb,xsec);
-//        plotter.getOrMake1DPre(bName+"_incl",fN+"_mbb",";M_{bb}",30,30,210)->Fill(mbb,xsec);
-//        plotter.getOrMake1DPre("bkg_incl",fN+"_mbb",";M_{bb}",30,30,210)->Fill(mbb,xsec);
-
-//        plotter.getOrMake1DPre(procName+"_"+bCat,fN+"_mbb",";M_{bb}",30,30,210)->Fill(mbb,xsec);
-//        plotter.getOrMake1DPre(bName+"_"+bCat,fN+"_mbb",";M_{bb}",30,30,210)->Fill(mbb,xsec);
-//        plotter.getOrMake1DPre("bkg_"+bCat,fN+"_mbb",";M_{bb}",30,30,210)->Fill(mbb,xsec);
-
-//        plotter.getOrMake1DPre(procName+"_incl",fN+"_mhh",";M_{HH}",132,700,4000)->Fill(hhMass,xsec);
-//        plotter.getOrMake1DPre(bName+"_incl",fN+"_mhh",";M_{HH}",132,700,4000)->Fill(hhMass,xsec);
-//        plotter.getOrMake1DPre("bkg_incl",fN+"_mhh",";M_{HH}",132,700,4000)->Fill(hhMass,xsec);
-
-//        plotter.getOrMake1DPre(procName+"_"+bCat,fN+"_mhh",";M_{HH}",132,700,4000)->Fill(hhMass,xsec);
-//        plotter.getOrMake1DPre(bName+"_"+bCat,fN+"_mhh",";M_{HH}",132,700,4000)->Fill(hhMass,xsec);
-//        plotter.getOrMake1DPre("bkg_"+bCat,fN+"_mhh",";M_{HH}",132,700,4000)->Fill(hhMass,xsec);
-
-//        plotter.getOrMake1DPre(procName+"_incl",fN+"_ht",";H_{T}",100,400,3000)->Fill(ht_pup,xsec);
-//        plotter.getOrMake1DPre(bName+"_incl",fN+"_ht",";H_{T}",100,400,3000)->Fill(ht_pup,xsec);
-//        plotter.getOrMake1DPre("bkg_incl",fN+"_ht",";H_{T}",100,400,3000)->Fill(ht_pup,xsec);
     };
 
 
@@ -150,13 +130,15 @@ void getBEVars(int trigPreSel=0) {
             TString pref = isData ? dataMap[dataset] : FillerConstants::MCProcessNames[process];
             if(!passTrigPUP_tight) continue;
 
-            if(!isData) weight = xsec*trigN*puN;
+            if(!isData) {
+            	weight = xsec*trigN*puN;
+            	if(passSR()) mkPlots(pref,isData,fileNames[k],"SR",hbbWQuark);
+            }
             if(passQgCR())  mkPlots(pref,isData,fileNames[k],"qgCR",hbbWQuark);
             if(passTopCR()) mkPlots(pref,isData,fileNames[k],"topCR",hbbWQuark);
 
             if (passQgCR() && passTopCR()) printf("some shit is wronggg\n");
 
-//            hht->Fill(ht_pup,xsec);
         }
     }
     plotter.write("outDebug.root");

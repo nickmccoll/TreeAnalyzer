@@ -115,22 +115,14 @@ public:
     bool runEvent() override {
         bool passPre = true;
         if(!DefaultSearchRegionAnalyzer::runEvent()) passPre = false;
-        if(!passTriggerPreselection) passPre = false;
+        if(!EventSelection::passTriggerPreselection(
+                parameters.event,*reader_event,ht_puppi,selectedDileptons)) passPre = false;
         if(!passEventFilters) passPre = false;
         if(selectedDileptons.size() != 2) passPre = false;
         if(!hbbCand_2l) passPre = false;
 
-        // muon ID preselection
-        if(selectedDileptons.size() == 2) {
-        	if (selectedDileptons[0]->isMuon() && selectedDileptons[1]->isMuon()) {
-        		bool pass1 = ((Muon*)selectedDileptons[0])->passMedID() && selectedDileptons[0]->pt() > 27;
-        		bool pass2 = ((Muon*)selectedDileptons[1])->passMedID() && selectedDileptons[1]->pt() > 27;
-        		if (!pass1 && !pass2) passPre = false;
-        	}
-        }
         if (selectedDileptons.size() == 2) {
-            float ptthresh = (selectedDileptons[0]->isMuon() ? 27 : 30);
-            if (selectedDileptons[0]->pt() < ptthresh) passPre = false;
+        	if (dilep1->pt() < (dilep1->isMuon() ? 27 : 30)) passPre = false;
         }
 
         if(!addUncVariables && !passPre) return false;
@@ -145,25 +137,26 @@ public:
         	process_ = size8(*reader_event->process);
         	dhType_  = size8(diHiggsEvt.type);
         	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT));
-        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_, (selectedDileptons.size() && selectedDileptons[0]->isMuon())) : 1.0 );
+        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_puppi, (selectedDileptons.size() && dilep1->isMuon())) : 1.0 );
         	pu_N_    = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL));
         	lep_N_   = 1.0 /*float(leptonSFProc->getSF())*/;
         	btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
 
+        	if (filename.Contains("Glu")) xsec_ = xsec_ * 0.26;
         }
 
         met_ = reader_event->met.pt();
 
-        if(selectedDileptons.size() == 2 && selectedDileptons.front() && selectedDileptons.back()){
-        	isMuon1_ = size8(selectedDileptons.front()->isMuon());
-        	isMuon2_ = size8(selectedDileptons.back()->isMuon());
-        	lep1PT_  = float(selectedDileptons.front()->pt());
-        	lep2PT_  = float(selectedDileptons.back()->pt());
+        if(selectedDileptons.size() == 2 && dilep1 && dilep2){
+        	isMuon1_ = size8(dilep1->isMuon());
+        	isMuon2_ = size8(dilep2->isMuon());
+        	lep1PT_  = float(dilep1->pt());
+        	lep2PT_  = float(dilep2->pt());
 
-        	dilepPT_   = float((selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).pt());
-        	dilepMass_ = float((selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).mass());
-        	dilepDR_   = float(PhysicsUtilities::deltaR(*selectedDileptons[0],*selectedDileptons[1]));
-        	dPhi_metll_= float(PhysicsUtilities::deltaPhi(reader_event->met.p4(),(selectedDileptons[0]->p4()+selectedDileptons[1]->p4())));
+        	dilepPT_   = float((dilep1->p4()+dilep2->p4()).pt());
+        	dilepMass_ = float((dilep1->p4()+dilep2->p4()).mass());
+        	dilepDR_   = float(PhysicsUtilities::deltaR(*dilep1,*dilep2));
+        	dPhi_metll_= float(PhysicsUtilities::absDeltaPhi(reader_event->met.p4(),(dilep1->p4()+dilep2->p4())));
         }
 
         hbbMass_ = float(hbbMass_2l);
@@ -171,7 +164,7 @@ public:
         	hbbPT_ = float(hbbCand_2l->pt());
         	hbbCSVCat_ = size8(hbbCSVCat_2l);
         	hhMass_ = float(hh_2l.mass());
-        	hwwPT_  = float(hWW_2l.mass());
+        	hwwPT_  = float(hWW_2l.pt());
         	nAK4Btags_ = size8(std::min(nMedBTags_HbbV_2l,250));
 
         }

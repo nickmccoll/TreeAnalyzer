@@ -31,12 +31,12 @@ ParameterSet set2017Parameters() {
     paramSet.event.minTriggerMu  =27;
     paramSet.event.leptonCorrSFFile = "corrections/triggerSF_17.root";
     paramSet.event.puCorrSFFile = "corrections/puSF_17.root";
-    paramSet.event.ttbarXSecSF_1000toInf_nLep0 = 0.000000718573;
-    paramSet.event.ttbarXSecSF_1000toInf_nLep1 = 0.000000739261;
-    paramSet.event.ttbarXSecSF_1000toInf_nLep2 = 0.000000523889;
-    paramSet.event.ttbarXSecSF_700to1000_nLep0 = 0.00000123404;
-    paramSet.event.ttbarXSecSF_700to1000_nLep1 = 0.00000129566;
-    paramSet.event.ttbarXSecSF_700to1000_nLep2 = 0.000000767859;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep0 = 0.000718573;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep1 = 0.000739261;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep2 = 0.000523889;
+    paramSet.event.ttbarXSecSF_700to1000_nLep0 = 0.00123404;
+    paramSet.event.ttbarXSecSF_700to1000_nLep1 = 0.00129566;
+    paramSet.event.ttbarXSecSF_700to1000_nLep2 = 0.000767859;
     paramSet.event.doTTBarStitching = true;
 
     paramSet.fatJets.cand_minPT     = 50                   ;
@@ -74,13 +74,13 @@ ParameterSet set2017Parameters() {
     paramSet.leptons.mu_getISO  = &Muon::miniIso;
 
     paramSet.dileptons.el_minPT   = 10  ;
-    paramSet.dileptons.el_maxETA  = 1.479 ;
+    paramSet.dileptons.el_maxETA  = 2.5 ;
     paramSet.dileptons.el_maxDZ   = 0.1 ;
     paramSet.dileptons.el_maxD0   = 0.05;
     paramSet.dileptons.el_maxSip3D   = 9999   ;
-    paramSet.dileptons.el_maxISO  = 0.2 ;
-    paramSet.dileptons.el_getID1   = &Electron::passMVA90ID_noIso;
-    paramSet.dileptons.el_getID2   = &Electron::passMVA90ID_noIso;
+    paramSet.dileptons.el_maxISO  = 0.15 ;
+    paramSet.dileptons.el_getID1   = &Electron::passMedID_noIso;
+    paramSet.dileptons.el_getID2   = &Electron::passMedID_noIso;
     paramSet.dileptons.el_getISO  = &Electron::miniIso;
 
     paramSet.dileptons.mu_minPT   = 10  ;
@@ -88,7 +88,7 @@ ParameterSet set2017Parameters() {
     paramSet.dileptons.mu_maxDZ   = 0.1 ;
     paramSet.dileptons.mu_maxD0   = 0.05;
     paramSet.dileptons.mu_maxSip3D   = 9999   ;
-    paramSet.dileptons.mu_maxISO  = 0.2 ;
+    paramSet.dileptons.mu_maxISO  = 0.15 ;
     paramSet.dileptons.mu_getID1   = &Muon::passLooseID;
     paramSet.dileptons.mu_getID2   = &Muon::passLooseID;
     paramSet.dileptons.mu_getISO  = &Muon::miniIso;

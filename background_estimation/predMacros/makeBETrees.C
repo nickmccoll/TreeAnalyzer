@@ -162,10 +162,6 @@ public:
         	isMuon_  = size8(selectedLepton->isMuon());
         	lepPT_   = float(selectedLepton->pt());
         	lepETA_  = float(selectedLepton->eta());
-        	lepMiniIso_ = float(selectedLepton->miniIso());
-
-//        	if (selectedLepton->isElectron()) lepMiniIsoFP_ = float(((Electron*)selectedLepton)->miniIsoFP());
-//        	else lepMiniIsoFP_ = 999.99; // if muon then just set this isolation to some high value (only using for electrons)
         }
 
         hbbMass_ = float(hbbMass);
@@ -296,8 +292,6 @@ public:
     size8 isMuon_    = 0;
     float lepPT_     = 0;
     float lepETA_    = 0;
-    float lepMiniIso_   = 0;
-//    float lepMiniIsoFP_ = 0;
     float hbbMass_   = 0;
     float hbbPT_     = 0;
     size8 hbbCSVCat_ = 0;

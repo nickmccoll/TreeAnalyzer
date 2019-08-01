@@ -11,6 +11,8 @@ public:
     CutStr(std::string name,std::string cut) : std::string(name), cut(cut){}
     CutStr(std::string name,std::string cut, std::string title) : std::string(name),
             cut(cut), title(title){}
+//    CutStr(const CutStr& str) : std::string(str), cut(str.cut), title(str.title) {}
+
     std::string cut;
     std::string title;
 };
@@ -36,10 +38,11 @@ CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&(hwwChi2<=11)");
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr abV  ("abV"   , "nAK4Btags!=0");
 
-CutStr dRC   ("dRC"    , "dilepDR<1.6");
 CutStr dPhiC ("dPhiC"  , "abs(dPhi_metll)<(3.14159/2)");
-CutStr mllV ("mllV"  , "(dilepMass>12)&&(dilepMass<75)");
-CutStr metC ("metC"  , "met>40");
+CutStr mllV ("mllV"  , "(dilepMass>6)&&(dilepMass<75)");
+CutStr metC ("metC"  , "met/hhMass>0.1");
+CutStr dRC   ("dRC"    , "dilepDR<1.0");
+CutStr drCrC  ("drCrC"   , "dilepDR>0.4");
 
 CutStr preSel("preSel"  , "passPre==1");
 
@@ -115,8 +118,8 @@ std::vector<CutStr > bkgSels = {
 
 enum BKGModels2L  {BKG_MISB,BKG_REALB};
 std::vector<CutStr > llBkgSels = {
-		CutStr("misB","numBinHbb==0","MisID b"),
-		CutStr("trueB","numBinHbb>=1","Good b")
+		CutStr("misB","hbbDecayTypeMC==0","MisID b"),
+		CutStr("trueB","hbbDecayTypeMC>0","Good b")
 };
 
 enum LEPCats  {LEP_EMU, LEP_E, LEP_MU};
@@ -320,14 +323,16 @@ std::string getCategoryLabel(const std::string& inStr){
 std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,1750,
                                  2000,2500,3000,3500,4000};
 
-enum SIGNALS  {RADION,BLKGRAV};
+enum SIGNALS  {RADION,BLKGRAV,DILEP_RADION};
 std::vector<CutStr > signals = {
         CutStr("radHH"     ,"Radion_hh_hVVhbb_inclusive_narrow","radion"),
-        CutStr("blkHH"     ,"BulkGravTohhTohVVhbb_narrow","bulk graviton")
+        CutStr("blkHH"     ,"BulkGravTohhTohVVhbb_narrow","bulk graviton"),
+		CutStr("raddHHcomb","spin0")
 };
 std::vector<std::vector<int> > signalMassBins = {
         {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
-        {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500}
+        {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
+		{800,900,1000,2000,2500,3000}
 };
 
 //Constants for models when building limits
