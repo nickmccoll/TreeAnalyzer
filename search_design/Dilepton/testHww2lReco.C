@@ -1,6 +1,6 @@
 #if !defined(__CINT__) || defined(__MAKECINT__)
 
-#include "TreeAnalyzer/interface/DileptonSearchRegionAnalyzer.h"
+#include "TreeAnalyzer/interface/DefaultSearchRegionAnalyzer.h"
 #include "TreeAnalyzer/interface/BaseTreeCopier.h"
 #include "Configuration/interface/FillerConstants.h"
 
@@ -272,26 +272,45 @@ double HwwSolver::HwwFunction(const double lep1X, const double lep1Y, const doub
 	return testStat;
 }
 
-class Analyzer : public DileptonSearchRegionAnalyzer {
+class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DileptonSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){}
-
-    void loadVariables() override {
-        reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event);
-        reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiJet",isRealData());       load(reader_fatjet);
-        reader_jet     =std::make_shared<JetReader>     ("ak4PuppiJet",isRealData(),false); load(reader_jet);
-        reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
-        reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon);
-
-        if(!isRealData()){
-            reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");          load(reader_genpart   );
-        }
-    }
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){}
 
     void makePlots(TString sn, const MomentumF hww) {
-        plotter.getOrMake1DPre(sn, "hww_mass", ";M_{Hww} (GeV)",100,0,300)->Fill(hww.mass(), weight);
-        plotter.getOrMake1DPre(sn, "hh_mass", ";M_{hh}",100,0,5000)->Fill((hbbCand->p4()+hww.p4()).mass(),weight);
+        plotter.getOrMake1DPre(sn, "hww_mass", ";M_{Hww} (GeV)",100,0,400)->Fill(hww.mass(), weight);
+        plotter.getOrMake1DPre(sn, "hh_mass", ";M_{hh}",1000,0,5000)->Fill((hbbCand_2l->p4()+hww.p4()).mass(),weight);
+    }
+
+    const GenParticle *getGenLepFromTau(const GenParticle* tau) {
+    	if (tau->absPdgId() != ParticleInfo::p_tauminus) return 0;
+    	if (!ParticleInfo::isLastInChain(tau)) {
+    		cout<<"tau not last in chain"<<endl;
+    		return 0;
+    	}
+
+    	const GenParticle* gp=0;
+    	int nlepsfromtau = 0;
+    	for (unsigned int k = 0; k < tau->numberOfDaughters(); k++) {
+    		const auto* dau = tau->daughter(k);
+    		if (dau->absPdgId() == ParticleInfo::p_muminus || dau->absPdgId() == ParticleInfo::p_eminus) {
+
+    			if (nlepsfromtau >= 1) {
+    				cout<<"already a lep in the tau decay!!"<<endl;
+    				continue;
+    			}
+    			gp = dau;
+    			nlepsfromtau++;
+    		}
+    	}
+    	if (!gp) return 0;
+    	if (nlepsfromtau > 1) {
+    		cout<<"Found "<<nlepsfromtau<<" leps in tau decay!!!!"<<endl;
+    		return 0;
+    	}
+
+    	const GenParticle *ptcl = gp;
+    	return ptcl;
     }
 
 	TString getDilepChan(const Lepton* lep1, const Lepton* lep2) {
@@ -308,28 +327,110 @@ public:
 
 	void testSolution1(TString sn, const Lepton* lep1, const Lepton* lep2) {
 		if (!isSignal()) return;
-		// use GEN-level neutrino momenta
-		const MomentumF hww = lep1->p4() + lep2->p4() + diHiggsEvt.w1_d2->p4() + diHiggsEvt.w2_d2->p4();
+
+		const GenParticle *glep1=0;
+		const GenParticle *glep2=0;
+
+		if (diHiggsEvt.w1_d1->absPdgId() == 15) glep1 = getGenLepFromTau(diHiggsEvt.w1_d1);
+		else glep1 = diHiggsEvt.w1_d1;
+
+		if (diHiggsEvt.w2_d1->absPdgId() == 15) glep2 = getGenLepFromTau(diHiggsEvt.w2_d1);
+		else glep2 = diHiggsEvt.w2_d1;
+
+		if (!glep1 || !glep2) return;
+
+		// use GEN-level invisible momentum
+		const MomentumF hww = lep1->p4() + lep2->p4() +
+				diHiggsEvt.hww->p4() - glep1->p4() - glep2->p4();
 		makePlots(sn+"SolGEN_",hww);
 	}
 
 	void testSolution2(TString sn, const Lepton* lep1, const Lepton* lep2) {
 
-		// assume the dineutrinos have the same theta as the dileptons and retain the pt from MET (with mvv = 0)
+		// assume the missing momentum has same theta as the dileptons and retain the pt from MET
+		// mvv = 0
 		double pz = reader_event->met.pt() / TMath::Tan((lep1->p4()+lep2->p4()).theta());
 		pz = (pz < 0 == (lep1->p4()+lep2->p4()).pz() < 0) ? pz : (-1)*pz;
-		ASTypes::CartLorentzVector pnunu(reader_event->met.px(),reader_event->met.py(),pz,sqrt(pow(reader_event->met.px(),2)+pow(reader_event->met.py(),2)+pz*pz));
-		const MomentumF nunu(pnunu);
-		const MomentumF hww = lep1->p4() + lep2->p4() + nunu.p4();
+		ASTypes::CartLorentzVector pinv(reader_event->met.px(),reader_event->met.py(),pz,
+				sqrt(pow(reader_event->met.px(),2)+pow(reader_event->met.py(),2)+pz*pz));
+		const MomentumF inv(pinv);
+		const MomentumF hww = lep1->p4() + lep2->p4() + inv.p4();
 		makePlots(sn+"Sol2_",hww);
 	}
 
 	void testSolution3(TString sn, const Lepton* lep1, const Lepton* lep2) {
 
-		// get pz of dineutrinos by solving for the higgs mass using MET, assuming that dineutrino invariant mass is 0 (mvv = 0)
-		const MomentumF pnunu = HiggsSolver::getInvisible(reader_event->met.p4(), lep1->p4() + lep2->p4(), 125);
-		const MomentumF hww = lep1->p4() + lep2->p4() + pnunu.p4();
+		// assume the missing momentum has same theta as the dileptons and retain the pt from MET
+		// mvv = 55
+		double pz = reader_event->met.pt() / TMath::Tan((lep1->p4()+lep2->p4()).theta());
+		pz = (pz < 0 == (lep1->p4()+lep2->p4()).pz() < 0) ? pz : (-1)*pz;
+		ASTypes::CartLorentzVector pinv(reader_event->met.px(),reader_event->met.py(),pz,
+				sqrt(pow(reader_event->met.px(),2)+pow(reader_event->met.py(),2)+pz*pz+55*55));
+		const MomentumF inv(pinv);
+		const MomentumF hww = lep1->p4() + lep2->p4() + inv.p4();
 		makePlots(sn+"Sol3_",hww);
+	}
+
+	void testSolution4(TString sn, const Lepton* lep1, const Lepton* lep2) {
+
+		MomentumF pll = lep1->p4() + lep2->p4();
+
+		// get pz of missing momentum with the delta Theta, then solve for minv by imposing higgs mass
+		double pxinv = reader_event->met.px();
+		double pyinv = reader_event->met.py();
+
+		double pzinv = reader_event->met.pt() / TMath::Tan(pll.theta());
+//		pzinv = (pzinv < 0 == pll.pz() < 0) ? pzinv : (-1)*pzinv;
+
+		double A = 125*125 - pll.mass()*pll.mass() + 2*(pll.px()*pxinv + pll.py()*pyinv + pll.pz()*pzinv);
+		double B = 2 * pll.E();
+		double C = pxinv*pxinv + pyinv*pyinv + pzinv*pzinv;
+
+		double b = (2*A + B*B);
+		double c = A*A - B*B*C;
+
+		double delta = b*b - 4*c;
+
+		double minv = 0;
+		if (delta < 0) {
+			cout<<"delta is less than 0"<<endl;
+			minv = TMath::Sqrt(b/2);
+		} else {
+
+			if (sqrt(delta) > b) {
+				minv = sqrt( (b + sqrt(delta)) / 2);
+				if (minv > 120) {
+					cout<<"minv gt 120!"<<endl;
+					cout<<"pos m^2 is "<<((b + sqrt(delta)) / 2)<<endl;
+					cout<<"neg m^2 is "<<((b - sqrt(delta)) / 2)<<endl;
+					printf("ll  mom: px = %f, py = %f, pz = %f, E = %f\n",pll.px(),pll.py(),pll.pz(),pll.E());
+					printf("inv mom: px = %f, py = %f, pz = %f, m = %f\n",pxinv,pyinv,pzinv,minv);
+					printf("hbb mom: px = %f, py = %f, pz = %f, E = %f\n",hbbCand_2l->px(),hbbCand_2l->py(),
+							hbbCand_2l->pz(),hbbCand_2l->E());
+
+					cout<<endl;
+
+					double sol1 = sqrt( (b + sqrt(delta)) / 2);
+					double sol2 = sqrt( fabs((b - sqrt(delta)) / 2));
+					minv = sol2;
+				}
+			}
+			else {
+				cout << "two viable solutions here" << endl;
+				double sol1 = sqrt( (b + sqrt(delta)) / 2);
+				double sol2 = sqrt( (b - sqrt(delta)) / 2);
+				cout<<sol1<<" or "<<sol2<<endl<<endl;;
+
+				minv = sol2;
+			}
+		}
+
+		cout<<endl<<"MINV = "<<minv<<endl;
+		double Einv = sqrt(pxinv*pxinv + pyinv*pyinv + pzinv*pzinv + minv*minv);
+		ASTypes::CartLorentzVector pinv(pxinv,pyinv,pzinv,Einv);
+
+		const MomentumF hww = lep1->p4() + lep2->p4() + pinv;
+		makePlots(sn+"Sol4_",hww);
 	}
 
 	void testMinimization(TString sn, const Lepton* lep1, const Lepton* lep2) {
@@ -387,31 +488,36 @@ public:
 	}
 
     bool runEvent() override {
-        if(!DileptonSearchRegionAnalyzer::runEvent()) return false;
-        if(reader_event->process == FillerConstants::SIGNAL && diHiggsEvt.type != DiHiggsEvent::DILEP) return false;
+        if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
+        if(isSignal() && diHiggsEvt.type != DiHiggsEvent::DILEP) return false;
+        TString sn = smpName + "_";
 
         // current selection
-        if(!hbbCand) return false;
+        if(!hbbCand_2l) return false;
         if(selectedDileptons.size() != 2) return false;
-        if(hbbCSVCat < BTagging::CSVSJ_MF) return false;
-        if (hbbMass < 30 || hbbMass > 210) return false;
+        if(hbbCSVCat_2l < BTagging::CSVSJ_MF) return false;
+        if (hbbMass_2l < 30 || hbbMass_2l > 210) return false;
         if (ht_puppi < 400) return false;
-        if (PhysicsUtilities::deltaR2(*selectedDileptons[0],*selectedDileptons[1]) > 1.6*1.6) return false;
-        double mll = (selectedDileptons[0]->p4() + selectedDileptons[1]->p4()).mass();
-        if (mll > 75 || mll < 12) return false;
+
+        testSolution0(sn,dilep1,dilep2);
+        testSolution1(sn,dilep1,dilep2);
+        testSolution2(sn,dilep1,dilep2);
+        testSolution3(sn,dilep1,dilep2);
+        testSolution4(sn,dilep1,dilep2);
+
+        if (PhysicsUtilities::deltaR2(*dilep1,*dilep2) > 1.0) return false;
+        double mll = (dilep1->p4() + dilep2->p4()).mass();
+        if (mll > 75 || mll < 6) return false;
         if (nMedBTags_HbbV != 0) return false;
 
         // assuming the input dataset is a skim using the Dilepton + Hbb selection
-        TString sn = smpName + "_";
-        if (getDilepChan(selectedDileptons[0],selectedDileptons[1]).Contains("ee")) {
-        	if (!(((const Electron*)selectedDileptons[0])->passMedID_noISO() && ((const Electron*)selectedDileptons[1])->passMedID_noISO())) return false;
-        }
 
-        testSolution0(sn,selectedDileptons[0],selectedDileptons[1]);
-        testSolution1(sn,selectedDileptons[0],selectedDileptons[1]);
-        testSolution2(sn,selectedDileptons[0],selectedDileptons[1]);
-        testSolution3(sn,selectedDileptons[0],selectedDileptons[1]);
-        testMinimization(sn,selectedDileptons[0],selectedDileptons[1]);
+        testSolution0(sn+"fullSel_",dilep1,dilep2);
+        testSolution1(sn+"fullSel_",dilep1,dilep2);
+        testSolution2(sn+"fullSel_",dilep1,dilep2);
+        testSolution3(sn+"fullSel_",dilep1,dilep2);
+        testSolution4(sn+"fullSel_",dilep1,dilep2);
+//        testMinimization(sn,dilep1,dilep2);
 
         return true;
     }

@@ -82,8 +82,9 @@ public:
     	outTree->addSingle(hbbCSVCat_,  "",  "hbbCSVCat");
 
     	outTree->addSingle(hhMass_,  "",  "hhMass");
-    	outTree->addSingle(wwDM_,  "",  "wwDM");
+    	outTree->addSingle(hhMassOld_,  "",  "hhMassOld");
     	outTree->addSingle(hwwPT_,  "",  "hwwPT");
+    	outTree->addSingle(hwwChi2_,  "",  "hwwChi2");
 
     	outTree->addSingle(wjjTau2o1_,  "",  "wjjTau2o1");
     	outTree->addSingle(wjjMass_,  "",  "wjjMass");
@@ -139,7 +140,7 @@ public:
         if(!addUncVariables && !passPre) return false;
         passPre_ = size8(passPre);
 
-
+        ht_ = float(ht_puppi);
         if(isRealData()){
         	dataset_ = size8(*reader_event->dataset);
         	dataRun_ = size8(*reader_event->dataRun);
@@ -147,14 +148,14 @@ public:
         } else {
         	process_ = size8(*reader_event->process);
         	dhType_  = size8(diHiggsEvt.type);
-        	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi()));
-        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_chs, (selectedLepton && selectedLepton->isMuon())) : 1.0 );
+        	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT) );
+        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_, (selectedLepton && selectedLepton->isMuon())) : 1.0 );
         	pu_N_    = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL));
-        	lep_N_   = float(leptonSFProc->getSF());
-        	btag_N_  = float(sjbtagSFProc->getSF({hbbCand})*ak4btagSFProc->getSF(jets_HbbV));
+        	lep_N_   = 1.0 /*float(leptonSFProc->getSF())*/;
+        	btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
+
         }
 
-        ht_  = float(ht_chs);
         met_ = float(reader_event->met.pt());
 
         if(selectedLepton){
@@ -169,14 +170,15 @@ public:
         hbbCSVCat_ = size8(hbbCSVCat);
 
         hhMass_   = float(hh.mass());
+        hhMassOld_   = float(hh_old.mass());
         wlnuMass_ = float(wlnu.mass());
-        wwDM_     = float(wwDM);
         hwwPT_    = float(hWW.pt());
+        hwwChi2_  = float(hwwChi);
 
         if(wjjCand){
         	wjjTau2o1_ = float(wjjCand->tau2otau1());
         	wjjMass_   = float(wjjCand->sdMom().mass());
-        	wjjPT_     = float(wjjCand->pt());
+        	wjjPT_     = float(wqq.pt());
         }
 
         wlnuPT_    = float(wlnu.pt());
@@ -246,8 +248,8 @@ public:
             w_elRecoUp_   = float(leptonSFProc->getElectronSF(UP,NOMINAL,NOMINAL)*nomMu);
             w_elIDUp_     = float(leptonSFProc->getElectronSF(NOMINAL,UP,NOMINAL)*nomMu);
             w_elISOUp_    = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,UP)*nomMu);
-            w_b_realUp_   = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,UP)* sjbtagSFProc->getSF({hbbCand},NOMINAL,UP));
-            w_b_fakeUp_   = float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL)* sjbtagSFProc->getSF({hbbCand},UP,NOMINAL));
+            w_b_realUp_   = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,UP)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,UP));
+            w_b_fakeUp_   = float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},UP,NOMINAL));
             w_puUp_       = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::UP));
 
             w_muIDDown_   = float(leptonSFProc->getMuonSF(NONE,DOWN,NOMINAL)*nomEl);
@@ -255,8 +257,8 @@ public:
             w_elRecoDown_ = float(leptonSFProc->getElectronSF(DOWN,NOMINAL,NOMINAL)*nomMu);
             w_elIDDown_   = float(leptonSFProc->getElectronSF(NOMINAL,DOWN,NOMINAL)*nomMu);
             w_elISODown_  = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,DOWN)*nomMu);
-            w_b_realDown_ = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN)* sjbtagSFProc->getSF({hbbCand},NOMINAL,DOWN));
-            w_b_fakeDown_ = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF({hbbCand},DOWN,NOMINAL));
+            w_b_realDown_ = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,DOWN));
+            w_b_fakeDown_ = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},DOWN,NOMINAL));
             w_puDown_     = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::DOWN));
 
 //            for(unsigned int i = 1; i < 9; ++i){
@@ -295,8 +297,9 @@ public:
     size8 hbbCSVCat_ = 0;
 
     float hhMass_    = 0;
-    float wwDM_      = 0;
     float hwwPT_     = 0;
+    float hhMassOld_ = 0;
+    float hwwChi2_   = 0;
 
     float wjjTau2o1_ = 0;
     float wjjMass_   = 0;
@@ -331,8 +334,6 @@ public:
 //    spv_float w_pdf_     = make_spv_float();
 
     bool addUncVariables = false;
-
-
 
 };
 

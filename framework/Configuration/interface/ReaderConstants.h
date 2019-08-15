@@ -15,6 +15,8 @@ typedef bool (*TriggerSel)(const EventReader& reader_event);
 }
 struct EventParameters{
     float lumi = -1;
+    bool  doTTBarStitching = true;
+
     std::vector<FillerConstants::METFilters> dataFilters;
     std::vector<FillerConstants::METFilters> mcFilters;
     EventSelection::TriggerSel  passTrigger =0 ;
@@ -22,6 +24,15 @@ struct EventParameters{
     float minHT;
     float minTriggerEl;
     float minTriggerMu;
+    float ttbarXSecSF_1000toInf_nLep0;
+    float ttbarXSecSF_1000toInf_nLep1;
+    float ttbarXSecSF_1000toInf_nLep2;
+    float ttbarXSecSF_700to1000_nLep0;
+    float ttbarXSecSF_700to1000_nLep1;
+    float ttbarXSecSF_700to1000_nLep2;
+
+    std::string leptonCorrSFFile;
+    std::string puCorrSFFile;
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -86,6 +97,35 @@ struct LeptonParameters {
 };
 
 //--------------------------------------------------------------------------------------------------
+namespace DileptonProcessor {
+    typedef  bool (Muon::*muFunBool)() const;
+    typedef  bool (Electron::*elFunBool)() const;
+    typedef  float (Muon::*muFunFloat)() const;
+    typedef  float (Electron::*elFunFloat)() const;
+}
+struct DileptonParameters {
+    float el_minPT  ;
+    float el_maxETA ;
+    float el_maxDZ  ;
+    float el_maxD0  ;
+    float el_maxSip3D  ;
+    float el_maxISO ;
+    DileptonProcessor::elFunBool el_getID1 ;
+    DileptonProcessor::elFunBool el_getID2 ;
+    DileptonProcessor::elFunFloat el_getISO;
+
+    float mu_minPT  ;
+    float mu_maxETA ;
+    float mu_maxDZ  ;
+    float mu_maxD0  ;
+    float mu_maxSip3D  ;
+    float mu_maxISO ;
+    DileptonProcessor::muFunBool mu_getID1 ;
+    DileptonProcessor::muFunBool mu_getID2 ;
+    DileptonProcessor::muFunFloat mu_getISO;
+
+};//--------------------------------------------------------------------------------------------------
+
 class BaseRecoJet;
 class Jet;
 namespace BTagging {
@@ -146,6 +186,7 @@ struct ParameterSet {
     EventParameters  event;
     FatJetParameters fatJets;
     LeptonParameters leptons;
+    DileptonParameters dileptons;
     JetParameters    jets;
     HWWParameters    hww;
 };

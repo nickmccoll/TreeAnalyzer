@@ -19,6 +19,7 @@ void GenParticleReader::setup(TreeReaderWrapper * wrapper){
     wrapper->setBranch(branchName,"nmoms"   ,nmoms   ,true);
     wrapper->setBranch(branchName,"firstmom",firstmom,true);
     wrapper->setBranch(branchName,"assoc"   ,assoc   ,true);
+    wrapper->setBranch(branchName,"mTTBar"  ,mTTBar  ,true);
 }
 
 void GenParticleReader::processVars() {

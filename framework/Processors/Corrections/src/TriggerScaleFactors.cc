@@ -2,8 +2,12 @@
 #include "Processors/Corrections/interface/TriggerScaleFactors.h"
 
 namespace TAna {
-TriggerScaleFactors::TriggerScaleFactors(const std::string& dataDir, const std::string& triggerSFFile, bool verbose ){
-    TFile * file = TObjectHelper::getFile(dataDir+triggerSFFile,"read",verbose);
+TriggerScaleFactors::TriggerScaleFactors(const std::string& dataDir){
+    dataDirectory = dataDir;
+}
+
+void TriggerScaleFactors::setParameters(const EventParameters& evtParam, bool verbose) {
+	TFile *file = TObjectHelper::getFile(dataDirectory+evtParam.leptonCorrSFFile,"read",verbose);
     electronSFs.reset(new  TObjectHelper::Hist1DContainer(file,"electronSF",verbose) );
     muonSFs.reset(new  TObjectHelper::Hist1DContainer(file,"muonSF",verbose) );
     delete file;

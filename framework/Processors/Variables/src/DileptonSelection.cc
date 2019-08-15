@@ -8,8 +8,26 @@
 #include "Configuration/interface/FillerConstants.h"
 
 namespace TAna {
+namespace DileptonProcessor {
 //_____________________________________________________________________________
-bool DilepSelHelpers::isGoodMuon(const Muon* lep, const float minPT, const float maxETA, const float maxDZ, const float maxD0,const float maxSIP3D, const float maxISO, muFunBool getID1, muFunBool getID2, muFunFloat getISO) {
+DilepChan getDilepChan(const Lepton* lep1, const Lepton* lep2) {
+	if (!lep1 || !lep2) return LL_BAD;
+	if (lep1->isMuon() && lep2->isMuon()) return LL_MUMU;
+	if (lep1->isElectron() && lep2->isElectron()) return LL_EE;
+	if (lep1->isMuon() != lep2->isMuon()) return LL_EMU;
+	return LL_BAD;
+}
+//_____________________________________________________________________________
+TString getDilepStr(const Lepton* lep1, const Lepton* lep2) {
+	DilepChan chan = getDilepChan(lep1,lep2);
+
+	if (chan == LL_EE)   return "_ee_";
+	if (chan == LL_MUMU) return "_mumu_";
+	if (chan == LL_EMU)  return "_emu_";
+	return "_bad_";
+}
+//_____________________________________________________________________________
+bool isGoodMuon(const Muon* lep, const float minPT, const float maxETA, const float maxDZ, const float maxD0,const float maxSIP3D, const float maxISO, muFunBool getID1, muFunBool getID2, muFunFloat getISO) {
     if(lep->pt() < minPT) return false;
     if(lep->absEta() >= maxETA) return false;
     if(maxDZ > 0 && std::fabs(lep->dz()) >= maxDZ) return false;
@@ -20,7 +38,7 @@ bool DilepSelHelpers::isGoodMuon(const Muon* lep, const float minPT, const float
     return true;
 }
 //_____________________________________________________________________________
-bool DilepSelHelpers::isGoodElectron(const Electron* lep, const float minPT, const float maxETA, const float maxDZ, const float maxD0,const float maxSIP3D, const float maxISO, elFunBool getID1, elFunBool getID2, elFunFloat getISO) {
+bool isGoodElectron(const Electron* lep, const float minPT, const float maxETA, const float maxDZ, const float maxD0,const float maxSIP3D, const float maxISO, elFunBool getID1, elFunBool getID2, elFunFloat getISO) {
     if(lep->pt() < minPT) return false;
     if(std::fabs(lep->scEta()) >= maxETA) return false;
     if(maxDZ > 0 && std::fabs(lep->dz()) >= maxDZ) return false;
@@ -31,55 +49,47 @@ bool DilepSelHelpers::isGoodElectron(const Electron* lep, const float minPT, con
     return true;
 }
 //_____________________________________________________________________________
-bool DilepSelHelpers::isGoodMuon(const Muon* lep, const DilepSelParameters& params) {
+bool isGoodMuon(const Muon* lep, const DileptonParameters& params) {
     return isGoodMuon(lep, params.mu_minPT, params.mu_maxETA, params.mu_maxDZ, params.mu_maxD0,
             params.mu_maxSip3D, params.mu_maxISO, params.mu_getID1, params.mu_getID2, params.mu_getISO
             );
 }
 //_____________________________________________________________________________
-bool DilepSelHelpers::isGoodElectron(const Electron* lep, const DilepSelParameters& params) {
+bool isGoodElectron(const Electron* lep, const DileptonParameters& params) {
     return isGoodElectron(lep, params.el_minPT, params.el_maxETA, params.el_maxDZ, params.el_maxD0,
             params.el_maxSip3D, params.el_maxISO, params.el_getID1, params.el_getID2, params.el_getISO
             );
 }
 //_____________________________________________________________________________
-bool DileptonProcessor::isGoodMuon(const EventReader& reader_event, const Muon * lep) const {
-   const bool useDataAF = reader_event.realData && !(*reader_event.dataRun == FillerConstants::RUN2016G || *reader_event.dataRun == FillerConstants::RUN2016H);
-   return DilepSelHelpers::isGoodMuon(lep, useDataAF? lepSelParams_dataABCDEF : lepSelParams);
+bool isGoodLepton(const Lepton * lep, const DileptonParameters& params) {
+    return lep->isMuon() ? isGoodMuon((const Muon*)lep,params) : isGoodElectron((const Electron*)lep,params);
 }
 //_____________________________________________________________________________
-bool DileptonProcessor::isGoodElectron(const Electron * lep) const {
-    return DilepSelHelpers::isGoodElectron(lep,lepSelParams);
-}
-//_____________________________________________________________________________
-bool DileptonProcessor::isGoodLepton(const EventReader& reader_event, const Lepton * lep) const {
-    return lep->isMuon() ? isGoodMuon(reader_event,(const Muon*)lep) : isGoodElectron((const Electron*)lep);
-}
-//_____________________________________________________________________________
-std::vector<const Muon*> DileptonProcessor::getMuons(const EventReader& reader_event, const MuonReader& reader_muon) const {
+std::vector<const Muon*> getMuons(const DileptonParameters& params, const MuonReader& reader_muon) {
     std::vector<const Muon*> leps;
-    bool useDataAF =  reader_event.realData && !(*reader_event.dataRun == FillerConstants::RUN2016G || *reader_event.dataRun == FillerConstants::RUN2016H);
     for(const auto& lep : reader_muon.muons){
-        if(DilepSelHelpers::isGoodMuon(&lep, useDataAF ? lepSelParams_dataABCDEF : lepSelParams)) leps.push_back(&lep);
+        if(isGoodMuon(&lep,params)) leps.push_back(&lep);
     }
     std::sort(leps.begin(),leps.end(), PhysicsUtilities::greaterPTDeref<Muon>());
     return leps;
 }
 //_____________________________________________________________________________
-std::vector<const Electron*> DileptonProcessor::getElectrons(const ElectronReader& reader_electron) const {
+std::vector<const Electron*> getElectrons(const DileptonParameters& params,
+		const ElectronReader& reader_electron) {
     std::vector<const Electron*> leps;
     for(const auto& lep : reader_electron.electrons){
-        if(DilepSelHelpers::isGoodElectron(&lep,lepSelParams)) leps.push_back(&lep);
+        if(isGoodElectron(&lep,params)) leps.push_back(&lep);
     }
     std::sort(leps.begin(),leps.end(), PhysicsUtilities::greaterPTDeref<Electron>());
     return leps;
 }
 //_____________________________________________________________________________
-std::vector<const Lepton*> DileptonProcessor::getLeptons(const EventReader& reader_event, const MuonReader& reader_muon, const ElectronReader& reader_electron) const {
+std::vector<const Lepton*> getLeptons(const DileptonParameters& params,
+		const MuonReader& reader_muon, const ElectronReader& reader_electron) {
     std::vector<const Lepton*>  leps;
 
-    auto electrons = getElectrons(reader_electron);
-    auto muons = getMuons(reader_event, reader_muon);
+    auto electrons = getElectrons(params,reader_electron);
+    auto muons = getMuons(params, reader_muon);
     leps.reserve(electrons.size() + muons.size());
     for(const auto* l : electrons) leps.push_back(l);
     for(const auto* l : muons) leps.push_back(l);
@@ -87,35 +97,5 @@ std::vector<const Lepton*> DileptonProcessor::getLeptons(const EventReader& read
     return leps;
 }
 
-namespace DefaultDileptonSelections {
-void setDefaultDilepSelParams(DilepSelParameters& par)        {
-    par.el_minPT   = 10  ;
-    par.el_maxETA  = 2.5 ;
-    par.el_maxDZ   = 0.1 ;
-    par.el_maxD0   = 0.05;
-    par.el_maxSip3D   = 4   ;
-    par.el_maxISO  = 0.2 ;
-    par.el_getID1   = &Electron::passHEEPID_noIso;
-    par.el_getID2   = &Electron::passMedID_noIso;
-    par.el_getISO  = &Electron::miniIso;
-
-    par.mu_minPT   = 10  ;
-    par.mu_maxETA  = 2.4 ;
-    par.mu_maxDZ   = 0.1 ;
-    par.mu_maxD0   = 0.05;
-    par.mu_maxSip3D   = 4   ;
-    par.mu_maxISO  = 0.2 ;
-    par.mu_getID1  = &Muon::passMedID;
-    par.mu_getID2  = &Muon::passMedID;
-    par.mu_getISO  = &Muon::miniIso;
 }
-void setDefaultDilepSelParams_dataAF(DilepSelParameters& par)        {
-    setDefaultDilepSelParams(par);
-}
-void setDefaultDileptonProcessor(DileptonProcessor& proc) {
-    setDefaultDilepSelParams(proc.lepSelParams);
-    setDefaultDilepSelParams_dataAF(proc.lepSelParams_dataABCDEF);
-}
-}
-
 }

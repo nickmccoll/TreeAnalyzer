@@ -782,8 +782,8 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
 
 void go(int step,int sig, std::string treeDir) {
     const std::string filename = hhFilename;
-    const std::string baseTreeName = treeDir + "/out_"+signals[sig].cut
-            +  "_M-XXX_TuneCP5_13TeV-madgraph-pythia8_0";
+    const std::string baseTreeName = treeDir + "/out_"+signals[sig].cut+  "_M-XXX_TuneCP5_13TeV-madgraph-pythia8_0";
+
     const std::string signalTrees = baseTreeName +".root";
     const std::string name = signals[sig];
     if(step == 0){
