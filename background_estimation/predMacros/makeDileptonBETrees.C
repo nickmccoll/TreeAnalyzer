@@ -2,7 +2,7 @@
 #if !defined(__CINT__) || defined(__MAKECINT__)
 
 #include "TreeAnalyzer/interface/BaseTreeCopier.h"
-#include "TreeAnalyzer/interface/DileptonSearchRegionAnalyzer.h"
+#include "TreeAnalyzer/interface/DefaultSearchRegionAnalyzer.h"
 #include "TreeReaders/interface/EventReader.h"
 
 #include "TreeReaders/interface/GenParticleReader.h"
@@ -30,15 +30,15 @@
 #include "TPRegexp.h"
 using namespace TAna;
 using namespace CorrHelp;
-class Analyzer : public DileptonSearchRegionAnalyzer {
+class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DileptonSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
         addUncVariables = (treeType == TREE_OTHER);
         filename = fileName;
     }
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC) : DileptonSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
         JERAK4PuppiProc ->setCorrType(jerUNC);
         JERAK4CHSProc   ->setCorrType(jerUNC);
         JERAK8PuppiProc ->setCorrType(jerUNC);
@@ -50,19 +50,7 @@ public:
             METUncProc ->setCorrType(metUNC);
             turnOnCorr(CORR_MET);
         }
-        filename = fileName;
 
-    }
-    void loadVariables() override {
-        reader_event   =std::make_shared<EventReader>   ("event",isRealData());             load(reader_event);
-        reader_fatjet  =std::make_shared<FatJetReader>  ("ak8PuppiJet",isRealData());       load(reader_fatjet);
-        reader_jet     =std::make_shared<JetReader>     ("ak4PuppiJet",isRealData(),false); load(reader_jet);
-        reader_electron=std::make_shared<ElectronReader>("electron");                       load(reader_electron);
-        reader_muon    =std::make_shared<MuonReader>    ("muon");                           load(reader_muon);
-
-        if(!isRealData()){
-            reader_genpart =std::make_shared<GenParticleReader>   ("genParticle");          load(reader_genpart   );
-        }
     }
 
     virtual BaseEventAnalyzer * setupEventAnalyzer() override {return new CopierEventAnalyzer();}
@@ -70,146 +58,143 @@ public:
     virtual void bookOutputVariables() override {
 
         if(isRealData()){
-            i_dataset             =  outTree->add<size8>  ("","dataset"  ,"b",0);
-            i_dataRun             =  outTree->add<size8>  ("","dataRun"  ,"b",0);
+        	outTree->addSingle(dataset_,  "",  "dataset");
+        	outTree->addSingle(dataRun_,  "",  "dataRun");
         } else {
-            i_process     =outTree->add<size8>  ("","process","b",0);
-            i_dhType      =outTree->add<size8>  ("","dhType" ,"b",0);
-            i_xsec        =outTree->add<float>  ("","xsec"   ,"F",0);
-            i_trig_N      =outTree->add<float>  ("","trig_N" ,"F",0);
-            i_pu_N        =outTree->add<float>  ("","pu_N"   ,"F",0);
-            i_lep_N       =outTree->add<float>  ("","lep_N"  ,"F",0);
-            i_btag_N      =outTree->add<float>  ("","btag_N" ,"F",0);
+        	outTree->addSingle(process_,  "",  "process");
+        	outTree->addSingle(dhType_,  "",  "dhType");
+        	outTree->addSingle(xsec_,  "",  "xsec");
+        	outTree->addSingle(trig_N_,  "",  "trig_N");
+        	outTree->addSingle(pu_N_,  "",  "pu_N");
+        	outTree->addSingle(lep_N_,  "",  "lep_N");
+        	outTree->addSingle(btag_N_,  "",  "btag_N");
         }
-        i_passPre     =outTree->add<size8>  ("","passPre"   ,"b",0);
-        i_ht          =outTree->add<float>  ("","ht"        ,"F",0);
-        i_met         =outTree->add<float>  ("","met"       ,"F",0);
-        i_isMuon1      =outTree->add<size8>  ("","isMuon1"    ,"b",0);
-        i_isMuon2      =outTree->add<size8>  ("","isMuon2"    ,"b",0);
-        i_lep1PT       =outTree->add<float>  ("","lep1PT"     ,"F",0);
-        i_lep2PT       =outTree->add<float>  ("","lep2PT"     ,"F",0);
-        i_dilepPT     =outTree->add<float>  ("","dilepPT"    ,"F",0);
-        i_dilepMass   =outTree->add<float>  ("","dilepMass"  ,"F",0);
-        i_dR_ll       =outTree->add<float>  ("","dilepDR"    ,"F",0);
-        i_dPhi_metll  =outTree->add<float>  ("","dPhi_met_dilep"    ,"F",0);
-
-        i_hbbMass     =outTree->add<float>  ("","hbbMass"   ,"F",0);
-        i_hbbPT       =outTree->add<float>  ("","hbbPT"     ,"F",0);
-        i_hbbCSVCat   =outTree->add<size8>  ("","hbbCSVCat" ,"b",0);
-
-        i_hhMass      =outTree->add<float>  ("","hhMass"    ,"F",0);
-        i_hwwPT       =outTree->add<float>  ("","hwwPT"     ,"F",0);
-
-        i_nAK4Btags   =outTree->add<size8>  ("","nAK4Btags" ,"b",0);
+        outTree->addSingle(passPre_, "", "passPre");
+        outTree->addSingle(ht_, "", "ht");
+        outTree->addSingle(met_, "", "met");
+        outTree->addSingle(isMuon1_, "", "isMuon1");
+        outTree->addSingle(isMuon2_, "", "isMuon2");
+        outTree->addSingle(lep1PT_, "", "lep1PT");
+        outTree->addSingle(lep2PT_, "", "lep2PT");
+        outTree->addSingle(dilepPT_, "", "dilepPT");
+        outTree->addSingle(dilepMass_, "", "dilepMass");
+        outTree->addSingle(dilepDR_, "", "dilepDR");
+        outTree->addSingle(dPhi_metll_, "", "dPhi_metll");
+        outTree->addSingle(hbbMass_, "", "hbbMass");
+        outTree->addSingle(hbbPT_, "", "hbbPT");
+        outTree->addSingle(hbbCSVCat_, "", "hbbCSVCat");
+        outTree->addSingle(hhMass_, "", "hhMass");
+        outTree->addSingle(hwwPT_, "", "hwwPT");
+        outTree->addSingle(nAK4Btags_, "", "nAK4Btags");
 
         if(!isRealData()){
-            i_hbbDecayTypeMC   =outTree->add<size8>  ("","hbbDecayTypeMC"  ,"b",0);
-            i_nLepsTT  =outTree->add<size8>  ("","nLepsTT" ,"b",0);
+            outTree->addSingle(hbbDecayTypeMC_, "", "hbbDecayTypeMC");
+            outTree->addSingle(numBinHbb_, "", "numBinHbb");
+            outTree->addSingle(nLepsTT_, "", "nLepsTT");
         }
 
         if(addUncVariables){
-            i_w_muIDUp        = outTree->add<float>("","w_muIDUp","F",0);
-            i_w_muISOUp       = outTree->add<float>("","w_muISOUp","F",0);
-            i_w_elRecoUp      = outTree->add<float>("","w_elRecoUp","F",0);
-            i_w_elIDUp        = outTree->add<float>("","w_elIDUp","F",0);
-            i_w_elISOUp       = outTree->add<float>("","w_elISOUp","F",0);
-            i_w_b_realUp     = outTree->add<float>("","w_b_realUp","F",0);
-            i_w_b_fakeUp      = outTree->add<float>("","w_b_fakeUp","F",0);
-            i_w_puUp          = outTree->add<float>("","w_puUp","F",0);
-            i_w_muIDDown      = outTree->add<float>("","w_muIDDown","F",0);
-            i_w_muISODown     = outTree->add<float>("","w_muISODown","F",0);
-            i_w_elRecoDown    = outTree->add<float>("","w_elRecoDown","F",0);
-            i_w_elIDDown      = outTree->add<float>("","w_elIDDown","F",0);
-            i_w_elISODown     = outTree->add<float>("","w_elISODown","F",0);
-            i_w_b_realDown   = outTree->add<float>("","w_b_realDown","F",0);
-            i_w_b_fakeDown    = outTree->add<float>("","w_b_fakeDown","F",0);
-            i_w_puDown        = outTree->add<float>("","w_puDown","F",0);
-            i_w_scale        = outTree->addMulti<float>("","w_scale",0);
-            i_w_pdf          = outTree->addMulti<float>("","w_pdf",0);
+        	outTree->addSingle(w_muIDUp_,  "",  "w_muIDUp");
+        	outTree->addSingle(w_muISOUp_,  "",  "w_muISOUp");
+        	outTree->addSingle(w_elRecoUp_,  "",  "w_elRecoUp");
+        	outTree->addSingle(w_elIDUp_,  "",  "w_elIDUp");
+        	outTree->addSingle(w_elISOUp_,  "",  "w_elISOUp");
+        	outTree->addSingle(w_b_realUp_,  "",  "w_b_realUp");
+        	outTree->addSingle(w_b_fakeUp_,  "",  "w_b_fakeUp");
+        	outTree->addSingle(w_puUp_,  "",  "w_puUp");
+        	outTree->addSingle(w_puDown_,  "",  "w_puDown");
+        	outTree->addSingle(w_muIDDown_,  "",  "w_muIDDown");
+        	outTree->addSingle(w_muISODown_,  "",  "w_muISODown");
+        	outTree->addSingle(w_elRecoDown_,  "",  "w_elRecoDown");
+        	outTree->addSingle(w_elIDDown_,  "",  "w_elIDDown");
+        	outTree->addSingle(w_elISODown_,  "",  "w_elISODown");
         }
 
     }
 
     bool runEvent() override {
         bool passPre = true;
-        if(!DileptonSearchRegionAnalyzer::runEvent()) passPre = false;
-        if(!passTriggerPreselection) passPre = false;
+        if(!DefaultSearchRegionAnalyzer::runEvent()) passPre = false;
+        if(!EventSelection::passTriggerPreselection(
+                parameters.event,*reader_event,ht_puppi,selectedDileptons)) passPre = false;
         if(!passEventFilters) passPre = false;
         if(selectedDileptons.size() != 2) passPre = false;
-        if(!hbbCand) passPre = false;
-        if (ht_puppi < 400) passPre = false;
+        if(!hbbCand_2l) passPre = false;
 
-        if(dilepChan == ee && passPre) {
-        	if (!(((const Electron*)selectedDileptons[0])->passMedID_noISO() && ((const Electron*)selectedDileptons[1])->passMedID_noISO())) passPre = false;
+        if (selectedDileptons.size() == 2) {
+        	if (dilep1->pt() < (dilep1->isMuon() ? 27 : 30)) passPre = false;
         }
 
         if(!addUncVariables && !passPre) return false;
-        outTree->fill(i_passPre     ,size8(passPre));
-
+        passPre_ = size8(passPre);
+        ht_ = float(ht_puppi);
 
         if(isRealData()){
-            outTree->fill(i_dataset     ,reader_event->dataset);
-            outTree->fill(i_dataRun     ,reader_event->dataRun);
+        	dataset_ = size8(*reader_event->dataset);
+        	dataRun_ = size8(*reader_event->dataRun);
+
         } else {
-            outTree->fill(i_process     ,reader_event->process);
-            outTree->fill(i_dhType      ,size8(diHiggsEvt.type));
-            outTree->fill(i_xsec        ,float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),lumi())));
-            outTree->fill(i_trig_N      ,float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_puppi, (selectedDileptons[0] && selectedDileptons[0]->isMuon())) : 1.0 ));
-            outTree->fill(i_pu_N        ,float(puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::NOMINAL)));
-            outTree->fill(i_lep_N       ,float(leptonSFProc->getSF()));
-            outTree->fill(i_btag_N      ,float(sjbtagSFProc->getSF({hbbCand})*ak4btagSFProc->getSF(jets_HbbV)));
+        	process_ = size8(*reader_event->process);
+        	dhType_  = size8(diHiggsEvt.type);
+        	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT));
+        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_puppi, (selectedDileptons.size() && dilep1->isMuon())) : 1.0 );
+        	pu_N_    = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL));
+        	lep_N_   = 1.0 /*float(leptonSFProc->getSF())*/;
+        	btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
+
+        	if (filename.Contains("Glu")) xsec_ = xsec_ * 0.26;
         }
 
-        outTree->fill(i_ht     ,float(ht_puppi));
-        outTree->fill(i_met    ,float(reader_event->met.pt()));
-        if(selectedDileptons.front() && selectedDileptons.back()){
-            outTree->fill(i_isMuon1      ,size8(selectedDileptons.front()->isMuon()));
-            outTree->fill(i_isMuon2      ,size8(selectedDileptons.back()->isMuon()));
-            outTree->fill(i_lep1PT      ,float(selectedDileptons.front()->pt()));
-            outTree->fill(i_lep2PT      ,float(selectedDileptons.back()->pt()));
+        met_ = reader_event->met.pt();
 
-            outTree->fill(i_dilepPT, float((selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).pt()));
-            outTree->fill(i_dilepMass, float((selectedDileptons[0]->p4()+selectedDileptons[1]->p4()).mass()));
-            outTree->fill(i_dR_ll, float(PhysicsUtilities::deltaR(*selectedDileptons[0],*selectedDileptons[1])));
-            outTree->fill(i_dPhi_metll, float(PhysicsUtilities::deltaPhi(reader_event->met.p4(),(selectedDileptons[0]->p4()+selectedDileptons[1]->p4()))));
+        if(selectedDileptons.size() == 2 && dilep1 && dilep2){
+        	isMuon1_ = size8(dilep1->isMuon());
+        	isMuon2_ = size8(dilep2->isMuon());
+        	lep1PT_  = float(dilep1->pt());
+        	lep2PT_  = float(dilep2->pt());
+
+        	dilepPT_   = float((dilep1->p4()+dilep2->p4()).pt());
+        	dilepMass_ = float((dilep1->p4()+dilep2->p4()).mass());
+        	dilepDR_   = float(PhysicsUtilities::deltaR(*dilep1,*dilep2));
+        	dPhi_metll_= float(PhysicsUtilities::absDeltaPhi(reader_event->met.p4(),(dilep1->p4()+dilep2->p4())));
+        }
+
+        hbbMass_ = float(hbbMass_2l);
+        if(hbbCand_2l) {
+        	hbbPT_ = float(hbbCand_2l->pt());
+        	hbbCSVCat_ = size8(hbbCSVCat_2l);
+        	hhMass_ = float(hh_2l.mass());
+        	hwwPT_  = float(hWW_2l.pt());
+        	nAK4Btags_ = size8(std::min(nMedBTags_HbbV_2l,250));
 
         }
 
-        outTree->fill(i_hbbMass     ,float(hbbMass));
-        if(hbbCand) {
-            outTree->fill(i_hbbPT       ,float(hbbCand->pt()));
-            outTree->fill(i_hbbCSVCat   ,size8(hbbCSVCat));
-
-            outTree->fill(i_hhMass      ,float(hh.mass()));
-            outTree->fill(i_hwwPT       ,float(hww.pt()));
-
-            outTree->fill(i_nAK4Btags   ,size8(std::min(nMedBTags_HbbV,250)));
-        }
-
-        if(!isRealData() && hbbCand){
+        if(!isRealData() && hbbCand_2l){
     		double maxDR2 = 0.8*0.8;
 
             int topDecayType = 0; // NONE b wj wjb wjj wjjb bb wjbb wjjbb
             int maxQuarksFromTop = 0;
             int totQuarksFromTops = 0;
             int numB = 0;
+            int numB_ll = 0;
 
             for (const auto& d : smDecayEvt.topDecays) {
             	if (d.type == TopDecay::BAD) continue;
             	if (d.type > TopDecay::HAD) {
-            		if (PhysicsUtilities::deltaR2(*d.b,*hbbCand) < maxDR2) {
+            		if (PhysicsUtilities::deltaR2(*d.b,*hbbCand_2l) < maxDR2) {
             			totQuarksFromTops++;
-            			numB++;
+            			numB++; numB_ll++;
             			if (maxQuarksFromTop == 0) maxQuarksFromTop = 1;
             		}
             	} else {
             		if (!d.b) continue;
             		bool passB = false;
-            		if (PhysicsUtilities::deltaR2(*d.b,*hbbCand) < maxDR2) passB = true;
-            		int nW = (PhysicsUtilities::deltaR2(*d.W_decay.dau1,*hbbCand) < maxDR2) + (PhysicsUtilities::deltaR2(*d.W_decay.dau2,*hbbCand) < maxDR2);
+            		if (PhysicsUtilities::deltaR2(*d.b,*hbbCand_2l) < maxDR2) passB = true;
+            		int nW = (PhysicsUtilities::deltaR2(*d.W_decay.dau1,*hbbCand_2l) < maxDR2) + (PhysicsUtilities::deltaR2(*d.W_decay.dau2,*hbbCand_2l) < maxDR2);
             		int nT = nW + passB;
             		totQuarksFromTops += nT;
             		numB += passB;
+            		numB_ll += passB;
             		if (nT > maxQuarksFromTop) maxQuarksFromTop = nT;
             	}
             }
@@ -232,7 +217,10 @@ public:
 
             for (const auto& d : smDecayEvt.bosonDecays) {
                 if(d.type != BosonDecay::Z_HAD && d.type != BosonDecay::W_HAD ) continue;
-                int nW = (PhysicsUtilities::deltaR2(*d.dau1,*hbbCand) < maxDR2) +  (PhysicsUtilities::deltaR2(*d.dau2,*hbbCand) < maxDR2);
+                int nW = (PhysicsUtilities::deltaR2(*d.dau1,*hbbCand_2l) < maxDR2) +  (PhysicsUtilities::deltaR2(*d.dau2,*hbbCand_2l) < maxDR2);
+                if (d.dau1->absPdgId() == ParticleInfo::p_b && PhysicsUtilities::deltaR2(*d.dau1,*hbbCand_2l) < maxDR2) numB_ll++;
+                if (d.dau2->absPdgId() == ParticleInfo::p_b && PhysicsUtilities::deltaR2(*d.dau2,*hbbCand_2l) < maxDR2) numB_ll++;
+
                 totQuarksFromWs += nW;
                 if (nW > maxQuarksFromW) maxQuarksFromW = nW;
             }
@@ -247,104 +235,102 @@ public:
             } else {
                 decayType = WDecayType;
             }
-            outTree->fill(i_hbbDecayTypeMC, size8(decayType));
+            hbbDecayTypeMC_ = size8(decayType);
+            numBinHbb_ = size8(numB_ll);
+            if (smDecayEvt.nLepsTT == -1) nLepsTT_ = 255;
+            else               nLepsTT_ = smDecayEvt.nLepsTT;
 
-            if (mcProc == FillerConstants::TTBAR) {
-                TPRegexp r1("(.*)(tbar)(.*)(\\d)(l)(.*)");
-                auto b = r1.MatchS(filename);
-                int nLepsTT = (((TObjString *)b->At(4))->GetString()).Atoi();
-            	outTree->fill(i_nLepsTT, size8(nLepsTT));
-            }
         }
 
         if(addUncVariables){
             const float nomMu = leptonSFProc->getMuonSF();
             const float nomEl = leptonSFProc->getElectronSF();
-            outTree->fill(i_w_muIDUp     ,float(leptonSFProc->getMuonSF(NONE,UP,NOMINAL)*nomEl));
-            outTree->fill(i_w_muISOUp    ,float(leptonSFProc->getMuonSF(NONE,NOMINAL,UP)*nomEl));
-            outTree->fill(i_w_elRecoUp   ,float(leptonSFProc->getElectronSF(UP,NOMINAL,NOMINAL)*nomMu));
-            outTree->fill(i_w_elIDUp     ,float(leptonSFProc->getElectronSF(NOMINAL,UP,NOMINAL)*nomMu));
-            outTree->fill(i_w_elISOUp    ,float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,UP)*nomMu));
-            outTree->fill(i_w_b_realUp   ,float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,UP)* sjbtagSFProc->getSF({hbbCand},NOMINAL,UP)));
-            outTree->fill(i_w_b_fakeUp   ,float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL)* sjbtagSFProc->getSF({hbbCand},UP,NOMINAL)));
-            outTree->fill(i_w_puUp       ,float(puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::UP)));
 
-            outTree->fill(i_w_muIDDown   ,float(leptonSFProc->getMuonSF(NONE,DOWN,NOMINAL)*nomEl));
-            outTree->fill(i_w_muISODown  ,float(leptonSFProc->getMuonSF(NONE,NOMINAL,DOWN)*nomEl));
-            outTree->fill(i_w_elRecoDown ,float(leptonSFProc->getElectronSF(DOWN,NOMINAL,NOMINAL)*nomMu));
-            outTree->fill(i_w_elIDDown   ,float(leptonSFProc->getElectronSF(NOMINAL,DOWN,NOMINAL)*nomMu));
-            outTree->fill(i_w_elISODown  ,float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,DOWN)*nomMu));
-            outTree->fill(i_w_b_realDown ,float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN)* sjbtagSFProc->getSF({hbbCand},NOMINAL,DOWN)));
-            outTree->fill(i_w_b_fakeDown ,float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF({hbbCand},DOWN,NOMINAL)));
-            outTree->fill(i_w_puDown     ,float(puSFProc->getCorrection(reader_event->nTruePUInts,CorrHelp::DOWN)));
+            w_muIDUp_     = float(leptonSFProc->getMuonSF(NONE,UP,NOMINAL)*nomEl);
+            w_muISOUp_    = float(leptonSFProc->getMuonSF(NONE,NOMINAL,UP)*nomEl);
+            w_elRecoUp_   = float(leptonSFProc->getElectronSF(UP,NOMINAL,NOMINAL)*nomMu);
+            w_elIDUp_     = float(leptonSFProc->getElectronSF(NOMINAL,UP,NOMINAL)*nomMu);
+            w_elISOUp_    = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,UP)*nomMu);
+            w_b_realUp_   = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,UP)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,UP));
+            w_b_fakeUp_   = float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},UP,NOMINAL));
+            w_puUp_       = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::UP));
+
+            w_muIDDown_   = float(leptonSFProc->getMuonSF(NONE,DOWN,NOMINAL)*nomEl);
+            w_muISODown_  = float(leptonSFProc->getMuonSF(NONE,NOMINAL,DOWN)*nomEl);
+            w_elRecoDown_ = float(leptonSFProc->getElectronSF(DOWN,NOMINAL,NOMINAL)*nomMu);
+            w_elIDDown_   = float(leptonSFProc->getElectronSF(NOMINAL,DOWN,NOMINAL)*nomMu);
+            w_elISODown_  = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,DOWN)*nomMu);
+            w_b_realDown_ = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,DOWN));
+            w_b_fakeDown_ = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},DOWN,NOMINAL));
+            w_puDown_     = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::DOWN));
         }
+
         return true;
     }
 
 
 
     //Event information and weights
-    size i_process    = 0;
-    size i_dhType     = 0;
-    size i_dataset    = 0;
-    size i_dataRun    = 0;
-    size i_xsec       = 0;
-    size i_trig_N     = 0;
-    size i_pu_N       = 0;
-    size i_lep_N      = 0;
-    size i_btag_N     = 0;
-    size i_passPre    = 0;
+    size8 process_    = 0;
+    size8 dhType_     = 0;
+    size8 dataset_    = 0;
+    size8 dataRun_    = 0;
+    float xsec_       = 0;
+    float trig_N_     = 0;
+    float pu_N_       = 0;
+    float lep_N_      = 0;
+    float btag_N_     = 0;
+    size8 passPre_    = 0;
 
     //SR variables
-    size i_ht         = 0;
-    size i_met        = 0;
-    size i_isMuon1    = 0;
-    size i_isMuon2    = 0;
-    size i_lep1PT     = 0;
-    size i_lep2PT     = 0;
-    size i_dilepPT    = 0;
-    size i_dilepMass  = 0;
-    size i_dR_ll      = 0;
-    size i_dPhi_metll = 0;
+    float ht_         = 0;
+    float met_        = 0;
+    size8 isMuon1_    = 0;
+    size8 isMuon2_    = 0;
+    float lep1PT_     = 0;
+    float lep2PT_     = 0;
+    float dilepPT_    = 0;
+    float dilepMass_  = 0;
+    float dilepDR_    = 0;
+    float dPhi_metll_ = 0;
 
-    size i_hbbMass   = 0;
-    size i_hbbPT     = 0;
-    size i_hbbCSVCat = 0;
+    float hbbMass_   = 0;
+    float hbbPT_     = 0;
+    size8 hbbCSVCat_ = 0;
 
-    size i_hhMass    = 0;
-    size i_hwwPT     = 0;
+    float hhMass_    = 0;
+    float hwwPT_     = 0;
 
-    size i_nAK4Btags = 0;
+    size8 nAK4Btags_ = 0;
 
     //BE extra variables
-    size i_hbbDecayTypeMC   =0;
-    size i_nLepsTT  =0;
+    size8 hbbDecayTypeMC_   =0;
+    size8 numBinHbb_        =0;
+    size8 nLepsTT_ = 0;
 
     //systematic variables
-    size i_w_muIDUp      = 0;
-    size i_w_muISOUp     = 0;
-    size i_w_elRecoUp    = 0;
-    size i_w_elIDUp      = 0;
-    size i_w_elISOUp     = 0;
-    size i_w_b_realUp    = 0;
-    size i_w_b_fakeUp    = 0;
-    size i_w_puUp        = 0;
-    size i_w_muIDDown    = 0;
-    size i_w_muISODown   = 0;
-    size i_w_elRecoDown  = 0;
-    size i_w_elIDDown    = 0;
-    size i_w_elISODown   = 0;
-    size i_w_b_realDown  = 0;
-    size i_w_b_fakeDown  = 0;
-    size i_w_puDown      = 0;
+    float w_muIDUp_      = 0;
+    float w_muISOUp_     = 0;
+    float w_elRecoUp_    = 0;
+    float w_elIDUp_      = 0;
+    float w_elISOUp_     = 0;
+    float w_b_realUp_    = 0;
+    float w_b_fakeUp_    = 0;
+    float w_puUp_        = 0;
+    float w_muIDDown_    = 0;
+    float w_muISODown_   = 0;
+    float w_elRecoDown_  = 0;
+    float w_elIDDown_    = 0;
+    float w_elISODown_   = 0;
+    float w_b_realDown_  = 0;
+    float w_b_fakeDown_  = 0;
+    float w_puDown_      = 0;
 
-    size i_w_scale       = 0;
-    size i_w_pdf         = 0;
+//    spv_float w_scale_   = make_spv_float();
+//    spv_float w_pdf_     = make_spv_float();
 
     bool addUncVariables = false;
     TString filename = "";
-
-
 
 };
 
@@ -368,21 +354,7 @@ void doOneVar(const std::string& fileName, const int treeInt,int randSeed, const
 #endif
 
 
-
-void makeDileptonBETrees(std::string fileName, int treeInt, int randSeed, std::string outFileName){
-    doOne(fileName,treeInt,randSeed,outFileName);
-//    if(treeInt==2){
-//        size_t lastindex = outFileName.find_last_of(".");
-//        std::string extLessName = outFileName.substr(0, lastindex);
-//        doOneVar(fileName,treeInt,randSeed+1,extLessName+"_JERUp.root"  ,UP     ,NONE,NONE);
-//        doOneVar(fileName,treeInt,randSeed+2,extLessName+"_JERDown.root",DOWN   ,NONE,NONE);
-//        doOneVar(fileName,treeInt,randSeed+3,extLessName+"_JESDOWN.root",NOMINAL,DOWN,NONE);
-//        doOneVar(fileName,treeInt,randSeed+4,extLessName+"_JESUp.root"  ,NOMINAL,UP  ,NONE);
-//        doOneVar(fileName,treeInt,randSeed+5,extLessName+"_METDOWN.root",NOMINAL,NONE,DOWN);
-//        doOneVar(fileName,treeInt,randSeed+6,extLessName+"_METUp.root"  ,NOMINAL,NONE,UP  );
-//    }
-}
-void makeDileptonBETrees(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec, float numEvent){
+void makeDileptonBETrees(std::string fileName, int treeInt, int randSeed, std::string outFileName, float xSec=-1, float numEvent=-1){
     doOne(fileName,treeInt,randSeed,outFileName,xSec,numEvent);
 //    if(treeInt==2){
 //        size_t lastindex = outFileName.find_last_of(".");

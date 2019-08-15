@@ -27,6 +27,7 @@ public:
     ra_size16 nmoms    ;
     ra_size16 firstmom ;
     ra_size16 assoc    ;
+    rd_float  mTTBar   ;
 
 
 	//objects created in process

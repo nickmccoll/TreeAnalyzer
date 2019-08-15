@@ -10,6 +10,7 @@
 
 #include "Processors/Corrections/interface/EventWeights.h"
 #include "Processors/Variables/interface/HiggsSolver.h"
+#include "Processors/Variables/interface/Hww2lSolver.h"
 #include "Processors/Variables/interface/JetKinematics.h"
 
 #include "Processors/Variables/interface/LeptonSelection.h"
@@ -61,7 +62,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     turnOnCorr(CORR_SJBTAG);
     turnOnCorr(CORR_AK4BTAG);
     turnOnCorr(CORR_SDMASS);
-    //    turnOnCorr(CORR_TOPPT);
+//    turnOnCorr(CORR_TOPPT);
     turnOnCorr(CORR_JER);
 }
 DefaultSearchRegionAnalyzer::~DefaultSearchRegionAnalyzer(){}
@@ -102,7 +103,7 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isRealData()) return;
 
     if(isCorrOn(CORR_XSEC) && !reader_event) mkErr("event","CORR_XSEC");
-    if(isCorrOn(CORR_TRIG) && !reader_jet_chs) mkErr("ak4Jet","CORR_TRIG");
+    if(isCorrOn(CORR_TRIG) && !reader_jet) mkErr("ak4Jet","CORR_TRIG");
     if(isCorrOn(CORR_TRIG) && !reader_electron) mkErr("electron","CORR_TRIG");
     if(isCorrOn(CORR_TRIG) && !reader_muon) mkErr("muon","CORR_TRIG");
     if(isCorrOn(CORR_TRIG) && !reader_genpart) mkErr("genParticle","CORR_TRIG");
@@ -136,6 +137,8 @@ void DefaultSearchRegionAnalyzer::setupParameters(){
     }
     if(isCorrOn(CORR_SJBTAG)) sjbtagSFProc->setParameters(parameters.jets);
     if(isCorrOn(CORR_AK4BTAG)) ak4btagSFProc->setParameters(parameters.jets);
+    if(isCorrOn(CORR_TRIG)) trigSFProc->setParameters(parameters.event);
+    if(isCorrOn(CORR_PU))  puSFProc->setParameters(parameters.event);
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
@@ -185,7 +188,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //|||||||||||||||||||||||||||||| GEN PARTICLES ||||||||||||||||||||||||||||||
     if(reader_genpart){
         if(mcProc == FillerConstants::SIGNAL) diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
-        smDecayEvt.setDecayInfo(reader_genpart->genParticles);
+        smDecayEvt.setDecayInfo(reader_genpart->genParticles,reader_event->sampParam.val());
     }
 
     //|||||||||||||||||||||||||||||| CHS JETS ||||||||||||||||||||||||||||||
@@ -194,20 +197,21 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         ht_chs = JetKinematics::ht(jets_chs);
     }
 
-
     //|||||||||||||||||||||||||||||| LEPTONS ||||||||||||||||||||||||||||||
     if(reader_electron && reader_muon){
         selectedLeptons = LeptonProcessor::getLeptons(parameters.leptons,
                 *reader_muon,*reader_electron);
         selectedLepton = selectedLeptons.size() ? selectedLeptons.front() : 0;
+
+        selectedDileptons = DileptonProcessor::getLeptons(parameters.dileptons,*reader_muon,*reader_electron);
+        if (selectedDileptons.size() >= 2) {
+        	dilep1 = selectedDileptons[0];
+        	dilep2 = selectedDileptons[1];
+        } else {
+        	dilep1 = 0;
+        	dilep2 = 0;
+        }
     }
-
-
-    //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
-    passEventFilters= EventSelection::passEventFilters(parameters.event,*reader_event);
-    passTriggerPreselection= EventSelection::passTriggerPreselection(
-            parameters.event,*reader_event,ht_chs,selectedLeptons);
-
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
     if(reader_fatjet && reader_fatjet_noLep &&  selectedLepton){
@@ -262,10 +266,38 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         hh_old     =  MomentumF();
     }
 
+    if(reader_fatjet && selectedDileptons.size() >= 2){
+
+        fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,selectedDileptons.front(),selectedDileptons.back());
+        hbbCand_2l  = fjProc->getDilepHbbCand();
+        hbbCSVCat_2l   = hbbCand_2l ? BTagging::getCSVSJCat(parameters.jets,hbbCand_2l->subJets())
+        : BTagging::CSVSJ_INCL ;
+
+        hWW_2l = Hww2lSolver::getSimpleHiggsMom(dilep1->p4()+dilep2->p4(),reader_event->met,55);
+        dilepChan = DileptonProcessor::getDilepChan(dilep1,dilep2);
+
+    } else {
+        hbbCand_2l    =  0;
+        hbbCSVCat_2l  = BTagging::CSVSJ_INCL;
+        hWW_2l        = MomentumF();
+        dilepChan = DileptonProcessor::LL_BAD;
+    }
+
+    if(hbbCand_2l){
+        hbbMass_2l =   isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand_2l) : hbbCand_2l->sdMom().mass();
+        hh_2l = hWW_2l.p4() + hbbCand_2l->p4();
+    } else {
+        hbbMass_2l    = 0;
+        hh_2l         = MomentumF();
+    }
 
     //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
 
     if(reader_jet){
+        jets_puppi = PhysicsUtilities::selObjsMom(reader_jet->jets,30);
+        ht_puppi = JetKinematics::ht(jets_puppi);
+
+
         jets = PhysicsUtilities::selObjsMom(reader_jet->jets,
                 parameters.jets.minJetPT,parameters.jets.maxJetETA,
                 [&](const Jet* j){return (j->*parameters.jets.passJetID)();} );
@@ -282,29 +314,54 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
             jets_HbbV = jets;
             nMedBTags_HbbV = nMedBTags;
         }
+
+        if (hbbCand_2l) {
+            jets_NoDilepOverlap = PhysicsUtilities::selObjsMom(reader_jet->jets,30,2.4,[&](const Jet* j){return (PhysicsUtilities::deltaR2(*j,*dilep1) > 0.4*0.4
+                		&& PhysicsUtilities::deltaR2(*j,*dilep2) > 0.4*0.4);} );
+            ht_NoDilepOverlap = JetKinematics::ht(jets_NoDilepOverlap);
+
+            jets_HbbV_2l = PhysicsUtilities::selObjsD(jets,
+                    [&](const Jet* j){return  PhysicsUtilities::deltaR2(*j,*hbbCand_2l ) >= 1.2*1.2;});
+            nMedBTags_HbbV_2l = PhysicsUtilities::selObjsMomD(jets_HbbV_2l,
+                    parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
+                    [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
+        } else {
+        	jets_HbbV_2l = jets;
+        	nMedBTags_HbbV_2l = nMedBTags;
+        }
     }
 
+
+    //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
+    passEventFilters= EventSelection::passEventFilters(parameters.event,*reader_event);
+    passTriggerPreselection= EventSelection::passTriggerPreselection(
+            parameters.event,*reader_event,ht_puppi,selectedLeptons);
 
     //|||||||||||||||||||||||||||||| EVENT WEIGHTS ||||||||||||||||||||||||||||||
     weight = 1;
     if(!isRealData()){
-        if(isCorrOn(CORR_XSEC))
+        if(isCorrOn(CORR_XSEC)) {
             weight *= EventWeights::getNormalizedEventWeight(
-                    *reader_event,xsec(),nSampEvt(),parameters.event.lumi);
-        if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size()))
+                    *reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT);
+        }
+        if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size())) {
             weight *= trigSFProc->getLeptonTriggerSF(
-                    ht_chs, (selectedLepton && selectedLepton->isMuon()));
-        if(isCorrOn(CORR_PU) )
-            weight *= puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);
+                    ht_puppi, (selectedLepton && selectedLepton->isMuon()));
+        }
+        if(isCorrOn(CORR_PU) ) {
+        	float pucorr = puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);
+            weight *= pucorr;
+        }
         if(isCorrOn(CORR_LEP)){
             leptonSFProc->load(smDecayEvt,selectedLeptons);
             weight *= leptonSFProc->getSF();
         }
         if(isCorrOn(CORR_SJBTAG)){
-            weight *= sjbtagSFProc->getSF(parameters.jets,{hbbCand});
+            weight    *= sjbtagSFProc->getSF(parameters.jets,{hbbCand});
         }
         if(isCorrOn(CORR_AK4BTAG)){
-            weight *= ak4btagSFProc->getSF(jets_HbbV);
+            weight    *= ak4btagSFProc->getSF(jets_HbbV);
+
         }
         if(isCorrOn(CORR_TOPPT)){
             weight *= topPTProc->getCorrection(mcProc,smDecayEvt);

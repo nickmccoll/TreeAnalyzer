@@ -3,6 +3,7 @@
 
 #include "AnalysisSupport/Utilities/interface/TObjectHelper.h"
 #include "CorrectionHelper.h"
+#include "Configuration/interface/ReaderConstants.h"
 
 namespace TAna {
 class EventReader;
@@ -15,13 +16,13 @@ namespace EventWeights {
     //If this is a data event, set cross section to -1
     //If it is not, will calculate it on the fly
     float getNormalizedEventWeight(const EventReader& reader_event, const float cross,
-            const float numE, const float lumi = 1);
+            const float numE, const EventParameters& evtParam, const float genMtt, const int nLepsTT);
 }
 
 class PUScaleFactors {
 public:
-    PUScaleFactors(const std::string& dataDir, const std::string& sfFile = "corrections/puSF.root",
-            bool verbose = false);
+    PUScaleFactors(const std::string& dataDir);
+    void setParameters(const EventParameters& evtParam, bool verbose=false);
     float getCorrection(const unsigned int trueNumInteractions,
             const CorrHelp::CORRTYPE corrType = CorrHelp::NOMINAL) const;
 
@@ -29,6 +30,8 @@ private:
     std::unique_ptr<TObjectHelper::Hist1DContainer> nominalSF;
     std::unique_ptr<TObjectHelper::Hist1DContainer> upSF;
     std::unique_ptr<TObjectHelper::Hist1DContainer> downSF;
+    std::string dataDirectory;
+
 };
 class TopPTWeighting {
 public:
