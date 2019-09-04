@@ -126,6 +126,22 @@ public:
     double maxX = 0;
 };
 
+//Histogram assumptions: Equal bin widths
+//bin contents are the probability density (divided by bin widths)
+//That way we can interpolate between bin centers and not mess up the integral
+//the overflow and underflow contain the INTEGRAL of probability from the last bins bin center to
+//infinity. We do an extrapolation assuming an exponential form.
+class OneDimPDFWExtrap : public BASEPDF {
+public:
+    virtual void setup(TFile * inFile, const std::string& hName, bool verbose= false );
+    double getProbability(const double x) const;
+    double bW = 0;
+    int nB = 0;
+    double minX = 0;
+    double maxX = 0;
+    std::unique_ptr<TH1> hCur  = 0;
+};
+
 class TwoDimPDF : public BASEPDF {
 public:
     void setup(TFile * inFile, const std::string& hName,  bool verbose= false );
@@ -150,7 +166,7 @@ public:
     HiggsLiFunction() {}
 
     void setObservables(const MomentumF& inL, const MomentumF& inM,
-            const MomentumF& inJ, const double inPT);
+            const MomentumF& inJ);
 
     void setIterationStorage(const double * p);
 
@@ -234,6 +250,8 @@ public:
 //    enum PDFList {EMET_PERP,EMET_PAR,WQQ_RES, WQQ_SDMASS, HWW_WLNU_MASS, NPDFS};
     enum PDFList {EMET_PERP,EMET_PAR,WQQ_RES, WQQ_SDMASS, WLNU_MASS, HWW_MASS, NPDFS};
 
+
+
     void setup(std::string fileName, const double ptCorB_,const double ptCorM_,
             bool verbose= false );
 
@@ -261,16 +279,85 @@ public:
     ROOT::Math::Functor osqq_functor;
     ROOT::Math::Functor vqq_functor;
 
-//    ROOT::Minuit2::Minuit2Minimizer osqq_minimizer;
-//    ROOT::Minuit2::Minuit2Minimizer vqq_minimizer;
-
 
     Minimizer osqq_minimizer;
     Minimizer vqq_minimizer;
+};
 
 
 
+class BkgLiFunction {
+public:
 
+    enum PARAMList {EMET_PERP,EMET_PAR, NEUT_Z};
+
+    BkgLiFunction() {}
+
+    void setObservables(const MomentumF& inL, const MomentumF& inM,
+            const MomentumF& inJ);
+
+    void setIterationStorage(const double * p);
+
+    double operator()(const double * p);
+
+    //constants for this class
+    std::vector<std::shared_ptr<BASEPDF>> pdfs;
+
+    //constants for every run (set in setObservables)
+    ASTypes::CartLorentzVector lepton;
+    ASTypes::CartLorentzVector met;
+    ASTypes::CartLorentzVector qqJet;
+
+    double hwwParX =0;
+    double hwwParY =0;
+    double hwwParNormX =0;
+    double hwwParNormY =0;
+    double hwwPerpNormX =0;
+    double hwwPerpNormY =0;
+    double hwwMag  =0;
+    double metPerp =0;
+    double metPar  =0;
+
+    //per iteration storage (set in set iteration vars)
+    double neutE = 0;
+    double neutPerp = 0;
+    double neutPar = 0;
+    double neutX = 0;
+    double neutY = 0;
+    double extraMetPerp = 0;
+    double extraMetPar = 0;
+    ASTypes::CartLorentzVector neutrino;
+    ASTypes::CartLorentzVector wlnu;
+    ASTypes::CartLorentzVector hww;
+
+    //output
+    double LL = 0;
+};
+
+
+class BkgLi {
+public:
+    typedef TMinuitMinimizer Minimizer;
+
+    BkgLi(const std::string& dataDir);
+    ~BkgLi() {
+
+    }
+    enum PDFList {EMET_PERP,EMET_PAR, WLNU_MASS, HWW_MASS, NPDFS};
+
+    void setup(std::string fileName,bool verbose= false );
+    void resetParameters(Minimizer& min);
+    void minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
+            HiggsSolverInfoDebug& out);
+
+    const std::string dataDir;
+    double ptCorB=0;
+    double ptCorM=0;
+    std::vector<std::shared_ptr<BASEPDF>> pdfs;
+    std::unique_ptr<TH1> hwwPT;
+    BkgLiFunction function;
+    ROOT::Math::Functor functor;
+    Minimizer minimizer;
 };
 
 

@@ -32,14 +32,11 @@ class Analyzer : public HHSolTreeAnalyzer {
 public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed,int step) :
-        HHSolTreeAnalyzer(fileName,treeName,treeInt, randSeed), step(step), HSolver(""){
+        HHSolTreeAnalyzer(fileName,treeName,treeInt, randSeed), step(step), HSolver(""),
+        BkgHSolver(""){
         HSolver.setup("hhSol_templates.root",0.9663,-0.00001013,true);
+        BkgHSolver.setup("hhSol_bkgTemplates.root",true);
         parameters = ReaderConstants::set2017Parameters();
-
-        std::cout << "UMMM "<< HSolver.osqq_pdfs[1]->getProbability(0.0749314)<<std::endl;
-        std::cout << "UMMM "<< HSolver.vqq_pdfs[1]->getProbability(0.0749314)<<std::endl;
-//        (0.0749314,1.67529,0.515989)
-
     }
 
 
@@ -140,12 +137,10 @@ public:
         ASTypes::CylLorentzVectorF approxJ (true_sf*qqJet.pt(),qqJet.eta(),qqJet.phi(),
                 isVirtualWqq ? 31 : 80.0);
 
-        ASTypes::CylLorentzVectorF approxJ2 = true_sf*qqJet.p4();
 
         auto approxW = lepton.p4() + true_neut.p4();
 
         auto approxH = approxW + approxJ;
-        auto approxH2 = approxW + approxJ2;
 
         float corHPT = getCorHPt(hwwMag);
 
@@ -286,14 +281,258 @@ public:
 
     }
 
-    static void processTemplates(const TString& inFileName, const TString& outFileName) {
+
+    void getBKGTemplatePlots(bool finalBinning) {
+        if(hwwMag < 300) return;
+        double extraMetPerp = metPerp-neutPerp;
+        double extraMetPar = metPar-neutPar;
+
+        ASTypes::CylLorentzVectorF approxJ (qqJet.pt(),qqJet.eta(),qqJet.phi(),
+                0);
+        auto approxW = lepton.p4() + true_neut.p4();
+        auto approxH = approxW + approxJ;
+
+        TString pf = (isSignal() ? TString("signal") : smpName);
+        TString comb = (*process==FillerConstants::TTBAR || *process == FillerConstants::WJETS)
+                            ? ("ttbarPW") : "other";
+        if(*process==FillerConstants::TTBAR && hwwMag > 1500) comb = "other";
+
+
+        auto plt =[&](const TString& prefix){
+
+            plotter.getOrMake1DPre(prefix,"hwwMag",";hwwMag",300,0,3000)
+                ->Fill(hwwMag,weight);
+
+            plotter.getOrMake1DPre(prefix,"extraMetPerp",";extraMetPerp",1000,-500,500)
+                ->Fill(extraMetPerp,weight);
+            plotter.getOrMake1DPre(prefix,"extraMetParRelhwwMag",";extraMetPar / hwwMag",400,-2,2)
+                ->Fill(extraMetPar/hwwMag,weight);
+
+            plotter.getOrMake1DPre(prefix,"qqSDMassCoarse",";qqSDMass",2,50,70)
+                ->Fill(*qqJet_SDmass,weight);
+            plotter.getOrMake1DPre(prefix
+                    , "approxW",";approxW",300,0,300)->Fill(approxW.mass(),weight);
+            plotter.getOrMake1DPre(prefix, "approxH",";approxH",600,0,600)
+                ->Fill(approxH.mass(),weight);
+
+        };
+
+
+        auto pltFinal =[&](const TString& prefix){
+
+
+
+            plotter.getOrMake1DPre(prefix,"extraMetPerp",";extraMetPerp",30,-150,150)
+                ->Fill(extraMetPerp,weight);
+            plotter.getOrMake1DPre(prefix,"extraMetParRelhwwMag",";extraMetPar/hwwMag",50,-0.6,0.4)
+                ->Fill(extraMetPar/hwwMag,weight);
+
+
+            plotter.getOrMake1DPre(prefix,"hWW"      ,";hWW term"
+                    ,50,100,600)       ->Fill(approxH.mass(),weight);
+            plotter.getOrMake1DPre(prefix,"Wlnu"      ,";Wlnu term"
+                   ,20,60,100)       ->Fill(approxW.mass(),weight);
+        };
+
+        TString ptBin;
+        if(hwwMag >300 && hwwMag< 500) ptBin = "_low";
+        else if(hwwMag >800 && hwwMag< 900) ptBin = "_test";
+        else if(hwwMag >1000 && hwwMag < 1500) ptBin = "_high";
+        else ptBin = "_other";
+
+
+        if(!finalBinning){
+            plt(pf);
+            plt(pf+ptBin);
+            plt(comb);
+            plt(comb+ptBin);
+
+        } else {
+            pltFinal(pf);
+            pltFinal(pf +ptBin);
+            pltFinal(comb);
+            pltFinal(comb +ptBin);
+        }
+
+        plotter.getOrMake1DPre(pf +ptBin,"true_hwwMag",";hwwMag",300,0,3000)
+            ->Fill(hwwMag,weight);
+        plotter.getOrMake1DPre(pf,"true_hwwMag",";hwwMag",300,0,3000)
+            ->Fill(hwwMag,weight);
+        plotter.getOrMake1DPre(comb +ptBin,"true_hwwMag",";hwwMag",300,0,3000)
+            ->Fill(hwwMag,weight);
+        plotter.getOrMake1DPre(comb,"true_hwwMag",";hwwMag",300,0,3000)
+            ->Fill(hwwMag,weight);
+
+    }
+
+
+
+    void getQCDTemplatePlots(bool finalBinning) {
+//         if(hwwMag < 300) return;
+
+         ASTypes::CylLorentzVectorF approxJ (qqJet.pt(),qqJet.eta(),qqJet.phi(),
+                 0);
+
+         ASTypes::CylLorentzVectorF aproxN (met.pt(),lepton.eta(),met.phi(),0);
+
+         auto approxW = metPar > 0 ? lepton.p4() + aproxN : lepton.p4();
+         auto approxH = approxW + qqJet.p4();
+
+         auto approxW2 = lepton.p4();
+         auto approxH2 = approxW2 + qqJet.p4();
+
+         auto hww2ParX      = qqJet.px() + lepton.px();
+         auto hww2ParY      = qqJet.py() + lepton.py();
+         auto hww2ParNormX  = hww2ParX/approxH2.pt();
+         auto hww2ParNormY  = hww2ParY/approxH2.pt();
+         auto getPar =[&](const MomentumF& mom)->double{
+             return mom.px()*hww2ParNormX+mom.py()*hww2ParNormY;
+         };
+         auto metPar2       = getPar(met);
+         auto approxW3 = metPar2 > 0 ? lepton.p4() + aproxN : lepton.p4();
+         auto approxH3 = approxW3 + qqJet.p4();
+
+         TString pf = smpName;
+
+
+         auto mkTL = [](const ASTypes::CylLorentzVectorF& in) -> TLorentzVector{
+             return TLorentzVector(in.px(),in.py(),in.pz(),in.E());
+         };
+
+         auto mkBPl = [&](const TLorentzVector& mom, const TLorentzVector&d1, const TLorentzVector& d2, const TString& name){
+             TVector3 bv = -1*mom.BoostVector();
+             TLorentzVector bd1 = d1;TLorentzVector bd2 = d2;
+             bd1.Boost(bv);
+             bd2.Boost(bv);
+             plotter.getOrMake1DPre(name,"deltaPhi",";deltaPhi",100,-3.2,3.2)->Fill(PhysicsUtilities::deltaPhi(mom.Phi(),bd1.Phi()),weight);
+             plotter.getOrMake1DPre(name,"deltaTheta",";deltaTheta",100,-3.2,3.2)->Fill(PhysicsUtilities::deltaPhi(mom.Theta(),bd1.Theta()),weight);
+             plotter.getOrMake1DPre(name,"deltaPhi2",";deltaPhi",100,-3.2,3.2)->Fill(PhysicsUtilities::deltaPhi(mom.Phi(),bd2.Phi()),weight);
+             plotter.getOrMake1DPre(name,"deltaTheta2",";deltaTheta",100,-3.2,3.2)->Fill(PhysicsUtilities::deltaPhi(mom.Theta(),bd2.Theta()),weight);
+
+         };
+
+
+         auto approxHTL = mkTL(approxH);
+         auto jTL = mkTL(qqJet.p4());
+         auto lTL = mkTL(lepton.p4());
+
+
+         auto plt =[&](const TString& prefix){
+
+             plotter.getOrMake1DPre(prefix,"hwwMag",";hwwMag",300,0,3000)
+                 ->Fill(hwwMag,weight);
+
+             plotter.getOrMake1DPre(prefix,"extraMetPerp",";extraMetPerp",1000,-500,500)
+                 ->Fill(metPerp,weight);
+             plotter.getOrMake1DPre(prefix,"extraMetParRelhwwMag",";extraMetPar / hwwMag",400,-2,2)
+                 ->Fill(metPar/hwwMag,weight);
+
+             plotter.getOrMake1DPre(prefix,"extraMetParRelhwwMag2",";extraMetPar / hwwMag",400,-2,2)
+                 ->Fill(metPar2/approxH2.pt(),weight);
+
+             plotter.getOrMake1DPre(prefix,"wPTRelhwwMag",";wPTRelhwwMag / hwwMag",400,-2,2)
+                 ->Fill(approxW.pt()/hwwMag,weight);
+
+             plotter.getOrMake1DPre(prefix,"qqSDMassCoarse",";qqSDMass",2,50,70)
+                 ->Fill(*qqJet_SDmass,weight);
+             plotter.getOrMake1DPre(prefix
+                     , "approxW",";approxW",300,0,300)->Fill(approxW.mass(),weight);
+             plotter.getOrMake1DPre(prefix
+                     , "approxW2",";approxW",300,0,300)->Fill(approxW2.mass(),weight);
+
+             plotter.getOrMake1DPre(prefix
+                     , "ptDR",";ptDR",300,0,300)->Fill(approxH.pt()*PhysicsUtilities::deltaR(qqJet,approxW),weight);
+             plotter.getOrMake1DPre(prefix
+                     , "ptDR2",";ptDR2",300,0,300)->Fill(approxH2.pt()*PhysicsUtilities::deltaR(qqJet,approxW2),weight);
+
+             plotter.getOrMake1DPre(prefix
+                     , "DR",";ptDR",100,0,5)->Fill(PhysicsUtilities::deltaR(qqJet,approxW),weight);
+             plotter.getOrMake1DPre(prefix
+                     , "DR2",";ptDR2",100,0,5)->Fill(PhysicsUtilities::deltaR(qqJet,approxW2),weight);
+
+             plotter.getOrMake1DPre(prefix, "approxH",";approxH",600,0,600)
+                 ->Fill(approxH.mass(),weight);
+             plotter.getOrMake1DPre(prefix, "approxH2",";approxH",600,0,600)
+                 ->Fill(approxH2.mass(),weight);
+             plotter.getOrMake1DPre(prefix, "approxH3",";approxH",600,0,600)
+                 ->Fill(approxH3.mass(),weight);
+
+             mkBPl(approxHTL,jTL,lTL,prefix);
+
+
+
+         };
+
+
+         auto pltFinal =[&](const TString& prefix){
+
+
+
+             plotter.getOrMake1DPre(prefix,"extraMetPerp",";extraMetPerp",30,-150,150)
+                 ->Fill(extraMetPerp,weight);
+             plotter.getOrMake1DPre(prefix,"extraMetParRelhwwMag",";extraMetPar/hwwMag",50,-0.6,0.4)
+                 ->Fill(extraMetPar/hwwMag,weight);
+
+
+             plotter.getOrMake1DPre(prefix,"hWW"      ,";hWW term"
+                     ,50,100,600)       ->Fill(approxH.mass(),weight);
+             plotter.getOrMake1DPre(prefix,"Wlnu"      ,";Wlnu term"
+                    ,20,60,100)       ->Fill(approxW.mass(),weight);
+         };
+
+         TString ptBin;
+         if(hwwMag >300 && hwwMag< 500) ptBin = "_low";
+         else if(hwwMag >800 && hwwMag< 900) ptBin = "_test";
+         else if(hwwMag >1000 && hwwMag < 1500) ptBin = "_high";
+         else ptBin = "_other";
+
+
+         if(!finalBinning){
+             plt(pf);
+             plt(pf+ptBin);
+
+
+         } else {
+             pltFinal(pf);
+             pltFinal(pf +ptBin);
+
+         }
+
+         plotter.getOrMake1DPre(pf +ptBin,"true_hwwMag",";hwwMag",300,0,3000)
+             ->Fill(hwwMag,weight);
+         plotter.getOrMake1DPre(pf,"true_hwwMag",";hwwMag",300,0,3000)
+             ->Fill(hwwMag,weight);
+
+     }
+
+
+    static void processTemplates(const TString& inFileName, const TString& outFileName,
+            bool isSignal) {
         TFile * fIn = new TFile(inFileName,"read");
         std::vector<TH1*> outHs;
+        std::vector<TString> ptCats    ;
+        std::vector<TString> shells  ;
+        std::vector<TString> ext1DVs ;
+        std::vector<TString> std1DVs ;
+        std::vector<TString> twoDVs  ;
+
+        TString procName;
+
+        if(isSignal){
+            procName = "signal";
+            ptCats    = {"low_","high_"};
+            shells  = {"vqq_","osqq_"};
+            ext1DVs = {"extraMetPerp","extraMetParRelhwwMag","wqqPTRes","hWW","Wlnu"};
+            std1DVs = {"qqSDMassCoarse"};
+            twoDVs = {"signal_vqq_hWW_v_Wlnu","signal_osqq_hWW_v_Wlnu"};
+        } else {
+            procName = "ttbarPW";
+            ptCats   = {"low_","high_"};
+            shells  = {""};
+            ext1DVs = {"extraMetPerp","extraMetParRelhwwMag","hWW","Wlnu"};
+        }
 
         // start witht the 1D histograms
-        std::vector<TString> sigs = {"signal_low","signal_high"};
-        std::vector<TString> shells = {"vqq","osqq"};
-        std::vector<TString> ext1DVs = {"extraMetPerp","extraMetParRelhwwMag","wqqPTRes","hWW","Wlnu"};
         auto do1D =[&](const TString& hName, bool extrap){
             TH1 * h = 0;
             fIn->GetObject(hName,h);
@@ -323,21 +562,24 @@ public:
         };
 
 
-        for(unsigned int iS = 0; iS < sigs.size(); ++iS){
+        for(unsigned int iS = 0; iS < ptCats.size(); ++iS){
             for(unsigned int iSh = 0; iSh < shells.size(); ++iSh){
                 for(unsigned int iV = 0; iV < ext1DVs.size(); ++iV){
-                    do1D(sigs[iS]+"_"+shells[iSh]+"_"+ext1DVs[iV],true);
+                    do1D( procName + "_"+ ptCats[iS]+shells[iSh]+ext1DVs[iV],true);
                 }
-                do1D(sigs[iS]+"_"+shells[iSh]+"_qqSDMassCoarse",false);
+                for(unsigned int iV = 0; iV < std1DVs.size(); ++iV){
+                    do1D(ptCats[iS]+"_"+shells[iSh]+std1DVs[iV],true);
+                }
             }
         }
 
+
         //Add in the average mass plots
-        TH1F * ptH = new TH1F("signal_avgHWWMag",";avg hWWMag",
-                sigs.size(), -0.5, float(sigs.size())-0.5);
-        for(unsigned int iS = 0; iS < sigs.size(); ++iS){
+        TH1F * ptH = new TH1F(procName + "_avgHWWMag",";avg hWWMag",
+                ptCats.size(), -0.5, float(ptCats.size())-0.5);
+        for(unsigned int iS = 0; iS < ptCats.size(); ++iS){
             TH1 * h = 0;
-            fIn->GetObject(sigs[iS]+"_true_hwwMag",h);
+            fIn->GetObject(procName +"_" + ptCats[iS]+"true_hwwMag",h);
             if(!h)
                 throw std::invalid_argument(std::string(
                         "processTemplates() -> Couldn't find the histogram! "));
@@ -346,8 +588,6 @@ public:
         }
         outHs.push_back(ptH);
 
-
-        std::vector<TString> twoDVs = {"signal_vqq_hWW_v_Wlnu","signal_osqq_hWW_v_Wlnu"};
         for(unsigned int iV = 0; iV < twoDVs.size(); ++iV){
             TH2 * h = 0;
             fIn->GetObject(twoDVs[iV],h);
@@ -573,6 +813,12 @@ public:
 
 
     void testSol(bool doPrintouts) {
+        if(!isSignal()){
+            if(*bbJet_SDmass < 30) return;
+            if(*bbJet_SDmass > 210) return;
+            if(*nAK4Btags > 0) return;
+            if(*qqJet_t2ot1>0.75) return;
+        }
 
         auto print = [&](const ASTypes::CylLorentzVectorF& neut,
                 const ASTypes::CylLorentzVectorF& jet, const ASTypes::CylLorentzVectorF& wlnu,
@@ -646,32 +892,97 @@ public:
         HiggsSolverInfoDebug hwwInfo;
         HSolver.minimize(lepton,met,qqJet,*qqJet_SDmass,hwwInfo);
 
+        HiggsSolverInfoDebug hwwBkgInfo;
+        BkgHSolver.minimize(lepton,met,qqJet,hwwBkgInfo);
+
         plotter.getOrMake1DPre(smpName, "simpleHH",";HH",120,0,3000)
                 ->Fill(*hh_orig,weight);
         plotter.getOrMake1DPre(smpName, "chi2HH",";HH",120,0,3000)
                 ->Fill(*hh_chi2,weight);
         plotter.getOrMake1DPre(smpName, "likeliHH",";HH",120,0,3000)
                 ->Fill((hwwInfo.min_sol.hWW + bbJet.p4()).mass(),weight);
+        plotter.getOrMake1DPre(smpName, "likeliBHH",";HH",120,0,3000)
+                ->Fill((hwwBkgInfo.min_sol.hWW + bbJet.p4()).mass(),weight);
+
+
         plotter.getOrMake1DPre(smpName, "chi2",";chi2",100,0,20)
                 ->Fill(*chi2,weight);
         plotter.getOrMake1DPre(smpName, "likeli",";likeli",200,0,50)
                 ->Fill(hwwInfo.min_sol.likeli,weight);
+        plotter.getOrMake1DPre(smpName, "Blikeli",";likeli",200,0,50)
+                ->Fill(hwwBkgInfo.min_sol.likeli,weight);
+
+        plotter.getOrMake1DPre(smpName, "SoBlikeli",";likeli",200,0,5)
+                ->Fill(hwwInfo.min_sol.likeli > 0 ?
+                        hwwInfo.min_sol.likeli/hwwBkgInfo.min_sol.likeli
+                        : 50,weight);
+
+
+        plotter.getOrMake1DPre(smpName, "likeliHWW",";HWW",250,0,500)
+                ->Fill(hwwInfo.min_sol.hWW.mass(),weight);
+        plotter.getOrMake1DPre(smpName, "likeliBHWW",";HH",250,0,500)
+                ->Fill(hwwBkgInfo.min_sol.hWW.mass(),weight);
 
 
         if(*hh_chi2>2000)
         plotter.getOrMake1DPre(smpName, "m2000_chi2",";chi2",100,0,20)
                 ->Fill(*chi2,weight);
-        if((hwwInfo.min_sol.hWW + bbJet.p4()).mass()>2000)
+        if((hwwInfo.min_sol.hWW + bbJet.p4()).mass()>2000){
         plotter.getOrMake1DPre(smpName, "m2000_likeli",";likeli",200,0,50)
                 ->Fill(hwwInfo.min_sol.likeli,weight);
+        plotter.getOrMake1DPre(smpName, "m2000_Blikeli",";likeli",200,0,50)
+                ->Fill(hwwBkgInfo.min_sol.likeli,weight);
+
+        plotter.getOrMake1DPre(smpName, "m2000_SoBlikeli",";likeli",200,0,5)
+                ->Fill(hwwInfo.min_sol.likeli > 0 ?
+                        hwwInfo.min_sol.likeli/hwwBkgInfo.min_sol.likeli
+                        : 50,weight);
+
+        plotter.getOrMake1DPre(smpName, "m2000_likeliHWW",";HWW",250,0,500)
+                ->Fill(hwwInfo.min_sol.hWW.mass(),weight);
+        plotter.getOrMake1DPre(smpName, "m2000_likeliBHWW",";HWW",250,0,500)
+                ->Fill(hwwBkgInfo.min_sol.hWW.mass(),weight);
+
+        }
 
 
         if(*hh_chi2>1000)
           plotter.getOrMake1DPre(smpName, "m1000_chi2",";chi2",100,0,20)
                   ->Fill(*chi2,weight);
-          if((hwwInfo.min_sol.hWW + bbJet.p4()).mass()>1000)
+          if((hwwInfo.min_sol.hWW + bbJet.p4()).mass()>1000){
           plotter.getOrMake1DPre(smpName, "m1000_likeli",";likeli",200,0,50)
                   ->Fill(hwwInfo.min_sol.likeli,weight);
+
+          plotter.getOrMake1DPre(smpName, "m1000_Blikeli",";likeli",200,0,50)
+                  ->Fill(hwwBkgInfo.min_sol.likeli,weight);
+
+          plotter.getOrMake1DPre(smpName, "m1000_SoBlikeli",";likeli",200,0,5)
+                  ->Fill(hwwInfo.min_sol.likeli > 0 ?
+                          hwwInfo.min_sol.likeli/hwwBkgInfo.min_sol.likeli
+                          : 50,weight);
+
+          plotter.getOrMake1DPre(smpName, "m1000_likeliHWW",";HWW",250,0,500)
+                  ->Fill(hwwInfo.min_sol.hWW.mass(),weight);
+          plotter.getOrMake1DPre(smpName, "m1000_likeliBHWW",";HWW",250,0,500)
+                  ->Fill(hwwBkgInfo.min_sol.hWW.mass(),weight);
+
+          }
+
+
+          if(hwwInfo.min_sol.likeli < 32){
+              plotter.getOrMake1DPre(smpName, "lllt32_Blikeli",";likeli",200,0,50)
+                      ->Fill(hwwBkgInfo.min_sol.likeli,weight);
+
+              plotter.getOrMake1DPre(smpName, "lllt32_SoBlikeli",";likeli",200,0,5)
+                      ->Fill(hwwInfo.min_sol.likeli > 0 ?
+                              hwwInfo.min_sol.likeli/hwwBkgInfo.min_sol.likeli
+                              : 50,weight);
+
+              plotter.getOrMake1DPre(smpName, "lllt32_likeliHWW",";HWW",250,0,500)
+                      ->Fill(hwwInfo.min_sol.hWW.mass(),weight);
+              plotter.getOrMake1DPre(smpName, "lllt32_likeliBHWW",";HWW",250,0,500)
+                      ->Fill(hwwBkgInfo.min_sol.hWW.mass(),weight);
+          }
 
 
 
@@ -694,9 +1005,11 @@ public:
                   plotter.getOrMake1DPre("signal_lllt37", "sampParam",";sampParam",50,0,5000)
                           ->Fill(*sampParam,weight);
 
-              if(hwwInfo.min_sol.likeli < 32)
+              if(hwwInfo.min_sol.likeli < 32){
                   plotter.getOrMake1DPre("signal_lllt32", "sampParam",";sampParam",50,0,5000)
                           ->Fill(*sampParam,weight);
+              }
+
               if(hwwInfo.min_sol.likeli < 29.5)
                   plotter.getOrMake1DPre("signal_lllt29p5", "sampParam",";sampParam",50,0,5000)
                           ->Fill(*sampParam,weight);
@@ -807,9 +1120,9 @@ public:
     bool runEvent() override {
         if(!HHSolTreeAnalyzer::runEvent()) return false;
 //        if(*qqJet_t2ot1 >= 0.75) return false;
-//        if(isSignal() && (*bbJet_SDmass < 100 || *bbJet_SDmass>150)) return false;
-//        if(isSignal() && *wqqDR >= 0.7) return false;
-//        if(isSignal() && (PhysicsUtilities::deltaR(true_jet,qqJet) > 0.4)) return false;
+        if(isSignal() && (*bbJet_SDmass < 100 || *bbJet_SDmass>150)) return false;
+        if(isSignal() && *wqqDR >= 0.7) return false;
+        if(isSignal() && (PhysicsUtilities::deltaR(true_jet,qqJet) > 0.4)) return false;
 //        if(!isSignal() && *process!= FillerConstants::TTBAR)return false;
         if(step==0)
             getHHPtResolution();
@@ -821,6 +1134,16 @@ public:
             getTemplatePlots(true);
         if(step==5)
             testSol(false);
+        if(step==6)
+            getBKGTemplatePlots(false);
+        if(step==7)
+            getBKGTemplatePlots(true);
+        if(step==9)
+            getQCDTemplatePlots(false);
+        if(step==10)
+            getQCDTemplatePlots(true);
+
+
         return true;
     }
 
@@ -830,6 +1153,7 @@ public:
 
     HiggsSolver oHSolver;
     HiggsLi HSolver;
+    BkgLi BkgHSolver;
     ParameterSet parameters;
 };
 
@@ -839,7 +1163,12 @@ void getHHTraining(int step, std::string fileName, std::string outFileName,
         float xSec=-1, float numEvent=-1){
 
     if(step == 4){
-        Analyzer::processTemplates("hSolTrees_temp.root","hhSol_templates.root");
+        Analyzer::processTemplates("hSolTrees_temp.root","hhSol_templates.root",true);
+        return;
+    }
+
+    if(step == 8){
+        Analyzer::processTemplates("hSolTrees_bkgTemp_bkg.root","hhSol_bkgTemplates.root",false);
         return;
     }
 
@@ -862,6 +1191,19 @@ void getHHTraining(int step, std::string fileName, std::string outFileName,
         break;
     case 5:
         outN += "test";
+        break;
+    case 6 :
+        outN += "bkgTempStudy";
+        break;
+    case 7 :
+        outN += "bkgTemp";
+        break;
+
+    case 9 :
+        outN += "qcdTempStudy";
+        break;
+    case 10 :
+        outN += "qcdTemp";
         break;
     }
 

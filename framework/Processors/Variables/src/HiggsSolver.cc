@@ -255,14 +255,6 @@ void OneDimPDFWInterp::setup(TFile * inFile, const std::string& hLowName,
         hM->SetBinContent(iB, m);
     }
 
-    std::cout <<"HI!!! "<< iHigh <<" "<<iLow<<" "<<nB <<" "<< hCur->GetBinContent(10)
-        <<" "<< hLow->GetBinContent(10)
-        <<" "<< hHigh->GetBinContent(10)
-        <<" "<< hB->GetBinContent(10)
-        <<" "<< hM->GetBinContent(10)
-        <<" "<< hM->GetBinContent(10)*iLow +  hB->GetBinContent(10)
-        <<" "<< hM->GetBinContent(10)*iHigh +  hB->GetBinContent(10)
-        <<std::endl;
 }
 
 void OneDimPDFWInterp::setInterp(double i){
@@ -302,7 +294,28 @@ void OneDimPDFWInterpAndExtrap::setup(TFile * inFile, const std::string& hLowNam
 
 
 double OneDimPDFWInterpAndExtrap::getProbability(const double x) const{
-//    std:: cout << x <<" "<< minX<<" "<< maxX<<" "<< hCur->FindFixBin(x)<<" "<<hCur->GetBinContent(hCur->FindFixBin(x)) <<" "
+    if(x <= minX){
+        return bW*extapDown(x,minX,
+                hCur->GetBinContent(1),hCur->GetBinContent(0));
+    }
+    if( x >= maxX){
+        return bW*extapUp(x,maxX,
+                hCur->GetBinContent(nB),hCur->GetBinContent(nB+1));
+    }
+    return bW*hCur->Interpolate(x);
+}
+void OneDimPDFWExtrap::setup(TFile * inFile, const std::string& hName, bool verbose ){
+    hCur = TObjectHelper::getObject<TH1>(inFile,hName,verbose);
+    hCur->SetDirectory(0);
+
+    nB = hCur->GetNbinsX();
+    bW = hCur->GetBinWidth(1);
+    minX = hCur->GetBinCenter(1);
+    maxX = hCur->GetBinCenter(nB);
+}
+
+
+double OneDimPDFWExtrap::getProbability(const double x) const{
     if(x <= minX){
         return bW*extapDown(x,minX,
                 hCur->GetBinContent(1),hCur->GetBinContent(0));
@@ -464,37 +477,28 @@ double TwoDimPDF::getProbability(const double x, const double y) const {
     return bW*h->Interpolate(x,y);
 }
 void HiggsLiFunction::setObservables(const MomentumF& inL,
-        const MomentumF& inM, const MomentumF& inJ, const double inPT){
+        const MomentumF& inM, const MomentumF& inJ){
 
 
     lepton = inL.p4();met = inM.p4();qqJet = inJ.p4();
     origQQPT = inJ.pt();
-    hwwMag  = inPT;
-
 
     hwwParX = qqJet.px()+ lepton.px() + met.px();
     hwwParY = qqJet.py() + lepton.py() + met.py();
-    const double origHWWMag  = std::sqrt(hwwParX*hwwParX+hwwParY*hwwParY);
-    hwwParNormX = hwwParX/origHWWMag;
-    hwwParNormY = hwwParY/origHWWMag;
+    hwwMag  = std::sqrt(hwwParX*hwwParX+hwwParY*hwwParY);
+
+    hwwParNormX = hwwParX/hwwMag;
+    hwwParNormY = hwwParY/hwwMag;
     hwwPerpNormX = -1*hwwParNormY;
     hwwPerpNormY = hwwParNormX;
 
     metPerp = met.px()*hwwPerpNormX+met.py()*hwwPerpNormY;
     metPar  = met.px()*hwwParNormX+met.py()*hwwParNormY;
-
-
 }
 
 void HiggsLiFunction::setIterationStorage(const double * p){
-//    neutPerp = metPerp- p[EMET_PERP];
-//    neutPar  = metPar- p[EMET_PAR]*hwwMag;
-//    neutE = std::sqrt(neutPerp*neutPerp+neutPar*neutPar+p[NEUT_Z]*p[NEUT_Z]);
-//    neutX = neutPerp*hwwPerpNormX + neutPar*hwwParNormX;
-//    neutY = neutPerp*hwwPerpNormY + neutPar*hwwParNormY;
 
-
-
+// testting with the parameters being the neutrino momentum, not extra met
 //        neutX = p[EMET_PERP];
 //        neutY = p[EMET_PAR];
 //
@@ -505,18 +509,8 @@ void HiggsLiFunction::setIterationStorage(const double * p){
 //
 //    neutPerp = getPerp(neutX,neutY);
 //    neutPar  = getPar(neutX,neutY);
-
-
 //    extraMetPerp = metPerp - neutPerp;
 //    extraMetPar = metPar - neutPar;
-
-
-
-
-//    std::cout << hwwParNormX <<" "<< hwwParX <<" "<< neutX<<"  "<<neutY <<" "<<p[NEUT_Z]<<" -> ";
-
-//    neutX = neutPerp*hwwPerpNormX + neutPar*hwwParNormX;
-//    neutY = neutPerp*hwwPerpNormY + neutPar*hwwParNormY;
 
 
 
@@ -547,7 +541,7 @@ void HiggsLiFunction::setIterationStorage(const double * p){
 
 
 
-
+//testing the old chi2 method in this framework
 double HiggsLiFunction::test(const double* p){
 //    std::cout << neutE <<" -> ";
     setIterationStorage(p);
@@ -590,24 +584,25 @@ double HiggsLiFunction::operator()(const double* p){
     LL += std::log(pdfs[HiggsLi::EMET_PERP]->getProbability(p[EMET_PERP]));
     LL += std::log(pdfs[HiggsLi::EMET_PAR]->getProbability(p[EMET_PAR]));
     LL += std::log(pdfs[HiggsLi::WQQ_RES]->getProbability(p[WQQ_RES]));
-
-//    const double jetSFChiSq = (wqqSF-1.0)*(wqqSF-1.0)/(HiggsSolver::jetErr*HiggsSolver::jetErr);
-//    LL += -1*jetSFChiSq/2.0;
-
 //    LL += std::log(pdfs[HiggsLi::HWW_WLNU_MASS]->getProbability(hww.mass(),wlnu.mass()));
-
-//    const double hWWMassError = jetM > 60 ? HiggsSolver::offWlnuHWWErr : HiggsSolver::onWlnuHWWErr;
-//    const double hWWMassChiSq = std::pow( (hww.mass() -125)/hWWMassError,2  );
-//    const double meanWlnuMass = jetM > 60 ? HiggsSolver::offWlnuMeanWlnu : HiggsSolver::onWlnuMeanWlnu;
-//    const double wlnuMassError = jetM > 60
-//            ? (wlnu.mass() > HiggsSolver::offWlnuMeanWlnu ? HiggsSolver::offWlnuPosWlnuErr : HiggsSolver::offWnluNegWlnuErr)
-//                    : HiggsSolver::onWlnuWlnuErr;
-//    const double wlnuMassChiSq = std::pow( (wlnu.mass() -meanWlnuMass)/wlnuMassError,2  );
-//
-//    LL += -1*hWWMassChiSq/2.0;
-//    LL += -1*wlnuMassChiSq/2.0;
     LL += std::log(pdfs[HiggsLi::WLNU_MASS]->getProbability(wlnu.mass()));
     LL += std::log(pdfs[HiggsLi::HWW_MASS]->getProbability(hww.mass()));
+
+
+    // Testing replacing certain terms with the chisq
+    //    const double jetSFChiSq = (wqqSF-1.0)*(wqqSF-1.0)/(HiggsSolver::jetErr*HiggsSolver::jetErr);
+    //    LL += -1*jetSFChiSq/2.0;
+    //    LL += std::log(pdfs[HiggsLi::HWW_WLNU_MASS]->getProbability(hww.mass(),wlnu.mass()));
+    //    const double hWWMassError = jetM > 60 ? HiggsSolver::offWlnuHWWErr : HiggsSolver::onWlnuHWWErr;
+    //    const double hWWMassChiSq = std::pow( (hww.mass() -125)/hWWMassError,2  );
+    //    const double meanWlnuMass = jetM > 60 ? HiggsSolver::offWlnuMeanWlnu : HiggsSolver::onWlnuMeanWlnu;
+    //    const double wlnuMassError = jetM > 60
+    //            ? (wlnu.mass() > HiggsSolver::offWlnuMeanWlnu ? HiggsSolver::offWlnuPosWlnuErr : HiggsSolver::offWnluNegWlnuErr)
+    //                    : HiggsSolver::onWlnuWlnuErr;
+    //    const double wlnuMassChiSq = std::pow( (wlnu.mass() -meanWlnuMass)/wlnuMassError,2  );
+    //
+    //    LL += -1*hWWMassChiSq/2.0;
+    //    LL += -1*wlnuMassChiSq/2.0;
 
 
 
@@ -629,7 +624,7 @@ double HiggsLiFunction::operator()(const double* p){
 }
 
 
-
+//Testing with the neutrino as a parameter
 //double HiggsLiFunction::operator()(const double* p){
 //    neutE = std::sqrt(p[NEUT_X]*p[NEUT_X]+p[NEUT_Y]*p[NEUT_Y]+p[NEUT_Z]*p[NEUT_Z]);
 //
@@ -671,12 +666,8 @@ double HiggsLiFunction::operator()(const double* p){
 //}
 
 HiggsLi::HiggsLi(const std::string& dataDir) : dataDir(dataDir),
-//        osqq_functor(&osqq_function,&HiggsLiFunction::test,4),
-//        vqq_functor(&vqq_function,&HiggsLiFunction::test,4),
         osqq_functor(&osqq_function,&HiggsLiFunction::operator (),4),
         vqq_functor(&vqq_function,&HiggsLiFunction::operator (),4),
-//        osqq_minimizer( ROOT::Minuit2::kSimplex ),
-//        vqq_minimizer( ROOT::Minuit2::kSimplex )
         osqq_minimizer( ROOT::Minuit::kSimplex,4 ),
         vqq_minimizer( ROOT::Minuit::kSimplex,4 )
 {
@@ -832,62 +823,17 @@ void HiggsLi::minimize(const MomentumF& lepton, const MomentumF& met, const Mome
     interp(WQQ_SDMASS);
     interp(WLNU_MASS);
     interp(HWW_MASS);
-//    std::cout <<"HI!!! "<<  oHWWMag <<" "<<cHWWMag<<std::endl;
-
-
-
-//    double metpz = (lepton.pz() < 0 ? -1.0 : 1.0) * std::fabs(met.pt() / std::tan(lepton.theta()));
-//
-//    resetParameters(osqq_minimizer,met.px(),met.py(),metpz);
-//    resetParameters(vqq_minimizer,met.px(),met.py(),metpz);
-
-//    auto doFit = [&](
-//            ROOT::Minuit2::Minuit2Minimizer& min, HiggsLiFunction& f,
-//            std::vector<std::shared_ptr<BASEPDF>>& pdfs, HiggsSolInfoDebug& out  ){
-//        f.setObservables(lepton,met,qqJet,cHWWMag);
-//
-//
-//        out.minOut=min.Minimize();
-//        out.noSDLikli = min.MinValue();
-//        const double *xs = min.X();
-//
-//        out.likeli = out.noSDLikli - 2.0*std::log(pdfs[WQQ_SDMASS]->getProbability(qqSDMass));
-//
-//        double nE = std::sqrt(
-//                xs[HiggsLiFunction::NEUT_X]*xs[HiggsLiFunction::NEUT_X]+
-//                xs[HiggsLiFunction::NEUT_Y]*xs[HiggsLiFunction::NEUT_Y]+
-//                xs[HiggsLiFunction::NEUT_Z]*xs[HiggsLiFunction::NEUT_Z]);
-//        out.neutrino.SetPxPyPzE(xs[HiggsLiFunction::NEUT_X],xs[HiggsLiFunction::NEUT_Y],
-//                xs[HiggsLiFunction::NEUT_Z],nE);
-//        out.ptRes = xs[HiggsLiFunction::QQJET_RES];
-//
-//        double wqqSF = 1.0/(out.ptRes+1.0);
-//        double jetE   = std::sqrt(
-//                wqqSF*wqqSF*(qqJet.px()*qqJet.px()+qqJet.py()*qqJet.py()+qqJet.pz()*qqJet.pz())
-//                +f.jetM*f.jetM);
-//        out.wqqjet.SetPxPyPzE(wqqSF*qqJet.px(),wqqSF*qqJet.py(),wqqSF*qqJet.pz(),jetE);
-//        out.wlnu = lepton.p4() + out.neutrino;
-//        out.hWW = out.wqqjet + out.wlnu;
-//    };
 
     auto doFit = [&](
             Minimizer& min, HiggsLiFunction& f,
             std::vector<std::shared_ptr<BASEPDF>>& pdfs, HiggsSolInfoDebug& out  ){
 
-        f.setObservables(lepton,met,qqJet,oHWWMag);
-//        f.setObservables(lepton,met,qqJet,(lepton.p4()+met.p4()+qqJet.p4()).pt());
-//        double defs[] = {0,0,0,0};
-//        f.setIterationStorage(defs);
-//        double guessZ = HiggsSolver::getInvisible(met,f.scaledQQJet+lepton.p4()).pz();
+        f.setObservables(lepton,met,qqJet);
         resetParameters(min,0,3000 );
 //        resetParameters(min,met.x(),met.y());
 
-
-
         out.minOut=min.Minimize();
         out.noSDLikli = min.MinValue();
-//        out.likeli = out.noSDLikli;
-
         out.likeli = out.noSDLikli - 2.0*std::log(pdfs[WQQ_SDMASS]->getProbability(qqSDMass));
 
         const double *xs = min.X();
@@ -911,8 +857,6 @@ void HiggsLi::minimize(const MomentumF& lepton, const MomentumF& met, const Mome
 //        doFit(osqq_minimizer,osqq_function,osqq_pdfs,out.osqq_sol);
 //        out.min_sol = out.osqq_sol;
 //    }
-
-
     osqq_minimizer.SetFunction(osqq_functor);
     doFit(osqq_minimizer,osqq_function,osqq_pdfs,out.osqq_sol);
     vqq_minimizer.SetFunction(vqq_functor);
@@ -920,4 +864,155 @@ void HiggsLi::minimize(const MomentumF& lepton, const MomentumF& met, const Mome
     out.min_sol = out.vqq_sol.likeli < out.osqq_sol.likeli ? out.vqq_sol : out.osqq_sol;
 }
 
+
+void BkgLiFunction::setObservables(const MomentumF& inL,
+        const MomentumF& inM, const MomentumF& inJ){
+
+    lepton = inL.p4();met = inM.p4();qqJet = inJ.p4();
+
+
+
+
+    hwwParX = qqJet.px()+ lepton.px() + met.px();
+    hwwParY = qqJet.py() + lepton.py() + met.py();
+    hwwMag  = std::sqrt(hwwParX*hwwParX+hwwParY*hwwParY);
+
+    hwwParNormX = hwwParX/hwwMag;
+    hwwParNormY = hwwParY/hwwMag;
+    hwwPerpNormX = -1*hwwParNormY;
+    hwwPerpNormY = hwwParNormX;
+
+    metPerp = met.px()*hwwPerpNormX+met.py()*hwwPerpNormY;
+    metPar  = met.px()*hwwParNormX+met.py()*hwwParNormY;
+
+    double jetE   = std::sqrt(
+            (qqJet.px()*qqJet.px()+qqJet.py()*qqJet.py()+qqJet.pz()*qqJet.pz()));
+
+    qqJet.SetPxPyPzE(qqJet.px(),qqJet.py(),qqJet.pz(),jetE);
 }
+
+void BkgLiFunction::setIterationStorage(const double * p){
+
+    neutPerp = metPerp- p[EMET_PERP];
+    neutPar  = metPar- p[EMET_PAR]*hwwMag;
+    neutE = std::sqrt(neutPerp*neutPerp+neutPar*neutPar+p[NEUT_Z]*p[NEUT_Z]);
+    neutX = neutPerp*hwwPerpNormX + neutPar*hwwParNormX;
+    neutY = neutPerp*hwwPerpNormY + neutPar*hwwParNormY;
+    neutE = std::sqrt(neutPerp*neutPerp+neutPar*neutPar+p[NEUT_Z]*p[NEUT_Z]);
+    neutrino.SetPxPyPzE(neutX,neutY,p[NEUT_Z],neutE);
+
+
+    wlnu = lepton + neutrino;
+    hww = wlnu + qqJet;
+}
+
+
+double BkgLiFunction::operator()(const double* p){
+    setIterationStorage(p);
+    LL = 0;
+    LL += std::log(pdfs[BkgLi::EMET_PERP]->getProbability(p[EMET_PERP]));
+    LL += std::log(pdfs[BkgLi::EMET_PAR]->getProbability(p[EMET_PAR]));
+    LL += std::log(pdfs[BkgLi::WLNU_MASS]->getProbability(wlnu.mass()));
+    LL += std::log(pdfs[BkgLi::HWW_MASS]->getProbability(hww.mass()));
+    return -2.0*LL;
+}
+
+
+
+BkgLi::BkgLi(const std::string& dataDir) : dataDir(dataDir),
+        functor(&function,&BkgLiFunction::operator (),4),
+        minimizer( ROOT::Minuit::kSimplex,4 )
+{
+    auto setupMinimizer=[&](Minimizer& min, ROOT::Math::Functor& f) {
+        min.SetFunction(f);
+        resetParameters(min);
+    };
+    setupMinimizer(minimizer,functor);
+
+    pdfs.resize(NPDFS);
+    pdfs[EMET_PERP]    .reset(new OneDimPDFWInterpAndExtrap());
+    pdfs[EMET_PAR]     .reset(new OneDimPDFWInterpAndExtrap());
+    pdfs[WLNU_MASS].reset(new OneDimPDFWInterpAndExtrap());
+    pdfs[HWW_MASS].reset(new OneDimPDFWInterpAndExtrap());
+
+    function.pdfs.resize(NPDFS);
+    function.pdfs[EMET_PERP]     = pdfs[EMET_PERP]    ;
+    function.pdfs[EMET_PAR]      = pdfs[EMET_PAR]     ;
+    function.pdfs[WLNU_MASS]     = pdfs[WLNU_MASS]      ;
+    function.pdfs[HWW_MASS]      = pdfs[HWW_MASS]   ;
+}
+
+void BkgLi::resetParameters(Minimizer& min) {
+    min.SetVariable(BkgLiFunction::EMET_PERP,"EMET_PERP",0,100);
+    min.SetVariable(BkgLiFunction::EMET_PAR,"EMET_PAR",0,0.5);
+    min.SetVariable(BkgLiFunction::NEUT_Z  ,"NEUT_Z",0,500);
+    min.SetFixedVariable(3,"DUMMY",0);
+}
+void BkgLi::setup(std::string fileName, bool verbose){
+    TFile * inFile = TObjectHelper::getFile(dataDir+fileName,"read",verbose);
+
+//    auto setup1D = [&] (int entry, const std::string& vName){
+//        ((OneDimPDFWExtrap*)(pdfs[entry].get()))-> setup(inFile,
+//                std::string("ttbarPW_")+vName,verbose);
+//    };
+    hwwPT = TObjectHelper::getObject<TH1>(inFile,"ttbarPW_avgHWWMag",verbose);
+    const double lowM = hwwPT->GetBinContent(1);
+    const double highM = hwwPT->GetBinContent(2);
+    auto setup1D = [&] (int entry, const std::string& vName){
+        ((OneDimPDFWInterp*)(pdfs[entry].get()))-> setup(inFile,
+                std::string("ttbarPW_low_")+vName,
+                std::string("ttbarPW_high_")+vName,lowM,highM,verbose);
+    };
+    setup1D(EMET_PERP,"extraMetPerp");
+    setup1D(EMET_PAR,"extraMetParRelhwwMag");
+    setup1D(WLNU_MASS,"Wlnu");
+    setup1D(HWW_MASS,"hWW");
+
+    delete inFile;
+}
+
+
+void BkgLi::minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
+        HiggsSolverInfoDebug& out){
+
+    const double oHWWMag = (lepton.p4()+met.p4()+qqJet.p4()).pt();
+    auto interp = [&](PDFList p) {
+      ((OneDimPDFWInterp*)(pdfs[p].get()))->setInterp(oHWWMag);
+
+    };
+    interp(EMET_PERP);
+    interp(EMET_PAR);
+    interp(WLNU_MASS);
+    interp(HWW_MASS);
+
+    auto doFit = [&](
+            Minimizer& min, BkgLiFunction& f,HiggsSolInfoDebug& out  ){
+
+        f.setObservables(lepton,met,qqJet);
+        resetParameters(min);
+
+        out.minOut=min.Minimize();
+
+        out.likeli = min.MinValue();
+        const double *xs = min.X();
+        f.setIterationStorage(xs);
+        out.neutrino = f.neutrino;
+        out.wqqjet = f.qqJet;
+        out.wlnu = f.wlnu;
+        out.hWW = f.hww;
+        out.emetperp = xs[BkgLiFunction::EMET_PERP];
+        out.emetpar = xs[BkgLiFunction::EMET_PAR];
+
+    };
+
+    minimizer.SetFunction(functor);
+    doFit(minimizer,function,out.min_sol);
+}
+
+
+
+}
+
+
+
+
