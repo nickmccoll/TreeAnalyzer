@@ -196,7 +196,6 @@ public:
     void setIterationStorage(const double * p);
 
     double operator()(const double * p);
-    double test(const double * p);
 
     //constants for this class
     std::vector<std::shared_ptr<BASEPDF>> pdfs;
@@ -243,24 +242,22 @@ public:
 class HSolverLi {
 public:
     typedef TMinuitMinimizer Minimizer;
+    //    enum PDFList {EMET_PERP,EMET_PAR,WQQ_RES, WQQ_SDMASS, HWW_WLNU_MASS, NPDFS};
+        enum PDFList {EMET_PERP,EMET_PAR,WQQ_RES, WQQ_SDMASS, WLNU_MASS, HWW_MASS, NPDFS};
 
+    //Setup
     HSolverLi(const std::string& dataDir);
-    ~HSolverLi() {
+    ~HSolverLi() {}
+    void setParamters(const HWWParameters& hwwParam, bool verbose=false);
 
-    }
-//    enum PDFList {EMET_PERP,EMET_PAR,WQQ_RES, WQQ_SDMASS, HWW_WLNU_MASS, NPDFS};
-    enum PDFList {EMET_PERP,EMET_PAR,WQQ_RES, WQQ_SDMASS, WLNU_MASS, HWW_MASS, NPDFS};
-
-    void setup(std::string fileName, const double ptCorB_,const double ptCorM_,
-            bool verbose= false );
-
-    void resetParameters(Minimizer& min, const double neutZ=0);
-
-    double getCorrHWWPT(const double recoPT) const;
-
-    void minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
+    // Run
+    double minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
             double qqSDMass, HSolverLiInfo& out,
             HSolverLiInfo * osqq_sol = 0, HSolverLiInfo * vqq_sol = 0);
+
+    //Support
+    void resetParameters(Minimizer& min, const double neutZ=0);
+    double getCorrHWWPT(const double recoPT) const;
 
     const std::string dataDir;
     double ptCorB=0;
@@ -335,17 +332,19 @@ public:
 class HSolverBkgLi {
 public:
     typedef TMinuitMinimizer Minimizer;
-
-    HSolverBkgLi(const std::string& dataDir);
-    ~HSolverBkgLi() {
-
-    }
     enum PDFList {EMET_PERP,EMET_PAR, WLNU_MASS, HWW_MASS, NPDFS};
 
-    void setup(std::string fileName,bool verbose= false );
-    void resetParameters(Minimizer& min);
-    void minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
+    //Setup
+    HSolverBkgLi(const std::string& dataDir);
+    void setParamters(const HWWParameters& hwwParam, bool verbose=false);
+    ~HSolverBkgLi() {}
+
+    //Run
+    double minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
             HSolverLiInfo& out);
+
+    //Support
+    void resetParameters(Minimizer& min);
 
     const std::string dataDir;
     double ptCorB=0;

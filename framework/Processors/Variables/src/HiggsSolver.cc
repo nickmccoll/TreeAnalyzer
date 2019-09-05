@@ -570,16 +570,14 @@ void HSolverLi::resetParameters(Minimizer& min,const double neutZ) {
     min.SetLimitedVariable(HSolverLiFunction::WQQ_RES ,"QQJET_RES",0,0.5,-0.9,5);
 }
 //--------------------------------------------------------------------------------------------------
-void HSolverLi::setup(std::string fileName, const double ptCorB_,const double ptCorM_,
-        bool verbose){
-    TFile * inFile = TObjectHelper::getFile(dataDir+fileName,"read",verbose);
+void HSolverLi::setParamters(const HWWParameters& hwwParam, bool verbose) {
+    TFile * inFile = TObjectHelper::getFile(dataDir+hwwParam.liFileName,"read",verbose);
+    ptCorB = hwwParam.ptCorB;
+    ptCorM = hwwParam.ptCorM;
 
     hwwPT = TObjectHelper::getObject<TH1>(inFile,"signal_avgHWWMag",verbose);
     const double lowM = hwwPT->GetBinContent(1);
     const double highM = hwwPT->GetBinContent(2);
-
-    ptCorB = ptCorB_;
-    ptCorM = ptCorM_;
 
     auto setup1D = [&] (int entry, const std::string& vName){
         ((OneDimPDFWInterp*)(vqq_pdfs[entry].get()))-> setup(inFile,
@@ -605,7 +603,7 @@ void HSolverLi::setup(std::string fileName, const double ptCorB_,const double pt
 //    setup2D(HWW_WLNU_MASS,"hWW_v_Wlnu");
 
     delete inFile;
-}
+};
 //--------------------------------------------------------------------------------------------------
 double HSolverLi::getCorrHWWPT(const double recoPT) const{
     double boundPT = recoPT;
@@ -615,7 +613,7 @@ double HSolverLi::getCorrHWWPT(const double recoPT) const{
     return recoPT * corPT/boundPT; //apply as a correction due to the limted range;
 }
 //--------------------------------------------------------------------------------------------------
-void HSolverLi::minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
+double HSolverLi::minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
         double qqSDMass, HSolverLiInfo& out, HSolverLiInfo * osqq_sol, HSolverLiInfo * vqq_sol){
     const double oHWWMag = (lepton.p4()+met.p4()+qqJet.p4()).pt();
     const double cHWWMag = getCorrHWWPT(oHWWMag);
@@ -672,6 +670,8 @@ void HSolverLi::minimize(const MomentumF& lepton, const MomentumF& met, const Mo
     doFit(osqq_minimizer,osqq_function,osqq_pdfs,out,osqq_sol);
     vqq_minimizer.SetFunction(vqq_functor);
     doFit(vqq_minimizer,vqq_function,vqq_pdfs,out,vqq_sol);
+
+    return out.likeli;
 }
 //--------------------------------------------------------------------------------------------------
 // HSolverBkgLiFunction
@@ -751,15 +751,8 @@ HSolverBkgLi::HSolverBkgLi(const std::string& dataDir) : dataDir(dataDir),
     function.pdfs[HWW_MASS]      = pdfs[HWW_MASS]   ;
 }
 //--------------------------------------------------------------------------------------------------
-void HSolverBkgLi::resetParameters(Minimizer& min) {
-    min.SetVariable(HSolverBkgLiFunction::EMET_PERP,"EMET_PERP",0,100);
-    min.SetVariable(HSolverBkgLiFunction::EMET_PAR,"EMET_PAR",0,0.5);
-    min.SetVariable(HSolverBkgLiFunction::NEUT_Z  ,"NEUT_Z",0,500);
-    min.SetFixedVariable(3,"DUMMY",0);
-}
-//--------------------------------------------------------------------------------------------------
-void HSolverBkgLi::setup(std::string fileName, bool verbose){
-    TFile * inFile = TObjectHelper::getFile(dataDir+fileName,"read",verbose);
+void HSolverBkgLi::setParamters(const HWWParameters& hwwParam, bool verbose){
+    TFile * inFile = TObjectHelper::getFile(dataDir+hwwParam.bkgLiFileName,"read",verbose);
     hwwPT = TObjectHelper::getObject<TH1>(inFile,"ttbarPW_avgHWWMag",verbose);
     const double lowM = hwwPT->GetBinContent(1);
     const double highM = hwwPT->GetBinContent(2);
@@ -776,7 +769,14 @@ void HSolverBkgLi::setup(std::string fileName, bool verbose){
     delete inFile;
 }
 //--------------------------------------------------------------------------------------------------
-void HSolverBkgLi::minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
+void HSolverBkgLi::resetParameters(Minimizer& min) {
+    min.SetVariable(HSolverBkgLiFunction::EMET_PERP,"EMET_PERP",0,100);
+    min.SetVariable(HSolverBkgLiFunction::EMET_PAR,"EMET_PAR",0,0.5);
+    min.SetVariable(HSolverBkgLiFunction::NEUT_Z  ,"NEUT_Z",0,500);
+    min.SetFixedVariable(3,"DUMMY",0);
+}
+//--------------------------------------------------------------------------------------------------
+double HSolverBkgLi::minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
         HSolverLiInfo& out){
 
     const double oHWWMag = (lepton.p4()+met.p4()+qqJet.p4()).pt();
@@ -811,6 +811,7 @@ void HSolverBkgLi::minimize(const MomentumF& lepton, const MomentumF& met, const
 
     minimizer.SetFunction(functor);
     doFit(minimizer,function,out);
+    return out.likeli;
 }
 }
 

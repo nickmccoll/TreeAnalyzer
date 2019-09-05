@@ -34,9 +34,11 @@ public:
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed,int step) :
         HHSolTreeAnalyzer(fileName,treeName,treeInt, randSeed), step(step), HSolver(""),
         BkgHSolver(""){
-        HSolver.setup("hhSol_templates.root",0.9663,-0.00001013,true);
-        BkgHSolver.setup("hhSol_bkgTemplates.root",true);
         parameters = ReaderConstants::set2017Parameters();
+        parameters.hww.liFileName = "hhSol_templates.root";
+        parameters.hww.bkgLiFileName = "hhSol_bkgTemplates.root";
+        HSolver.setParamters(parameters.hww);
+        BkgHSolver.setParamters(parameters.hww);
     }
 
 

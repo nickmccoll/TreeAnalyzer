@@ -124,7 +124,8 @@ struct DileptonParameters {
     DileptonProcessor::muFunBool mu_getID2 ;
     DileptonProcessor::muFunFloat mu_getISO;
 
-};//--------------------------------------------------------------------------------------------------
+};
+//--------------------------------------------------------------------------------------------------
 
 class BaseRecoJet;
 class Jet;
@@ -165,6 +166,7 @@ struct JetParameters {
 };
 
 struct HWWParameters {
+    // CHI parameters
     double posMETParErr     ;
     double negMETParErr     ;
     double metPerpErr       ;
@@ -179,7 +181,11 @@ struct HWWParameters {
     double onWlnuHWWErr     ;
     double offWlnuHWWErr    ;
 
-    std::string   tempalteFileName;
+    //LI parameters
+    double ptCorB           ;
+    double ptCorM           ;
+    std::string   liFileName;
+    std::string   bkgLiFileName;
 
 };
 

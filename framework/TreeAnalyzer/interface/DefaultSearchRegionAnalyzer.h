@@ -30,6 +30,8 @@ class JERCorrector;
 class JESUncShifter;
 class METUncShifter;
 class HSolverChi;
+class HSolverLi;
+class HSolverBkgLi;
 
 class Jet               ;
 class FatJet            ;
@@ -136,7 +138,8 @@ public:
 
     float                      wwDM        = 0;
     float                      hwwChi      = 0;
-    bool                       passWWDM    = false;
+    float                      hwwLi       = 0;
+    float                      hwwBkgLi    = 0;
 
 
     MomentumF                  neutrino           ;
@@ -144,7 +147,8 @@ public:
     MomentumF                  wqq                ;
     MomentumF                  hWW                ;
     MomentumF                  hh                 ;
-    MomentumF                  hh_old             ;
+    MomentumF                  hh_chi             ;
+    MomentumF                  hh_basic           ;
     float                      hbbMass     =0     ;
 
     MomentumF                  hWW_2l             ;
@@ -168,7 +172,9 @@ public:
     std::unique_ptr<JERCorrector>         JERAK8PuppiProc ;
     std::unique_ptr<JESUncShifter>        JESUncProc ;
     std::unique_ptr<METUncShifter>          METUncProc;
-    std::unique_ptr<HSolverChi>              higgsSolver;
+    std::unique_ptr<HSolverChi>             hSolverChi;
+    std::unique_ptr<HSolverLi>             hSolverLi;
+    std::unique_ptr<HSolverBkgLi>          hSolverBkgLi;
 };
 }
 #endif
