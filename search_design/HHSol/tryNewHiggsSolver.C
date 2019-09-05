@@ -379,7 +379,7 @@ public:
 //    }
 
     void goTest() {
-        HiggsSolverInfo info;
+        HiggsChiInfo info;
         double chisq = solver.hSolverMinimization(selectedLepton->p4(),wjjCand->p4(),
                 reader_event->met.p4(),wjjCand->sdMom().mass() <60,parameters.hww ,&info);
 
@@ -476,7 +476,7 @@ public:
 
     }
 
-    void plotTerms(const std::string& prefix, const HiggsSolverInfo& info){
+    void plotTerms(const std::string& prefix, const HiggsChiInfo& info){
         const double jetX = wjjCand->px();
         const double jetY = wjjCand->py();
         const double jetZ = wjjCand->pz();
@@ -569,7 +569,7 @@ public:
     }
 
     void goTest2() {
-         HiggsSolverInfo info;
+         HiggsChiInfo info;
          double chisq = solver.hSolverMinimization(selectedLepton->p4(),wjjCand->p4(),
                  reader_event->met.p4(),wjjCand->sdMom().mass() <60,parameters.hww ,&info);
 

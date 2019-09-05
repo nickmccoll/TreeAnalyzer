@@ -1,3 +1,62 @@
+// RUNNING
+
+cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIISummer16MiniAODv2/Radion_hh_hVVhbb_inclusive_narrow_M2000_TuneCUETP8M1_13TeV-madgraph-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/50000/0CA7CEB0-B25E-E711-9997-842B2B42B758.root" outputFile="testGen_old.root" isCrab=False sample=signal_blkgrav type=MC2017 sampParam=2000 maxEvents=1000
+
+
+cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIISummer16MiniAODv2/Radion_hh_hVVhbb_inclusive_narrow_M2000_TuneCUETP8M1_13TeV-madgraph-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/50000/0CA7CEB0-B25E-E711-9997-842B2B42B758.root" outputFile="testGen_new.root" isCrab=False sample=signal_blkgrav type=MC2017 sampParam=2000 maxEvents=200
+
+
+
+cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIISummer16MiniAODv2/Radion_hh_hVVhbb_inclusive_narrow_M2000_TuneCUETP8M1_13TeV-madgraph-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/50000/0CA7CEB0-B25E-E711-9997-842B2B42B758.root" outputFile="testGen_newFilt.root" isCrab=False sample=signal_blkgrav type=MC2017 sampParam=2000 maxEvents=200
+
+cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIIFall17MiniAODv2/QCD_HT2000toInf_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/80000/F44F2FDA-3A5B-E811-A65C-0CC47A4D7630.root" outputFile="testQCD_newFilt.root" isCrab=False sample=qcd type=MC2017 sampParam=2000 maxEvents=200
+
+cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIIFall17MiniAODv2/QCD_HT500to700_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/90000/E2B87AE4-D496-E811-9F33-0CC47A78A468.root" outputFile="testQCD500_new.root" isCrab=False sample=qcd type=MC2017 sampParam=500 maxEvents=200
+
+cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIIFall17MiniAODv2/QCD_HT500to700_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/90000/E2B87AE4-D496-E811-9F33-0CC47A78A468.root" outputFile="testQCD500_newFilt.root" isCrab=False sample=qcd type=MC2017 sampParam=500 maxEvents=200
+
+
+////////
+
+rr -b -q 'HHSol/getHHTraining.C+(0,"trees/hhSolTrees_radion.root","radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(0,"trees/hhSolTrees_bulkgrav.root","bulkgrav")' 
+hadd -f hSolTrees_HPTRes.root hSolTrees_HPTRes_*.root
+  
+  rr -b -q 'HHSol/getHHTraining.C+(0,"trees/hhSolTrees_radion.root","radion")' &
+  rr -b -q 'HHSol/getHHTraining.C+(0,"trees/hhSolTrees_bulkgrav.root","bulkgrav")' 
+  hadd -f hSolTrees_test.root hSolTrees_test_*.root
+
+rr -b -q 'HHSol/getHHTraining.C+(2,"trees/hhSolTrees_radion.root","radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(2,"trees/hhSolTrees_bulkgrav.root","bulkgrav")' 
+hadd -f hSolTrees_tempStudy.root hSolTrees_tempStudy_*.root
+
+rr -b -q 'HHSol/getHHTraining.C+(3,"trees/hhSolTrees_radion.root","radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(3,"trees/hhSolTrees_bulkgrav.root","bulkgrav")' 
+hadd -f hSolTrees_temp.root hSolTrees_temp_*.root
+
+
+
+rr -b -q 'HHSol/getHHTraining.C+(4,"","")'
+    
+    
+
+rr -b -q 'HHSol/getHHTraining.C+(5,"trees/hhSolTrees_bkg.root","bkg")' &    
+rr -b -q 'HHSol/getHHTraining.C+(5,"trees/hhSolTrees_radion.root","radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(5,"trees/hhSolTrees_bulkgrav.root","bulkgrav")' &
+hadd -f hSolTrees_test.root hSolTrees_test_*.root
+
+
+
+
+rr -b -q 'HHSol/getHHTraining.C+(6,"trees/hhSolTrees_bkg.root","bkg")' & 
+              
+              
+rr -b -q 'HHSol/getHHTraining.C+(9,"trees/hhSolTrees_bkg.root","bkg")' &    
+rr -b -q 'HHSol/getHHTraining.C+(9,"trees/hhSolTrees_radion.root","radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(9,"trees/hhSolTrees_bulkgrav.root","bulkgrav")' &
+hadd -f hSolTrees_qcdTempStudy.root hSolTrees_qcdTempStudy_*.root   
+
+
 //Fit HHRes
 {
   TFile * f = new TFile("hSolTrees_HPTRes.root");

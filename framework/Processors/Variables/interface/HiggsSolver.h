@@ -17,11 +17,20 @@
 namespace TAna {
 struct HWWParameters;
 
+//--------------------------------------------------------------------------------------------------
+// Solve a second order equation
+//--------------------------------------------------------------------------------------------------
+namespace HSolverBasic {
+MomentumF getInvisible(const MomentumF& met, const MomentumF& vis,
+            const double hMass = 125);
+};
 
-class HiggsSolverInfo {
-public:
-    HiggsSolverInfo()
-{};
+
+//--------------------------------------------------------------------------------------------------
+// Higgs solver based on a chi-square fit
+//--------------------------------------------------------------------------------------------------
+struct HSolverChiInfo {
+    HSolverChiInfo(){};
     float chiSq = -1;
     float SF = -1;
     ASTypes::CylLorentzVectorF neutrino;
@@ -29,33 +38,24 @@ public:
     ASTypes::CylLorentzVectorF hWW;
     ASTypes::CylLorentzVectorF wqqjet;
 };
-
-
-
-class HiggsSolver {
-
+//--------------------------------------------------------------------------------------------------
+class HSolverChi {
 public:
-
-    HiggsSolver();
-    ~HiggsSolver();
-
+    HSolverChi();
+    ~HSolverChi();
 
     static void minuitFunctionWrapper(int& nDim, double* gout, double& result, double *par,int flg);
     double hSolverMinimization(const ASTypes::CylLorentzVectorF& lep,
             const ASTypes::CylLorentzVectorF& jet, const ASTypes::CylLorentzVectorF& met,
-            bool jetIsVirtual,const HWWParameters& params, HiggsSolverInfo * info);
+            bool jetIsVirtual,const HWWParameters& params, HSolverChiInfo * info);
 
 
     static double hSolverFunction( const double leptonX, const double leptonY, const double leptonZ,
             const double neutrinoX, const double neutrinoY,const double neutrinoZ,
             const double jetX,    const double jetY,    const double jetZ,    const double jetM,
             const double jetSF, const double metX, const double metY,
-            HiggsSolverInfo * info = 0
+            HSolverChiInfo * info = 0
     );
-
-
-    static MomentumF getInvisible(const MomentumF& met, const MomentumF& vis,
-            const double hMass = 125);
 
     TFitter *minimizer;
 
@@ -74,8 +74,9 @@ public:
     static double onWlnuHWWErr     ;
     static double offWlnuHWWErr    ;
 };
-
-
+//--------------------------------------------------------------------------------------------------
+// PDF support for the likelihood HSolvers
+//--------------------------------------------------------------------------------------------------
 class BASEPDF {
 public:
     virtual ~BASEPDF(){}
@@ -91,7 +92,11 @@ public:
     static double extapUp(const double x, const double bound, const double probAtBound,
             const double integBound);
 };
-
+//--------------------------------------------------------------------------------------------------
+// 1D PDF that supports interpolation between two PDFs
+// We assume that the underflow and overflow make sense.....
+// Bin contents are the probability density
+//--------------------------------------------------------------------------------------------------
 class OneDimPDFWInterp : public BASEPDF {
 public:
     virtual ~OneDimPDFWInterp(){}
@@ -112,25 +117,15 @@ public:
     std::unique_ptr<TH1> hM    = 0;
     std::unique_ptr<TH1> hB    = 0;
 };
-//Histogram assumptions: Equal bin widths
-//bin contents are the probability density (divided by bin widths)
-//That way we can interpolate between bin centers and not mess up the integral
-//the overflow and underflow contain the INTEGRAL of probability from the last bins bin center to
-//infinity. We do an extrapolation assuming an exponential form.
-class OneDimPDFWInterpAndExtrap : public OneDimPDFWInterp {
-public:
-    virtual void setup(TFile * inFile, const std::string& hLowName, const std::string& hHighName,
-            const double lowValue, const double highValue, bool verbose= false );
-    double getProbability(const double x) const;
-    double minX = 0;
-    double maxX = 0;
-};
 
-//Histogram assumptions: Equal bin widths
-//bin contents are the probability density (divided by bin widths)
-//That way we can interpolate between bin centers and not mess up the integral
-//the overflow and underflow contain the INTEGRAL of probability from the last bins bin center to
-//infinity. We do an extrapolation assuming an exponential form.
+//--------------------------------------------------------------------------------------------------
+// 1D PDF that supports extrapolation above and below the histogram edges
+// Histogram assumptions: Equal bin widths
+// bin contents are the probability density (divided by bin widths)
+// That way we can interpolate between bin centers and not mess up the integral
+// the overflow and underflow contain the INTEGRAL of probability from the last bins bin center to
+// infinity. We do an extrapolation assuming an exponential form.
+//--------------------------------------------------------------------------------------------------
 class OneDimPDFWExtrap : public BASEPDF {
 public:
     virtual void setup(TFile * inFile, const std::string& hName, bool verbose= false );
@@ -142,6 +137,21 @@ public:
     std::unique_ptr<TH1> hCur  = 0;
 };
 
+//--------------------------------------------------------------------------------------------------
+// 1D PDF that supports extrapolation and interpolation (follows Extrap assumptions and req.)
+//--------------------------------------------------------------------------------------------------
+class OneDimPDFWInterpAndExtrap : public OneDimPDFWInterp {
+public:
+    virtual void setup(TFile * inFile, const std::string& hLowName, const std::string& hHighName,
+            const double lowValue, const double highValue, bool verbose= false );
+    double getProbability(const double x) const;
+    double minX = 0;
+    double maxX = 0;
+};
+
+//--------------------------------------------------------------------------------------------------
+// 2D PDF that supports extrapolation...same requirements as OneDimPDFWExtrap
+//--------------------------------------------------------------------------------------------------
 class TwoDimPDF : public BASEPDF {
 public:
     void setup(TFile * inFile, const std::string& hName,  bool verbose= false );
@@ -155,15 +165,30 @@ public:
     double maxY = 0;
     std::unique_ptr<TH1> h    = 0;
 };
-
-
-class HiggsLiFunction {
+//--------------------------------------------------------------------------------------------------
+// Solve with a likelihood based method
+//--------------------------------------------------------------------------------------------------
+struct HSolverLiInfo {
+    HSolverLiInfo() {};
+    int minOut = -2;
+    float likeli = -1;
+    float noSDLikli = -1;
+    float ptRes = -1;
+    ASTypes::CylLorentzVectorF neutrino;
+    ASTypes::CylLorentzVectorF wlnu;
+    ASTypes::CylLorentzVectorF hWW;
+    ASTypes::CylLorentzVectorF wqqjet;
+    float emetperp=0;
+    float emetpar=0;
+};
+//--------------------------------------------------------------------------------------------------
+// H->WW assumption function
+//--------------------------------------------------------------------------------------------------
+class HSolverLiFunction {
 public:
-//    enum PARAMList {NEUT_X,NEUT_Y,NEUT_Z, QQJET_RES};
-
     enum PARAMList {EMET_PERP,EMET_PAR, NEUT_Z,WQQ_RES};
 
-    HiggsLiFunction() {}
+    HSolverLiFunction() {}
 
     void setObservables(const MomentumF& inL, const MomentumF& inM,
             const MomentumF& inJ);
@@ -211,60 +236,31 @@ public:
     //output
     double LL = 0;
 };
-class HiggsSolInfoDebug {
-public:
-    HiggsSolInfoDebug()
-{};
-    int minOut = -2;
-    float likeli = -1;
-    float noSDLikli = -1;
-    float ptRes = -1;
-    ASTypes::CylLorentzVectorF neutrino;
-    ASTypes::CylLorentzVectorF wlnu;
-    ASTypes::CylLorentzVectorF hWW;
-    ASTypes::CylLorentzVectorF wqqjet;
 
-    float emetperp=0;
-    float emetpar=0;
-};
-
-
-class HiggsSolverInfoDebug {
-public:
-    HiggsSolverInfoDebug()
-{};
-    HiggsSolInfoDebug osqq_sol;
-    HiggsSolInfoDebug vqq_sol;
-    HiggsSolInfoDebug min_sol;
-};
-class HiggsLi {
+//--------------------------------------------------------------------------------------------------
+// H->WW assumption solver
+//--------------------------------------------------------------------------------------------------
+class HSolverLi {
 public:
     typedef TMinuitMinimizer Minimizer;
 
-//    typedef ROOT::Minuit2::Minuit2Minimizer Minimizer;
-
-    HiggsLi(const std::string& dataDir);
-    ~HiggsLi() {
+    HSolverLi(const std::string& dataDir);
+    ~HSolverLi() {
 
     }
 //    enum PDFList {EMET_PERP,EMET_PAR,WQQ_RES, WQQ_SDMASS, HWW_WLNU_MASS, NPDFS};
     enum PDFList {EMET_PERP,EMET_PAR,WQQ_RES, WQQ_SDMASS, WLNU_MASS, HWW_MASS, NPDFS};
 
-
-
     void setup(std::string fileName, const double ptCorB_,const double ptCorM_,
             bool verbose= false );
 
-//    void resetParameters(ROOT::Minuit2::Minuit2Minimizer& min,
-//            const double metX=0, const double metY=0, const double metZ=0);
-
-    void resetParameters(Minimizer& min,
-            const double neutZ=0,const double bounds=1000);
+    void resetParameters(Minimizer& min, const double neutZ=0);
 
     double getCorrHWWPT(const double recoPT) const;
 
     void minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
-            double qqSDMass, HiggsSolverInfoDebug& out);
+            double qqSDMass, HSolverLiInfo& out,
+            HSolverLiInfo * osqq_sol = 0, HSolverLiInfo * vqq_sol = 0);
 
     const std::string dataDir;
     double ptCorB=0;
@@ -273,25 +269,25 @@ public:
     std::vector<std::shared_ptr<BASEPDF>> vqq_pdfs;
     std::unique_ptr<TH1> hwwPT;
 
-    HiggsLiFunction osqq_function;
-    HiggsLiFunction vqq_function;
+    HSolverLiFunction osqq_function;
+    HSolverLiFunction vqq_function;
 
     ROOT::Math::Functor osqq_functor;
     ROOT::Math::Functor vqq_functor;
-
 
     Minimizer osqq_minimizer;
     Minimizer vqq_minimizer;
 };
 
-
-
-class BkgLiFunction {
+//--------------------------------------------------------------------------------------------------
+// Bkg assumption function
+//--------------------------------------------------------------------------------------------------
+class HSolverBkgLiFunction {
 public:
 
     enum PARAMList {EMET_PERP,EMET_PAR, NEUT_Z};
 
-    BkgLiFunction() {}
+    HSolverBkgLiFunction() {}
 
     void setObservables(const MomentumF& inL, const MomentumF& inM,
             const MomentumF& inJ);
@@ -333,14 +329,15 @@ public:
     //output
     double LL = 0;
 };
-
-
-class BkgLi {
+//--------------------------------------------------------------------------------------------------
+// Bkg assumption solver
+//--------------------------------------------------------------------------------------------------
+class HSolverBkgLi {
 public:
     typedef TMinuitMinimizer Minimizer;
 
-    BkgLi(const std::string& dataDir);
-    ~BkgLi() {
+    HSolverBkgLi(const std::string& dataDir);
+    ~HSolverBkgLi() {
 
     }
     enum PDFList {EMET_PERP,EMET_PAR, WLNU_MASS, HWW_MASS, NPDFS};
@@ -348,14 +345,14 @@ public:
     void setup(std::string fileName,bool verbose= false );
     void resetParameters(Minimizer& min);
     void minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
-            HiggsSolverInfoDebug& out);
+            HSolverLiInfo& out);
 
     const std::string dataDir;
     double ptCorB=0;
     double ptCorM=0;
     std::vector<std::shared_ptr<BASEPDF>> pdfs;
     std::unique_ptr<TH1> hwwPT;
-    BkgLiFunction function;
+    HSolverBkgLiFunction function;
     ROOT::Math::Functor functor;
     Minimizer minimizer;
 };

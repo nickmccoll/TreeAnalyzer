@@ -29,7 +29,7 @@ class TopPTWeighting;
 class JERCorrector;
 class JESUncShifter;
 class METUncShifter;
-class HiggsSolver;
+class HSolverChi;
 
 class Jet               ;
 class FatJet            ;
@@ -168,7 +168,7 @@ public:
     std::unique_ptr<JERCorrector>         JERAK8PuppiProc ;
     std::unique_ptr<JESUncShifter>        JESUncProc ;
     std::unique_ptr<METUncShifter>          METUncProc;
-    std::unique_ptr<HiggsSolver>            higgsSolver;
+    std::unique_ptr<HSolverChi>              higgsSolver;
 };
 }
 #endif

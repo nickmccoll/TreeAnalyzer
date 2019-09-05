@@ -7,11 +7,11 @@
 #include "DataFormats/interface/Lepton.h"
 #include "DataFormats/interface/Momentum.h"
 #include "Processors/GenTools/interface/DiHiggsEvent.h"
-#include "Processors/Variables/interface/HiggsSolver.h"
 #include "Configuration/interface/ReaderConstants.h"
 #include <TString.h>
 #include <TVector2.h>
 #include <TLorentzVector.h>
+#include "TreeAnalyzer/framework/Processors/Variables/interface/HiggsSolver.h"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
@@ -838,12 +838,12 @@ public:
             print(true_neut.p4(),true_jet.p4(),true_W.p4(), true_H.p4(),
                     (bbJet.p4()+true_H.p4()).mass() );
             //simple
-            auto simN = HiggsSolver::getInvisible(met,lepton.p4()+qqJet.p4());
+            auto simN = HSolverBasic::getInvisible(met,lepton.p4()+qqJet.p4());
             print(simN.p4(),qqJet.p4(),lepton.p4()+simN.p4(), lepton.p4()+simN.p4() + qqJet.p4(),
                     (bbJet.p4()+lepton.p4()+simN.p4() + qqJet.p4()).mass() );
             //older
 
-            HiggsSolverInfo ohwwInfo;
+            HSolverChiInfo ohwwInfo;
             double ohwwChi   = oHSolver.hSolverMinimization(lepton.p4(),qqJet.p4(),
                     met.p4(),*qqJet_SDmass <60,parameters.hww, &ohwwInfo);
             std::cout <<ohwwChi<<" -> ";
@@ -852,16 +852,20 @@ public:
 
 
 
-            HiggsSolverInfoDebug hwwInfo;
-            HSolver.minimize(lepton,met,qqJet,*qqJet_SDmass,hwwInfo);
-            print(hwwInfo.min_sol.neutrino,hwwInfo.min_sol.wqqjet,hwwInfo.min_sol.wlnu,
-                    hwwInfo.min_sol.hWW,(bbJet.p4()+hwwInfo.min_sol.hWW).mass() );
+            HSolverLiInfo hwwInfo;
+            HSolverLiInfo hwwInfo_vqq;
+            HSolverLiInfo hwwInfo_osqq;
 
-            std::cout << hwwInfo.osqq_sol.likeli <<" "<< hwwInfo.osqq_sol.noSDLikli<<" "
-                    << hwwInfo.vqq_sol.likeli<<" "<< hwwInfo.vqq_sol.noSDLikli<<std::endl;
+            HSolver.minimize(lepton,met,qqJet,*qqJet_SDmass,hwwInfo, &hwwInfo_osqq,
+                    &hwwInfo_vqq);
+            print(hwwInfo.neutrino,hwwInfo.wqqjet,hwwInfo.wlnu,
+                    hwwInfo.hWW,(bbJet.p4()+hwwInfo.hWW).mass() );
 
-            std::cout <<"("<< hwwInfo.min_sol.likeli<<") ("<<hwwInfo.min_sol.emetperp<<","<<
-                    hwwInfo.min_sol.emetpar<<","<<hwwInfo.min_sol.neutrino.pz()<<","<<hwwInfo.min_sol.ptRes<<") (";
+            std::cout << hwwInfo_osqq.likeli <<" "<< hwwInfo_osqq.noSDLikli<<" "
+                    << hwwInfo_vqq.likeli<<" "<< hwwInfo_vqq.noSDLikli<<std::endl;
+
+            std::cout <<"("<< hwwInfo.likeli<<") ("<<hwwInfo.emetperp<<","<<
+                    hwwInfo.emetpar<<","<<hwwInfo.neutrino.pz()<<","<<hwwInfo.ptRes<<") (";
 
 //            if(hwwInfo.min_sol.likeli == hwwInfo.vqq_sol.likeli){
 //                std:: cout <<
@@ -889,10 +893,10 @@ public:
 //            print(hwwInfo.vqq_sol.neutrino,hwwInfo.vqq_sol.wqqjet,hwwInfo.vqq_sol.wlnu,
 //                    hwwInfo.vqq_sol.hWW,(bbJet.p4()+hwwInfo.vqq_sol.hWW).mass() );
         }
-        HiggsSolverInfoDebug hwwInfo;
+        HSolverLiInfo hwwInfo;
         HSolver.minimize(lepton,met,qqJet,*qqJet_SDmass,hwwInfo);
 
-        HiggsSolverInfoDebug hwwBkgInfo;
+        HSolverLiInfo hwwBkgInfo;
         BkgHSolver.minimize(lepton,met,qqJet,hwwBkgInfo);
 
         plotter.getOrMake1DPre(smpName, "simpleHH",";HH",120,0,3000)
@@ -900,48 +904,48 @@ public:
         plotter.getOrMake1DPre(smpName, "chi2HH",";HH",120,0,3000)
                 ->Fill(*hh_chi2,weight);
         plotter.getOrMake1DPre(smpName, "likeliHH",";HH",120,0,3000)
-                ->Fill((hwwInfo.min_sol.hWW + bbJet.p4()).mass(),weight);
+                ->Fill((hwwInfo.hWW + bbJet.p4()).mass(),weight);
         plotter.getOrMake1DPre(smpName, "likeliBHH",";HH",120,0,3000)
-                ->Fill((hwwBkgInfo.min_sol.hWW + bbJet.p4()).mass(),weight);
+                ->Fill((hwwBkgInfo.hWW + bbJet.p4()).mass(),weight);
 
 
         plotter.getOrMake1DPre(smpName, "chi2",";chi2",100,0,20)
                 ->Fill(*chi2,weight);
         plotter.getOrMake1DPre(smpName, "likeli",";likeli",200,0,50)
-                ->Fill(hwwInfo.min_sol.likeli,weight);
+                ->Fill(hwwInfo.likeli,weight);
         plotter.getOrMake1DPre(smpName, "Blikeli",";likeli",200,0,50)
-                ->Fill(hwwBkgInfo.min_sol.likeli,weight);
+                ->Fill(hwwBkgInfo.likeli,weight);
 
         plotter.getOrMake1DPre(smpName, "SoBlikeli",";likeli",200,0,5)
-                ->Fill(hwwInfo.min_sol.likeli > 0 ?
-                        hwwInfo.min_sol.likeli/hwwBkgInfo.min_sol.likeli
+                ->Fill(hwwInfo.likeli > 0 ?
+                        hwwInfo.likeli/hwwBkgInfo.likeli
                         : 50,weight);
 
 
         plotter.getOrMake1DPre(smpName, "likeliHWW",";HWW",250,0,500)
-                ->Fill(hwwInfo.min_sol.hWW.mass(),weight);
+                ->Fill(hwwInfo.hWW.mass(),weight);
         plotter.getOrMake1DPre(smpName, "likeliBHWW",";HH",250,0,500)
-                ->Fill(hwwBkgInfo.min_sol.hWW.mass(),weight);
+                ->Fill(hwwBkgInfo.hWW.mass(),weight);
 
 
         if(*hh_chi2>2000)
         plotter.getOrMake1DPre(smpName, "m2000_chi2",";chi2",100,0,20)
                 ->Fill(*chi2,weight);
-        if((hwwInfo.min_sol.hWW + bbJet.p4()).mass()>2000){
+        if((hwwInfo.hWW + bbJet.p4()).mass()>2000){
         plotter.getOrMake1DPre(smpName, "m2000_likeli",";likeli",200,0,50)
-                ->Fill(hwwInfo.min_sol.likeli,weight);
+                ->Fill(hwwInfo.likeli,weight);
         plotter.getOrMake1DPre(smpName, "m2000_Blikeli",";likeli",200,0,50)
-                ->Fill(hwwBkgInfo.min_sol.likeli,weight);
+                ->Fill(hwwBkgInfo.likeli,weight);
 
         plotter.getOrMake1DPre(smpName, "m2000_SoBlikeli",";likeli",200,0,5)
-                ->Fill(hwwInfo.min_sol.likeli > 0 ?
-                        hwwInfo.min_sol.likeli/hwwBkgInfo.min_sol.likeli
+                ->Fill(hwwInfo.likeli > 0 ?
+                        hwwInfo.likeli/hwwBkgInfo.likeli
                         : 50,weight);
 
         plotter.getOrMake1DPre(smpName, "m2000_likeliHWW",";HWW",250,0,500)
-                ->Fill(hwwInfo.min_sol.hWW.mass(),weight);
+                ->Fill(hwwInfo.hWW.mass(),weight);
         plotter.getOrMake1DPre(smpName, "m2000_likeliBHWW",";HWW",250,0,500)
-                ->Fill(hwwBkgInfo.min_sol.hWW.mass(),weight);
+                ->Fill(hwwBkgInfo.hWW.mass(),weight);
 
         }
 
@@ -949,39 +953,39 @@ public:
         if(*hh_chi2>1000)
           plotter.getOrMake1DPre(smpName, "m1000_chi2",";chi2",100,0,20)
                   ->Fill(*chi2,weight);
-          if((hwwInfo.min_sol.hWW + bbJet.p4()).mass()>1000){
+          if((hwwInfo.hWW + bbJet.p4()).mass()>1000){
           plotter.getOrMake1DPre(smpName, "m1000_likeli",";likeli",200,0,50)
-                  ->Fill(hwwInfo.min_sol.likeli,weight);
+                  ->Fill(hwwInfo.likeli,weight);
 
           plotter.getOrMake1DPre(smpName, "m1000_Blikeli",";likeli",200,0,50)
-                  ->Fill(hwwBkgInfo.min_sol.likeli,weight);
+                  ->Fill(hwwBkgInfo.likeli,weight);
 
           plotter.getOrMake1DPre(smpName, "m1000_SoBlikeli",";likeli",200,0,5)
-                  ->Fill(hwwInfo.min_sol.likeli > 0 ?
-                          hwwInfo.min_sol.likeli/hwwBkgInfo.min_sol.likeli
+                  ->Fill(hwwInfo.likeli > 0 ?
+                          hwwInfo.likeli/hwwBkgInfo.likeli
                           : 50,weight);
 
           plotter.getOrMake1DPre(smpName, "m1000_likeliHWW",";HWW",250,0,500)
-                  ->Fill(hwwInfo.min_sol.hWW.mass(),weight);
+                  ->Fill(hwwInfo.hWW.mass(),weight);
           plotter.getOrMake1DPre(smpName, "m1000_likeliBHWW",";HWW",250,0,500)
-                  ->Fill(hwwBkgInfo.min_sol.hWW.mass(),weight);
+                  ->Fill(hwwBkgInfo.hWW.mass(),weight);
 
           }
 
 
-          if(hwwInfo.min_sol.likeli < 32){
+          if(hwwInfo.likeli < 32){
               plotter.getOrMake1DPre(smpName, "lllt32_Blikeli",";likeli",200,0,50)
-                      ->Fill(hwwBkgInfo.min_sol.likeli,weight);
+                      ->Fill(hwwBkgInfo.likeli,weight);
 
               plotter.getOrMake1DPre(smpName, "lllt32_SoBlikeli",";likeli",200,0,5)
-                      ->Fill(hwwInfo.min_sol.likeli > 0 ?
-                              hwwInfo.min_sol.likeli/hwwBkgInfo.min_sol.likeli
+                      ->Fill(hwwInfo.likeli > 0 ?
+                              hwwInfo.likeli/hwwBkgInfo.likeli
                               : 50,weight);
 
               plotter.getOrMake1DPre(smpName, "lllt32_likeliHWW",";HWW",250,0,500)
-                      ->Fill(hwwInfo.min_sol.hWW.mass(),weight);
+                      ->Fill(hwwInfo.hWW.mass(),weight);
               plotter.getOrMake1DPre(smpName, "lllt32_likeliBHWW",";HWW",250,0,500)
-                      ->Fill(hwwBkgInfo.min_sol.hWW.mass(),weight);
+                      ->Fill(hwwBkgInfo.hWW.mass(),weight);
           }
 
 
@@ -1001,16 +1005,16 @@ public:
                   plotter.getOrMake1DPre("signal_chilt5", "sampParam",";sampParam",50,0,5000)
                           ->Fill(*sampParam,weight);
 
-              if(hwwInfo.min_sol.likeli < 37)
+              if(hwwInfo.likeli < 37)
                   plotter.getOrMake1DPre("signal_lllt37", "sampParam",";sampParam",50,0,5000)
                           ->Fill(*sampParam,weight);
 
-              if(hwwInfo.min_sol.likeli < 32){
+              if(hwwInfo.likeli < 32){
                   plotter.getOrMake1DPre("signal_lllt32", "sampParam",";sampParam",50,0,5000)
                           ->Fill(*sampParam,weight);
               }
 
-              if(hwwInfo.min_sol.likeli < 29.5)
+              if(hwwInfo.likeli < 29.5)
                   plotter.getOrMake1DPre("signal_lllt29p5", "sampParam",";sampParam",50,0,5000)
                           ->Fill(*sampParam,weight);
 
@@ -1032,18 +1036,18 @@ public:
                           ->Fill(*hh_chi2,weight);
 
               plotter.getOrMake1DPre(smpName+"_llltinf", "likeliHH",";HH",120,0,3000)
-                      ->Fill((hwwInfo.min_sol.hWW + bbJet.p4()).mass(),weight);
+                      ->Fill((hwwInfo.hWW + bbJet.p4()).mass(),weight);
 
-              if(hwwInfo.min_sol.likeli < 37)
+              if(hwwInfo.likeli < 37)
                   plotter.getOrMake1DPre(smpName+"_lllt37", "likeliHH",";HH",120,0,3000)
-                          ->Fill((hwwInfo.min_sol.hWW + bbJet.p4()).mass(),weight);
+                          ->Fill((hwwInfo.hWW + bbJet.p4()).mass(),weight);
 
-              if(hwwInfo.min_sol.likeli < 32)
+              if(hwwInfo.likeli < 32)
                   plotter.getOrMake1DPre(smpName+"_lllt32", "likeliHH",";HH",120,0,3000)
-                          ->Fill((hwwInfo.min_sol.hWW + bbJet.p4()).mass(),weight);
-              if(hwwInfo.min_sol.likeli < 29.5)
+                          ->Fill((hwwInfo.hWW + bbJet.p4()).mass(),weight);
+              if(hwwInfo.likeli < 29.5)
                   plotter.getOrMake1DPre(smpName+"_lllt29p5", "likeliHH",";HH",120,0,3000)
-                          ->Fill((hwwInfo.min_sol.hWW + bbJet.p4()).mass(),weight);
+                          ->Fill((hwwInfo.hWW + bbJet.p4()).mass(),weight);
           }
 
 //        HiggsSolverInfo ohwwInfo;
@@ -1151,9 +1155,9 @@ public:
     HistGetter plotter;
     int step;
 
-    HiggsSolver oHSolver;
-    HiggsLi HSolver;
-    BkgLi BkgHSolver;
+    HSolverChi oHSolver;
+    HSolverLi HSolver;
+    HSolverBkgLi BkgHSolver;
     ParameterSet parameters;
 };
 
