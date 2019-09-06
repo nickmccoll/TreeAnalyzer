@@ -55,9 +55,15 @@ void getBEVars(int trigPreSel=0) {
 
     auto pltVars = [&](TString pref, TString bCat, TString fN) {
         plotter.getOrMake1DPre(pref+"_"+bCat,fN+"_mbb",";M_{bb}",30,30,210)->Fill(hbbMass,weight);
+        TString hhS = "mhh2000toInf";
+        if (hhMass > 700 && hhMass < 1000) hhS = "mhh700to1000";
+        else if (hhMass > 1000 && hhMass < 1500) hhS = "mhh1000to1500";
+        else if (hhMass > 1500 && hhMass < 2000) hhS = "mhh1500to2000";
+        plotter.getOrMake1DPre(pref+"_"+bCat+"_"+hhS,fN+"_mbb",";M_{bb}",30,30,210)->Fill(hbbMass,weight);
+
         plotter.getOrMake1DPre(pref+"_"+bCat,fN+"_mhh",";M_{HH}",132,700,4000)->Fill(hhMass,weight);
-        plotter.getOrMake1DPre(pref+"_"+bCat,fN+"_ht",";H_{T}",100,400,3000)->Fill(ht,weight);
-        plotter.getOrMake1DPre(pref+"_"+bCat,fN+"_eta",";#eta",40,-2.4,2.4)->Fill(lepETA,weight);
+//        plotter.getOrMake1DPre(pref+"_"+bCat,fN+"_ht",";H_{T}",100,400,3000)->Fill(ht,weight);
+//        plotter.getOrMake1DPre(pref+"_"+bCat,fN+"_eta",";#eta",40,-2.4,2.4)->Fill(lepETA,weight);
     };
 
     auto mkPlots = [&](TString procName, bool isData, TString fN, TString region, int nQuarks) {
@@ -75,11 +81,14 @@ void getBEVars(int trigPreSel=0) {
 //        	else if (hbbCSVCat==6) bCat = "bT";
 
         	pltVars(bName,region,fN);
+        	if(nQuarks==0 && process!=8) pltVars(bName+"_noQCD",region,fN);
+        	if (process==2) pltVars(procName+"_"+bName,region,fN);
     	}
 
     	pltVars(procName,region,fN);
     	if (isData) pltVars("data",region,fN);
     	else        pltVars("bkg" ,region,fN);
+
 
     };
 
@@ -101,17 +110,17 @@ void getBEVars(int trigPreSel=0) {
         t->SetBranchAddress("hwwPT",&hwwPt);
         t->SetBranchAddress("wjjTau2o1",&tau21);
         t->SetBranchAddress("ht",&ht);
-        t->SetBranchAddress("ht_pup_30",&ht_pup);
-        t->SetBranchAddress("ht_chs_20",&ht_chs);
+//        t->SetBranchAddress("ht_pup_30",&ht_pup);
+//        t->SetBranchAddress("ht_chs_20",&ht_chs);
         t->SetBranchAddress("hbbCSVCat",&hbbCSVCat);
         t->SetBranchAddress("nAK4Btags",&nAK4Btags);
         t->SetBranchAddress("passPre",&passPre);
         t->SetBranchAddress("isMuon",&isMuon);
         t->SetBranchAddress("lepETA",&lepETA);
 
-        t->SetBranchAddress("passTrigCHS_30",&passTrigCHS);
-        t->SetBranchAddress("passTrigPUP_30",&passTrigPUP_loose);
-        t->SetBranchAddress("passTrigPUP_tight",&passTrigPUP_tight);
+//        t->SetBranchAddress("passTrigCHS_30",&passTrigCHS);
+//        t->SetBranchAddress("passTrigPUP_30",&passTrigPUP_loose);
+//        t->SetBranchAddress("passTrigPUP_tight",&passTrigPUP_tight);
 
         if(!isData) {
         	t->SetBranchAddress("process",&process);
@@ -128,10 +137,11 @@ void getBEVars(int trigPreSel=0) {
             if (i%100000 == 0) printf("processing evt %d\n",i);
             t->GetEntry(i);
             TString pref = isData ? dataMap[dataset] : FillerConstants::MCProcessNames[process];
-            if(!passTrigPUP_tight) continue;
+//            if(!passTrigPUP_tight) continue;
 
             if(!isData) {
             	weight = xsec*trigN*puN;
+            	if (process==2) weight *= 0.831493;
             	if(passSR()) mkPlots(pref,isData,fileNames[k],"SR",hbbWQuark);
             }
             if(passQgCR())  mkPlots(pref,isData,fileNames[k],"qgCR",hbbWQuark);
@@ -141,6 +151,6 @@ void getBEVars(int trigPreSel=0) {
 
         }
     }
-    plotter.write("outDebug.root");
+    plotter.write("debug1l.root");
 
 }

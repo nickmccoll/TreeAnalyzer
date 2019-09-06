@@ -1,7 +1,7 @@
 #if !defined(__CINT__) || defined(__MAKECINT__)
 #include "../predTools/DataCardMaker.h"
-#include "../predTools/DileptonCutConstants.h"
-using namespace DileptonCutConstants;
+#include "../predTools/CutConstants.h"
+using namespace CutConstants;
 using namespace ASTypes;
 
 
@@ -41,16 +41,17 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         fPF = mainDir + "/bkgInputsQGCR/" + filename + "_QGCR";
         break;
     }
+    printf("debug0\n");
 
     const std::string category = "std";
     std::string cmd = "combineCards.py ";
-    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& h :hadCuts){
-        if(l == lepCats[LEP_INCL] ) continue;
+    for(const auto& l :dilepCats) for(const auto& b :btagCats) for(const auto& s :selCuts){
+        if(l == dilepCats[LEP_INCL] ) continue;
         if(b == btagCats[BTAG_LMT]) continue;
-        if(h != hadCuts[HAD_FULL] ) continue;
+        if(s != selCuts[SEL_FULL] ) continue;
 
 
-        auto card = DataCardMaker(l,b +"_"+h ,"13TeV",1,category);
+        auto card = DataCardMaker(l,b +"_"+s ,"13TeV",1,category);
 //        std::vector<double> newYBins =
 //        {700,725,750,775,800,825,850,875,900,925,950,975,1000,1025,1050,1075,1100,1125,1150,1175,
 //                1200,1225,1250,1275,1300,1325,1350,1375,1400,1425,1450,1475,
@@ -59,7 +60,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
 //        card.rebinY(newYBins);
 //        card.rebinY(13,700,2000);
 
-        const std::string cat = l +"_"+b +"_"+h;
+        const std::string cat = l +"_"+b +"_"+s;
         cmd += std::string(" ")+ category +"_"+cat +"_13TeV=datacard_"+category+"_"+cat +"_13TeV.txt";
 
         auto fullInputName =[&](const std::string& proc, const std::string& l, const std::string& b, const std::string& h,  const std::string& pf) -> std::string
@@ -75,11 +76,13 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         card.addVar(MOD_MJ,100,0,1000,false);
         card.addVar(MOD_MR,1000,0,10000,false);
         card.addVar(MOD_MS,2000,true);
+        printf("debug0.1\n");
 
         //---------------------------------------------------------------------------------------------------
         //Get rates and contributions for backgrounds
         //---------------------------------------------------------------------------------------------------
-        double rate_nom = card.addFixedYieldFromFile(bkgSels[BKG_NOM],1,fPF+"_"+bkgSels[BKG_NOM]+"_distributions.root",bkgSels[BKG_NOM]+"_"+cat+"_"+hhMCS,true);
+        double rate_nontop = card.addFixedYieldFromFile(llBkgSels[BKG_NONTOP],1,fPF+"_"+llBkgSels[BKG_NONTOP]+"_distributions.root",llBkgSels[BKG_NONTOP]+"_"+cat+"_"+hhMCS,true);
+        double rate_top = card.addFixedYieldFromFile(llBkgSels[BKG_TOP],1,fPF+"_"+llBkgSels[BKG_TOP]+"_distributions.root",llBkgSels[BKG_TOP]+"_"+cat+"_"+hhMCS,true);
 
         //---------------------------------------------------------------------------------------------------
         //Add Systematics first since the param systs need to have the variables added to the workspace
@@ -88,7 +91,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         card.addSystematic("yield","lnN",{{signalName,1.0391}});//lumi = 2.5 pdf= 2, PU = 0.5, btagfake=1
 
         //lepton efficiency
-        if(l==lepCats[LEP_OF])
+        if(l==dilepCats[LEP_OF])
             card.addSystematic("eff_"+l,"lnN",{{signalName,1.0602}}); //2% trigger / 5.5% for reco  / 1.4% ID / ISO 0.2%
         else
             card.addSystematic("eff_"+l,"lnN",{{signalName,1.0566}}); //2% trigger / ID 1%  /  ISO 5.2%
@@ -107,16 +110,18 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         card.addParamSystematic("hbb_scale",0.0,0.0094);
         card.addParamSystematic("hbb_res",0.0,0.2);
         //KDE shape systematics
-        card.addParamSystematic(systName(bkgSels[BKG_NOM]    ,"PTX",b) ,0.0,0.5);
-        card.addParamSystematic(systName(bkgSels[BKG_NOM]    ,"OPTX",b),0.0,1.0);
-        card.addParamSystematic(systName(bkgSels[BKG_NOM]    ,"PTY")   ,0.0,1.0);
-        card.addParamSystematic(systName(bkgSels[BKG_NOM]    ,"OPTY")  ,0.0,1.0);
+        card.addParamSystematic(systName(llBkgSels[BKG_NONTOP]    ,"PTX",b) ,0.0,0.5);
+        card.addParamSystematic(systName(llBkgSels[BKG_NONTOP]    ,"OPTX",b),0.0,1.0);
+        card.addParamSystematic(systName(llBkgSels[BKG_NONTOP]    ,"PTY")   ,0.0,1.0);
+		card.addParamSystematic(systName(llBkgSels[BKG_NONTOP]    ,"OPTY")  ,0.0,1.0);
 //        card.addParamSystematic(systName(bkgSels[BKG_QG]    ,"PT2Y") ,0.0,1.0);
 
         //Normalization
-        card.addSystematic(systName(bkgSels[BKG_NOM],"norm")  ,"lnN",{{bkgSels[BKG_NOM],1.5}});
+        card.addSystematic(systName(llBkgSels[BKG_NONTOP],"norm")  ,"lnN",{{llBkgSels[BKG_NONTOP],1.5}});
+        card.addSystematic(systName("top","norm")            ,"lnN",{{llBkgSels[BKG_TOP],1.25}});
 
 
+        printf("debug0.2\n");
 
 
         //---------------------------------------------------------------------------------------------------
@@ -143,18 +148,40 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             card.addParametricYieldWithUncertainty(signalName,0,signalInputName(signalName,"yield.json"),1.0,uncForm,{"btag_eff","unclust","jer","jes"}
                             ,MOD_MS);
 //        } else throw std::invalid_argument("makeCard::go() -> Bad parsing");
+            printf("debug0.3\n");
 
         //---------------------------------------------------------------------------------------------------
-        //NOM
+        //NONTOP
         //---------------------------------------------------------------------------------------------------
         PDFAdder::InterpSysts qgKDESysts;
-        qgKDESysts.addSyst("PTX",{{systName(bkgSels[BKG_NOM],"PTX",b),"1"  }});
-        qgKDESysts.addSyst("OPTX",{{systName(bkgSels[BKG_NOM],"OPTX",b),"1"  }});
-        qgKDESysts.addSyst("PTY",{{systName(bkgSels[BKG_NOM],"PTY"),"1"  }});
-        qgKDESysts.addSyst("OPTY",{{systName(bkgSels[BKG_NOM],"OPTY"),"1"  }});
+        qgKDESysts.addSyst("PTX",{{systName(llBkgSels[BKG_NONTOP],"PTX",b),"1"  }});
+        qgKDESysts.addSyst("OPTX",{{systName(llBkgSels[BKG_NONTOP],"OPTX",b),"1"  }});
+        qgKDESysts.addSyst("PTY",{{systName(llBkgSels[BKG_NONTOP],"PTY"),"1"  }});
+        qgKDESysts.addSyst("OPTY",{{systName(llBkgSels[BKG_NONTOP],"OPTY"),"1"  }});
 //        qgKDESysts.addSyst("PT2Y",{{systName(bkgSels[BKG_QG],"PT2Y"),"1"  }});
-        card.addHistoShapeFromFile(bkgSels[BKG_NOM],{MOD_MJ,MOD_MR}, inputName(bkgSels[BKG_NOM],"2D_template.root"),"histo",qgKDESysts);
+        card.addHistoShapeFromFile(llBkgSels[BKG_NONTOP],{MOD_MJ,MOD_MR}, inputName(llBkgSels[BKG_NONTOP],"2D_template.root"),"histo",qgKDESysts);
+        printf("debug0.4\n");
 
+        //---------------------------------------------------------------------------------------------------
+        //TOP
+        //---------------------------------------------------------------------------------------------------
+        PDFAdder::InterpSysts twKDESysts;
+        printf("debug0.41\n");
+
+//        twKDESysts.addSyst("PTX",{{systName(llBkgSels[BKG_REALB],"PTX",b),"1"  }});
+//        printf("debug0.42\n");
+//
+//        twKDESysts.addSyst("OPTX",{{systName(llBkgSels[BKG_REALB],"OPTX",b),"1"  }});
+//        printf("debug0.43\n");
+
+//        twKDESysts.addSyst("PTY",{{systName("top","scale"),"1"},{systName("top","lostmw_rel_scale",b),"1"}});
+//        printf("debug0.44\n");
+//
+//        twKDESysts.addSyst("OPTY",{{systName("top","res"  ),"1"  }});
+        printf("debug0.45\n");
+
+        card.addHistoShapeFromFile(llBkgSels[BKG_TOP],{MOD_MJ,MOD_MR},inputName(llBkgSels[BKG_TOP],"2D_template.root"),"histo",twKDESysts);
+        printf("debug0.5\n");
 
         //---------------------------------------------------------------------------------------------------
         //Data
@@ -162,8 +189,9 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         card.importBinnedData(fPF + "_data_distributions.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
 
 //        card.importBinnedData(fPF + "_pd.root","data_"+cat+"_hbbMass_hhMass",{MOD_MJ,MOD_MR});
-
         card.makeCard();
+        printf("debug1\n");
+
     }
     std::ofstream outFile("comp.sh",std::ios::out|std::ios::trunc);
     outFile << cmd <<" > combinedCard.txt";
@@ -178,6 +206,6 @@ void makeDileptonCard(int inreg = REG_SR, int insig = RADION,    bool condSignal
     std::cout <<" <<<<< "<< inreg <<" "<< condSignal <<" "<<signals[insig]<<std::endl;
     REGION reg = REGION(inreg);
     if(reg == REG_QGCR) btagCats = qgBtagCats;
-    std::string mainDir = "/Users/brentstone/Dropbox/Physics/HHbbWW/";
+    std::string mainDir = "/Users/brentstone/Dropbox/Physics/HHbbWW/BEtrees/Dilepton17/";
     go(insig,hhFilename,mainDir,reg,!condSignal);
 }

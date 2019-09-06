@@ -8,10 +8,10 @@ namespace CutConstants{
 
 class CutStr : public std::string{
 public:
+	CutStr() {}
     CutStr(std::string name,std::string cut) : std::string(name), cut(cut){}
     CutStr(std::string name,std::string cut, std::string title) : std::string(name),
             cut(cut), title(title){}
-//    CutStr(const CutStr& str) : std::string(str), cut(str.cut), title(str.title) {}
 
     std::string cut;
     std::string title;
@@ -116,10 +116,11 @@ std::vector<CutStr > bkgSels = {
         CutStr("mt"     ,"hbbWQuark==5","#it{m}_{t} bkg.")
 };
 
-enum BKGModels2L  {BKG_MISB,BKG_REALB};
+enum BKGModels2L  {BKG_NONTOP,BKG_TOP};
 std::vector<CutStr > llBkgSels = {
-		CutStr("misB","hbbDecayTypeMC==0","MisID b"),
-		CutStr("trueB","hbbDecayTypeMC>0","Good b")
+		CutStr("nontop","hbbDecayTypeMC==0","NonTop bkg"),
+		CutStr("top","hbbDecayTypeMC>0","Top bkg")
+
 };
 
 enum LEPCats  {LEP_EMU, LEP_E, LEP_MU};

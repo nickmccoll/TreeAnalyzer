@@ -503,6 +503,8 @@ public:
                 printf("dbg1.4\n");
 
                 std::vector<int> signalColors ={kSpring+10,634};
+                if(cont.sig.size() == 1 ) signalColors = {634};
+
                 for(unsigned int iSig = 0; iSig < cont.sig.size(); ++iSig){
                     if(cont.sig[iSig]){
                         auto * g = p->addHistLine(cont.sig[iSig],prefs.signalTitles[iSig],signalColors[iSig]);
@@ -1518,7 +1520,8 @@ printf("debug0\n");
         hhPlot.signals = {"1000","2500"};
         hhPlot.signalTitles = {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"};
         //Horrible
-        doComp(reg,hhPlot.nToys,  postFitFilename,limitBaseName +"/postFit_comp.root",hhPlot.signals);
+        doComp(reg,hhPlot.nToys,  postFitFilename,limitBaseName +"/postFit_comp.root"
+                ,{"800","1000","1200","2500"});
         srList ={"emu_LMT_I_full"};
         srListTitles ={ "All categories"};
 
@@ -1529,10 +1532,15 @@ printf("debug0\n");
         hhPlot.sels =  srList;
         hhPlot.titles = srListTitles;
         hhPlot.isSupp = true;
-        hhPlot.botTitles = {"","","","100 < #it{m}_{bb} < 150 GeV"};
+        hhPlot.botTitles = {"","","","100 < #it{m}_{b#bar{b}} < 150 GeV"};
 
-        hhPlot.minTop =0.5;
-        hhPlot.maxTop =5000;
+        hhPlot.minTop =0.1;
+        hhPlot.maxTop =6700;
+
+        hhPlot.minBot =0.05;
+        hhPlot.maxBot= 1.95;
+        hhPlot.removeTrailingZeros = true;
+
         hhPlot.rebinFactor=4;
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
@@ -1541,17 +1549,45 @@ printf("debug0\n");
         writeables = doDataPlot(hhPlot,filename,limitBaseName +"/postFit_comp.root",do1lep);
         DataPlotPrefs hbbPlot = hhPlot;
         hbbPlot.binInY = true;
-        hbbPlot.bins = {700,4000,4000,700,1000,2000,4000};
+
         hbbPlot.doLog = false;
         hbbPlot.minTop =0;
-        hbbPlot.maxTop =0;//reg==REG_TOPCR ?  1000 :2000;
-        hbbPlot.maxTops = {480.0,0,0,400.0,200.0,20.0};
-        hbbPlot.botTitles = {"","","","0.7 < #it{m}_{HH} < 1 TeV","1 < #it{m}_{HH} < 2 TeV","2 < #it{m}_{HH} < 4  TeV"};
+        hbbPlot.maxTop =0;
+        hbbPlot.minBot =-1;
+        hbbPlot.maxBot= -1;
+        hbbPlot.removeTrailingZeros = false;
         hbbPlot.rebinFactor = 3;
         auto writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root",do1lep);
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
+
+        hbbPlot.bins = {700,1000};
+        hbbPlot.botTitles = {"0.7 < #it{m}_{HH} < 1 TeV"};
+        hbbPlot.signals = {"800"};
+        hbbPlot.signalTitles = {"0.8 TeV X_{spin-0}"};
+        writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root",do1lep);
+        writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
+
+        hbbPlot.bins = {1000,2000};
+        hbbPlot.botTitles = {"1 < #it{m}_{HH} < 2 TeV"};
+        hbbPlot.signals = {"1200"};
+        hbbPlot.signalTitles = {"1.2 TeV X_{spin-0}"};
+        writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root",do1lep);
+        writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
+
+        hbbPlot.bins = {2000,4000};
+        hbbPlot.botTitles = {"2 < #it{m}_{HH} < 4 TeV"};
+        hbbPlot.signals = {"2500"};
+        hbbPlot.signalTitles = {"2.5 TeV X_{spin-0}"};
+        hbbPlot.maxTop =20.0;
+        writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root",do1lep);
+        writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
+
+
         Dummy d(outName);
     }
+
+
+
 
     if(step== 9){ //postfit SR for Supp 1
         if(outName.size())         outName += "postfitSupMat_dataComp";
@@ -1565,9 +1601,18 @@ printf("debug0\n");
         hhPlot.titles = srListTitles;
         hhPlot.isSupp = true;
         hhPlot.botTitles = {"100 < #it{m}_{b#bar{b}} < 150 GeV"};
+        hhPlot.removeTrailingZeros = true;
+        hhPlot.minTop =10;
+        hhPlot.maxTop =10;
+        float muMax = 3600; float muMin = 0.015;
+        float elMax = 3400; float elMin = 0.003;
 
-        hhPlot.minTop =0.05;
-        hhPlot.maxTop =1000;
+        hhPlot.maxTops = {elMax,elMax,elMax,elMax,elMax,elMax,muMax,muMax,muMax,muMax,muMax,muMax};
+        hhPlot.minTops = {elMin,elMin,elMin,elMin,elMin,elMin,muMin,muMin,muMin,muMin,muMin,muMin};
+
+
+        hhPlot.minBot =0.05;
+        hhPlot.maxBot= 3.45;
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
         hhPlot.doLog = true;
