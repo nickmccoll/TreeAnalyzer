@@ -38,7 +38,6 @@ public:
         parameters.event.doTTBarStitching = false;
     }
 
-
     virtual void loadVariables() override {
         reader_event       =loadReader<EventReader>   ("event",isRealData());
         reader_fatjet      =loadReader<FatJetReader>  ("ak8PuppiJet",isRealData(),true,true);
