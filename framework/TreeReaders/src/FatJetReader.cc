@@ -7,9 +7,10 @@
 namespace TAna{
 //--------------------------------------------------------------------------------------------------
 FatJetReader::FatJetReader(std::string branchName, bool isRealData,
-        bool fillGenFatJets,bool fillBTagging) :
+        bool fillGenFatJets,bool fillBTagging, bool fillLSFInfo) :
                 BaseReader("FatJetReader",branchName),
-                realData(isRealData),fillGenFatJets(fillGenFatJets),fillBTagging(fillBTagging)
+                realData(isRealData),fillGenFatJets(fillGenFatJets),fillBTagging(fillBTagging),
+                fillLSFInfo(fillLSFInfo)
 {};
 
 FatJetReader::~FatJetReader(){}
@@ -25,9 +26,19 @@ void FatJetReader::setup(TreeReaderWrapper * wrapper){
     if(fillBTagging) wrapper->setBranch(branchName,"bbt",bbt,true);
     wrapper->setBranch(branchName,"tau1"     ,tau1     ,true);
     wrapper->setBranch(branchName,"tau2"     ,tau2     ,true);
-    wrapper->setBranch(branchName,"tau3"     ,tau3     ,true);
-    wrapper->setBranch(branchName,"ecfb1"    ,ecfb1    ,true);
-    wrapper->setBranch(branchName,"ecfb2"    ,ecfb2    ,true);
+    if(fillLSFInfo){
+        wrapper->setBranch(branchName,"ecfN2"      ,ecfN2      ,true);
+        wrapper->setBranch(branchName,"ecfM2"      ,ecfM2      ,true);
+        wrapper->setBranch(branchName,"ecfD2"      ,ecfD2      ,true);
+        wrapper->setBranch(branchName,"ecfN3"      ,ecfN3      ,true);
+        wrapper->setBranch(branchName,"ecfU3"      ,ecfU3      ,true);
+        wrapper->setBranch(branchName,"ecfU2"      ,ecfU2      ,true);
+        wrapper->setBranch(branchName,"tau3"       ,tau3       ,true);
+        wrapper->setBranch(branchName,"tau4"       ,tau4       ,true);
+        wrapper->setBranch(branchName,"lsf3"       ,lsf3       ,true);
+        wrapper->setBranch(branchName,"dRLep"      ,dRLep      ,true);
+        wrapper->setBranch(branchName,"lepInJetMVA",lepInJetMVA,true);
+    }
 
     if(!realData){
         wrapper->setBranch(branchName,"hadronFlavor",hadronFlavor,true);
@@ -86,7 +97,7 @@ void FatJetReader::processVars() {
                 toRawFact[iO]);
 
         const float doubleBT = fillBTagging ? bbt[iO] : 0;
-        jets.back().addExtraInfo(id[iO],doubleBT,tau1[iO],tau2[iO],tau3[iO],ecfb1[iO],ecfb2[iO]);
+        jets.back().addExtraInfo(id[iO],doubleBT,tau1[iO],tau2[iO]);
 
         if(!realData){
             GenJet *gj = fillGenFatJets && genIDX[iO] != 255 ?
