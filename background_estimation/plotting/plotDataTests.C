@@ -1573,7 +1573,6 @@ printf("debug0\n");
         hbbPlot.signalTitles = {"1.2 TeV X_{spin-0}"};
         writeables2 = doDataPlot(hbbPlot,filename,limitBaseName +"/postFit_comp.root",do1lep);
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
-
         hbbPlot.bins = {2000,4000};
         hbbPlot.botTitles = {"2 < #it{m}_{HH} < 4 TeV"};
         hbbPlot.signals = {"2500"};

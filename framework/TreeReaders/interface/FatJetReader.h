@@ -10,16 +10,17 @@ namespace TAna{
 class FatJetReader: public BaseReader {
 public:
     FatJetReader(std::string branchName, bool isRealData,
-            bool fillGenFatJets = true, bool fillBTagging = true);
+            bool fillGenFatJets = true, bool fillBTagging = true, bool fillLSFInfo = false);
 	virtual ~FatJetReader();
 	virtual void setup(TreeReaderWrapper * wrapper);
 	virtual void processVars();
 
 private:
 	//settings
-	bool realData   ;
-	bool fillGenFatJets;
+	bool realData       ;
+	bool fillGenFatJets ;
 	bool fillBTagging   ;
+	bool fillLSFInfo    ;
 public:
 	//branches from the tree
     ra_float pt                 ;
@@ -31,9 +32,18 @@ public:
     ra_float bbt                ;
     ra_float tau1               ;
     ra_float tau2               ;
+
+    ra_float ecfN2              ;
+    ra_float ecfM2              ;
+    ra_float ecfD2              ;
+    ra_float ecfN3              ;
+    ra_float ecfU3              ;
+    ra_float ecfU2              ;
     ra_float tau3               ;
-    ra_float ecfb1              ;
-    ra_float ecfb2              ;
+    ra_float tau4               ;
+    ra_float lsf3               ;
+    ra_float dRLep              ;
+    ra_float lepInJetMVA        ;
 
     ra_int8  hadronFlavor       ;
     ra_int8  partonFlavor       ;

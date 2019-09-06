@@ -341,7 +341,7 @@ public:
     }
 
     double getMassHH(const Lepton* lep, const FatJet *bb, const FatJet *jj) {
-        HiggsSolverInfo hwwInfo;
+        HSolverChiInfo hwwInfo;
         double chi   = higgsSolver->hSolverMinimization(lep->p4(),jj->p4(),
                 reader_event->met.p4(),jj->sdMom().mass() <60,parameters.hww, &hwwInfo);
 
@@ -371,7 +371,7 @@ public:
     	float bbmass = isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbb) : hbb->sdMom().mass();
         if(bbmass < 30 || bbmass > 210) return false;
 
-        HiggsSolverInfo hwwInfo;
+        HSolverChiInfo hwwInfo;
         double chi   = higgsSolver->hSolverMinimization(lep->p4(),wjj->p4(),
                 reader_event->met.p4(),wjj->sdMom().mass() <60,parameters.hww, &hwwInfo);
         MomentumF hww = hwwInfo.hWW;

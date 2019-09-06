@@ -1,3 +1,4 @@
+#include "Processors/Variables/interface/HiggsSolver.h"
 #include "../interface/DefaultSearchRegionAnalyzer.h"
 
 #include "TreeReaders/interface/EventReader.h"
@@ -9,14 +10,11 @@
 #include "Configuration/interface/FillerConstants.h"
 
 #include "Processors/Corrections/interface/EventWeights.h"
-#include "Processors/Variables/interface/HiggsSolver.h"
 #include "Processors/Variables/interface/Hww2lSolver.h"
 #include "Processors/Variables/interface/JetKinematics.h"
 
 #include "Processors/Variables/interface/LeptonSelection.h"
 #include "Processors/Variables/interface/FatJetSelection.h"
-#include "Processors/Variables/interface/HiggsSolver.h"
-
 #include "Processors/EventSelection/interface/EventSelection.h"
 #include "Processors/Corrections/interface/TriggerScaleFactors.h"
 #include "Processors/Corrections/interface/LeptonScaleFactors.h"
@@ -53,7 +51,9 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     JERAK8PuppiProc .reset(new JERCorrector (dataDirectory, "corrections/Summer16_25nsV1_MC_PtResolution_AK8PFPuppi.txt",randGen));;
     JESUncProc . reset(new JESUncShifter());
     METUncProc . reset(new METUncShifter());
-    higgsSolver . reset(new HiggsSolver());
+    hSolverChi . reset(new HSolverChi());
+    hSolverLi . reset(new HSolverLi(dataDirectory));
+    hSolverBkgLi . reset(new HSolverBkgLi(dataDirectory));
 
     turnOnCorr(CORR_XSEC);
     turnOnCorr(CORR_TRIG);
@@ -135,10 +135,13 @@ void DefaultSearchRegionAnalyzer::setupParameters(){
         throw std::invalid_argument(
                 "DefaultSearchRegionAnalyzer -> The era needs to be set to use this class");
     }
-    if(isCorrOn(CORR_SJBTAG)) sjbtagSFProc->setParameters(parameters.jets);
+    if(isCorrOn(CORR_SJBTAG))  sjbtagSFProc->setParameters(parameters.jets);
     if(isCorrOn(CORR_AK4BTAG)) ak4btagSFProc->setParameters(parameters.jets);
-    if(isCorrOn(CORR_TRIG)) trigSFProc->setParameters(parameters.event);
-    if(isCorrOn(CORR_PU))  puSFProc->setParameters(parameters.event);
+    if(isCorrOn(CORR_TRIG))    trigSFProc->setParameters(parameters.event);
+    if(isCorrOn(CORR_PU))      puSFProc->setParameters(parameters.event);
+
+    hSolverLi->setParamters(parameters.hww);
+    hSolverBkgLi->setParamters(parameters.hww);
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
@@ -229,41 +232,55 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         wjjCSVCat   = BTagging::CSVSJ_INCL;
     }
 
+
+    if(hbbCand)
+        hbbMass    =   isCorrOn(CORR_SDMASS) ?
+                hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
+    else
+        hbbMass     = 0;
+
+
+    HSolverLiInfo  hwwInfoLi;
+    HSolverLiInfo  hwwInfoBkgLi;
+    HSolverChiInfo hwwInfoChi;
     if(wjjCand){
-        HiggsSolverInfo hwwInfo;
-        hwwChi   = higgsSolver->hSolverMinimization(selectedLepton->p4(),wjjCand->p4(),
-                reader_event->met.p4(),wjjCand->sdMom().mass() <60,parameters.hww, &hwwInfo);
-        neutrino = hwwInfo.neutrino;
-        wlnu     = hwwInfo.wlnu;
-        wqq      = hwwInfo.wqqjet;
-        hWW      = hwwInfo.hWW;
+        const double qqSDMass = wjjCand->sdMom().mass();
+        hwwChi   = hSolverChi->hSolverMinimization(selectedLepton->p4(),wjjCand->p4(),
+                reader_event->met.p4(),qqSDMass <60,parameters.hww, &hwwInfoChi);
+
+        hwwLi   = hSolverLi->minimize(selectedLepton->p4(),reader_event->met.p4(),
+                wjjCand->p4(), qqSDMass, hwwInfoLi);
+
+        hwwBkgLi   = hSolverBkgLi->minimize(selectedLepton->p4(),reader_event->met.p4(),
+                wjjCand->p4(), hwwInfoBkgLi);
+
+        neutrino = hwwInfoLi.neutrino;
+        wlnu     = hwwInfoLi.wlnu;
+        wqq      = hwwInfoLi.wqqjet;
+        hWW      = hwwInfoLi.hWW;
         wwDM     = PhysicsUtilities::deltaR( wlnu,wqq) * hWW.pt()/2.0;
-        passWWDM = wwDM < 125.0;
     } else {
-        hwwChi      =  0;
+        hwwChi      =  1000;
+        hwwLi       =  1000;
+        hwwBkgLi    =  1000;
         neutrino    =  MomentumF();
         wlnu        =  MomentumF();
         wqq         =  MomentumF();
         hWW         =  MomentumF();
         wwDM        =  0;
-        passWWDM    =  false;
-    }
-
-    if(hbbCand){
-        hbbMass    =   isCorrOn(CORR_SDMASS) ?
-                hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
-        hh =  wjjCand  ? (hWW.p4() + hbbCand->p4()) :  MomentumF();
-    } else {
-        hbbMass    = 0;
-        hh         =  MomentumF();
     }
 
     if(hbbCand && wjjCand){
-        auto oldN =  HiggsSolver::getInvisible(reader_event->met,
+        hh =  hWW.p4() + hbbCand->p4();
+        hh_chi   =  hbbCand->p4() + hwwInfoChi.hWW;
+
+        auto oldN =  HSolverBasic::getInvisible(reader_event->met,
                 (selectedLepton->p4() + wjjCand->p4()) );
-        hh_old =  hbbCand->p4() + oldN.p4() + selectedLepton->p4() + wjjCand->p4();
+        hh_basic =  hbbCand->p4() + oldN.p4() + selectedLepton->p4() + wjjCand->p4();
     } else {
-        hh_old     =  MomentumF();
+        hh         =  MomentumF();
+        hh_chi     =  MomentumF();
+        hh_basic   =  MomentumF();
     }
 
     if(reader_fatjet && selectedDileptons.size() >= 2){

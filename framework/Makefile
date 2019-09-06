@@ -51,9 +51,9 @@ $(TARGET): $(OBJ)
 	@echo "Linking the target $@"
 	@echo "============="
 ifeq ($(PLATFORM),macosx)
-		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) -lGenVector -lRooFitCore -lMinuit
+		$(LD) $(SOFLAGS)$@ $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) -lGenVector -lRooFitCore -lMinuit -lMinuit2
 else
-		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) $(ROOTLIBS) -lRooFitCore  -lMinuit
+		$(LD) $(SOFLAGS) $(LDFLAGS) $^ $(OutPutOpt) $@ $(EXPLLINKLIBS) $(ROOTLIBS) -lRooFitCore  -lMinuit -lMinuit2
 endif
 	@echo -- Link finished --
 

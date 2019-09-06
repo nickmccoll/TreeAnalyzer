@@ -131,6 +131,11 @@ ParameterSet set2017Parameters() {
     paramSet.hww.onWlnuHWWErr     = 8.3;
     paramSet.hww.offWlnuHWWErr    = 3;
 
+    paramSet.hww.ptCorB        = 0.9663;
+    paramSet.hww.ptCorM        = -0.00001013;
+    paramSet.hww.liFileName    ="variables/hhSol_templates.root";
+    paramSet.hww.bkgLiFileName ="variables/hhSol_bkgTemplates.root";
+
 
     return paramSet;
 }

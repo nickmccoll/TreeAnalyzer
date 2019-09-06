@@ -34,8 +34,7 @@ public :
     virtual ~FatJet() {}
 
     void addExtraInfo(const float jetID,
-            const float bbt, const float tau1, const float tau2, const float tau3,
-            const float ecfb1,const float ecfb2);
+            const float bbt, const float tau1, const float tau2);
 
     void addSubJet(const SubJet& sj);
 
@@ -63,9 +62,6 @@ protected :
     float _bbt  =0;
     float _tau1 =0;
     float _tau2 =0;
-    float _tau3 =0;
-    float _ecfb1 =0;
-    float _ecfb2 =0;
     std::vector<SubJet> _sjs;
 
 
