@@ -191,7 +191,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //|||||||||||||||||||||||||||||| GEN PARTICLES ||||||||||||||||||||||||||||||
     if(reader_genpart){
         if(mcProc == FillerConstants::SIGNAL) diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
-        smDecayEvt.setDecayInfo(reader_genpart->genParticles,reader_event->sampParam.val());
+        smDecayEvt.setDecayInfo(reader_genpart->genParticles,*reader_event->sampParam);
     }
 
     //|||||||||||||||||||||||||||||| CHS JETS ||||||||||||||||||||||||||||||
@@ -214,6 +214,19 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         	dilep1 = 0;
         	dilep2 = 0;
         }
+
+        // classify channel of event based on lepton selection
+        if (selectedLepton) is1lLepSelected = true;
+        else                is1lLepSelected = false;
+
+        if (selectedDileptons.size() == 2) {
+        	is2lLepSelected = dilep1->isMuon() ? (dilep1->pt() >= parameters.event.minTriggerMu) :
+        			(dilep1->pt() >= parameters.event.minTriggerEl);
+        } else {
+        	is2lLepSelected = false;
+        }
+
+        if (is1lLepSelected && is2lLepSelected) is1lLepSelected = false;
     }
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
@@ -353,6 +366,51 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     passEventFilters= EventSelection::passEventFilters(parameters.event,*reader_event);
     passTriggerPreselection= EventSelection::passTriggerPreselection(
             parameters.event,*reader_event,ht_puppi,selectedLeptons);
+    passTriggerPreselection2l = EventSelection::passTriggerPreselection(
+            parameters.event,*reader_event,ht_puppi,selectedDileptons);
+
+    //|||||||||||||||||||||||||||||| REGIONS ||||||||||||||||||||||||||||||
+    if (is2lLepSelected && hbbCand_2l) {
+    	llMass = (dilep1->p4()+dilep2->p4()).mass();
+    	llDR = PhysicsUtilities::deltaR(*dilep1,*dilep2);
+    	llMetDphi = PhysicsUtilities::absDeltaPhi(reader_event->met,(dilep1->p4()+dilep2->p4()));
+    	metOhhMass = reader_event->met.pt() / hh_2l.mass();
+
+    	bool inMassRange = hbbMass_2l > 30 && hbbMass_2l < 210 && hh_2l.mass() > 700;
+    	pass2lCuts = llMass > 6 && llMass < 75 && llDR < 1.0 && nMedBTags_HbbV_2l == 0 &&
+    			llMetDphi < TMath::PiOver2() && metOhhMass > 0.1;
+
+    	is2lSR = pass2lCuts && hbbCSVCat_2l >= BTagging::CSVSJ_MF && inMassRange;
+    	is2lNonTopCR = pass2lCuts && hbbCSVCat_2l == BTagging::CSVSJ_FF && inMassRange;
+
+    	is2lTopCR = llMass > 6 && llMass < 75 && llDR > 0.4 && llMetDphi < TMath::PiOver2() && inMassRange &&
+    			metOhhMass > 0.1 && hbbCSVCat_2l >= BTagging::CSVSJ_MF && nMedBTags_HbbV_2l != 0;
+    } else {
+    	llMass       = 1000;
+    	llDR         = 1000;
+    	llMetDphi    = 1000;
+    	metOhhMass   = 1000;
+    	pass2lCuts   = false;
+    	is2lSR       = false;
+    	is2lNonTopCR = false;
+    	is2lTopCR    = false;
+    }
+
+    if (is1lLepSelected && hbbCand && wjjCand) {
+
+    	bool inMassRange = hbbMass > 30 && hbbMass < 210 && hh.mass() > 700;
+    	pass1lCuts = wjjCand->tau2otau1() < 0.75 && hWW.pt()/hh.mass() > 0.3 &&
+    			hwwChi <= 11;
+
+    	is1lSR = inMassRange && pass1lCuts && hbbCSVCat >= BTagging::CSVSJ_MF && nMedBTags_HbbV == 0;
+    	is1lTopCR = inMassRange && pass1lCuts && hbbCSVCat >= BTagging::CSVSJ_MF && nMedBTags_HbbV != 0;
+    	is1lQgCR = inMassRange && pass1lCuts && hbbCSVCat == BTagging::CSVSJ_FF && nMedBTags_HbbV == 0;
+    } else {
+    	pass1lCuts = false;
+    	is1lSR     = false;
+    	is1lTopCR  = false;
+    	is1lQgCR   = false;
+    }
 
     //|||||||||||||||||||||||||||||| EVENT WEIGHTS ||||||||||||||||||||||||||||||
     weight = 1;

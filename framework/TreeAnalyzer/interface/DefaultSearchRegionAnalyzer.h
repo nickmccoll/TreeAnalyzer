@@ -116,6 +116,7 @@ public:
 
     bool            passEventFilters = false;
     bool            passTriggerPreselection = false;
+    bool            passTriggerPreselection2l = false;
 
     DiHiggsEvent    diHiggsEvt;
     SMDecayEvent    smDecayEvt;
@@ -141,7 +142,6 @@ public:
     float                      hwwLi       = 0;
     float                      hwwBkgLi    = 0;
 
-
     MomentumF                  neutrino           ;
     MomentumF                  wlnu               ;
     MomentumF                  wqq                ;
@@ -154,6 +154,23 @@ public:
     MomentumF                  hWW_2l             ;
     MomentumF                  hh_2l              ;
     float                      hbbMass_2l  =0     ;
+
+    float llMass = 0;
+    float llDR = 0;
+    float llMetDphi = 0;
+    float metOhhMass = 0;
+
+    bool is1lLepSelected = false;
+    bool is2lLepSelected = false;
+    bool pass1lCuts = false;
+    bool pass2lCuts = false;
+
+    bool is1lSR       = false;
+    bool is1lQgCR     = false;
+    bool is1lTopCR    = false;
+    bool is2lSR       = false;
+    bool is2lNonTopCR = false;
+    bool is2lTopCR    = false;
 
     ParameterSet parameters;
     FillerConstants::DataEra lastEra = FillerConstants::NOERA; //See if we need to load new params.

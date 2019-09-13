@@ -55,7 +55,7 @@ ParameterSet set2017Parameters() {
     paramSet.fatJets.hbbLL_minSJs      = 2;
     paramSet.fatJets.hbbLL_minDRbbLL   = 2.0;
 
-    paramSet.leptons.el_minPT   = 20  ;
+    paramSet.leptons.el_minPT   = 30  ;
     paramSet.leptons.el_maxETA  = 1.479 ;
     paramSet.leptons.el_maxDZ   = 0.1 ;
     paramSet.leptons.el_maxD0   = 0.05;
@@ -64,7 +64,7 @@ ParameterSet set2017Parameters() {
     paramSet.leptons.el_getID   = &Electron::passMVA90ID_noIso;
     paramSet.leptons.el_getISO  = &Electron::miniIso;
 
-    paramSet.leptons.mu_minPT   = 20  ;
+    paramSet.leptons.mu_minPT   = 27  ;
     paramSet.leptons.mu_maxETA  = 2.4 ;
     paramSet.leptons.mu_maxDZ   = 0.1 ;
     paramSet.leptons.mu_maxD0   = 0.05;
