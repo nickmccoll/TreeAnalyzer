@@ -669,6 +669,18 @@ public:
         fIn->Close();
     }
 
+//    static void finalizeTemplates(const TString& inFileName, const TString& outFileName,
+//            bool isSignal) {
+//
+//            if(isSignal){
+//                HSolverLi signalSolver("");
+//                signalSolver.setParamters(parameters.hww);
+//
+//
+//            }
+//
+//    }
+
 
     void getInputPlots() {
 
@@ -866,8 +878,8 @@ public:
             std::cout << hwwInfo_osqq.likeli <<" "<< hwwInfo_osqq.noSDLikli<<" "
                     << hwwInfo_vqq.likeli<<" "<< hwwInfo_vqq.noSDLikli<<std::endl;
 
-            std::cout <<"("<< hwwInfo.likeli<<") ("<<hwwInfo.emetperp<<","<<
-                    hwwInfo.emetpar<<","<<hwwInfo.neutrino.pz()<<","<<hwwInfo.ptRes<<") (";
+//            std::cout <<"("<< hwwInfo.likeli<<") ("<<hwwInfo.emetperp<<","<<
+//                    hwwInfo.emetpar<<","<<hwwInfo.neutrino.pz()<<","<<hwwInfo.ptRes<<") (";
 
 //            if(hwwInfo.min_sol.likeli == hwwInfo.vqq_sol.likeli){
 //                std:: cout <<
@@ -896,229 +908,135 @@ public:
 //                    hwwInfo.vqq_sol.hWW,(bbJet.p4()+hwwInfo.vqq_sol.hWW).mass() );
         }
         HSolverLiInfo hwwInfo;
-        HSolver.minimize(lepton,met,qqJet,*qqJet_SDmass,hwwInfo);
+        HSolverLiInfo osqqHWWInfo;
+        HSolverLiInfo vqqHWWInfo;
+        HSolverLiInfo altHWWInfo;
+        HSolver.minimize(lepton,met,qqJet,*qqJet_SDmass,hwwInfo,&osqqHWWInfo,&vqqHWWInfo,&altHWWInfo);
 
         HSolverLiInfo hwwBkgInfo;
-        BkgHSolver.minimize(lepton,met,qqJet,hwwBkgInfo);
+        HSolverLiInfo hwwBkgAltInfo;
+        BkgHSolver.minimize(lepton,met,qqJet,hwwBkgInfo,&hwwBkgAltInfo);
+
+
+        auto bN = HSolverBasic::getInvisible(met, (qqJet.p4()+lepton.p4()));
+
+
+        const double lHH = (hwwInfo.hWW + bbJet.p4()).mass();
+
+
+        const double nBL = hwwBkgInfo.likeli/hwwBkgAltInfo.likeli;
+
+        const double ptom = (bN.p4() + lepton.p4() + qqJet.p4()).pt() / *hh_orig;
+        const double ptom2 = hwwInfo.hWW.pt() / lHH;
+
+        const double md = PhysicsUtilities::deltaR( bN.p4() + lepton.p4() ,qqJet)
+        * (bN.p4() + lepton.p4() + qqJet.p4()).pt()/2.0;
 
         plotter.getOrMake1DPre(smpName, "simpleHH",";HH",120,0,3000)
                 ->Fill(*hh_orig,weight);
         plotter.getOrMake1DPre(smpName, "chi2HH",";HH",120,0,3000)
                 ->Fill(*hh_chi2,weight);
         plotter.getOrMake1DPre(smpName, "likeliHH",";HH",120,0,3000)
-                ->Fill((hwwInfo.hWW + bbJet.p4()).mass(),weight);
+                ->Fill(lHH,weight);
         plotter.getOrMake1DPre(smpName, "likeliBHH",";HH",120,0,3000)
                 ->Fill((hwwBkgInfo.hWW + bbJet.p4()).mass(),weight);
 
 
+        auto mkDiscPlts =[&](const TString& prefix){
+
+
+
+            plotter.getOrMake1DPre(prefix, "likeli",";likeli",200,0,100)
+                    ->Fill(hwwInfo.likeli,weight);
+
+            plotter.getOrMake1DPre(prefix, "likeli_raw",";likeli",200,0,5)
+                    ->Fill(hwwInfo.rawLikeli,weight);
+
+            plotter.getOrMake1DPre(prefix, "alt",";likeli",200,0,100)
+                    ->Fill(altHWWInfo.rawLikeli,weight);
+
+            plotter.getOrMake1DPre(prefix, "md",";MD",200,0,200)
+                    ->Fill(md,weight);
+
+
+
+            plotter.getOrMake1DPre(prefix, "Blikeli",";likeli",200,0,50)
+                    ->Fill(hwwBkgInfo.likeli,weight);
+
+            plotter.getOrMake1DPre(prefix, "Blikeli_nAlt",";likeli",200,0,5)
+                    ->Fill(nBL,weight);
+
+            plotter.getOrMake1DPre(prefix, "bAlt",";likeli",200,0,100)
+                    ->Fill(hwwBkgAltInfo.likeli,weight);
+
+            plotter.getOrMake1DPre(prefix, "SoBlikeli",";likeli",200,0,5)
+                    ->Fill(nBL > 0 ? hwwInfo.likeli/nBL
+                            : 50,weight);
+
+
+            plotter.getOrMake1DPre(prefix, "ptom",";HH",250,0,1)
+                    ->Fill( ptom,weight);
+            plotter.getOrMake1DPre(prefix, "ptom2",";HH",250,0,1)
+                    ->Fill( ptom2,weight);
+        };
+
+
+
+
+        mkDiscPlts(smpName);
+        if(lHH>1000) mkDiscPlts(smpName +"_m1000");
+        if(lHH>2000) mkDiscPlts(smpName +"_m2000");
+        if(hwwInfo.likeli < 1.45)  mkDiscPlts(smpName +"_lllt1p45");
+        if(hwwInfo.likeli < 1.45 && lHH>1000)  mkDiscPlts(smpName +"_m1000_lllt1p45");
+        if(hwwInfo.likeli < 1.45 && lHH>2000)  mkDiscPlts(smpName +"_m2000_lllt1p45");
+
+        if(md < 125 && lHH>1000)  mkDiscPlts(smpName +"_m1000_mdlt125");
+        if(md < 125 && lHH>2000)  mkDiscPlts(smpName +"_m2000_mdlt125");
+
         plotter.getOrMake1DPre(smpName, "chi2",";chi2",100,0,20)
                 ->Fill(*chi2,weight);
-        plotter.getOrMake1DPre(smpName, "likeli",";likeli",200,0,50)
-                ->Fill(hwwInfo.likeli,weight);
-        plotter.getOrMake1DPre(smpName, "Blikeli",";likeli",200,0,50)
-                ->Fill(hwwBkgInfo.likeli,weight);
-
-        plotter.getOrMake1DPre(smpName, "SoBlikeli",";likeli",200,0,5)
-                ->Fill(hwwInfo.likeli > 0 ?
-                        hwwInfo.likeli/hwwBkgInfo.likeli
-                        : 50,weight);
-
-
-        plotter.getOrMake1DPre(smpName, "likeliHWW",";HWW",250,0,500)
-                ->Fill(hwwInfo.hWW.mass(),weight);
-        plotter.getOrMake1DPre(smpName, "likeliBHWW",";HH",250,0,500)
-                ->Fill(hwwBkgInfo.hWW.mass(),weight);
-
-
-        if(*hh_chi2>2000)
-        plotter.getOrMake1DPre(smpName, "m2000_chi2",";chi2",100,0,20)
-                ->Fill(*chi2,weight);
-        if((hwwInfo.hWW + bbJet.p4()).mass()>2000){
-        plotter.getOrMake1DPre(smpName, "m2000_likeli",";likeli",200,0,50)
-                ->Fill(hwwInfo.likeli,weight);
-        plotter.getOrMake1DPre(smpName, "m2000_Blikeli",";likeli",200,0,50)
-                ->Fill(hwwBkgInfo.likeli,weight);
-
-        plotter.getOrMake1DPre(smpName, "m2000_SoBlikeli",";likeli",200,0,5)
-                ->Fill(hwwInfo.likeli > 0 ?
-                        hwwInfo.likeli/hwwBkgInfo.likeli
-                        : 50,weight);
-
-        plotter.getOrMake1DPre(smpName, "m2000_likeliHWW",";HWW",250,0,500)
-                ->Fill(hwwInfo.hWW.mass(),weight);
-        plotter.getOrMake1DPre(smpName, "m2000_likeliBHWW",";HWW",250,0,500)
-                ->Fill(hwwBkgInfo.hWW.mass(),weight);
-
-        }
-
-
         if(*hh_chi2>1000)
           plotter.getOrMake1DPre(smpName, "m1000_chi2",";chi2",100,0,20)
                   ->Fill(*chi2,weight);
-          if((hwwInfo.hWW + bbJet.p4()).mass()>1000){
-          plotter.getOrMake1DPre(smpName, "m1000_likeli",";likeli",200,0,50)
-                  ->Fill(hwwInfo.likeli,weight);
-
-          plotter.getOrMake1DPre(smpName, "m1000_Blikeli",";likeli",200,0,50)
-                  ->Fill(hwwBkgInfo.likeli,weight);
-
-          plotter.getOrMake1DPre(smpName, "m1000_SoBlikeli",";likeli",200,0,5)
-                  ->Fill(hwwInfo.likeli > 0 ?
-                          hwwInfo.likeli/hwwBkgInfo.likeli
-                          : 50,weight);
-
-          plotter.getOrMake1DPre(smpName, "m1000_likeliHWW",";HWW",250,0,500)
-                  ->Fill(hwwInfo.hWW.mass(),weight);
-          plotter.getOrMake1DPre(smpName, "m1000_likeliBHWW",";HWW",250,0,500)
-                  ->Fill(hwwBkgInfo.hWW.mass(),weight);
-
-          }
-
-
-          if(hwwInfo.likeli < 32){
-              plotter.getOrMake1DPre(smpName, "lllt32_Blikeli",";likeli",200,0,50)
-                      ->Fill(hwwBkgInfo.likeli,weight);
-
-              plotter.getOrMake1DPre(smpName, "lllt32_SoBlikeli",";likeli",200,0,5)
-                      ->Fill(hwwInfo.likeli > 0 ?
-                              hwwInfo.likeli/hwwBkgInfo.likeli
-                              : 50,weight);
-
-              plotter.getOrMake1DPre(smpName, "lllt32_likeliHWW",";HWW",250,0,500)
-                      ->Fill(hwwInfo.hWW.mass(),weight);
-              plotter.getOrMake1DPre(smpName, "lllt32_likeliBHWW",";HWW",250,0,500)
-                      ->Fill(hwwBkgInfo.hWW.mass(),weight);
-          }
+        if(*hh_chi2>2000)
+        plotter.getOrMake1DPre(smpName, "m2000_chi2",";chi2",100,0,20)
+                ->Fill(*chi2,weight);
 
 
 
-          if(isSignal()){
-              plotter.getOrMake1DPre("signal", "sampParam",";sampParam",50,0,5000)
-                      ->Fill(*sampParam,weight);
-
-              if(*chi2 < 20)
-                  plotter.getOrMake1DPre("signal_chilt20", "sampParam",";sampParam",50,0,5000)
-                          ->Fill(*sampParam,weight);
-              if(*chi2 < 9)
-                  plotter.getOrMake1DPre("signal_chilt9", "sampParam",";sampParam",50,0,5000)
-                          ->Fill(*sampParam,weight);
-
-              if(*chi2 < 5)
-                  plotter.getOrMake1DPre("signal_chilt5", "sampParam",";sampParam",50,0,5000)
-                          ->Fill(*sampParam,weight);
-
-              if(hwwInfo.likeli < 37)
-                  plotter.getOrMake1DPre("signal_lllt37", "sampParam",";sampParam",50,0,5000)
-                          ->Fill(*sampParam,weight);
-
-              if(hwwInfo.likeli < 32){
-                  plotter.getOrMake1DPre("signal_lllt32", "sampParam",";sampParam",50,0,5000)
-                          ->Fill(*sampParam,weight);
-              }
-
-              if(hwwInfo.likeli < 29.5)
-                  plotter.getOrMake1DPre("signal_lllt29p5", "sampParam",";sampParam",50,0,5000)
-                          ->Fill(*sampParam,weight);
 
 
+        auto plotForDCuts = [&](const TString& selName){
+            if(isSignal())
+                plotter.getOrMake1DPre("signal"+selName, "sampParam",";sampParam",35,500,4000)
+                    ->Fill(*sampParam,weight);
+            else {
+                plotter.getOrMake1DPre(smpName+selName, "chi2HH",";HH",120,0,3000)
+                        ->Fill(*hh_chi2,weight);
+                plotter.getOrMake1DPre(smpName+selName, "likeliHH",";HH",120,0,3000)
+                        ->Fill(lHH,weight);
 
-          } else {
-              plotter.getOrMake1DPre(smpName+"_chiltinf", "chi2HH",";HH",120,0,3000)
-                           ->Fill(*hh_chi2,weight);
+                plotter.getOrMake1DPre(smpName+selName, "simpleHH",";HH",120,0,3000)
+                        ->Fill(*hh_orig,weight);
 
-              if(*chi2 < 20)
-                  plotter.getOrMake1DPre(smpName+"_chilt20", "chi2HH",";HH",120,0,3000)
-                          ->Fill(*hh_chi2,weight);
-              if(*chi2 < 9)
-                  plotter.getOrMake1DPre(smpName+"_chilt9", "chi2HH",";HH",120,0,3000)
-                          ->Fill(*hh_chi2,weight);
+            }
 
-              if(*chi2 < 5)
-                  plotter.getOrMake1DPre(smpName+"_chilt5", "chi2HH",";HH",120,0,3000)
-                          ->Fill(*hh_chi2,weight);
+        };
+        plotForDCuts("_chiltinf");
+        plotForDCuts("_llltinf");
+        plotForDCuts("_mdltinf");
+        if(*chi2 < 1.75) plotForDCuts("_chilt1p75");
+        if(hwwInfo.likeli < 1.05) plotForDCuts("_lllt1p05");
+        if(hwwInfo.likeli < 1.1) plotForDCuts("_lllt1p1");
+        if(hwwInfo.likeli < 1.2) plotForDCuts("_lllt1p2");
+        if(hwwInfo.likeli < 1.25) plotForDCuts("_lllt1p25");
 
-              plotter.getOrMake1DPre(smpName+"_llltinf", "likeliHH",";HH",120,0,3000)
-                      ->Fill((hwwInfo.hWW + bbJet.p4()).mass(),weight);
-
-              if(hwwInfo.likeli < 37)
-                  plotter.getOrMake1DPre(smpName+"_lllt37", "likeliHH",";HH",120,0,3000)
-                          ->Fill((hwwInfo.hWW + bbJet.p4()).mass(),weight);
-
-              if(hwwInfo.likeli < 32)
-                  plotter.getOrMake1DPre(smpName+"_lllt32", "likeliHH",";HH",120,0,3000)
-                          ->Fill((hwwInfo.hWW + bbJet.p4()).mass(),weight);
-              if(hwwInfo.likeli < 29.5)
-                  plotter.getOrMake1DPre(smpName+"_lllt29p5", "likeliHH",";HH",120,0,3000)
-                          ->Fill((hwwInfo.hWW + bbJet.p4()).mass(),weight);
-          }
-
-//        HiggsSolverInfo ohwwInfo;
-//        std::cout <<std::endl<<"STARTING THE MINUIT MINIMIZER~"<<std::endl;
-//        double ohwwChi   = oHSolver.hSolverMinimization(lepton.p4(),qqJet.p4(),
-//                met.p4(),*qqJet_SDmass <60,parameters.hww, &ohwwInfo);
-//
-//        auto getPerp =[&](const MomentumF& mom)->double{
-//              return mom.px()*hwwPerpNormX+mom.py()*hwwPerpNormY;
-//          };
-//          auto getPar =[&](const MomentumF& mom)->double{
-//              return mom.px()*hwwParNormX+mom.py()*hwwParNormY;
-//          };
-//
-//        std::cout << "("<< hwwInfo.min_sol.likeli<<" "<< (hwwInfo.min_sol.hWW + bbJet.p4()).mass() <<") "<<
-//                  "("<< ohwwChi<<" "<< (ohwwInfo.hWW+bbJet.p4()).mass() <<") "<<std::endl;
-
-//        double tp [] = {  metPerp - getPerp(ohwwInfo.neutrino),(metPar - getPar(ohwwInfo.neutrino))/(lepton.p4()+met.p4()+qqJet.p4()).pt(),ohwwInfo.neutrino.pz(),ohwwInfo.SF};
-
-//        double tp [] = {  ohwwInfo.neutrino.px(),ohwwInfo.neutrino.py(),ohwwInfo.neutrino.pz(),ohwwInfo.SF};
-//
-////        double tp [] = {  metPerp - getPerp(hwwInfo.min_sol.neutrino),(metPar - getPar(hwwInfo.min_sol.neutrino))/(lepton.p4()+met.p4()+qqJet.p4()).pt(),hwwInfo.min_sol.neutrino.pz(),hwwInfo.min_sol.ptRes};
-//        double tc, th;
-//        if(*qqJet_SDmass <60){
-//            tc = HSolver.vqq_function.test(tp);
-//            th = (HSolver.vqq_function.hww + bbJet.p4()).mass();
-//
-////            std::cout <<"("<<  ohwwInfo.neutrino.px()<<" "<< ohwwInfo.neutrino.py()<<" "<< ohwwInfo.neutrino.pz() <<") "<<" ?? " <<
-////            "("<<  HSolver.vqq_function.neutX<<" "<< HSolver.vqq_function.neutY<<" "<< HSolver.vqq_function.neutrino.Pz() <<") "<<std::endl;
-//
-//
-//        } else {
-//            tc = HSolver.osqq_function.test(tp);
-//            th = (HSolver.osqq_function.hww + bbJet.p4()).mass();
-//        }
-//        std::cout <<"("<< tc<<" "<< th <<") "<<std::endl;
-
-
-//
-//        print(ohwwInfo.neutrino,ohwwInfo.wqqjet,ohwwInfo.wlnu, ohwwInfo.hWW,
-//                (bbJet.p4()+ohwwInfo.hWW).mass() );
-//        print(hwwInfo.min_sol.neutrino,hwwInfo.min_sol.wqqjet,hwwInfo.min_sol.wlnu,
-//                hwwInfo.min_sol.hWW,(bbJet.p4()+hwwInfo.min_sol.hWW).mass() );
-//
-//
-//        std::cout <<"("<< hwwInfo.min_sol.likeli<<") ("<<hwwInfo.min_sol.emetperp<<","<<
-//                hwwInfo.min_sol.emetpar<<","<<hwwInfo.min_sol.neutrino.pz()<<","<<hwwInfo.min_sol.ptRes<<") (";
-//
-//        if(hwwInfo.min_sol.likeli == hwwInfo.vqq_sol.likeli){
-//            std:: cout <<
-//                    -2.*std::log(HSolver.vqq_pdfs[HiggsLi::EMET_PERP]->getProbability(hwwInfo.min_sol.emetperp))
-//                    <<","<<-2.*std::log(HSolver.vqq_pdfs[HiggsLi::EMET_PAR]->getProbability(hwwInfo.min_sol.emetpar))
-//                    <<","<<-2.*std::log(HSolver.vqq_pdfs[HiggsLi::WQQ_RES]->getProbability(hwwInfo.min_sol.ptRes))
-//                    <<","<<-2.*std::log(HSolver.vqq_pdfs[HiggsLi::HWW_WLNU_MASS]->getProbability(hwwInfo.min_sol.hWW.mass(),hwwInfo.min_sol.wlnu.mass()))
-//                    <<") ";
-//        } else {
-//            std:: cout <<
-//                    -2.*std::log(HSolver.osqq_pdfs[HiggsLi::EMET_PERP]->getProbability(hwwInfo.min_sol.emetperp))
-//                    <<","<<-2.*std::log(HSolver.osqq_pdfs[HiggsLi::EMET_PAR]->getProbability(hwwInfo.min_sol.emetpar))
-//                    <<","<<-2.*std::log(HSolver.osqq_pdfs[HiggsLi::WQQ_RES]->getProbability(hwwInfo.min_sol.ptRes))
-//                    <<","<<-2.*std::log(HSolver.osqq_pdfs[HiggsLi::HWW_WLNU_MASS]->getProbability(hwwInfo.min_sol.hWW.mass(),hwwInfo.min_sol.wlnu.mass()))
-//                    <<") ";
-//        }
-//
-//
-//
-//        print(hwwInfo.min_sol.neutrino,hwwInfo.min_sol.wqqjet,hwwInfo.min_sol.wlnu,
-//                hwwInfo.min_sol.hWW,(bbJet.p4()+hwwInfo.min_sol.hWW).mass() );
-
+        if(*chi2 < 11) plotForDCuts("_chilt11");
+        if(hwwInfo.likeli < 1.35) plotForDCuts("_lllt1p35");
+        if(*chi2 < 19) plotForDCuts("_chilt19");
+        if(hwwInfo.likeli < 1.45) plotForDCuts("_lllt1p45");
+        if(hwwInfo.likeli < 1.6) plotForDCuts("_lllt1p6");
+        if(md < 125) plotForDCuts("_mdlt125");
 
     }
 

@@ -491,8 +491,6 @@ void HSolverLiFunction::setIterationStorage(const double * p){
 
     scaledQQJet.SetPxPyPzE(wqqSF*qqJet.px(),wqqSF*qqJet.py(),wqqSF*qqJet.pz(),jetE);
 
-
-
     neutPerp = metPerp- p[EMET_PERP];
     neutPar  = metPar- p[EMET_PAR]*hwwMag;
     neutE = std::sqrt(neutPerp*neutPerp+neutPar*neutPar+p[NEUT_Z]*p[NEUT_Z]);
@@ -522,22 +520,42 @@ double HSolverLiFunction::operator()(const double* p){
     return -2.0*LL;
 }
 //--------------------------------------------------------------------------------------------------
+// HSolverLiAltFunction
+//--------------------------------------------------------------------------------------------------
+double HSolverLiAltFunction::operator()(const double* p){
+    LL = 0;
+    LL += std::log(pdfs[HSolverLi::EMET_PERP]->getProbability(p[EMET_PERP]));
+    LL += std::log(pdfs[HSolverLi::EMET_PAR]->getProbability(p[EMET_PAR]));
+    LL += std::log(pdfs[HSolverLi::WQQ_RES]->getProbability(p[WQQ_RES]));
+    LL += std::log(pdfs[HSolverLi::WLNU_MASS]->getProbability(p[WLNU_MASS]));
+    LL += std::log(pdfs[HSolverLi::HWW_MASS]->getProbability(p[HWW_MASS]));
+    return -2.0*LL;
+}
+//--------------------------------------------------------------------------------------------------
+// HSolverLi
+//--------------------------------------------------------------------------------------------------
 HSolverLi::HSolverLi(const std::string& dataDir) : dataDir(dataDir),
-        osqq_functor(&osqq_function,&HSolverLiFunction::operator (),4),
-        vqq_functor(&vqq_function,&HSolverLiFunction::operator (),4),
-        osqq_minimizer( ROOT::Minuit::kSimplex,4 ),
-        vqq_minimizer( ROOT::Minuit::kSimplex,4 )
+        osqq_functor(&osqq_function,&HSolverLiFunction::operator () ,HSolverLiFunction::NUMPARAMS),
+        vqq_functor(&vqq_function,&HSolverLiFunction::operator (),HSolverLiFunction::NUMPARAMS),
+        osqq_alt_functor(&osqq_alt_function,&HSolverLiAltFunction::operator (),HSolverLiFunction::NUMPARAMS),
+        vqq_alt_functor(&vqq_alt_function,&HSolverLiAltFunction::operator (),HSolverLiFunction::NUMPARAMS),
+        minimizer( ROOT::Minuit::kSimplex,HSolverLiFunction::NUMPARAMS)
 {
+
+    if(int(HSolverLiFunction::NUMPARAMS) != int(HSolverLiAltFunction::NUMPARAMS) ||
+            int(HSolverLiFunction::NUMPARAMS) != int(HSolverBkgLiFunction::NUMPARAMS))
+        throw std::invalid_argument(
+                "HSolverLi::HSolverLi -> The number of all function parameters must match!");
+
     auto setupMinimizer=[&](Minimizer& min, ROOT::Math::Functor& f) {
         min.SetFunction(f);
         resetParameters(min);
 
     };
-    setupMinimizer(vqq_minimizer,vqq_functor);
-    setupMinimizer(osqq_minimizer,osqq_functor);
+    setupMinimizer(minimizer,vqq_functor);
 
-    auto setupPDFS = [&](HSolverLiFunction * func, std::vector<std::shared_ptr<BASEPDF>>* pdfs,
-            const float jetM) {
+
+    auto initializePDFs = [&] (std::vector<std::shared_ptr<BASEPDF>>* pdfs){
         pdfs->resize(NPDFS);
         (*pdfs)[EMET_PERP]    .reset(new OneDimPDFWInterpAndExtrap());
         (*pdfs)[EMET_PAR]     .reset(new OneDimPDFWInterpAndExtrap());
@@ -546,7 +564,9 @@ HSolverLi::HSolverLi(const std::string& dataDir) : dataDir(dataDir),
 //        (*pdfs)[HWW_WLNU_MASS].reset(new TwoDimPDF());
         (*pdfs)[WLNU_MASS]    .reset(new OneDimPDFWInterpAndExtrap());
         (*pdfs)[HWW_MASS]     .reset(new OneDimPDFWInterpAndExtrap());
+    };
 
+    auto setupPDFS = [&](HSolverFunction * func, std::vector<std::shared_ptr<BASEPDF>>* pdfs) {
         func->pdfs.resize(NPDFS);
         (*func).pdfs[EMET_PERP]     = (*pdfs)[EMET_PERP]    ;
         (*func).pdfs[EMET_PAR]      = (*pdfs)[EMET_PAR]     ;
@@ -555,11 +575,19 @@ HSolverLi::HSolverLi(const std::string& dataDir) : dataDir(dataDir),
 //        (*func).pdfs[HWW_WLNU_MASS] = (*pdfs)[HWW_WLNU_MASS];
         (*func).pdfs[WLNU_MASS]     = (*pdfs)[WLNU_MASS];
         (*func).pdfs[HWW_MASS]      = (*pdfs)[HWW_MASS];
-        (*func).jetM = jetM;
+
     };
 
-    setupPDFS(&osqq_function,&osqq_pdfs,80);
-    setupPDFS(&vqq_function,&vqq_pdfs,31);
+
+    initializePDFs(&osqq_pdfs);
+    initializePDFs(&vqq_pdfs);
+
+    setupPDFS(&osqq_function,&osqq_pdfs);
+    setupPDFS(&vqq_function,&vqq_pdfs);
+    osqq_function.jetM = 80;
+    vqq_function.jetM = 31;
+    setupPDFS(&osqq_alt_function,&osqq_pdfs);
+    setupPDFS(&vqq_alt_function,&vqq_pdfs);
 }
 //--------------------------------------------------------------------------------------------------
 void HSolverLi::resetParameters(Minimizer& min,const double neutZ) {
@@ -568,6 +596,16 @@ void HSolverLi::resetParameters(Minimizer& min,const double neutZ) {
     min.SetVariable(HSolverLiFunction::EMET_PAR,"EMET_PAR",0,0.5);
     min.SetVariable(HSolverLiFunction::NEUT_Z  ,"NEUT_Z",neutZ,500);
     min.SetLimitedVariable(HSolverLiFunction::WQQ_RES ,"QQJET_RES",0,0.5,-0.9,5);
+    min.SetFixedVariable(HSolverLiFunction::DUMMY,"DUMMY",1);
+}
+//--------------------------------------------------------------------------------------------------
+void HSolverLi::resetAltParameters(Minimizer& min) {
+
+    min.SetVariable(HSolverLiAltFunction::EMET_PERP,"EMET_PERP",0,100);
+    min.SetVariable(HSolverLiAltFunction::EMET_PAR,"EMET_PAR",0,0.5);
+    min.SetLimitedVariable(HSolverLiAltFunction::WQQ_RES  ,"WQQ_RES",0,0.5,-0.9,5);
+    min.SetVariable(HSolverLiAltFunction::WLNU_MASS  ,"WLNU_MASS",55,500);
+    min.SetVariable(HSolverLiAltFunction::HWW_MASS  ,"HWW_MASS",125,500);
 }
 //--------------------------------------------------------------------------------------------------
 void HSolverLi::setParamters(const HWWParameters& hwwParam, bool verbose) {
@@ -613,8 +651,86 @@ double HSolverLi::getCorrHWWPT(const double recoPT) const{
     return recoPT * corPT/boundPT; //apply as a correction due to the limted range;
 }
 //--------------------------------------------------------------------------------------------------
-double HSolverLi::minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
+double HSolverLi::fitNormalization(double qqSDMass,HSolverLiInfo * out){
+
+
+    double minLikeli = -1;
+    auto doNomFit = [&](Minimizer& min, HSolverLiAltFunction& f) {
+        resetAltParameters(min);
+
+        const int minOut = min.Minimize();
+        const double noSDLikli = min.MinValue();
+        const double likeli =
+                noSDLikli - 2.0*std::log(f.pdfs[WQQ_SDMASS]->getProbability(qqSDMass));
+        const double *xs = min.X();
+
+        auto fill = [&] (HSolverLiInfo& o){
+            o.minOut=minOut;
+            o.noSDLikli = noSDLikli;
+            o.rawLikeli = likeli;
+            for(unsigned int iP = 0; iP <HSolverLiAltFunction::NUMPARAMS; ++iP )
+                o.params[iP] = xs[iP];
+        };
+        if(minLikeli < 0 || likeli < minLikeli){
+            minLikeli = likeli;
+            if(out) fill(*out);
+        }
+    };
+
+    minimizer.SetFunction(osqq_alt_functor);
+    doNomFit(minimizer,osqq_alt_function);
+    minimizer.SetFunction(vqq_alt_functor);
+    doNomFit(minimizer,vqq_alt_function);
+    return minLikeli;
+}
+//--------------------------------------------------------------------------------------------------
+double HSolverLi::fit(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
         double qqSDMass, HSolverLiInfo& out, HSolverLiInfo * osqq_sol, HSolverLiInfo * vqq_sol){
+
+    double minLikeli = -1;
+    auto doFit = [&](
+            Minimizer& min, HSolverLiFunction& f, HSolverLiInfo* extraInfo){
+        f.setObservables(lepton,met,qqJet);
+        resetParameters(min,0);
+        const int minOut = min.Minimize();
+        const double noSDLikli = min.MinValue();
+        const double likeli =
+                noSDLikli - 2.0*std::log(f.pdfs[WQQ_SDMASS]->getProbability(qqSDMass));
+        const double *xs = min.X();
+        f.setIterationStorage(xs);
+
+        auto fill = [&] (HSolverLiInfo& o){
+            o.minOut=minOut;
+            o.rawLikeli = likeli;
+            o.noSDLikli = noSDLikli;
+            for(unsigned int iP = 0; iP <HSolverLiAltFunction::NUMPARAMS; ++iP )
+                o.params[iP] = xs[iP];
+            o.neutrino = f.neutrino;
+            o.wqqjet = f.scaledQQJet;
+            o.wlnu = f.wlnu;
+            o.hWW = f.hww;
+        };
+
+        if(minLikeli < 0 || likeli < minLikeli){
+            minLikeli = likeli;
+            fill(out);
+        }
+        if(extraInfo)fill(*extraInfo);
+    };
+
+
+    minimizer.SetFunction(osqq_functor);
+    doFit(minimizer,osqq_function,osqq_sol);
+    minimizer.SetFunction(vqq_functor);
+    doFit(minimizer,vqq_function,vqq_sol);
+
+    return minLikeli;
+}
+
+//--------------------------------------------------------------------------------------------------
+void HSolverLi::interpolatePDFs(const MomentumF& lepton, const MomentumF& met,
+        const MomentumF& qqJet){
+
     const double oHWWMag = (lepton.p4()+met.p4()+qqJet.p4()).pt();
     const double cHWWMag = getCorrHWWPT(oHWWMag);
 
@@ -629,48 +745,18 @@ double HSolverLi::minimize(const MomentumF& lepton, const MomentumF& met, const 
     interp(WLNU_MASS);
     interp(HWW_MASS);
 
-    auto doFit = [&](
-            Minimizer& min, HSolverLiFunction& f,
-            std::vector<std::shared_ptr<BASEPDF>>& pdfs, HSolverLiInfo& info,
-            HSolverLiInfo* extraInfo  ){
+}
 
-        f.setObservables(lepton,met,qqJet);
-        resetParameters(min,0);
+//--------------------------------------------------------------------------------------------------
+double HSolverLi::minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
+        double qqSDMass, HSolverLiInfo& out, HSolverLiInfo * osqq_sol, HSolverLiInfo * vqq_sol,
+        HSolverLiInfo * nom_sol){
 
-        const int minOut = min.Minimize();
-        const double noSDLikli = min.MinValue();
-        const double likeli = noSDLikli - 2.0*std::log(pdfs[WQQ_SDMASS]->getProbability(qqSDMass));
-        const double *xs = min.X();
-        f.setIterationStorage(xs);
+    interpolatePDFs(lepton,met,qqJet);
+    const double rawLikeli = fit(lepton,met,qqJet,qqSDMass,out, osqq_sol,vqq_sol);
+    const double normLikeli = fitNormalization(qqSDMass,nom_sol);
 
-        auto fill = [&] (HSolverLiInfo& o){
-            o.minOut=minOut;
-            o.noSDLikli = noSDLikli;
-            o.likeli = likeli;
-            o.neutrino = f.neutrino;
-            o.ptRes = xs[HSolverLiFunction::WQQ_RES];
-            o.wqqjet = f.scaledQQJet;
-            o.wlnu = f.wlnu;
-            o.hWW = f.hww;
-            o.emetperp = xs[HSolverLiFunction::EMET_PERP];
-            o.emetpar = xs[HSolverLiFunction::EMET_PAR];
-        };
-
-        //check if new likeli is smaller than the one already stored (or just store if it is <0)
-        if(info.likeli < 0 || likeli < info.likeli ) fill(info);
-
-        //if asked for...store the extra one too
-        if(extraInfo)fill(*extraInfo);
-    };
-
-    //reset the likeli
-    out.likeli = -1;
-
-    osqq_minimizer.SetFunction(osqq_functor);
-    doFit(osqq_minimizer,osqq_function,osqq_pdfs,out,osqq_sol);
-    vqq_minimizer.SetFunction(vqq_functor);
-    doFit(vqq_minimizer,vqq_function,vqq_pdfs,out,vqq_sol);
-
+    out.likeli = rawLikeli / normLikeli;
     return out.likeli;
 }
 //--------------------------------------------------------------------------------------------------
@@ -724,13 +810,26 @@ double HSolverBkgLiFunction::operator()(const double* p){
     LL += std::log(pdfs[HSolverBkgLi::HWW_MASS]->getProbability(hww.mass()));
     return -2.0*LL;
 }
+//--------------------------------------------------------------------------------------------------
+// HSolverBkgLiAltFunction
+//--------------------------------------------------------------------------------------------------
+double HSolverBkgLiAltFunction::operator()(const double* p){
+    LL = 0;
+    LL += std::log(pdfs[HSolverBkgLi::EMET_PERP]->getProbability(p[EMET_PERP]));
+    LL += std::log(pdfs[HSolverBkgLi::EMET_PAR]->getProbability(p[EMET_PAR]));
+    LL += std::log(pdfs[HSolverBkgLi::WLNU_MASS]->getProbability(p[WLNU_MASS]));
+    LL += std::log(pdfs[HSolverBkgLi::HWW_MASS]->getProbability(p[HWW_MASS]));
+    return -2.0*LL;
+}
 
 //--------------------------------------------------------------------------------------------------
 // HSolverBkgLi
 //--------------------------------------------------------------------------------------------------
 HSolverBkgLi::HSolverBkgLi(const std::string& dataDir) : dataDir(dataDir),
-        functor(&function,&HSolverBkgLiFunction::operator (),4),
-        minimizer( ROOT::Minuit::kSimplex,4 )
+        functor(&function,&HSolverBkgLiFunction::operator (),HSolverBkgLiFunction::NUMPARAMS),
+        altFunctor(&altFunction,&HSolverBkgLiAltFunction::operator (),
+                HSolverBkgLiAltFunction::NUMPARAMS),
+        minimizer( ROOT::Minuit::kSimplex,HSolverBkgLiFunction::NUMPARAMS )
 {
     auto setupMinimizer=[&](Minimizer& min, ROOT::Math::Functor& f) {
         min.SetFunction(f);
@@ -744,11 +843,17 @@ HSolverBkgLi::HSolverBkgLi(const std::string& dataDir) : dataDir(dataDir),
     pdfs[WLNU_MASS].reset(new OneDimPDFWInterpAndExtrap());
     pdfs[HWW_MASS].reset(new OneDimPDFWInterpAndExtrap());
 
-    function.pdfs.resize(NPDFS);
-    function.pdfs[EMET_PERP]     = pdfs[EMET_PERP]    ;
-    function.pdfs[EMET_PAR]      = pdfs[EMET_PAR]     ;
-    function.pdfs[WLNU_MASS]     = pdfs[WLNU_MASS]      ;
-    function.pdfs[HWW_MASS]      = pdfs[HWW_MASS]   ;
+    auto setPDFS = [&](HSolverFunction* f){
+        f->pdfs.resize(NPDFS);
+        f->pdfs[EMET_PERP]     = pdfs[EMET_PERP]    ;
+        f->pdfs[EMET_PAR]      = pdfs[EMET_PAR]     ;
+        f->pdfs[WLNU_MASS]     = pdfs[WLNU_MASS]      ;
+        f->pdfs[HWW_MASS]      = pdfs[HWW_MASS]   ;
+    };
+    setPDFS(&function);
+    setPDFS(&altFunction);
+
+
 }
 //--------------------------------------------------------------------------------------------------
 void HSolverBkgLi::setParamters(const HWWParameters& hwwParam, bool verbose){
@@ -773,11 +878,21 @@ void HSolverBkgLi::resetParameters(Minimizer& min) {
     min.SetVariable(HSolverBkgLiFunction::EMET_PERP,"EMET_PERP",0,100);
     min.SetVariable(HSolverBkgLiFunction::EMET_PAR,"EMET_PAR",0,0.5);
     min.SetVariable(HSolverBkgLiFunction::NEUT_Z  ,"NEUT_Z",0,500);
-    min.SetFixedVariable(3,"DUMMY",0);
+    min.SetFixedVariable(HSolverBkgLiFunction::DUMMY ,"DUMMY",1);
+    min.SetFixedVariable(HSolverBkgLiFunction::DUMMY2 ,"DUMMY2",1);
+}
+//--------------------------------------------------------------------------------------------------
+void HSolverBkgLi::resetAltParameters(Minimizer& min) {
+    min.SetVariable(HSolverBkgLiAltFunction::EMET_PERP,"EMET_PERP",0,100);
+    min.SetVariable(HSolverBkgLiAltFunction::EMET_PAR,"EMET_PAR",0,0.5);
+    min.SetVariable(HSolverBkgLiAltFunction::WLNU_MASS  ,"WLNU_MASS",80,500);
+    min.SetVariable(HSolverBkgLiAltFunction::HWW_MASS  ,"HWW_MASS",125,500);
+    min.SetFixedVariable(HSolverBkgLiAltFunction::DUMMY ,"DUMMY",1);
+
 }
 //--------------------------------------------------------------------------------------------------
 double HSolverBkgLi::minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
-        HSolverLiInfo& out){
+        HSolverLiInfo& out, HSolverLiInfo* altOut){
 
     const double oHWWMag = (lepton.p4()+met.p4()+qqJet.p4()).pt();
     auto interp = [&](PDFList p) {
@@ -800,18 +915,36 @@ double HSolverBkgLi::minimize(const MomentumF& lepton, const MomentumF& met, con
         out.likeli = min.MinValue();
         const double *xs = min.X();
         f.setIterationStorage(xs);
+        for(unsigned int iP = 0; iP <HSolverLiAltFunction::NUMPARAMS; ++iP )
+            out.params[iP] = xs[iP];
         out.neutrino = f.neutrino;
         out.wqqjet = f.qqJet;
         out.wlnu = f.wlnu;
         out.hWW = f.hww;
-        out.emetperp = xs[HSolverBkgLiFunction::EMET_PERP];
-        out.emetpar = xs[HSolverBkgLiFunction::EMET_PAR];
 
+    };
+
+    auto doNomFit = [&](
+            Minimizer& min,HSolverLiInfo& out  ){
+        resetAltParameters(min);
+        out.minOut=min.Minimize();
+        out.likeli = min.MinValue();
+
+        const double *xs = min.X();
+        for(unsigned int iP = 0; iP <HSolverLiAltFunction::NUMPARAMS; ++iP )
+            out.params[iP] = xs[iP];
     };
 
     minimizer.SetFunction(functor);
     doFit(minimizer,function,out);
+
+
+    if(altOut){
+        minimizer.SetFunction(altFunctor);
+        doNomFit(minimizer,*altOut);
+    }
     return out.likeli;
+
 }
 }
 

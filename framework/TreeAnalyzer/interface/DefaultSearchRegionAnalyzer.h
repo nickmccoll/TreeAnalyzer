@@ -31,7 +31,6 @@ class JESUncShifter;
 class METUncShifter;
 class HSolverChi;
 class HSolverLi;
-class HSolverBkgLi;
 
 class Jet               ;
 class FatJet            ;
@@ -139,7 +138,6 @@ public:
     float                      wwDM        = 0;
     float                      hwwChi      = 0;
     float                      hwwLi       = 0;
-    float                      hwwBkgLi    = 0;
 
 
     MomentumF                  neutrino           ;
@@ -174,7 +172,6 @@ public:
     std::unique_ptr<METUncShifter>          METUncProc;
     std::unique_ptr<HSolverChi>             hSolverChi;
     std::unique_ptr<HSolverLi>             hSolverLi;
-    std::unique_ptr<HSolverBkgLi>          hSolverBkgLi;
 };
 }
 #endif

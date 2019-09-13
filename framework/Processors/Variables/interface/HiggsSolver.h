@@ -170,25 +170,43 @@ public:
 //--------------------------------------------------------------------------------------------------
 struct HSolverLiInfo {
     HSolverLiInfo() {};
+
+    //minimizer output
     int minOut = -2;
     float likeli = -1;
-    float noSDLikli = -1;
-    float ptRes = -1;
+    float rawLikeli = -1; //Not normalized
+    float noSDLikli = -1; // No SD mass (raw)
+
+    //fitted values
+    std::vector<float> params = {0,0,0,0,0};
+
+    //For convenience
     ASTypes::CylLorentzVectorF neutrino;
     ASTypes::CylLorentzVectorF wlnu;
     ASTypes::CylLorentzVectorF hWW;
     ASTypes::CylLorentzVectorF wqqjet;
-    float emetperp=0;
-    float emetpar=0;
 };
 //--------------------------------------------------------------------------------------------------
 // H->WW assumption function
 //--------------------------------------------------------------------------------------------------
-class HSolverLiFunction {
+class HSolverFunction {
 public:
-    enum PARAMList {EMET_PERP,EMET_PAR, NEUT_Z,WQQ_RES};
+    virtual ~HSolverFunction(){};
+    virtual double operator()(const double * p) =0;
+
+    //constants for this class
+    std::vector<std::shared_ptr<BASEPDF>> pdfs;
+
+    //output
+    double LL = 0;
+};
+
+class HSolverLiFunction : public HSolverFunction {
+public:
+    enum PARAMList {EMET_PERP,EMET_PAR, NEUT_Z,WQQ_RES,DUMMY, NUMPARAMS};
 
     HSolverLiFunction() {}
+    virtual ~HSolverLiFunction(){};
 
     void setObservables(const MomentumF& inL, const MomentumF& inM,
             const MomentumF& inJ);
@@ -198,7 +216,6 @@ public:
     double operator()(const double * p);
 
     //constants for this class
-    std::vector<std::shared_ptr<BASEPDF>> pdfs;
     double jetM =0;
 
     //constants for every run (set in setObservables)
@@ -229,11 +246,23 @@ public:
     double jetE = 0;
     ASTypes::CartLorentzVector neutrino;
     ASTypes::CartLorentzVector scaledQQJet;
+    ASTypes::CartLorentzVector scaledLep;
     ASTypes::CartLorentzVector wlnu;
     ASTypes::CartLorentzVector hww;
 
-    //output
-    double LL = 0;
+};
+//--------------------------------------------------------------------------------------------------
+// H->WW assumption function normalization
+//--------------------------------------------------------------------------------------------------
+class HSolverLiAltFunction : public HSolverFunction {
+public:
+public:
+    enum PARAMList {EMET_PERP,EMET_PAR,WQQ_RES,WLNU_MASS,HWW_MASS,NUMPARAMS};
+
+    HSolverLiAltFunction() {}
+    virtual ~HSolverLiAltFunction(){};
+    double operator()(const double * p);
+
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -242,7 +271,6 @@ public:
 class HSolverLi {
 public:
     typedef TMinuitMinimizer Minimizer;
-    //    enum PDFList {EMET_PERP,EMET_PAR,WQQ_RES, WQQ_SDMASS, HWW_WLNU_MASS, NPDFS};
         enum PDFList {EMET_PERP,EMET_PAR,WQQ_RES, WQQ_SDMASS, WLNU_MASS, HWW_MASS, NPDFS};
 
     //Setup
@@ -253,10 +281,19 @@ public:
     // Run
     double minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
             double qqSDMass, HSolverLiInfo& out,
-            HSolverLiInfo * osqq_sol = 0, HSolverLiInfo * vqq_sol = 0);
+            HSolverLiInfo * osqq_sol = 0, HSolverLiInfo * vqq_sol = 0,
+            HSolverLiInfo * nom_sol=0);
+
+
 
     //Support
+    void interpolatePDFs(const MomentumF& lepton, const MomentumF& met,const MomentumF& qqJet);
+    double fit(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
+            double qqSDMass, HSolverLiInfo& out,
+            HSolverLiInfo * osqq_sol = 0, HSolverLiInfo * vqq_sol = 0);
+    double fitNormalization(double qqSDMass,HSolverLiInfo * out=0);
     void resetParameters(Minimizer& min, const double neutZ=0);
+    void resetAltParameters(Minimizer& min);
     double getCorrHWWPT(const double recoPT) const;
 
     const std::string dataDir;
@@ -268,33 +305,33 @@ public:
 
     HSolverLiFunction osqq_function;
     HSolverLiFunction vqq_function;
+    HSolverLiAltFunction osqq_alt_function;
+    HSolverLiAltFunction vqq_alt_function;
 
     ROOT::Math::Functor osqq_functor;
     ROOT::Math::Functor vqq_functor;
+    ROOT::Math::Functor osqq_alt_functor;
+    ROOT::Math::Functor vqq_alt_functor;
 
-    Minimizer osqq_minimizer;
-    Minimizer vqq_minimizer;
+    Minimizer minimizer;
 };
 
 //--------------------------------------------------------------------------------------------------
 // Bkg assumption function
 //--------------------------------------------------------------------------------------------------
-class HSolverBkgLiFunction {
+class HSolverBkgLiFunction : public HSolverFunction  {
 public:
 
-    enum PARAMList {EMET_PERP,EMET_PAR, NEUT_Z};
+    enum PARAMList {EMET_PERP,EMET_PAR, NEUT_Z, DUMMY, DUMMY2, NUMPARAMS};
 
     HSolverBkgLiFunction() {}
+    virtual ~HSolverBkgLiFunction(){};
 
     void setObservables(const MomentumF& inL, const MomentumF& inM,
             const MomentumF& inJ);
 
     void setIterationStorage(const double * p);
-
     double operator()(const double * p);
-
-    //constants for this class
-    std::vector<std::shared_ptr<BASEPDF>> pdfs;
 
     //constants for every run (set in setObservables)
     ASTypes::CartLorentzVector lepton;
@@ -322,12 +359,22 @@ public:
     ASTypes::CartLorentzVector neutrino;
     ASTypes::CartLorentzVector wlnu;
     ASTypes::CartLorentzVector hww;
-
-    //output
-    double LL = 0;
 };
 //--------------------------------------------------------------------------------------------------
-// Bkg assumption solver
+// Bkg assumption function normalization
+//--------------------------------------------------------------------------------------------------
+class HSolverBkgLiAltFunction : public HSolverFunction {
+public:
+public:
+    enum PARAMList {EMET_PERP,EMET_PAR,WLNU_MASS,HWW_MASS,DUMMY,NUMPARAMS};
+
+    HSolverBkgLiAltFunction() {}
+    virtual ~HSolverBkgLiAltFunction(){};
+    double operator()(const double * p);
+
+};
+//--------------------------------------------------------------------------------------------------
+// Bkg assumption solver....has to be updated if it is to be used
 //--------------------------------------------------------------------------------------------------
 class HSolverBkgLi {
 public:
@@ -341,10 +388,11 @@ public:
 
     //Run
     double minimize(const MomentumF& lepton, const MomentumF& met, const MomentumF& qqJet,
-            HSolverLiInfo& out);
+            HSolverLiInfo& out, HSolverLiInfo* altOut=0);
 
     //Support
     void resetParameters(Minimizer& min);
+    void resetAltParameters(Minimizer& min);
 
     const std::string dataDir;
     double ptCorB=0;
@@ -352,7 +400,9 @@ public:
     std::vector<std::shared_ptr<BASEPDF>> pdfs;
     std::unique_ptr<TH1> hwwPT;
     HSolverBkgLiFunction function;
+    HSolverBkgLiAltFunction altFunction;
     ROOT::Math::Functor functor;
+    ROOT::Math::Functor altFunctor;
     Minimizer minimizer;
 };
 

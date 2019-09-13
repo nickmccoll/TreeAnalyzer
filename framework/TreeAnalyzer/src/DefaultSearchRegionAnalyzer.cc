@@ -53,7 +53,6 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     METUncProc . reset(new METUncShifter());
     hSolverChi . reset(new HSolverChi());
     hSolverLi . reset(new HSolverLi(dataDirectory));
-    hSolverBkgLi . reset(new HSolverBkgLi(dataDirectory));
 
     turnOnCorr(CORR_XSEC);
     turnOnCorr(CORR_TRIG);
@@ -141,7 +140,6 @@ void DefaultSearchRegionAnalyzer::setupParameters(){
     if(isCorrOn(CORR_PU))      puSFProc->setParameters(parameters.event);
 
     hSolverLi->setParamters(parameters.hww);
-    hSolverBkgLi->setParamters(parameters.hww);
 }
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
@@ -251,9 +249,6 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         hwwLi   = hSolverLi->minimize(selectedLepton->p4(),reader_event->met.p4(),
                 wjjCand->p4(), qqSDMass, hwwInfoLi);
 
-        hwwBkgLi   = hSolverBkgLi->minimize(selectedLepton->p4(),reader_event->met.p4(),
-                wjjCand->p4(), hwwInfoBkgLi);
-
         neutrino = hwwInfoLi.neutrino;
         wlnu     = hwwInfoLi.wlnu;
         wqq      = hwwInfoLi.wqqjet;
@@ -262,7 +257,6 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     } else {
         hwwChi      =  1000;
         hwwLi       =  1000;
-        hwwBkgLi    =  1000;
         neutrino    =  MomentumF();
         wlnu        =  MomentumF();
         wqq         =  MomentumF();

@@ -273,8 +273,19 @@ TEST RESULTS
 //Efficiency curves of the likli/chi
 {
   TFile * f = new TFile("hSolTrees_test.root");
-  std::vector<TString> sigs = {"radion_m1000","radion_m2000","ttbar_m1000","wjets_m1000","ttbar_m2000","wjets_m2000"};  
-  std::vector<TString> vars = {"chi2","likeli","likeliNoSD"};
+  std::vector<TString> sigs = {"radion_m1000","radion_m2000","radion_m4000","ttbar_m1000","wjets_m1000","ttbar_m2000","wjets_m2000"};
+  // std::vector<TString> vars = {"chi2","likeli","OSQQ","OSQQPZ","VQQ","VQQPZ"};
+  // std::vector<TString> vars = {"chi2","likeli","likeli_nAlt","alt"};
+    // std::vector<TString> vars = {"chi2","Blikeli","Blikeli_nAlt","bAlt"};
+        std::vector<TString> vars = {"chi2","likeli","likeli_nAlt","likeli_nAlt2"};
+  
+  
+  // std::vector<TString> sigs = {"radion_m1000","radion_m2000","radion_m3000","ttbar_m1000","wjets_m1000"};
+  // std::vector<TString> sigNs = {"#it{m}_{X} 1 TeV","#it{m}_{X} 2 TeV", "#it{m}_{X} 3 TeV","t#bar{t}","W+jets"};
+  
+  // std::vector<TString> sigs = {"radion_m1000","radion_m3000","ttbar_m1000"};
+  // std::vector<TString> sigNs = {"#it{m}_{X} 1 TeV","#it{m}_{X} 3 TeV","t#bar{t}"};
+  // std::vector<TString> vars = {"chi2","likeli","likeliNoSD","Blikeli"};
 
 
     for(unsigned int iV = 0; iV < vars.size(); ++iV){  
@@ -283,12 +294,15 @@ TEST RESULTS
       TH1* h = 0;
       f->GetObject(sigs[iS]+"_"+vars[iV],h);
       if(h==0) continue;
-      h = PlotTools::getIntegral(h,false,true);
+      // h = PlotTools::getIntegral(h,false,true);
+      // p->addHistLine(h,sigNs[iS]);
       p->addHistLine(h,sigs[iS]);
     }
-    // p->setBotMinMax(0,2);
-    // p->drawSplitRatio(0,"stack",false,false,vars[iV]);
-    // p->normalize();
+    p->setBotMinMax(0,2);
+    p->drawSplitRatio(0,"stack",false,false,vars[iV]);
+    p->normalize();
+    // p->rebin(4);
+    p->setXTitle("miniminized -2*log(L)");
     p->draw(false,vars[iV]);
   }
   
@@ -299,26 +313,33 @@ TEST RESULTS
 ///Straight eff check
 {
   TFile * f = new TFile("hSolTrees_test.root");
-  std::vector<TString> sigs = {"ttbar","wjets"};
-  std::vector<TString> vars = {"chi2HH","likeliHH"};
-  std::vector<TString> cuts = {"chilt20","chilt9","chilt5","lllt37","lllt32","lllt29p5"};
+  std::vector<TString> sigs = {"ttbar","wjets","qcd"};
+  std::vector<TString> vars = {"simpleHH","chi2HH","likeliHH"};
+  // std::vector<TString> cuts = {"chilt19","chilt11","mdlt125","lllt1p45","lllt1p35"};
+    // std::vector<TString> cuts = {"mdlt125","chilt19","chilt11","lllt1p6","lllt1p45","lllt1p35"};
+    std::vector<TString> cuts = {"mdlt125","chilt11","lllt1p45","lllt1p25","lllt1p2","lllt1p1"};
 
 
   //start With sigal
   Plotter * p = new Plotter();
   TH1* hd = 0;
-  f->GetObject("signal_sampParam",hd);
+  f->GetObject("signal_llltinf_sampParam",hd);
   if(hd!= 0){
     hd = (TH1*) hd->Clone();
     p->addHistLine(hd,"noCut");
     for(unsigned int iC = 0; iC < cuts.size(); ++iC){          
       TH1* h = 0;
       f->GetObject("signal_"+cuts[iC]+"_sampParam",h);      
-      if(h==0) continue;  
+      if(h==0){
+        std::cout << "signal_"+cuts[iC]+"_sampParam" <<std::endl;
+        continue;  
+      } 
       p->addHistLine(h,cuts[iC]);
     }
     p->setMinMax(0.5,1);
     p->drawRatio(0,"stack",false,false,"signal_sampParam");
+  } else {
+    std::cout << "signal_sampParam" <<std::endl;
   }
   
   //Now BKG
@@ -328,17 +349,19 @@ TEST RESULTS
     f->GetObject(sigs[iS]+"_simpleHH",hd);      
     if(hd==0) continue;
     hd = (TH1*) hd->Clone();
-    p->addHistLine(hd,"noC");
-  for(unsigned int iV = 0; iV < vars.size(); ++iV){  
+    p->addHistLine(hd,"noC");    
       for(unsigned int iC = 0; iC < cuts.size(); ++iC){            
+            TString v = vars[0];
+            if(iC > 0) v = vars[1];
+            if(iC >1) v = vars[2];
     TH1* h = 0;
-    f->GetObject(sigs[iS]+"_"+cuts[iC]+"_"+vars[iV],h);      
+    f->GetObject(sigs[iS]+"_"+cuts[iC]+"_"+v,h);      
       if(h==0) continue;      
       p->addHistLine(h,cuts[iC]);
     }
 
-  }
   p->setMinMax(0,1.5);
+  p->rebin(10);
   p->drawRatio(0,"stack",false,false,sigs[iS]+"_cutComps");  
 }
  
@@ -558,18 +581,33 @@ TEST RESULTS
 ///ROC CURVES
 {
   TFile * f = new TFile("hSolTrees_test.root");
-  std::vector<TString> sigs = {"radion_m1000","radion_m2000"};
-  std::vector<TString> bkgCs = {"m1000","m2000"};
+  // std::vector<TString> sigs = {"radion_m1000","radion_m2000"};
+  // std::vector<TString> bkgCs = {"m1000","m2000"};
+  
+  
+  
+  
+  std::vector<TString> sigs = {"radion_m1000"};
+  std::vector<TString> bkgCs = {"m1000"};
+  std::vector<TString> sigNs = {""};
+  std::vector<TString> varNss = {"signal L","bkg. L", "L ratio"};
   
   // std::vector<TString> sigs = {"radion_m1000_lllt32"};
   // std::vector<TString> bkgCs = {"lllt32"};
   std::vector<TString> bkgs = {"ttbar","wjets","qcd"};
   
-  
   // std::vector<TString> vars = {"chi2","likeli","Blikeli","SoBlikeli"};
-  std::vector<TString> vars = {"likeli","Blikeli","SoBlikeli"};
+  // std::vector<TString> vars = {"likeli","Blikeli","SoBlikeli"};
     // std::vector<TString> vars = {"likeliBHWW","likeliHWW"};
-  int cutGT = 1;
+  
+  
+    // std::vector<TString> vars = {"Blikeli","Blikeli_nAlt"};
+    // std::vector<TString> vars = {"SoBlikeli","SoBNlikeli"};
+    std::vector<TString> vars = {"likeli","likeli_nAlt","likeli_nAlt2"};
+  
+  
+
+  int cutGT = 10;
   for(unsigned int iB = 0; iB < bkgs.size(); ++iB){
     Plotter * p = new Plotter();
     for(unsigned int iV = 0; iV < vars.size(); ++iV){
@@ -584,9 +622,13 @@ TEST RESULTS
         hb=(TH1*)hb->Clone();
         
         auto * roc = PlotTools::getRocCurve(hs,hb,iV==cutGT, "signal eff","bkg. eff");
-        p->addGraph(roc,sigs[iS]+"_"+vars[iV]);                
+        p->addGraph(roc,sigs[iS]+"_"+vars[iV]);   
+                // p->addGraph(roc,varNss[iV]);
+                        // p->addGraph(roc,vars[iV]); 
       }                  
     }
+    p->setXTitle("signal efficiency");
+    p->setYTitle("bkg. efficiency");
     p->draw(false,bkgs[iB])      ;
   }
 }
@@ -626,4 +668,49 @@ TEST RESULTS
   
   
 }
+}
+
+
+//////////////. GET CUTS. //////////////. 
+//First cut for high mass
+{
+  TFile * f = new TFile("hSolTrees_getCuts.root");
+  std::vector<std::string> sigs = {"m800","m1000","m2000","m2500","m3000"};
+  std::vector<std::string> cuts = {"tauIncl","tau0p75","tau0p55"};
+  // std::vector<std::string> cuts = {"tau0p80","tau0p75","tau0p70","tau0p60","tau0p55","tau0p50","tau0p45","tau0p40"};
+  
+  // TString sigN ="radion";
+  TString sigN =   "graviton";
+  TString var = "likeli";
+  
+  
+  for(unsigned int iS = 0; iS < sigs.size(); ++iS){
+    Plotter * pr = new Plotter();
+    Plotter * ps = new Plotter();
+    Plotter * pb = new Plotter();
+  for(unsigned int iC = 0; iC < cuts.size(); ++iC){
+
+    
+      
+      TH1* hs = 0;
+      f->GetObject(sigN + "_"+sigs[iS]+"_"+cuts[iC]+"_mIncl_"+var,hs);
+      TH1* hb = 0;
+      f->GetObject("bkg_"+cuts[iC]+"_"+sigs[iS]+"_"+var,hb);      
+      if(hs==0||hb==0) continue;      
+      hs = PlotTools::getIntegral(hs,false,false);
+      hb = PlotTools::getIntegral(hb,false,false);
+      TH1* hr = (TH1*)hs->Clone();
+      for(unsigned int iX = 1; iX <= hs->GetNbinsX(); ++iX){
+        hr->SetBinContent(iX,hs->GetBinContent(iX)/(std::sqrt(3.+hb->GetBinContent(iX)) ));
+      }
+      ps->addHistLine(hs,cuts[iC]);
+      pb->addHistLine(hb,cuts[iC]);
+      pr->addHistLine(hr,cuts[iC]);        
+    }
+    pr->draw(false,"sosqrt3pb_" + sigs[iS]);
+    // ps->draw(false,"sig_"+ sigs[iS]);
+    // pb->draw(false,"bkg_"+ sigs[iS]);
+    
+  }
+  
 }
