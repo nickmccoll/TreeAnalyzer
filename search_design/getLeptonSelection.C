@@ -169,7 +169,7 @@ public:
         for(unsigned int iT = 0; iT < mu_ISOTNs.size(); ++iT){
             lParams.mu_getISO   = mu_ISOTs[iT];
             for(unsigned int iS = 0; iS < mu_ISOVs.size(); ++iS){
-                const size idx = iT*mu_ISOVs.size() + iS + 1;
+                const ASTypes::size idx = iT*mu_ISOVs.size() + iS + 1;
                 lParams.mu_maxISO   = mu_ISOVs[iS];
                 TString name = mu_ISOTNs[iT] + TString::Format("_0p%.0f",mu_ISOVs[iS]*10.0 );
                 auto leps = LeptonProcessor::getMuons(lParams,*reader_muon);
@@ -218,7 +218,7 @@ public:
         for(unsigned int iT = 0; iT < el_ISOTNs.size(); ++iT){
             lParams.el_getISO   = el_ISOTs[iT];
             for(unsigned int iS = 0; iS < el_ISOVs.size(); ++iS){
-                const size idx = iT*el_ISOVs.size() + iS + 1;
+                const ASTypes::size idx = iT*el_ISOVs.size() + iS + 1;
                 lParams.el_maxISO   = el_ISOVs[iS];
                 TString name = el_ISOTNs[iT] + TString::Format("_0p%.0f",el_ISOVs[iS]*10.0 );
                 auto leps = LeptonProcessor::getElectrons(lParams,*reader_electron);
@@ -285,7 +285,7 @@ public:
         LeptonParameters lParams = parameters.leptons;
 
 
-        static const std::vector<float>                     mu_S3Ds = {2,3,4,5,6};
+        static const std::vector<float>                     mu_S3Ds = {2,3,4,5,6,10000};
 
         addPlots(prefix,"muS3","incl",0,isSignal ?signalPT :-1);
         if(passTight)
@@ -299,7 +299,7 @@ public:
 
 
         for(unsigned int iS = 0; iS < mu_S3Ds.size(); ++iS){
-            lParams.mu_maxD0   = 999.9;
+            lParams.mu_maxSip3D   = 10000;
             TString name = TString::Format("%.0f",mu_S3Ds[iS]);name.ReplaceAll(".","p");
             auto leps = LeptonProcessor::getMuons(lParams,*reader_muon);
             float maxPT =-1;
@@ -410,7 +410,7 @@ public:
             const Electron* signalLep){
         LeptonParameters lParams = parameters.leptons;
 
-        static const std::vector<float>                     el_S3Ds = {2,3,4,5,6};
+        static const std::vector<float>                     el_S3Ds = {2,3,4,5,6,10000};
 
         addPlots(prefix,"elS3","incl",0,isSignal ?signalPT :-1);
         if(passTight) addPlots(prefix+"_passTight","elS3","incl",0,isSignal ?signalPT :-1);
@@ -422,7 +422,7 @@ public:
 
 
         for(unsigned int iS = 0; iS < el_S3Ds.size(); ++iS){
-            lParams.el_maxD0   = 999.9;
+            lParams.el_maxSip3D   = 10000;
             TString name = TString::Format("%.0f",el_S3Ds[iS]);name.ReplaceAll(".","p");
             auto leps = LeptonProcessor::getElectrons(lParams,*reader_electron);
             double maxPT =-1;
@@ -486,6 +486,22 @@ public:
         }
     }
 
+
+
+    const GenParticle * getGenElMu(const GenParticle* genLepton){
+        if(genLepton->absPdgId() == ParticleInfo::p_muminus){
+            return genLepton;
+        } else if(genLepton->absPdgId() == ParticleInfo::p_eminus){
+            return genLepton;
+        } else if(genLepton->absPdgId() == ParticleInfo::p_tauminus){
+            for(unsigned int iD = 0; iD < genLepton->numberOfDaughters(); ++iD){
+                auto md = getGenElMu(genLepton->daughter(iD));
+                if(md) return md;
+            }
+        }
+        return 0;
+    }
+
     const Lepton * getMatchedLepton(const GenParticle& genLepton,
             const std::vector<const Muon *> muons, const std::vector<const Electron*> electrons){
         if(genLepton.absPdgId() == ParticleInfo::p_muminus){
@@ -493,12 +509,13 @@ public:
             int idx = PhysicsUtilities::findNearestDRDeref(genLepton,muons,nearestDR,0.2);
             if(idx < 0) return 0;
             else return muons[idx];
-        } else {
+        } else if(genLepton.absPdgId() == ParticleInfo::p_eminus){
             double nearestDR =10;
             int idx = PhysicsUtilities::findNearestDRDeref(genLepton,electrons,nearestDR,0.2);
             if(idx < 0) return 0;
             else return electrons[idx];
         }
+        return 0;
     }
 
     bool runEvent() override {
@@ -509,23 +526,45 @@ public:
         TString prefix = smpName;
 
 
-        if(isSignal() && diHiggsEvt.type >= DiHiggsEvent::MU){
+        if(isSignal() && diHiggsEvt.type >= DiHiggsEvent::TAU_MU){
             const auto muons = PhysicsUtilities::selObjsMom(reader_muon->muons,20,2.4);
-            const auto electrons = PhysicsUtilities::selObjsMom(reader_electron->electrons,20,2.4);
-            const auto* recoL = getMatchedLepton(*diHiggsEvt.w1_d1,muons,electrons);
-            if(diHiggsEvt.w1_d1->absPdgId() == ParticleInfo::p_muminus){
-                testMuID (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Muon*)recoL);
-                testMuISO(prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Muon*)recoL);
-                testMuDZ (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Muon*)recoL);
-                testMuD0 (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Muon*)recoL);
-                testMuSIP3D (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Muon*)recoL);
-            } else  {
-                testElID (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Electron*)recoL);
-                testElISO(prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Electron*)recoL);
-                testElDZ (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Electron*)recoL);
-                testElD0 (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Electron*)recoL);
-                testElSIP3D (prefix,passTight,true,diHiggsEvt.w1_d1->pt(),(const Electron*)recoL);
+            const auto electrons = PhysicsUtilities::selObjsMom(reader_electron->electrons,20,1.479);
+            const auto* genL = getGenElMu(diHiggsEvt.w1_d1);
+            if(genL == 0) {
+                std::cout<< "errror!!!!"<<std::endl;
+                return true;
             }
+            const auto* recoL = getMatchedLepton(*genL,muons,electrons);
+            if(genL->absPdgId() == ParticleInfo::p_muminus){
+                testMuID (prefix,passTight,true   ,genL->pt(),(const Muon*)recoL);
+                testMuISO(prefix,passTight,true   ,genL->pt(),(const Muon*)recoL);
+                testMuDZ (prefix,passTight,true   ,genL->pt(),(const Muon*)recoL);
+                testMuD0 (prefix,passTight,true   ,genL->pt(),(const Muon*)recoL);
+                testMuSIP3D (prefix,passTight,true,genL->pt(),(const Muon*)recoL);
+            } else  {
+                testElID (prefix,passTight,true   ,genL->pt(),(const Electron*)recoL);
+                testElISO(prefix,passTight,true   ,genL->pt(),(const Electron*)recoL);
+                testElDZ (prefix,passTight,true   ,genL->pt(),(const Electron*)recoL);
+                testElD0 (prefix,passTight,true   ,genL->pt(),(const Electron*)recoL);
+                testElSIP3D (prefix,passTight,true,genL->pt(),(const Electron*)recoL);
+            }
+            if(diHiggsEvt.type >= DiHiggsEvent::MU){
+                if(genL->absPdgId() == ParticleInfo::p_muminus){
+                    testMuID (prefix+"_noTau",passTight,true   ,genL->pt(),(const Muon*)recoL);
+                    testMuISO(prefix+"_noTau",passTight,true   ,genL->pt(),(const Muon*)recoL);
+                    testMuDZ (prefix+"_noTau",passTight,true   ,genL->pt(),(const Muon*)recoL);
+                    testMuD0 (prefix+"_noTau",passTight,true   ,genL->pt(),(const Muon*)recoL);
+                    testMuSIP3D (prefix+"_noTau",passTight,true,genL->pt(),(const Muon*)recoL);
+                } else  {
+                    testElID (prefix+"_noTau",passTight,true   ,genL->pt(),(const Electron*)recoL);
+                    testElISO(prefix+"_noTau",passTight,true   ,genL->pt(),(const Electron*)recoL);
+                    testElDZ (prefix+"_noTau",passTight,true   ,genL->pt(),(const Electron*)recoL);
+                    testElD0 (prefix+"_noTau",passTight,true   ,genL->pt(),(const Electron*)recoL);
+                    testElSIP3D (prefix+"_noTau",passTight,true,genL->pt(),(const Electron*)recoL);
+                }
+            }
+
+
         }
         if(!isSignal()){
             testMuID (prefix,passTight,false,0,0);
