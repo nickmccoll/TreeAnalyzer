@@ -676,7 +676,11 @@ TEST RESULTS
 {
   TFile * f = new TFile("hSolTrees_getCuts.root");
   std::vector<std::string> sigs = {"m800","m1000","m2000","m2500","m3000"};
-  std::vector<std::string> cuts = {"tauIncl","tau0p75","tau0p55"};
+  // std::vector<std::string> cuts = {"tauIncl_LMT_emu","tau0p75_LMT_emu","tau0p55_LMT_emu","tau0p75_MT_emu","tau0p55_MT_emu"};
+    // std::vector<std::string> cuts = {"oLP_L_emu","oLP_M_emu","oLP_T_emu","oHP_L_emu","oHP_M_emu","oHP_T_emu"};
+    // std::vector<std::string> cuts = {"tau0p75_LMT_emu","tau0p75_MT_emu","tau0p75_T_emu","oHP_LMT_emu","oHP_MT_emu","oHP_T_emu"};
+      std::vector<std::string> cuts = {"tau0p75_LMT_emu","tau0p75_MT_emu","tau0p75_T_emu","oHP_LMT_emu","oHP_L_emu","oHP_T_emu"};
+        // std::vector<std::string> cuts = {"tau0p75_L_emu","tau0p75_M_emu","tau0p75_T_emu","tau0p55_L_emu","tau0p55_M_emu","tau0p55_T_emu"};
   // std::vector<std::string> cuts = {"tau0p80","tau0p75","tau0p70","tau0p60","tau0p55","tau0p50","tau0p45","tau0p40"};
   
   // TString sigN ="radion";
@@ -712,5 +716,83 @@ TEST RESULTS
     // pb->draw(false,"bkg_"+ sigs[iS]);
     
   }
+  
+}
+
+//////////////. Evalute impact on individual SRs. //////////////. 
+
+{
+  TFile * f = new TFile("hSolTrees_getCuts.root");
+  
+  std::vector<std::string> cuts = {"oHPMD_LMT_e","oHPMD_LMT_mu","oLPMD_LMT_e","oLPMD_LMT_mu","nHP_LMT_e","nHP_LMT_mu","nLP_LMT_e","nLP_LMT_mu"};
+  // std::vector<std::string> cuts = {"nHP_L_e","nHP_M_e","nHP_T_e","nLP_L_e","nLP_M_e","nLP_T_e","nHP_L_mu","nHP_M_mu","nHP_T_mu","nLP_L_mu","nLP_M_mu","nLP_T_mu"};
+std::vector<std::string> bkgs = {"ttbar","wjets","qcd"};
+  TString var = "mhh";
+  
+
+
+  for(unsigned int iC = 0; iC < cuts.size(); ++iC){
+    Plotter * p = new Plotter();
+    
+      for(unsigned int iB = 0; iB < bkgs.size(); ++iB){
+    
+      
+      TH1* hs = 0;
+      f->GetObject(bkgs[iB] +"_"+cuts[iC]+"_"+var,hs);  
+      if(hs==0) continue;      
+      p->addHistLine(hs,bkgs[iB]);
+      
+    }
+    p->setBotMinMax(0,1);
+    p->drawSplitRatio(0,"stack",false,false,cuts[iC]);
+    // ps->draw(false,"sig_"+ sigs[iS]);
+    // pb->draw(false,"bkg_"+ sigs[iS]);
+    
+  }
+  
+}
+{
+  TFile * f = new TFile("hSolTrees_getCuts.root");
+  
+
+std::vector<std::string> bkgs = {"ttbar","wjets","qcd"};
+std::vector<std::string> btags = {"L","M","T"};
+std::vector<std::string> leps = {"e","mu"};
+std::vector<std::string> regs = {"HP","LP"};
+
+  TString var = "mhh";
+  
+
+for(unsigned int iB = 0; iB < bkgs.size(); ++iB){
+  for(unsigned int iT = 0; iT < btags.size(); ++iT){          
+    Plotter * p = new Plotter();    
+    
+      for(unsigned int iL = 0; iL < leps.size(); ++iL){          
+          for(unsigned int iR = 0; iR < regs.size(); ++iR){          
+      
+      TH1* ho = 0;
+      f->GetObject(bkgs[iB] +"_o"+regs[iR]+"MD_"+btags[iT]+"_"+leps[iL]+"_"+var,ho);  
+      TH1* hn = 0;
+      f->GetObject(bkgs[iB] +"_n"+regs[iR]+"_"+btags[iT]+"_"+leps[iL]+"_"+var,hn);  
+      if(ho==0) continue;      
+            if(hn==0) continue;  
+            
+            hn = PlotTools::rebin(hn,4);
+            ho = PlotTools::rebin(ho,4); 
+            
+      hn->Divide(ho);    
+      p->addHistLine(hn,regs[iR]+"_"+btags[iT]+"_"+leps[iL]);
+      
+    }
+  }
+    p->setMinMax(0.01,10);
+    auto *c = p->draw(false,bkgs[iB]+"_"+btags[iT]);
+    c->SetLogy();
+    c->Update();
+    // ps->draw(false,"sig_"+ sigs[iS]);
+    // pb->draw(false,"bkg_"+ sigs[iS]);
+    
+  }
+}
   
 }

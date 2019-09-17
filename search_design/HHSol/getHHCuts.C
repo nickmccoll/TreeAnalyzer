@@ -46,7 +46,6 @@ public:
         if(!HHSolTreeAnalyzer::runEvent()) return false;
         if((*bbJet_SDmass < 100 || *bbJet_SDmass>150)) return false;
         if(*nAK4Btags != 0) return false;
-        if(*process > FillerConstants::WJETS)return false;
 
         HSolverLiInfo hwwInfo;
         HSolverLiInfo altHWWInfo;
@@ -54,11 +53,24 @@ public:
 
         const double lHH = (hwwInfo.hWW + bbJet.p4()).mass();
         const double ptom = hwwInfo.hWW.pt() / lHH;
+        auto bN = HSolverBasic::getInvisible(met, (qqJet.p4()+lepton.p4()));
 
-        if(lHH < 700) return false;
+        const double md = PhysicsUtilities::deltaR( bN.p4() + lepton.p4() ,qqJet)
+        * (bN.p4() + lepton.p4() + qqJet.p4()).pt()/2.0;
+
+//        if(lHH < 700) return false;
         if(ptom < 0.3) return false;
 
+
+//        if(!isSignal() && ){
+//
+//        }
+
         auto mkDPlts = [&](const TString& prefix, float lV){
+
+            plotter.getOrMake1DPre(prefix, "mhh",";#it{m}_{HH}",40,0,4000)
+                    ->Fill(lHH,weight);
+
             plotter.getOrMake1DPre(prefix+"_mIncl", "likeli",";likeli",205,0.95,3)
                     ->Fill(lV,weight);
 
@@ -80,42 +92,78 @@ public:
 
         };
 
+        auto mkCutLEPPlts = [&](const TString& prefix, float l1){
+            mkDPlts(prefix+"_emu", ll);
+            if(*isMuon == 1)
+                mkDPlts(prefix+"_mu", ll);
+            else
+                mkDPlts(prefix+"_e", ll);
+        };
+
+
+        auto mkCutBTAGPlts = [&](const TString& prefix, float l1){
+            mkCutLEPPlts(prefix+"_LMT", ll);
+            if(*hbbCat == 4)
+                mkCutLEPPlts(prefix+"_L", ll);
+            if(*hbbCat == 5)
+                mkCutLEPPlts(prefix+"_M", ll);
+            if(*hbbCat == 6)
+                mkCutLEPPlts(prefix+"_T", ll);
+            if(*hbbCat >= 5)
+                mkCutLEPPlts(prefix+"_MT", ll);
+        };
+
         auto mkCut1Plts = [&](const TString& prefix){
-            mkDPlts(prefix+"_tauIncl", ll);
+            mkCutBTAGPlts(prefix+"_tauIncl", ll);
 
             if(*qqJet_t2ot1 < 0.80)
-                mkDPlts(prefix+"_tau0p80",ll);
+                mkCutBTAGPlts(prefix+"_tau0p80",ll);
             if(*qqJet_t2ot1 < 0.70)
-                mkDPlts(prefix+"_tau0p70",ll);
+                mkCutBTAGPlts(prefix+"_tau0p70",ll);
             if(*qqJet_t2ot1 < 0.60)
-                mkDPlts(prefix+"_tau0p60",ll);
+                mkCutBTAGPlts(prefix+"_tau0p60",ll);
             if(*qqJet_t2ot1 < 0.50)
-                mkDPlts(prefix+"_tau0p50",ll);
+                mkCutBTAGPlts(prefix+"_tau0p50",ll);
 
             if(*qqJet_t2ot1 < 0.45)
-                mkDPlts(prefix+"_tau0p45",ll);
+                mkCutBTAGPlts(prefix+"_tau0p45",ll);
             if(*qqJet_t2ot1 < 0.40)
-                mkDPlts(prefix+"_tau0p40",ll);
+                mkCutBTAGPlts(prefix+"_tau0p40",ll);
 
             if(*qqJet_t2ot1 < 0.75)
-                mkDPlts(prefix+"_tau0p75",ll);
+                mkCutBTAGPlts(prefix+"_tau0p75",ll);
 
             if(*qqJet_t2ot1 < 0.55)
-                mkDPlts(prefix+"_tau0p55",ll);
+                mkCutBTAGPlts(prefix+"_tau0p55",ll);
 
 
+            if(*qqJet_t2ot1 >= 0.55 && *qqJet_t2ot1 < 0.75)
+                mkCutBTAGPlts(prefix+"_oLP",ll);
             if(*qqJet_t2ot1 < 0.55)
-                mkDPlts(prefix+"_tau0p55OR",0.9);
-            else if(*qqJet_t2ot1 < 0.75 )
-                    mkDPlts(prefix+"_tau0p55OR",ll);
+                mkCutBTAGPlts(prefix+"_oHP",ll);
+
+            if(md < 125){
+                if(*qqJet_t2ot1 >= 0.55 && *qqJet_t2ot1 < 0.75)
+                    mkCutBTAGPlts(prefix+"_oLPMD",ll);
+                if(*qqJet_t2ot1 < 0.55)
+                    mkCutBTAGPlts(prefix+"_oHPMD",ll);
+            }
 
 
-
+            if((*qqJet_t2ot1 < 0.75&& ll<1.45) && (ll>=1.1 || *qqJet_t2ot1 >= 0.55) )
+                mkCutBTAGPlts(prefix+"_nLP",ll);
+            if(ll<1.1 && *qqJet_t2ot1 < 0.55)
+                mkCutBTAGPlts(prefix+"_nHP",ll);
 
         };
 
         if(isSignal()) mkCut1Plts(smpName);
-        else mkCut1Plts("bkg");
+        else {
+            if(*process <= FillerConstants::WJETS)
+                mkCut1Plts("bkg");
+            mkCut1Plts("bkgWQCD");
+            mkCut1Plts(smpName);
+        }
 
         return true;
     }

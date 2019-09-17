@@ -24,6 +24,8 @@ public:
         setBranch("","process"       ,process        ,true);
         setBranch("","sampParam"     ,sampParam      ,true);
         setBranch("","dhType"        ,dhType         ,true);
+        setBranch("","hbbCat"        ,hbbCat         ,true);
+        setBranch("","isMuon"        ,isMuon         ,true);
         setBranch("","weight"        ,weight_        ,true);
         setBranch("","nAK4Btags"     ,nAK4Btags      ,true);
         setBranch("","hh_orig"       ,hh_orig        ,true);
@@ -111,6 +113,8 @@ public:
     rd_size8 process        ;
     rd_int   sampParam      ;
     rd_size8 dhType         ;
+    rd_size8 hbbCat         ;
+    rd_size8 isMuon         ;
     rd_float weight_        ;
     rd_size8 nAK4Btags      ;
     rd_float hh_orig        ;

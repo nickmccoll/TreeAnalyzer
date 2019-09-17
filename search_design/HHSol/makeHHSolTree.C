@@ -41,6 +41,12 @@ public:
     }
 
 
+    virtual void setupParameters() override {
+        DefaultSearchRegionAnalyzer::setupParameters();
+        parameters.event.doTTBarStitching = false;
+    }
+
+
     virtual BaseEventAnalyzer * setupEventAnalyzer() override {return new CopierEventAnalyzer();}
 
     virtual void bookOutputVariables() override {
@@ -48,6 +54,8 @@ public:
         outTree->addSingle(process        ,  "",  "process");
         outTree->addSingle(sampParam      ,  "",  "sampParam");
         outTree->addSingle(dhType         ,  "",  "dhType");
+        outTree->addSingle(hbbCat         ,  "",  "hbbCat");
+        outTree->addSingle(isMuon         ,  "",  "isMuon");
         outTree->addSingle(weight         ,  "",  "weight");
         outTree->addSingle(nAK4Btags      ,  "",  "nAK4Btags");
         outTree->addSingle(hh_orig        ,  "",  "hh_orig");
@@ -160,12 +168,14 @@ public:
 
         process = *reader_event->process;
         sampParam = *reader_event->sampParam;
+        hbbCat = hbbCSVCat;
+        isMuon = selectedLepton->isMuon();
         weight  =  EventWeights::getNormalizedEventWeight(
-                *reader_event,xsec(),nSampEvt(),parameters.event.lumi);
+                *reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT);
 
         nAK4Btags = size8(std::min(nMedBTags_HbbV,250));
-        hh_orig =hh_old.mass();
-        hh_chi2 =hh.mass();
+        hh_orig =hh_basic.mass();
+        hh_chi2 =hh_chi.mass();
         md      = wwDM;
         chi2    =hwwChi;
         wqqDR = isSignal() ? std::max(PhysicsUtilities::deltaR(*wjjCand,*diHiggsEvt.w2_d1),
@@ -246,6 +256,8 @@ public:
     size8 process        = 0;
     int   sampParam      = 0;
     size8 dhType         = 0;
+    size8 hbbCat         = 0;
+    size8 isMuon         = 0;
     float weight         = 0;
 
     size8 nAK4Btags      = 0;
