@@ -26,7 +26,7 @@ std::vector<CutStr > processes = {
         CutStr("other"     ,"(process>1&&!(process==2||process==3||process==8))","Other SM")
 };
 
-enum REGION  {REG_SR, REG_TOPCR, REG_QGCR};
+enum REGION  {REG_SR, REG_TOPCR, REG_NONTOPCR};
 
 CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
 //CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N");
@@ -44,8 +44,8 @@ CutStr metC ("metC"  , "met/hhMass>0.1");
 CutStr dRC   ("dRC"    , "dilepDR<1.0");
 CutStr drCrC  ("drCrC"   , "dilepDR>0.4");
 
-CutStr preSel1("preSel1"  , "passPre1l==1");
-CutStr preSel2("preSel2"  , "passPre2l==1");
+CutStr preSel1("preSel1"  , "lepChan==1");
+CutStr preSel2("preSel2"  , "lepChan==2");
 
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
 CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
@@ -117,13 +117,6 @@ std::vector<CutStr > bkgSels = {
         CutStr("mt"     ,"hbbDecayType==5","#it{m}_{t} bkg.")
 };
 
-std::vector<CutStr > llBkgSels = {
-        CutStr("qg"    ,"hbbDecayType==0","q/g bkg."),
-        CutStr("losttw","((hbbDecayType>0)&&(hbbDecayType<=3))||(hbbDecayType2>5)","Lost t/W bkg."),
-        CutStr("mw"     ,"hbbDecayType==4","#it{m}_{W} bkg."),
-        CutStr("mt"     ,"hbbDecayType==5","#it{m}_{t} bkg.")
-};
-
 enum LEPCats  {LEP_EMU, LEP_E, LEP_MU};
 std::vector<CutStr> lepCats = {
         CutStr("emu","isMuon>=0","e#mu"),
@@ -134,8 +127,8 @@ std::vector<CutStr> lepCats = {
 enum DILEPCats  {LEP_INCL, LEP_SF, LEP_OF};
 std::vector<CutStr> dilepCats = {
         CutStr("IF","((isMuon1>=0)&&(isMuon2>=0))","incl flavor"),
-        CutStr("SF","((isMuon1==0)==(isMuon2==0))","same flavor"),
-        CutStr("OF"  ,"((isMuon1==0)!=(isMuon2==0))","opposite flavor"),
+        CutStr("SF","(isMuon1==isMuon2)","same flavor"),
+        CutStr("OF","(isMuon1!=isMuon2)","opposite flavor"),
 };
 
 enum BTAGCats  {BTAG_LMT, BTAG_L, BTAG_M, BTAG_T};
@@ -171,9 +164,9 @@ std::vector<CutStr > hadCuts = {
 
 enum SELCuts  {SEL_NONE,SEL_RPhiB,SEL_FULL};
 std::vector<CutStr > selCuts = {
-        CutStr("none",preSel2.cut,"-ExB -#it{#DeltaR}_{ll} -#it{M}_{ll} -#it{MET} -#it{#Delta#Phi}_{met,ll}"),
+        CutStr("none"   ,preSel2.cut,"-ExB -#it{#DeltaR}_{ll} -#it{M}_{ll} -#it{MET} -#it{#Delta#Phi}_{met,ll}"),
 		CutStr("R_phi_b",preSel2.cut+"&&"+dRC.cut+"&&"+mllV.cut+"&&"+metC.cut,"full relax B, phi"),
-        CutStr("full",preSel2.cut+"&&"+bV.cut+"&&"+dRC.cut+"&&"+dPhiC.cut+"&&"+mllV.cut+"&&"+metC.cut,"")
+        CutStr("full"   ,preSel2.cut+"&&"+bV.cut+"&&"+dRC.cut+"&&"+dPhiC.cut+"&&"+mllV.cut+"&&"+metC.cut,"")
 
 };
 
