@@ -38,14 +38,14 @@ void test2DCondTemplate(std::string name, std::string filename, std::string sel)
     std::vector<std::string> extras = {"xs_0p75_xc_3_ys_0p5_yc_1","xs_0p75_xc_3_ys_0p5_yc_1_2"};
     //      for(const auto& s : extras ) addHistos(s,true,false);
 
-    std::vector<double> hBBBinning = {30,40,50,60,80,100,120,140,170,210};
+    std::vector<double> hBBBinning = {30,210,30,40,50,60,80,100,120,140,170,210};
     std::vector<double> hhBinning  = {700,4000,700,800,900,1000,1500,2000,3000,4000,5000};
 
 
     addWr(make2DTests(name + "_COND2D_HHF" ,dH,hs,hNs,hBBBinning,false,-1));
-    addWr(make2DTests(name + "_COND2D_HHC" ,dH,hs,hNs,hBBBinning,false,10));
+    addWr(make2DTests(name + "_COND2D_HHC" ,dH,hs,hNs,hBBBinning,false,8));
     addWr(make2DTests(name + "_COND2D_HbbF"  ,dH,hs,hNs,hhBinning,true,-1,false));
-    addWr(make2DTests(name + "_COND2D_HbbC"  ,dH,hs,hNs,hhBinning,true,5 ,false));
+    addWr(make2DTests(name + "_COND2D_HbbC"  ,dH,hs,hNs,hhBinning,true,6 ,false));
 }
 
 void test2DTemplate(const std::string& name, const std::string& filename,
@@ -222,26 +222,28 @@ public:
 
 
 
-void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, std::string outName = ""){
+void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, bool do1lep = true, std::string outName = ""){
     REGION reg = REGION(inreg);
 
     std:: string inName =  "bkgInputs" ;
-    auto srList = getSRList(reg);
     if(reg == REG_TOPCR){
         inName =  "bkgInputsTopCR";
         hhFilename +="_TopCR";
     }
-    else if(reg == REG_QGCR){
-        inName =  "bkgInputsQGCR";
-        hhFilename +="_QGCR";
+    else if(reg == REG_NONTOPCR){
+        inName =  "bkgInputsNonTopCR";
+        hhFilename +="_NonTopCR";
     }
     std::string filename = inName +"/"+hhFilename;
+
+    auto srList = getSRList(reg);
+    if (!do1lep) srList = getDilepSRList(reg);
 
     CutStr mod = bkgSels [doTW ? BKG_LOSTTW : BKG_QG];
     if(outName.size()){
         outName += std::string("/") + mod;
         if(reg == REG_TOPCR) outName +=  "_TopCR";
-        else if(reg == REG_QGCR) outName +=  "_QGCR";
+        else if(reg == REG_NONTOPCR) outName +=  "_NonTopCR";
     }
 
 
@@ -249,10 +251,11 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, std::
     switch(step){
     case 0:
         if(doTW) return;
+        if(!do1lep) return;
         if(outName.size()) outName += "_QCDRatio";
-//        writeables = testRatioFits(mod,filename,"QCDSF",{"emu_I_I_ltmb","e_I_LP_ltmb","mu_I_LP_ltmb","e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"});
-            testRatioFits(mod,filename,"QCDSF",{"e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"},writeables);
-        if(reg == REG_QGCR){
+
+        testRatioFits(mod,filename,"QCDSF",{"e_I_LP_full","e_I_HP_full","mu_I_LP_full","mu_I_HP_full"},writeables);
+        if(reg == REG_NONTOPCR){
             testRatioUncs(mod,filename,"QCDSF",{ {"emu_LMT_I_ltmb","emu_I_I_ltmb"},
                     {"e_L_LP_full","e_I_LP_full"},{"e_L_HP_full","e_I_HP_full"},{"mu_L_LP_full","mu_I_LP_full"},
                     {"mu_L_HP_full","mu_I_HP_full"}},1,1,1,writeables);
@@ -266,24 +269,35 @@ void plotNonResBkgTests(int step = 0,bool doTW = true, int inreg = REG_SR, std::
         break;
     case 1:
         if(doTW) return;
+        if(!do1lep) return;
         if(outName.size()) outName += "_testQCDSF";
         stepSels = srList; stepSels.push_back("emu_LMT_I_ltmb");
         testQCDSF(mod,filename,stepSels);
         break;
     case 2:
         if(outName.size()) outName += "_2DCondTemp";
-        test2DCondTemplate(mod,filename,"emu_LMT_I_ltmb");
+        test2DCondTemplate(mod,filename,"emu_LMT_I_ltmb_IF_LMT_R_phi_b");
         break;
     case 3:
         if(outName.size()) outName += "_MVVKern";
-        if(doTW) stepSels = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
-        else stepSels = {"e_LMT_HP_ltmb","mu_LMT_HP_ltmb","e_LMT_LP_ltmb","mu_LMT_LP_ltmb"};
+        if(doTW) {
+        	if (do1lep) stepSels = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
+        	else        stepSels = {"IF_LMT_R_phi_b"};
+        } else {
+        	if (do1lep) stepSels = {"e_LMT_HP_ltmb","mu_LMT_HP_ltmb","e_LMT_LP_ltmb","mu_LMT_LP_ltmb"};
+        	else        stepSels = {"OF_LMT_R_phi_b","SF_LMT_R_phi_b","IF_LMT_R_phi_b"};
+        }
         writeables = test1DKern(mod,filename,"MVV",stepSels);
         break;
     case 4:
         if(outName.size()) outName += "_2DTemp";
-        if(doTW) stepSels = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
-        else stepSels = {"emu_LMT_I_ltmb","e_LMT_I_ltmb","mu_LMT_I_ltmb"};
+        if(doTW) {
+        	if (do1lep) stepSels = {"emu_LMT_I_ltmb","emu_LMT_LP_ltmb","emu_LMT_HP_ltmb"};
+        	else        stepSels = {"IF_LMT_R_phi_b"};
+        } else {
+        	if (do1lep) stepSels = {"emu_LMT_I_ltmb","e_LMT_I_ltmb","mu_LMT_I_ltmb"};
+        	else        stepSels = {"OF_LMT_R_phi_b","SF_LMT_R_phi_b","IF_LMT_R_phi_b"};
+        }
         test2DTemplate(mod,filename,stepSels);
         break;
     case 5:

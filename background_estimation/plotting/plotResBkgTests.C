@@ -85,18 +85,20 @@ public:
 
 
 
-void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR,  std::string outName = ""){
+void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR, bool do1lep = true, std::string outName = ""){
     REGION reg = REGION(inreg);
 
-    std:: string inName =  "bkgInputs" ;
     auto srList = getSRList(reg);
+    if (!do1lep) srList = getDilepSRList(reg);
+
+    std:: string inName =  "bkgInputs" ;
     if(reg == REG_TOPCR){
         inName =  "bkgInputsTopCR";
         hhFilename +="_TopCR";
     }
-    else if(reg == REG_QGCR){
-        inName =  "bkgInputsQGCR";
-        hhFilename +="_QGCR";
+    else if(reg == REG_NONTOPCR){
+        inName =  "bkgInputsNonTopCR";
+        hhFilename +="_NonTopCR";
     }
     std::string filename = inName +"/"+hhFilename;
 
@@ -104,16 +106,22 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR,  std::s
     if(outName.size()){
         outName += std::string("/") + mod;
         if(reg == REG_TOPCR) outName +=  "_TopCR";
-        else if(reg == REG_QGCR) outName +=  "_QGCR";
+        else if(reg == REG_NONTOPCR) outName +=  "_NonTopCR";
     }
 
     std::vector<std::string> mtMJJBinning = {"emu_LMT_I_none"};
-    if(reg != REG_QGCR && doMT) mtMJJBinning ={"emu_L_I_none","emu_M_I_none","emu_T_I_none"};
+    if(reg != REG_NONTOPCR && doMT) mtMJJBinning ={"emu_L_I_none","emu_M_I_none","emu_T_I_none"};
+
+    if (!do1lep) {
+    	if(reg != REG_NONTOPCR && doMT) mtMJJBinning = {"IF_L_none","IF_M_none","IF_T_none"};
+    	else mtMJJBinning = {"IF_LMT_none"};
+    }
 
     switch(step){
     case 0:
         if(outName.size()) outName += "_MVV_temp";
-        writeables = test1DKern(mod,filename,"MVV",{"emu_LMT_I_lt"});
+        if(do1lep) writeables = test1DKern(mod,filename,"MVV",{"emu_LMT_I_lt"});
+        else       writeables = test1DKern(mod,filename,"MVV",{"IF_LMT_R_phi_b"});
         break;
     case 1:
         if(outName.size()) outName += "_MVV_fit";
@@ -136,11 +144,16 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR,  std::s
         writeables = test2DModel({mod},filename,srList,{700,4000});
         break;
     case 6:
+    	std::vector<std::string> bins = {"emu_LMT_I_full","e_LMT_I_full","mu_LMT_I_full"};
+    	if (!do1lep) bins = {"IF_LMT_full","OF_LMT_full","SF_LMT_full"};
+
         if(outName.size()) outName += "_all_2DComp";
         writeables = test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },
-              filename,{"emu_LMT_I_full"},{700,4000});
-        writeables = test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },
-              filename,srList,{30,210},false);
+              filename,bins,{700,4000});
+        auto temp = test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },
+              filename,bins,{30,210},false);
+
+        writeables.insert(writeables.end(),temp.begin(),temp.end());
 
     }
 
