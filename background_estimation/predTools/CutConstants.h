@@ -318,16 +318,15 @@ std::string getCategoryLabel(const std::string& inStr){
 std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,1750,
                                  2000,2500,3000,3500,4000};
 
-enum SIGNALS  {RADION,BLKGRAV,DILEP_RADION};
+enum SIGNALS  {RADION,BLKGRAV};
 std::vector<CutStr > signals = {
-        CutStr("radHH"     ,"Radion_hh_hVVhbb_inclusive_narrow","radion"),
-        CutStr("blkHH"     ,"BulkGravTohhTohVVhbb_narrow","bulk graviton"),
-		CutStr("raddHHcomb","spin0")
+        CutStr("radHH"     ,"spin0","radion"),
+        CutStr("blkHH"     ,"spin2","bulk graviton")
 };
 std::vector<std::vector<int> > signalMassBins = {
+		{800,900,1000,2000,2500,3000},
+//        {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
         {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
-        {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
-		{800,900,1000,2000,2500,3000}
 };
 
 //Constants for models when building limits
