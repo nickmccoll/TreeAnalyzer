@@ -187,6 +187,8 @@ struct HWWParameters {
     std::string   liFileName;
     std::string   bkgLiFileName;
 
+    double dilepInvMassGuess;
+
 };
 
 //--------------------------------------------------------------------------------------------------

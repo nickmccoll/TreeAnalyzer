@@ -56,6 +56,9 @@ public:
                      ,CORR_MET     =(1<<10)
     };
 
+    enum LepChannels {NOCHANNEL, SINGLELEP, DILEP};
+    LepChannels lepChan = NOCHANNEL;
+
     DefaultSearchRegionAnalyzer(std::string fileName, std::string treeName,
             int treeInt, ASTypes::size randomSeed =0);
 
@@ -96,10 +99,8 @@ public:
 
     std::vector<const Jet*> jets;
     std::vector<const Jet*> jets_HbbV;
-    std::vector<const Jet*> jets_HbbV_2l;
     int nMedBTags = 0;
     int nMedBTags_HbbV = 0;
-    int nMedBTags_HbbV_2l = 0;
 
     std::vector<const Jet*> jets_chs;
     float                   ht_chs    =0;
@@ -107,9 +108,6 @@ public:
     std::vector<const Jet*> jets_puppi;
     float                   ht_puppi    =0;
 
-
-    std::vector<const Jet*> jets_NoDilepOverlap;
-    float                   ht_NoDilepOverlap = 0;
 
     ASTypes::size   corrections=0; //list of corrections to carry out
     float           weight     =0; //std weight after all corrections
@@ -127,15 +125,11 @@ public:
     std::vector<const Lepton    *> selectedDileptons;
     const Lepton *                 dilep1=0;
     const Lepton *                 dilep2=0;
-    DileptonProcessor::DilepChan dilepChan = DileptonProcessor::LL_BAD;
 
     const FatJet*              wjjCand     =0;
     const FatJet*              hbbCand     =0;
     BTagging::CSVSJ_CAT        hbbCSVCat   = BTagging::CSVSJ_INCL;
     BTagging::CSVSJ_CAT        wjjCSVCat   = BTagging::CSVSJ_INCL;
-
-    const FatJet*       hbbCand_2l       =0;
-    BTagging::CSVSJ_CAT hbbCSVCat_2l     = BTagging::CSVSJ_INCL;
 
     float                      wwDM        = 0;
     float                      hwwChi      = 0;
@@ -151,26 +145,11 @@ public:
     MomentumF                  hh_basic           ;
     float                      hbbMass     =0     ;
 
-    MomentumF                  hWW_2l             ;
-    MomentumF                  hh_2l              ;
-    float                      hbbMass_2l  =0     ;
 
     float llMass = 0;
     float llDR = 0;
     float llMetDphi = 0;
     float metOhhMass = 0;
-
-    bool is1lLepSelected = false;
-    bool is2lLepSelected = false;
-    bool pass1lCuts = false;
-    bool pass2lCuts = false;
-
-    bool is1lSR       = false;
-    bool is1lQgCR     = false;
-    bool is1lTopCR    = false;
-    bool is2lSR       = false;
-    bool is2lNonTopCR = false;
-    bool is2lTopCR    = false;
 
     ParameterSet parameters;
     FillerConstants::DataEra lastEra = FillerConstants::NOERA; //See if we need to load new params.

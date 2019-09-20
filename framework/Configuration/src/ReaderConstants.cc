@@ -136,6 +136,7 @@ ParameterSet set2017Parameters() {
     paramSet.hww.liFileName    ="variables/hhSol_templates.root";
     paramSet.hww.bkgLiFileName ="variables/hhSol_bkgTemplates.root";
 
+    paramSet.hww.dilepInvMassGuess = 55;
 
     return paramSet;
 }
