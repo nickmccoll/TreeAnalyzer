@@ -16,6 +16,7 @@
 #include "RooUniform.h"
 #include "TH1D.h"
 #include "TH2.h"
+#include "InputsHelper.h"
 #include <vector>
 #include <string>
 
@@ -63,7 +64,6 @@ private:
     std::vector<Category> categories;
     std::vector<Variable> variables;
 
-
     RooStats::ModelConfig * mc = 0;
     RooStats::ModelConfig * mc_bonly = 0;
     const RooArgSet *POI=0;
@@ -74,6 +74,9 @@ private:
     RooAbsData *dobs =  0;
     RooRealVar *weightVar_ = 0;
     std::auto_ptr<RooAbsPdf> nuisancePdf;
+
+    TAxis *xAxis = 0;
+    TAxis *yAxis = 0;
 
     HistGetter plotter;
 };
@@ -147,37 +150,62 @@ RooFitResult* PostFitter::fit(RooStats::ModelConfig *mc, RooAbsData &data, bool 
 void PostFitter::doDataFit(bool doBonly){
     w->loadSnapshot("prefit");
     auto model = doBonly ? mc_bonly : mc;
+
+    plot2DData(dobs,"data");
     plotTotal2DPDF(model->GetPdf(),dobs,"prefit");
     fit(model,*dobs,false);
     plotTotal2DPDF(model->GetPdf(),dobs,"postfit");
     plot2DPDFComponents(model->GetPdf(),"postfit");
-    plot2DData(dobs,"data");
+
 }
 
 
 void PostFitter::plot2DPDFComponents(RooAbsPdf* func, const std::string& name){
 
     auto components = func->getComponents();
+
     auto simPdf = dynamic_cast<RooSimultaneous *>(func);
        for(const auto& c :contributions){
+
            const std::string prefix =  c.isSignal ? "shapeSig" : "shapeBkg";
            if(simPdf){
                for(const auto& cat : categories){
+
                    const std::string pdfName = prefix + "_" + c.name+"_"+cat.second+c.postFix;
                    const std::string normName = "n_exp_bin" +cat.second +"_proc_"+c.name;
+
                    auto pdf = (RooAbsPdf*)components->find(pdfName.c_str());
                    auto norm = (RooAbsReal*)components->find(normName.c_str());
-                   auto histogram = pdf->createHistogram((name+"_"+c.name+"_"+cat.first).c_str(),*variables[0].second,RooFit::YVar(*variables[1].second),RooFit::IntrinsicBinning());
+
+//                   auto histogram = pdf->createHistogram((name+"_"+c.name+"_"+cat.first).c_str(),*variables[0].second,RooFit::YVar(*variables[1].second),RooFit::IntrinsicBinning());
+                   RooArgSet* vars = pdf->getVariables() ;
+                   RooRealVar* xvar = (RooRealVar*) vars->find(variables[0].second->getTitle()) ;
+                   RooRealVar* yvar = (RooRealVar*) vars->find(variables[1].second->getTitle()) ;
+                   delete vars;
+
+                   if (!xAxis || !yAxis) {
+                       throw std::invalid_argument("null pointer on axis\n");
+                   }
+                   auto histogram = createTH2FromPDF(pdf,xvar,yvar,(name+"_"+c.name+"_"+cat.first).c_str(),"",xAxis,yAxis);
                    histogram->Scale(norm->getVal()/histogram->Integral());
                    histogram->SetDirectory(0);
                    plotter.add1D(histogram);
+
                }
            } else {
                const std::string pdfName = prefix + "_" + c.name+c.postFix;
                const std::string normName = "n_exp_bin_proc_"+c.name;
                auto pdf = (RooAbsPdf*)components->find(pdfName.c_str());
                auto norm = (RooAbsReal*)components->find(normName.c_str());
-               auto histogram = pdf->createHistogram((name+"_"+c.name).c_str(),*variables[0].second,RooFit::YVar(*variables[1].second),RooFit::IntrinsicBinning());
+//               auto histogram = pdf->createHistogram((name+"_"+c.name).c_str(),*variables[0].second,RooFit::YVar(*variables[1].second),RooFit::IntrinsicBinning());
+
+               if (!xAxis || !yAxis) {
+                   throw std::invalid_argument("null pointer on axis\n");
+               }               RooArgSet* vars = pdf->getVariables() ;
+               RooRealVar* xvar = (RooRealVar*) vars->find(variables[0].second->getTitle()) ;
+               RooRealVar* yvar = (RooRealVar*) vars->find(variables[1].second->getTitle()) ;
+               delete vars;
+               auto histogram = createTH2FromPDF(pdf,xvar,yvar,(name+"_"+c.name).c_str(),"",xAxis,yAxis);
                histogram->Scale(norm->getVal()/histogram->Integral());
                histogram->SetDirectory(0);
                plotter.add1D(histogram);
@@ -187,13 +215,24 @@ void PostFitter::plot2DPDFComponents(RooAbsPdf* func, const std::string& name){
 }
 
 void PostFitter::plotTotal2DPDF(RooAbsPdf* func,RooAbsData* data,  const std::string& name){
-    auto simPdf = dynamic_cast<RooSimultaneous *>(func);
-    if(simPdf){
+	auto simPdf = dynamic_cast<RooSimultaneous *>(func);
+
+
+	if(simPdf){
         for(const auto& cat : categories){
             auto pdf = simPdf->getPdf(cat.second.c_str());
             auto obs = pdf->getObservables(*data);
             double norm = pdf->expectedEvents(*obs);
-            auto histogram = pdf->createHistogram((name+"_"+cat.first).c_str(),*variables[0].second,RooFit::YVar(*variables[1].second),RooFit::IntrinsicBinning());
+
+            RooArgSet* vars = pdf->getVariables() ;
+            RooRealVar* xvar = (RooRealVar*) vars->find(variables[0].second->getTitle()) ;
+            RooRealVar* yvar = (RooRealVar*) vars->find(variables[1].second->getTitle()) ;
+            delete vars;
+//            auto histogram = pdf->createHistogram((name+"_"+cat.first).c_str(),*variables[0].second,RooFit::YVar(*variables[1].second),RooFit::IntrinsicBinning());
+
+            if (!xAxis || !yAxis) {
+                throw std::invalid_argument("null pointer on axis\n");
+            }            auto histogram = createTH2FromPDF(pdf,xvar,yvar,(name+"_"+cat.first).c_str(),"",xAxis,yAxis);
             histogram->Scale(norm/histogram->Integral());
             histogram->SetDirectory(0);
             plotter.add1D(histogram);
@@ -202,7 +241,15 @@ void PostFitter::plotTotal2DPDF(RooAbsPdf* func,RooAbsData* data,  const std::st
     } else {
         auto obs = func->getObservables(*data);
         double norm = func->expectedEvents(*obs);
-        auto histogram = func->createHistogram(name.c_str(),*variables[0].second,RooFit::YVar(*variables[1].second),RooFit::IntrinsicBinning());
+//        auto histogram = func->createHistogram(name.c_str(),*variables[0].second,RooFit::YVar(*variables[1].second),RooFit::IntrinsicBinning());
+
+        RooArgSet* vars = func->getVariables() ;
+        RooRealVar* xvar = (RooRealVar*) vars->find(variables[0].second->getTitle()) ;
+        RooRealVar* yvar = (RooRealVar*) vars->find(variables[1].second->getTitle()) ;
+        delete vars;
+        if (!xAxis || !yAxis) {
+            throw std::invalid_argument("null pointer on axis\n");
+        }        auto histogram = createTH2FromPDF(func,xvar,yvar,name.c_str(),"",xAxis,yAxis);
         histogram->Scale(norm/histogram->Integral());
         histogram->SetDirectory(0);
         plotter.add1D(histogram);
@@ -237,12 +284,18 @@ void PostFitter::plot2DData(RooAbsData* data, const std::string& name){
             const std::string cutStr = std::string("CMS_channel==CMS_channel::") + cat.second;
             auto reducedDataset=data->reduce(cutStr.c_str());
             auto histogram = reducedDataset->createHistogram((name+"_"+cat.first).c_str(),*variables[0].second,RooFit::YVar(*variables[1].second));
+
+            std::cout<<"data histogram name = "<<(name+"_"+cat.first).c_str()<<", integral = "<<histogram->Integral()<<std::endl;
+            xAxis = histogram->GetXaxis();
+            yAxis = histogram->GetYaxis();
             histogram->SetDirectory(0);
             plotter.add1D(histogram);
             delete reducedDataset;
         }
     } else {
         auto histogram = data->createHistogram(name.c_str(),*variables[0].second,RooFit::YVar(*variables[1].second));
+        xAxis = histogram->GetXaxis();
+        yAxis = histogram->GetYaxis();
         histogram->SetDirectory(0);
         plotter.add1D(histogram);
     }
@@ -301,6 +354,7 @@ void PostFitter::doToys(int nToys){
                 absdata_toy = toyModel->GetPdf()->generate(*observables,1);
             }
         }
+
         auto newData = copyDataWOZeros((RooDataSet*)absdata_toy);
         plot2DData(newData,std::string("toyData_")+ASTypes::int2Str(iToy));
         w->loadSnapshot("prefit");

@@ -78,13 +78,8 @@ struct DataPlotPrefs {
 struct HistContainer {
     HistContainer(bool is1l) {
         toys2D.reserve(100);
-        if (is1l) {
-            bkg2D.resize(BKG_MT+1); for(auto* b :bkg2D) b=0;
-            bkg.resize(BKG_MT+1); for(auto* b :bkg) b=0;
-        } else {
-            bkg2D.resize(BKG_TOP+1); for(auto* b :bkg2D) b=0;
-            bkg.resize(BKG_TOP+1); for(auto* b :bkg) b=0;
-        }
+        bkg2D.resize(BKG_MT+1); for(auto* b :bkg2D) b=0;
+        bkg.resize(BKG_MT+1); for(auto* b :bkg) b=0;
     }
     std::vector<TH2*> bkg2D;
     TH2* tot2D=0;
@@ -180,9 +175,6 @@ class DataPlotter {
 public:
     DataPlotter(const DataPlotPrefs& plotPrefs, const std::string& inputPrefix, const std::string& postFitFilename, const bool is1l ) : prefs(plotPrefs), is1lep(is1l)
 {
-    	if(is1lep) bSels = bkgSels;
-    	else bSels = llBkgSels;
-    	std::cout<<"size of bsels is "<<bSels.size()<<std::endl;
 
         if(prefs.addData) dataFile  = new TFile((inputPrefix+"_data_distributions.root").c_str(),"read");
         if(prefs.modelType == MOD_POST || prefs.addType == MOD_POST || prefs.addErrorBars )
@@ -191,13 +183,13 @@ public:
 
 
         if(prefs.modelType == MOD_MC || prefs.addType == MOD_MC || prefs.modelType == MOD_PRE || prefs.addType == MOD_PRE ){
-            for(const auto& t: bSels){
+            for(const auto& t: bkgSels){
                 TFile * fY = new TFile((inputPrefix+"_"+t+"_distributions.root").c_str(),"read");
                 mcFiles.push_back(fY);
             }
         }
         if(prefs.modelType == MOD_PRE || prefs.addType == MOD_PRE ){
-            for(const auto& t: bSels){
+            for(const auto& t: bkgSels){
                 TFile * fF = new TFile((inputPrefix+"_"+t+"_2D_template_debug.root").c_str(),"read");
                 prefitFiles.push_back(fF);
             }
@@ -268,24 +260,23 @@ public:
 
     std::vector<TH2*> getComponents(const ModelType type, const std::string& sel ){
         std::vector<TH2*> bkgs;
-        for(unsigned int iT = 0; iT < bSels.size(); ++iT){
+        for(unsigned int iT = 0; iT < bkgSels.size(); ++iT){
             TH2 * h = 0;
             if(type == MOD_MC) {
-                mcFiles[iT]->GetObject((bSels[iT]+"_"+sel+"_"+hbbMCS+"_"+hhMCS).c_str(),h);
+                mcFiles[iT]->GetObject((bkgSels[iT]+"_"+sel+"_"+hbbMCS+"_"+hhMCS).c_str(),h);
             }
             if(type == MOD_PRE) {
-                prefitFiles[iT]->GetObject((bSels[iT]+"_"+sel).c_str(),h);
+                prefitFiles[iT]->GetObject((bkgSels[iT]+"_"+sel).c_str(),h);
             }
             if(type == MOD_POST) {
 //                postfitFile->GetObject((std::string("postfit_")+ bSels[iT]+"_"+sel+"_"+MOD_MJ+"_"+MOD_MR).c_str(),h);
-            	postfitFile->GetObject((std::string("postfit_")+ bSels[iT]+"_"+sel).c_str(),h);
+            	postfitFile->GetObject((std::string("postfit_")+ bkgSels[iT]+"_"+sel).c_str(),h);
             }
             bkgs.push_back(h);
         }
         return bkgs;
     }
     void getBackgrounds(const std::string& sel, HistContainer& cont){
-    	std::cout<<"sel = "<<sel<<std::endl;
         std::vector<TH2*> postFits;
         std::vector<TH2*> preFits;
         std::vector<TH2*> mcs;
@@ -294,7 +285,7 @@ public:
             mcs = getComponents(MOD_MC,sel);
         if(prefs.modelType == MOD_PRE || prefs.addType == MOD_PRE ){
             preFits = getComponents(MOD_PRE,sel);
-            for(unsigned int iT = 0; iT < bSels.size(); ++iT){
+            for(unsigned int iT = 0; iT < bkgSels.size(); ++iT){
                 if(preFits[iT]) preFits[iT]->Scale(mcs[iT]->Integral()/preFits[iT]->Integral());
             }
         }
@@ -310,20 +301,15 @@ public:
             return total;
         };
 
-        std::cout<<"prefs.modelType = "<<prefs.modelType<<std::endl;
-        std::cout<<"postFits size = "<<postFits.size()<<std::endl;
-        std::cout<<"preFits size = "<<preFits.size()<<std::endl;
-        std::cout<<"mcs size = "<<mcs.size()<<std::endl;
-
         if(prefs.modelType == MOD_POST) cont.bkg2D = postFits;
         if(prefs.modelType == MOD_PRE)  cont.bkg2D = preFits ;
         if(prefs.modelType == MOD_MC)   cont.bkg2D = mcs     ;
 
-        cont.tot2D = combine(cont.bkg2D,bSels);
+        cont.tot2D = combine(cont.bkg2D,bkgSels);
 
-        if(prefs.addType == MOD_POST)cont.add2D=combine(postFits,bSels);
-        if(prefs.addType == MOD_PRE) cont.add2D=combine(preFits,bSels);
-        if(prefs.addType == MOD_MC) cont.add2D=combine(mcs,bSels);
+        if(prefs.addType == MOD_POST)cont.add2D=combine(postFits,bkgSels);
+        if(prefs.addType == MOD_PRE) cont.add2D=combine(preFits,bkgSels);
+        if(prefs.addType == MOD_MC) cont.add2D=combine(mcs,bkgSels);
         if(prefs.addType == MOD_NONE) cont.add2D=0;
     }
 
@@ -362,7 +348,7 @@ public:
 
         for(unsigned int iH = 0; iH < cont.bkg2D.size(); ++iH){
             if(cont.bkg2D[iH]==0) continue;
-            TH1 * h = processH2(cont.bkg2D[iH],bSels[iH]);
+            TH1 * h = processH2(cont.bkg2D[iH],bkgSels[iH]);
             for(int iX = 1; iX <= h->GetNbinsX(); ++iX)h->SetBinError(iX,0);
             cont.bkg[iH] = h;
         }
@@ -445,8 +431,6 @@ public:
     std::vector<TObject*> makePlots() {
         std::vector<TObject*> writeables;
 
-        printf("dbg0\n");
-
         for(unsigned int iS = 0; iS < prefs.sels.size(); ++iS){
             const auto& s = prefs.sels[iS];
             const auto& st = prefs.titles[iS];
@@ -454,7 +438,6 @@ public:
             cont.sig2D = signalHists[iS];
             getBackgrounds(s,cont);
             if(prefs.modelType == MOD_POST && prefs.addErrorBars) getToyModels(s,cont);
-            printf("dbg1.0\n");
 
             //add in the data to nBKS
             TH2 * h = 0;
@@ -462,7 +445,6 @@ public:
                 dataFile->GetObject(("data_"+s+"_"+hbbMCS+"_"+hhMCS).c_str(),h);
             }
             cont.data2D = h;
-            printf("dbg1.1\n");
 
             //Individual bins
             for(unsigned int iB = 0; iB + 1 < prefs.bins.size(); ++iB){
@@ -472,8 +454,6 @@ public:
                 }
                 get1DHists(s,iB,cont);
                 const std::string plotTitle = s +"_"+(prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]);
-
-                printf("dbg1.2\n");
 
                 Plotter * p = new Plotter();
                 std::vector<Drawing::TLegendEntryDef> legEntries;
@@ -489,7 +469,6 @@ public:
                     auto * g = p->addGraph(cont.toyErr,"Fit unc.",fillColor,1,0,20,1,false,true,false,"2");
                     legEntries.push_back(std::make_tuple(2,g,"Fit unc.","F"));
                 }
-                printf("dbg1.3\n");
 
                 if(cont.add){
                     auto * g = p->addHistLine(cont.add,modTitles[prefs.addType],kBlue);
@@ -499,8 +478,6 @@ public:
                 if( int(cont.toyErr!=0) + int(cont.add!=0)  == 1  ){
                     legEntries.push_back(std::make_tuple(4,(TObject*)(0),"",""));
                 }
-
-                printf("dbg1.4\n");
 
                 std::vector<int> signalColors ={kSpring+10,634};
                 if(cont.sig.size() == 1 ) signalColors = {634};
@@ -513,7 +490,6 @@ public:
                 }
 
                 if(cont.data){
-                	std::cout<<"cont.data exists"<<std::endl;
                     p->addHist(cont.data,"Data",kBlack,1,2,20,0.5,true,true,true);
                     TGraphAsymmErrors * g = new TGraphAsymmErrors;
                     g->SetLineColor  (kBlack);
@@ -525,20 +501,16 @@ public:
                     legEntries.push_back(std::make_tuple(0,g,"Data","P E"));
                 }
                 legEntries.push_back(std::make_tuple(1,(TObject*)(0),"",""));
-                printf("dbg1.5\n");
 
                 int nB = 0;
-                std::cout<<"cont.bkg.size = "<<cont.bkg.size()<<std::endl;
                 for(unsigned int iH = 0; iH < cont.bkg.size(); ++iH){
                     if(cont.bkg[iH]){
-                    	std::cout<<"is cont.bkg[iH]"<<std::endl;
                         nB ++;
-                        auto *g = p->addStackHist(cont.bkg[iH],bSels[iH].title.c_str());
-                        legEntries.push_back(std::make_tuple(10+cont.bkg.size() -iH,g,bSels[iH].title.c_str(),"f"));
+                        auto *g = p->addStackHist(cont.bkg[iH],bkgSels[iH].title.c_str());
+                        legEntries.push_back(std::make_tuple(10+cont.bkg.size() -iH,g,bkgSels[iH].title.c_str(),"f"));
                     }
                 }
                 if(nB % 2)  legEntries.push_back(std::make_tuple(10+ cont.bkg.size()+1,(TObject*)(0),"",""));
-                printf("dbg1.6\n");
 
                 if(cont.toyErr)p->clearTotStackError();
                 p->setUnderflow(false);
@@ -549,7 +521,6 @@ public:
                     binWidth = h->GetBinWidth(1);
                     break;
                 }
-                printf("dbg1.7\n");
 
                 double xV =0.45;
                 double yV =0.63;;
@@ -565,14 +536,12 @@ public:
                 } else {
                     p->setCMSLumi(10);
                 }
-                printf("dbg1.8\n");
 
                 float startY = (prefs.isSupp||preliminary) ? 0.83 : 0.75;
                 if(prefs.topTitle.size() ){
                     p->addText(prefs.topTitle,.18,startY,0.045);
                     startY -= 0.05;
                 }
-                printf("dbg1.9\n");
 
                 p->addText(st,.18,startY,0.045);
                 startY -= 0.05;
@@ -581,7 +550,6 @@ public:
                 }
 
                 p->setLegendNColumns(2);
-                printf("dbg1.91\n");
 
                 if(prefs.signals.size()){
                     p->setLegendPos(xV,yV,xV+0.457,yV+0.245);
@@ -591,7 +559,6 @@ public:
                 else {
                     p->setLegendPos(xV,yV,xV+0.445,yV+0.245);
                 }
-                printf("dbg1.92\n");
 
                 //--------------------LEGEND AND TEXT------------------------------
                 p->turnOffLegend();
@@ -603,7 +570,6 @@ public:
                 for(const auto& l : legEntries){
                     legend->AddEntry(std::get<1>(l),std::get<2>(l),std::get<3>(l));
                 }
-                printf("dbg1.93\n");
 
                 //--------------------LEGEND AND TEXT------------------------------
                 if(prefs.removeTrailingZeros == true) p->turnOffTrailingPoissonZeros();
@@ -626,7 +592,6 @@ public:
                     }
                     p->setYTitleBot((std::string("Data / ") + modTitles[prefs.modelType] +"").c_str());
                     auto * c = p->drawSplitRatio(-1,"stack",false,false,plotTitle.c_str());
-                    printf("dbg1.941\n");
 
                     if(prefs.doLog) c->GetPad(1)->SetLogy();
                     p->botStyle.xAxis->SetTitleOffset(1.05);
@@ -658,11 +623,9 @@ public:
                     c->Update();
                     writeables.push_back(c);
                 }
-                printf("dbg1.999\n");
 
             }
         }
-        printf("dbg2\n");
 
         return writeables;
     }
@@ -671,7 +634,6 @@ public:
         std::vector<TH1*> dataTSs(prefs.bins.size() -1,0);
         std::vector<TGraphAsymmErrors*> toyTSs(prefs.bins.size() -1,0);
         std::vector<TObject*> writeables;
-        printf("debug1.2\n");
 
         for(unsigned int iS = 0; iS < prefs.sels.size();++iS){
             const auto& s = prefs.sels[iS];
@@ -679,7 +641,6 @@ public:
             getBackgrounds(s,cont);
             //add in the data to nBKS
             dataFile->GetObject(("data_"+s+"_"+hbbMCS+"_"+hhMCS).c_str(),cont.data2D);
-            printf("debug1.3\n");
 
             //get toys
             std::vector<TH2*> toyFits;
@@ -698,7 +659,6 @@ public:
                     if(hd && hm) { toyFits.push_back(hm) ,toyData.push_back(hd);}
                 }
             }
-            printf("debug1.4\n");
 
             //Individual bins
             for(unsigned int iB = 0; iB + 1 < prefs.bins.size(); ++iB){
@@ -706,15 +666,12 @@ public:
                     if(prefs.bins[iB+1] == prefs.bins[iB]) ++iB;
                     continue;
                 }
-                printf("debug1.5\n");
 
                 get1DHists(s,iB,cont);
-                printf("debug1.51\n");
 
                 const std::string plotTitle = s +"_"+(prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]);
                 StatTesterAnalyzer * a= 0;
                 if(useBuiltInToys){
-                    printf("debug1.52\n");
 
                     auto bins = getBins(cont,iB);
                     std::vector<StatTesterAnalyzer::ModelAndData> toys; toys.reserve(toyFits.size());
@@ -727,33 +684,28 @@ public:
                         delete toys[iT].first;
                         delete toys[iT].second;
                     }
-                    printf("debug1.53\n");
 
                 } else {
                     a = new StatTesterAnalyzer((TH1D*)cont.tot,(TH1D*)cont.data,10000,false,plotTitle,outNamePrefix+"_"+plotTitle+".root" );
                 }
-                printf("debug1.6\n");
 
                 if(dataTSs[iB] == 0){
                     std::string sumName = (prefs.binInY ? hhMCS : hbbMCS) +"_"+flt2Str(prefs.bins[iB]) +"_"+flt2Str(prefs.bins[iB+1]);
                     dataTSs[iB] = new TH1F((sumName +"_data_TS").c_str(),";selection",prefs.sels.size(),-0.5,prefs.sels.size()-0.5);
                     toyTSs[iB] = new TGraphAsymmErrors();//(sumName +"_toy_TS",";selection",prefs.sels.size(),-0.5,prefs.sels.size()-0.5);
                 }
-                printf("debug1.7\n");
 
                 dataTSs[iB]->SetBinContent(iS+1,a->ts_nom_sa);
                 toyTSs[iB]->SetPoint(iS,iS,a->ts_avg_sa);
                 toyTSs[iB]->SetPointError(iS,0,0,a->ts_avg_sa - a->ts_down_sa,a->ts_up_sa-a->ts_avg_sa);
                 delete a;
             }
-            printf("debug1.8\n");
 
             for(unsigned int iT = 0; iT < toyFits.size(); ++iT ){
                 delete toyFits[iT];
                 delete toyData[iT];
             }
         }
-        printf("debug1.9\n");
 
         for(unsigned int iB = 0; iB < dataTSs.size(); ++iB){
             if(dataTSs[iB] == 0) continue;
@@ -771,7 +723,6 @@ public:
 
             writeables.push_back(c);
         }
-        printf("debug1.99\n");
 
         return writeables;
     }
@@ -783,22 +734,17 @@ public:
     std::vector<std::vector<TH2*>> signalHists;//[selection] [signal]
     TFile * postfitFile= 0;
     TFile * dataFile = 0;
-    std::vector<CutStr> bSels;
     bool is1lep = true;
 };
 
 
 std::vector<TObject*> doDataPlot(const DataPlotPrefs& dataPlot, const std::string& inputPrefix, const std::string& postFitFilename, const bool is1l){
     DataPlotter a(dataPlot,inputPrefix,postFitFilename,is1l);
-    printf("debug1.1\n");
-
     return a.makePlots();
 }
 
 std::vector<TObject*> doStatTest(const DataPlotPrefs& dataPlot, const std::string& inputPrefix, const std::string& postFitFilename, const std::string& outNamePrefix, const bool is1l){
     DataPlotter a(dataPlot,inputPrefix,postFitFilename,is1l);
-    printf("debug1.1\n");
-
     return a.makeStatTest(outNamePrefix);
 }
 
@@ -1182,7 +1128,7 @@ void doUncPlots(std::vector<TObject*>& writeables, const std::string& limitBaseN
     addAllN(topNormNs,"top","norm");
     addBN(topNormNs,"top","mt_rel_scale");
     addBN(topNormNs,"top","lostmw_rel_scale");
-    if(reg == REG_QGCR){
+    if(reg == REG_NONTOPCR){
         addBN(topNormNs,"top","tFrac");
         addBN(topNormNs,"top","lostFrac");
     } else {
@@ -1206,25 +1152,19 @@ void doUncPlots(std::vector<TObject*>& writeables, const std::string& limitBaseN
 
 
 
-void runPostFit(const std::string& inName, const std::string& outName, double fixR=0, const std::vector<CutStr> bkgs = bkgSels, bool is1l = true){
+void runPostFit(const std::string& inName, const std::string& outName, double fixR=0, int channel = 0){
     PostFitter fitter(inName,fixR);
     //        fitter.addSignal("radHH");
 
-    std::cout<<"constructed PostFitter"<<std::endl;
-    if (is1l) {
-        fitter.addBkg(bkgs[BKG_MT]);
-        fitter.addBkg(bkgs[BKG_MW]);
-        fitter.addBkg(bkgs[BKG_LOSTTW],"_opt");
-        fitter.addBkg(bkgs[BKG_QG],"_opt");
-    } else {
-    	fitter.addBkg(bkgs[BKG_NONTOP],"_opt");
-    	fitter.addBkg(bkgs[BKG_TOP]);
-    }
+    fitter.addBkg(bkgSels[BKG_MT]);
+    fitter.addBkg(bkgSels[BKG_MW]);
+    fitter.addBkg(bkgSels[BKG_LOSTTW],"_opt");
+    fitter.addBkg(bkgSels[BKG_QG],"_opt");
 
     fitter.addVariable(MOD_MJ);
     fitter.addVariable(MOD_MR);
 
-    if (is1l) {
+    if (channel == 0 || channel == 1) {
         for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats) for(const auto& h :hadCuts){
             if(l == lepCats[LEP_EMU] ) continue;
             if(b == btagCats[BTAG_LMT]) continue;
@@ -1233,7 +1173,8 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
             const std::string wsName = "std_"+ l +"_"+b+"_"+p +"_"+h+"_13TeV";
             fitter.addCategory(l +"_"+b+"_"+p +"_"+h,wsName);
         }
-    } else {
+    }
+    if (channel == 0 || channel == 2) {
         for(const auto& l :dilepCats) for(const auto& b :btagCats) for(const auto& s :selCuts){
             if(l == dilepCats[LEP_INCL] ) continue;
             if(b == btagCats[BTAG_LMT]) continue;
@@ -1253,17 +1194,16 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
 void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, const std::string limitBaseName = ""){
     REGION reg = REGION(inreg);
 
-    std::vector<CutStr> bSels = bkgSels;
-    auto srList = getSRList(reg);
-    auto srListTitles = getSRListTitles(reg);
-
-    if (!do1lep) {
-    	bSels = llBkgSels;
+    std::vector<std::string> srList, srListTitles;
+    if (do1lep) {
+        srList = getSRList(reg);
+        srListTitles = getSRListTitles(reg);
+    } else {
         srList = getDilepSRList(reg);
         srListTitles = getDilepSRListTitles(reg);
     }
 
-    std:: string inName =  "bkgInputs" ;
+    std::string inName  =  "bkgInputs" ;
     std::string outName = limitBaseName +"/plots/";
 
     if(reg == REG_TOPCR){
@@ -1271,27 +1211,24 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, const s
         hhFilename +="_TopCR";
         outName=limitBaseName+"/plots/TopCR_";
     }
-    else if(reg == REG_QGCR){
-        inName =  do1lep ? "bkgInputsQGCR" : "bkgInputsNonTopCR";
-        hhFilename += (do1lep ? "_QGCR" : "_NonTopCR");
-        outName=limitBaseName+"/plots/" + (do1lep ? "QGCR_" : "NonTopCR_");
+    else if(reg == REG_NONTOPCR){
+        inName = "bkgInputsNonTopCR";
+        hhFilename += "_NonTopCR";
+        outName=limitBaseName+"/plots/NonTopCR_";
         btagCats = qgBtagCats;
     }
 
     std::string filename = inName +"/"+hhFilename;
     std::string postFitFilename = limitBaseName +"/postFit.root";
 
-    std::cout<<"filename = "<<filename<<std::endl;
-    std::cout<<"postfit filename = "<<postFitFilename<<std::endl;
 
     if(step==0) {//run post fit
-        runPostFit(limitBaseName+"/combined.root",postFitFilename,0,bSels,do1lep);
+        runPostFit(limitBaseName+"/combined.root",postFitFilename,0,0); // may want option to do one channel at a time
     }
 
 
     if(step== 1){ //prefit
         if(outName.size())         outName += "prefit_dataComp";
-printf("debug0\n");
         DataPlotPrefs hhPlot;
         hhPlot.modelType = MOD_PRE;
         hhPlot.addRatio = true;
@@ -1299,19 +1236,15 @@ printf("debug0\n");
         hhPlot.binInY = false;
         hhPlot.sels = srList;
         hhPlot.titles = srListTitles;
-        printf("debug1\n");
 
         writeables = doDataPlot(hhPlot,filename,postFitFilename,do1lep);
         DataPlotPrefs hbbPlot = hhPlot;
         hbbPlot.bins = {700,4000};
         hbbPlot.binInY = true;
-        printf("debug2\n");
 
         auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename,do1lep);
-        printf("debug2.1\n");
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         Dummy d(outName);
-        printf("debug3\n");
 
     }
 
@@ -1357,9 +1290,7 @@ printf("debug0\n");
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
         //        hhPlot.addData = false;
-        printf("bbg0\n");
         writeables = doDataPlot(hhPlot,filename,postFitFilename,do1lep);
-        printf("bbg1\n");
 
         DataPlotPrefs hbbPlot = hhPlot;
         hbbPlot.bins = {700,4000};
@@ -1370,7 +1301,6 @@ printf("debug0\n");
         hbbPlot.maxTop =400;
         if(inreg == REG_SR && blind) hbbPlot.blindRange ={100,150};
         auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename,do1lep);
-        printf("bbg2\n");
 
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         Dummy d(outName);
@@ -1388,9 +1318,7 @@ printf("debug0\n");
         hhTest.sels = srList;
         hhTest.titles = srListTitles;
         hhTest.addErrorBars =true;
-        printf("dbg0\n");
         writeables = doStatTest(hhTest,filename,postFitFilename,outName + "statTest",do1lep);
-        printf("dbg1\n");
 
         DataPlotPrefs hbbTest = hhTest;
         hbbTest.binInY = true;
@@ -1404,7 +1332,6 @@ printf("debug0\n");
             auto writeables2 = doStatTest(hbbTest,filename,postFitFilename,outName + "statTest",do1lep);
             writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         }
-        printf("dbg2\n");
 
         Dummy d(outName+ "statTest_summary");
 

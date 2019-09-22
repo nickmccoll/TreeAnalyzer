@@ -3,7 +3,7 @@
 catName=$1
 runSR=$2
 signal=$3
-nLeps=$4
+channel=$4      # 0 for 1l + 2l, 1 for 1l, 2 for 2l
 macroLoc=$5
 
 
@@ -11,10 +11,7 @@ dirName="${catName}"
 if [ "${runSR}" = "1" ] ; then
     dirName="${dirName}_TopCR"
 fi
-if [ "${runSR}" = "2" ] && [ "${nLeps}" = "1" ] ; then
-    dirName="${dirName}_QGCR"
-fi
-if [ "${runSR}" = "2" ] && [ "${nLeps}" = "2" ] ; then
+if [ "${runSR}" = "2" ] ; then
     dirName="${dirName}_NonTopCR"
 fi
 if [ "${signal}" = "0" ] ; then
@@ -23,22 +20,14 @@ fi
 if [ "${signal}" = "1" ] ; then
     dirName="${dirName}_blk"
 fi
-if [ "${signal}" = "2" ] ; then
-    dirName="${dirName}_rad"
-fi
 
 mkdir ${dirName}
 cd ${dirName}
 mkdir plots
 
-if [ "${nLeps}" = "1" ] ; then
-    RCMD="root -b -q '${macroLoc}/makeCard.C+(${runSR},${signal})'"
-fi
-if [ "${nLeps}" = "2" ] ; then
-    RCMD="root -b -q '${macroLoc}/makeDileptonCard.C+(${runSR},${signal})'"
-fi
-
+RCMD="root -b -q '${macroLoc}/makeCard.C+(${runSR},${signal},${channel})'"
 eval $RCMD
+
 . comp.sh
 cd ..
 RCMD="scp -r ${dirName} bwstone@cmslpc26.fnal.gov:/uscms/home/bwstone/nobackup/TreeAnalyzer/CMSSW_8_3_0/src/combine/"
