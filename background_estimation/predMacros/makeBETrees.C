@@ -180,14 +180,6 @@ public:
             lepPT_   = selectedLepton->pt();
             lepETA_  = selectedLepton->eta();
 
-            hbbMass_ = hbbMass;
-            hbbPT_ = hbbCand->pt();
-            hbbCSVCat_ = hbbCSVCat;
-            hwwPT_ = hWW.pt();
-            hhMass_  = hh.mass();
-            hhMassBasic_   = hh_basic.mass();
-            nAK4Btags_   = std::min(nMedBTags_HbbV,250);
-
             hwwChi_  = hwwChi;
             hwwLi_  = hwwLi;
             wlnuMass_ = wlnu.mass();
@@ -196,6 +188,24 @@ public:
             wjjTau2o1_ = wjjCand->tau2otau1();
             wjjMass_   = wjjCand->sdMom().mass();
             wjjPT_     = wqq.pt();
+
+            hbbMass_ = hbbMass;
+            hbbPT_ = hbbCand->pt();
+            hbbCSVCat_ = hbbCSVCat;
+            hwwPT_ = hWW.pt();
+            hhMass_  = hh.mass();
+            hhMassBasic_   = hh_basic.mass();
+            nAK4Btags_   = std::min(nMedBTags_HbbV,250);
+
+            isMuon1_ = 0;
+            isMuon2_ = 0;
+        	lep1PT_  = 0;
+        	lep2PT_  = 0;
+        	dilepPT_ = 0;
+        	dilepMass_ = 0;
+        	dilepDR_   = 0;
+        	llMetDphi_ = 0;
+
         } else if (lepChan == DILEP) {
         	isMuon1_ = dilep1->isMuon();
         	isMuon2_ = dilep2->isMuon();
@@ -213,6 +223,17 @@ public:
             hwwPT_ = hWW.pt();
             hhMass_  = hh.mass();
             nAK4Btags_   = std::min(nMedBTags_HbbV,250);
+
+            isMuon_  = 0;
+            lepPT_   = 0;
+            lepETA_  = 0;
+            hwwChi_  = 0;
+            hwwLi_   = 0;
+            wlnuMass_ = 0;
+            wlnuPT_   = 0;
+            wjjTau2o1_ = 0;
+            wjjMass_   = 0;
+            wjjPT_     = 0;
         }
 
         if(!isRealData()) {
