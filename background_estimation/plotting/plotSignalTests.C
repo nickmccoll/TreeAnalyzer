@@ -199,6 +199,7 @@ void plotYields(std::string name, std::string filename,std::string fitName,
 
 void plotEfficiencies(std::string name, std::string filename,std::string fitName, int signal) {
 //    gROOT->SetBatch(true);
+	throw std::invalid_argument{"need to amend this function with input luminosity, etc"};
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<TObject*> paramPads;
     double inclusiveN  = 1000*35.9; //1000 fb x lumi

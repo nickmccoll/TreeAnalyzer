@@ -81,34 +81,6 @@ const float hbb_resUnc   = 30;   // coef of 1 means that we get a 100% scale at 
 //VV ->   -hs 0.0003 -hr 1200
 
 
-void makeBackgroundShapesMJJAdaKernel(const std::string& name, const std::string& filename,
-        const std::string inputFile, const std::string& baseSel="1.0",
-        bool addQCDSF = false,float khxs = 1,float khxc = 5){
-    std::string resFile=filename+"_"+name+"_detectorResponse.root";
-
-    CatIterator ci;
-    while(ci.getBin()){
-        if(!ci.is(LEP_EMU )) continue;
-        if(strFind(name,bkgSels[BKG_QG])||strFind(name,bkgSels[BKG_LOSTTW])){
-            if(!ci.is(BTAG_LMT)) continue;
-        } else {
-            if(ci.is(BTAG_LMT)) continue;
-        }
-        if(!ci.is(PURE_I  )) continue;
-        if(!ci.is(HAD_LTMB)) continue;
-
-        std::string tempFile=filename+"_"+name+"_"+ci.name()+"_MJJ_incl_template.root";
-        std::string cut =  std::string("(")+baseSel+"&&"+ci.cut()+")";
-        if(addQCDSF) cut += "*"+getQCDSF(name,filename,ci.l,ci.p,ci.h);
-        std::string args = std::string("-v -n histo ")+" -x "+hbbMCS.cut+" -g hbbGenMass " +
-                " -xb "+getHbbBinningString(true)+ " -s "+cut+" -w "+nomW.cut
-                + " -khs "+ flt2Str(khxs) +" -khc "+ flt2Str(khxc);
-        args += " -ks 1.5 -kr 1.5 -hs " +flt2Str(hbb_scaleUnc)+ " -hr " + flt2Str(hbb_resUnc)+ " ";
-        args += std::string(" -vsf ")+resFile+ " -vsh scalexHisto -vsv hbbGenPT -t nsSo ";
-        make1DTemplateWithAdaKern(inputFile,tempFile, args);
-    }
-}
-
 void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string& filename,
         const std::string inputFile, const std::string& baseSel="1.0", int channel = 0, bool addQCDSF = false,
         float khxs = 1,float khxc = 5){
@@ -186,35 +158,21 @@ void makeBackgroundShapes2DConditional(const std::string name, const std::string
         bool xIsCond = false, float khxs = 1,float khxc = 5,float khys = 1,float khyc = 5) {
 
 	// make 2D templates using a combined and relaxed 1l and 2l selection
-    CatIterator ci;
-    DilepCatIterator ci2;
     std::string tempFile=filename+"_"+name+"_";
-    std::string cut = "";
+    std::string inclName = lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]+"_"+
+    		dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts[SEL_RPhiB];
+    tempFile += inclName+"_2D_cond_template.root";
 
-    while(ci.getBin()){
-        if(!ci.is(LEP_EMU )) continue;
-        if(!ci.is(BTAG_LMT)) continue;
-        if(!ci.is(PURE_I  )) continue;
-        if(!ci.is(HAD_LTMB)) continue;
+    std::string inclCut = std::string("((")+baseSel+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut
+    		+"&&"+hadCuts[HAD_LTMB]+")";
+    if(addQCDSF) inclCut += "*"+getQCDSF(name,filename,LEP_EMU,PURE_I,HAD_LTMB);
+    inclCut += ")";
+    inclCut += "||("+dilepCats[LEP_INCL].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+selCuts[SEL_RPhiB].cut+")";
 
-        cut += std::string("((")+baseSel+"&&"+ci.cut()+")";
-        if(addQCDSF) cut += "*"+getQCDSF(name,filename,ci.l,ci.p,ci.h);
-        cut += ")";
-        tempFile += ci.name()+"_";
-
-    }
-    while(ci2.getBin()){
-        if(!ci2.is(LEP_INCL )) continue;
-        if(!ci2.is(BTAG_LMT )) continue;
-        if(!ci2.is(SEL_RPhiB)) continue;
-
-        cut += std::string("||(")+ci2.cut()+")";
-        tempFile += ci2.name()+"_2D_cond_template.root";
-    }
 
     std::string args = std::string("-v -n histo ") + " -vx "+ hbbMCS.cut+ " -vy "+hhMCS.cut
             + " -xb "+getHbbBinningString(true)+" -yb "+getHHBinningString(true)
-            +  " -s "+ cut +" -w "+nomW.cut+" ";
+            +  " -s "+ inclCut +" -w "+nomW.cut+" ";
     args+=std::string(" -khxs ")+ flt2Str(khxs) +" -khxc "+ flt2Str(khxc)
                     +" -khys "+ flt2Str(khys) +" -khyc "+ flt2Str(khyc) + " ";
     args += "-eopt y  "+ getMVVExpoMinMaxStr(name);
@@ -316,8 +274,6 @@ void cutMVVTemplate(const std::string& name, const std::string& filename, int ch
 }
 
 
-
-
 void getQCDScaleFactor(const std::string& name, const std::string& filename,
         const std::string inputFile, const std::string& cut="1.0"){
     std::vector<PlotVar> vars;
@@ -393,13 +349,11 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
         } else {
             sels.emplace_back(ci1.name(),ci1.cut());
         }
-
     }
 
     DilepCatIterator ci2;
     while(ci2.getBin()){
         sels.emplace_back(ci2.name(),ci2.cut());
-
     }
 
     CatIterator cit1;
@@ -575,20 +529,24 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     const std::string fitName = "MJJ_fit1stIt";
 
+    auto mkShapes = [&](std::string catName) {
+        makeBKG1DShapes(name,filename,catName,fitName,true,0,iF);
+
+        std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+catName+"_"+fitName+".root"
+                +" -var "+MOD_MR+" ";
+        argsP1 += " -minX 600 -maxX 3000 ";
+        std::string jsonArgsStd =
+                " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
+        MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
+    };
+
     if (channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_EMU)) continue;
             if(!ci.is(PURE_I)) continue;
             if(!ci.is(HAD_NONE)) continue;
-            makeBKG1DShapes(name,filename,ci.name(),fitName,true,0,iF);
-
-            std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+ci.name()+"_"+fitName+".root"
-                    +" -var "+MOD_MR+" ";
-            argsP1 += " -minX 600 -maxX 3000 ";
-            std::string jsonArgsStd =
-                    " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
-            MakeJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
+            mkShapes(ci.name());
         }
     }
     if (channel == 0 || channel == 2){
@@ -596,27 +554,17 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
         while(ci.getBin()){
             if(!ci.is(LEP_INCL)) continue;
             if(!ci.is(SEL_NONE)) continue;
-            makeBKG1DShapes(name,filename,ci.name(),fitName,true,0,iF);
-
-            std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+ci.name()+"_"+fitName+".root"
-                    +" -var "+MOD_MR+" ";
-            argsP1 += " -minX 600 -maxX 3000 ";
-            std::string jsonArgsStd =
-                    " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
-            MakeJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
+            mkShapes(ci.name());
         }
     }
 
     // do the inclusive 1l + 2l category
-    // **had some trouble doing this for each btagging category in addition to inclusive btaggin**
+    for (const auto& b : btagCats) {
+        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_NONE]
+        				+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts[SEL_NONE];
+        mkShapes(inclCatName);
+    }
 
-    std::string inclCatName = lepCats[LEP_EMU] +"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_NONE]
-    							+"_"+dilepCats[LEP_INCL] +"_"+btagCats[BTAG_LMT]+"_"+selCuts[SEL_NONE];
-    makeBKG1DShapes(name,filename,inclCatName,fitName,true,0,iF);
-    std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+inclCatName+"_"+fitName+".root"
-            +" -var "+MOD_MR+" -minX 600 -maxX 3500 ";
-    std::string jsonArgsStd = " -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
-    MakeJSON(filename+"_"+name+"_"+inclCatName+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
 
 }
 
@@ -624,27 +572,31 @@ void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     const std::string fitName = "MJJ_fit";
 
+    auto mkShapes = [&](std::string catName) {
+        CJSON oldJSON(     filename+"_"+name+"_"+catName+"_MJJ_fit1stIt.json");
+        oldJSON.fillFunctions(MOD_MR);
+        makeBKG1DShapes(name,filename,catName,fitName,true,&oldJSON,iF);
+
+        std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+catName+"_"+fitName+".root"
+                +" -var "+MOD_MR+" ";
+        argsP1 += " -minX 600 -maxX 3000 ";
+        std::string jsonArgsStd =
+                " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
+
+        CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",
+                argsP1+" "+jsonArgsStd);
+        newJSON.replaceEntry("alpha", oldJSON.getP("alpha") );
+        newJSON.replaceEntry("alpha2", oldJSON.getP("alpha2") );
+        newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
+    };
+
     if (channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_EMU)) continue;
             if(!ci.is(PURE_I)) continue;
             if(!ci.is(HAD_NONE)) continue;
-            CJSON oldJSON(     filename+"_"+name+"_"+ci.name()+"_MJJ_fit1stIt.json");
-            oldJSON.fillFunctions(MOD_MR);
-            makeBKG1DShapes(name,filename,ci.name(),fitName,true,&oldJSON,iF);
-
-            std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+ci.name()+"_"+fitName+".root"
-                    +" -var "+MOD_MR+" ";
-            argsP1 += " -minX 600 -maxX 3000 ";
-            std::string jsonArgsStd =
-                    " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
-
-            CJSON newJSON = getJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json",
-                    argsP1+" "+jsonArgsStd);
-            newJSON.replaceEntry("alpha", oldJSON.getP("alpha") );
-            newJSON.replaceEntry("alpha2", oldJSON.getP("alpha2") );
-            newJSON.write(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json");
+            mkShapes(ci.name());
         }
     }
     if (channel == 0 || channel == 2){
@@ -652,41 +604,16 @@ void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename
         while(ci.getBin()){
             if(!ci.is(LEP_INCL)) continue;
             if(!ci.is(SEL_NONE)) continue;
-            CJSON oldJSON(     filename+"_"+name+"_"+ci.name()+"_MJJ_fit1stIt.json");
-            oldJSON.fillFunctions(MOD_MR);
-            makeBKG1DShapes(name,filename,ci.name(),fitName,true,&oldJSON,iF);
-
-            std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+ci.name()+"_"+fitName+".root"
-                    +" -var "+MOD_MR+" ";
-            argsP1 += " -minX 600 -maxX 3000 ";
-            std::string jsonArgsStd =
-                    " -g mean:laur2,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
-
-            CJSON newJSON = getJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json",
-                    argsP1+" "+jsonArgsStd);
-            newJSON.replaceEntry("alpha", oldJSON.getP("alpha") );
-            newJSON.replaceEntry("alpha2", oldJSON.getP("alpha2") );
-            newJSON.write(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json");
+            mkShapes(ci.name());
         }
     }
 
     // do the inclusive 1l + 2l category (do each btagging cat)
-    // **had some trouble doing this for each btagging category in addition to inclusive btaggin**
-
-    std::string inclCatName = lepCats[LEP_EMU] +"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_NONE]
-    								+"_"+dilepCats[LEP_INCL] +"_"+btagCats[BTAG_LMT]+"_"+selCuts[SEL_NONE];
-
-    CJSON oldJSON(     filename+"_"+name+"_"+inclCatName+"_MJJ_fit1stIt.json");
-    oldJSON.fillFunctions(MOD_MR);
-    makeBKG1DShapes(name,filename,inclCatName,fitName,true,&oldJSON,iF);
-    std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+inclCatName+"_"+fitName+".root"
-                +" -var "+MOD_MR+" -minX 700 -maxX 3000 ";
-    std::string jsonArgsStd=" -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
-    CJSON newJSON = getJSON(filename+"_"+name+"_"+inclCatName+"_"+fitName+".json"
-                ,argsP1+" "+jsonArgsStd);
-    newJSON.replaceEntry("alpha", oldJSON.getP("alpha") );
-    newJSON.replaceEntry("alpha2", oldJSON.getP("alpha2") );
-    newJSON.write(filename+"_"+name+"_"+inclCatName+"_"+fitName+".json");
+    for (const auto& b : btagCats) {
+        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_NONE]
+        					+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts[SEL_NONE];
+        mkShapes(inclCatName);
+    }
 
 }
 
@@ -695,20 +622,24 @@ void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filena
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     const std::string fitName = "MJJ_fit1stIt";
 
+    auto mkShapes = [&](std::string catName) {
+        makeBKG1DShapes(name,filename,catName,fitName,false,0,iF);
+
+        std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+catName+"_"+fitName+".root"
+                +" -var "+MOD_MR+" ";
+        argsP1 += " -minX 700 -maxX 3500 ";
+        std::string jsonArgsStd =
+                " -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
+        MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
+    };
+
     if (channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_EMU)) continue;
             if(!ci.is(PURE_I)) continue;
             if(!ci.is(HAD_NONE)) continue;
-            makeBKG1DShapes(name,filename,ci.name(),fitName,false,0,iF);
-
-            std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+ci.name()+"_"+fitName+".root"
-                    +" -var "+MOD_MR+" ";
-            argsP1 += " -minX 700 -maxX 3500 ";
-            std::string jsonArgsStd =
-                    " -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
-            MakeJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
+            mkShapes(ci.name());
         }
     }
     if (channel == 0 || channel == 2) {
@@ -716,28 +647,16 @@ void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filena
         while(ci.getBin()){
             if(!ci.is(LEP_INCL)) continue;
             if(!ci.is(SEL_NONE)) continue;
-            makeBKG1DShapes(name,filename,ci.name(),fitName,false,0,iF);
-
-            std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+ci.name()+"_"+fitName+".root"
-                    +" -var "+MOD_MR+" ";
-            argsP1 += " -minX 700 -maxX 3500 ";
-            std::string jsonArgsStd =
-                    " -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
-            MakeJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
+            mkShapes(ci.name());
         }
     }
 
     // do the inclusive 1l + 2l category
-    // **had some trouble doing this for each btagging category in addition to inclusive btaggin**
-
-    std::string inclCatName = lepCats[LEP_EMU] +"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_NONE]
-    							+"_"+dilepCats[LEP_INCL] +"_"+btagCats[BTAG_LMT]+"_"+selCuts[SEL_NONE];
-
-    makeBKG1DShapes(name,filename,inclCatName,fitName,false,0,iF);
-    std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+inclCatName+"_"+fitName+".root"
-            +" -var "+MOD_MR+" -minX 700 -maxX 3500 ";
-    std::string jsonArgsStd = " -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
-    MakeJSON(filename+"_"+name+"_"+inclCatName+"_"+fitName+".json",argsP1+" "+  jsonArgsStd );
+    for(const auto& b : btagCats) {
+        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_NONE]
+        				+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts[SEL_NONE];
+        mkShapes(inclCatName);
+    }
 
 }
 
@@ -745,27 +664,31 @@ void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filena
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_inclM_distributions.root");
     const std::string fitName = "MJJ_fit";
 
+    auto mkShapes = [&](std::string catName) {
+        CJSON oldJSON(filename+"_"+name+"_"+catName+"_MJJ_fit1stIt.json");
+        oldJSON.fillFunctions(MOD_MR);
+        makeBKG1DShapes(name,filename,catName,fitName,false,&oldJSON,iF);
+
+        std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+catName+"_"+fitName+".root"
+                +" -var "+MOD_MR+" ";
+        argsP1 += " -minX 700 -maxX 3000 ";
+        std::string jsonArgsStd=
+                " -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
+
+        CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json"
+                ,argsP1+" "+jsonArgsStd);
+        newJSON.replaceEntry("alpha", oldJSON.getP("alpha") );
+        newJSON.replaceEntry("alpha2", oldJSON.getP("alpha2") );
+        newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
+    };
+
     if (channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_EMU )) continue;
             if(!ci.is(PURE_I  )) continue;
             if(!ci.is(HAD_NONE)) continue;
-            CJSON oldJSON(     filename+"_"+name+"_"+ci.name()+"_MJJ_fit1stIt.json");
-            oldJSON.fillFunctions(MOD_MR);
-            makeBKG1DShapes(name,filename,ci.name(),fitName,false,&oldJSON,iF);
-
-            std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+ci.name()+"_"+fitName+".root"
-                    +" -var "+MOD_MR+" ";
-            argsP1 += " -minX 700 -maxX 3000 ";
-            std::string jsonArgsStd=
-                    " -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
-
-            CJSON newJSON = getJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json"
-                    ,argsP1+" "+jsonArgsStd);
-            newJSON.replaceEntry("alpha", oldJSON.getP("alpha") );
-            newJSON.replaceEntry("alpha2", oldJSON.getP("alpha2") );
-            newJSON.write(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json");
+            mkShapes(ci.name());
         }
     }
     if (channel == 0 || channel == 2){
@@ -773,42 +696,16 @@ void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filena
         while(ci.getBin()){
             if(!ci.is(LEP_INCL )) continue;
             if(!ci.is(SEL_NONE)) continue;
-            CJSON oldJSON(     filename+"_"+name+"_"+ci.name()+"_MJJ_fit1stIt.json");
-            oldJSON.fillFunctions(MOD_MR);
-            makeBKG1DShapes(name,filename,ci.name(),fitName,false,&oldJSON,iF);
-
-            std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+ci.name()+"_"+fitName+".root"
-                    +" -var "+MOD_MR+" ";
-            argsP1 += " -minX 700 -maxX 3000 ";
-            std::string jsonArgsStd=
-                    " -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
-
-            CJSON newJSON = getJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json"
-                    ,argsP1+" "+jsonArgsStd);
-            newJSON.replaceEntry("alpha", oldJSON.getP("alpha") );
-            newJSON.replaceEntry("alpha2", oldJSON.getP("alpha2") );
-            newJSON.write(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json");
+            mkShapes(ci.name());
         }
     }
 
     // do the inclusive 1l + 2l category (do each btagging cat)
-    // **had some trouble doing this for each btagging category in addition to inclusive btaggin**
-
-    std::string inclCatName = lepCats[LEP_EMU] +"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_NONE]
-    						+"_"+dilepCats[LEP_INCL] +"_"+btagCats[BTAG_LMT]+"_"+selCuts[SEL_NONE];
-
-    CJSON oldJSON(     filename+"_"+name+"_"+inclCatName+"_MJJ_fit1stIt.json");
-    oldJSON.fillFunctions(MOD_MR);
-    makeBKG1DShapes(name,filename,inclCatName,fitName,false,&oldJSON,iF);
-    std::string argsP1 = std::string("-i ")+ filename+"_"+name+"_"+inclCatName+"_"+fitName+".root"
-            +" -var "+MOD_MR+" -minX 700 -maxX 3000 ";
-    std::string jsonArgsStd=" -g mean:laur3,sigma:laur2,alpha:laur4,alpha2:laur3,n:pol0,n2:pol0 ";
-    CJSON newJSON = getJSON(filename+"_"+name+"_"+inclCatName+"_"+fitName+".json"
-            ,argsP1+" "+jsonArgsStd);
-    newJSON.replaceEntry("alpha", oldJSON.getP("alpha") );
-    newJSON.replaceEntry("alpha2", oldJSON.getP("alpha2") );
-    newJSON.write(filename+"_"+name+"_"+inclCatName+"_"+fitName+".json");
-
+    for (const auto& b : btagCats) {
+        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_NONE]
+        			+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts[SEL_NONE];
+        mkShapes(inclCatName);
+    }
 
 }
 

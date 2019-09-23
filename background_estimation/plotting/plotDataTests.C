@@ -76,7 +76,7 @@ struct DataPlotPrefs {
 };
 
 struct HistContainer {
-    HistContainer(bool is1l) {
+    HistContainer() {
         toys2D.reserve(100);
         bkg2D.resize(BKG_MT+1); for(auto* b :bkg2D) b=0;
         bkg.resize(BKG_MT+1); for(auto* b :bkg) b=0;
@@ -173,7 +173,7 @@ void doComp(REGION region, const unsigned int nToys, const std::string& postFitF
 
 class DataPlotter {
 public:
-    DataPlotter(const DataPlotPrefs& plotPrefs, const std::string& inputPrefix, const std::string& postFitFilename, const bool is1l ) : prefs(plotPrefs), is1lep(is1l)
+    DataPlotter(const DataPlotPrefs& plotPrefs, const std::string& inputPrefix, const std::string& postFitFilename, const bool is1l ) : prefs(plotPrefs)
 {
 
         if(prefs.addData) dataFile  = new TFile((inputPrefix+"_data_distributions.root").c_str(),"read");
@@ -434,7 +434,7 @@ public:
         for(unsigned int iS = 0; iS < prefs.sels.size(); ++iS){
             const auto& s = prefs.sels[iS];
             const auto& st = prefs.titles[iS];
-            HistContainer cont(is1lep);
+            HistContainer cont;
             cont.sig2D = signalHists[iS];
             getBackgrounds(s,cont);
             if(prefs.modelType == MOD_POST && prefs.addErrorBars) getToyModels(s,cont);
@@ -637,7 +637,7 @@ public:
 
         for(unsigned int iS = 0; iS < prefs.sels.size();++iS){
             const auto& s = prefs.sels[iS];
-            HistContainer cont(is1lep);
+            HistContainer cont;
             getBackgrounds(s,cont);
             //add in the data to nBKS
             dataFile->GetObject(("data_"+s+"_"+hbbMCS+"_"+hhMCS).c_str(),cont.data2D);
@@ -734,7 +734,6 @@ public:
     std::vector<std::vector<TH2*>> signalHists;//[selection] [signal]
     TFile * postfitFile= 0;
     TFile * dataFile = 0;
-    bool is1lep = true;
 };
 
 
