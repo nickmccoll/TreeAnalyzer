@@ -102,9 +102,6 @@ public:
     int nMedBTags = 0;
     int nMedBTags_HbbV = 0;
 
-    std::vector<const Jet*> jets_chs;
-    float                   ht_chs    =0;
-
     std::vector<const Jet*> jets_puppi;
     float                   ht_puppi    =0;
 

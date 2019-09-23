@@ -81,7 +81,7 @@ void DefaultSearchRegionAnalyzer::loadVariables()  {
     reader_event       =loadReader<EventReader>   ("event",isRealData());
     reader_fatjet      =loadReader<FatJetReader>  ("ak8PuppiJet",isRealData());
     reader_fatjet_noLep=loadReader<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false,false);
-    reader_jet_chs     =loadReader<JetReader>     ("ak4Jet",isRealData());
+//    reader_jet_chs     =loadReader<JetReader>     ("ak4Jet",isRealData());
     reader_jet         =loadReader<JetReader>     ("ak4PuppiJet",isRealData(),false);
     reader_electron    =loadReader<ElectronReader>("electron");
     reader_muon        =loadReader<MuonReader>    ("muon");
@@ -195,10 +195,10 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     }
 
     //|||||||||||||||||||||||||||||| CHS JETS ||||||||||||||||||||||||||||||
-    if(reader_jet_chs){
-        jets_chs = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,30);
-        ht_chs = JetKinematics::ht(jets_chs);
-    }
+//    if(reader_jet_chs){
+//        jets_chs = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,30);
+//        ht_chs = JetKinematics::ht(jets_chs);
+//    }
 
     //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
     if(reader_jet){
@@ -361,8 +361,12 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
                     *reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT);
         }
         if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size())) {
-            weight *= trigSFProc->getLeptonTriggerSF(
-                    ht_puppi, (selectedLepton && selectedLepton->isMuon()));
+        	if (lepChan == DILEP) {
+                weight *= trigSFProc->getLeptonTriggerSF(ht_puppi, (dilep1->isMuon()));
+        	} else {
+                weight *= trigSFProc->getLeptonTriggerSF(
+                        ht_puppi, (selectedLepton && selectedLepton->isMuon()));
+        	}
         }
         if(isCorrOn(CORR_PU) ) {
         	float pucorr = puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);
