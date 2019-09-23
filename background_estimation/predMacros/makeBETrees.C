@@ -134,8 +134,6 @@ public:
         	passPre1 = false;
         	passPre2 = false;
         }
-        if(!passTriggerPreselection)   passPre1 = false;
-        if(!passTriggerPreselection2l) passPre2 = false;
         if(lepChan != SINGLELEP || !hbbCand || !wjjCand)  passPre1 = false;
         if(lepChan != DILEP || !hbbCand)                  passPre2 = false;
 
