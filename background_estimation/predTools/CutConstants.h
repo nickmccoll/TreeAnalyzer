@@ -119,9 +119,9 @@ std::vector<CutStr > bkgSels = {
 
 enum LEPCats  {LEP_EMU, LEP_E, LEP_MU};
 std::vector<CutStr> lepCats = {
-        CutStr("emu","isMuon>=0","e#mu"),
-        CutStr("e"  ,"isMuon==0","e"),
-        CutStr("mu" ,"isMuon==1","#mu")
+        CutStr("emu","isMuon1>=0","e#mu"),
+        CutStr("e"  ,"isMuon1==0","e"),
+        CutStr("mu" ,"isMuon1==1","#mu")
 };
 
 enum DILEPCats  {LEP_INCL, LEP_SF, LEP_OF};
