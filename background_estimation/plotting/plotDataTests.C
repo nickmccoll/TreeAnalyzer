@@ -1184,7 +1184,7 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
     }
 
     fitter.doDataFit();
-    fitter.doToys(10);
+    fitter.doToys(100);
     fitter.write(outName);
 
 }
