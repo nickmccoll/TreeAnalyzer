@@ -77,17 +77,15 @@ public:
     	outTree->addSingle(ht_,  "",  "ht");
     	outTree->addSingle(met_,  "",  "met");
         outTree->addSingle(event_, "", "event");
-
         outTree->addSingle(lepChan_,  "",  "lepChan");
-
-    	outTree->addSingle(isMuon_,  "",  "isMuon");
-    	outTree->addSingle(lepPT_,  "",  "lepPT");
-    	outTree->addSingle(lepETA_,  "",  "lepETA");
 
         outTree->addSingle(isMuon1_, "", "isMuon1");
         outTree->addSingle(isMuon2_, "", "isMuon2");
         outTree->addSingle(lep1PT_, "", "lep1PT");
         outTree->addSingle(lep2PT_, "", "lep2PT");
+    	outTree->addSingle(lep1ETA_,  "",  "lep1ETA");
+    	outTree->addSingle(lep2ETA_,  "",  "lep2ETA");
+
         outTree->addSingle(dilepPT_, "", "dilepPT");
         outTree->addSingle(dilepMass_, "", "dilepMass");
         outTree->addSingle(dilepDR_, "", "dilepDR");
@@ -176,9 +174,9 @@ public:
         }
 
         if(lepChan == SINGLELEP){
-            isMuon_  = selectedLepton->isMuon();
-            lepPT_   = selectedLepton->pt();
-            lepETA_  = selectedLepton->eta();
+            isMuon1_  = selectedLepton->isMuon();
+            lep1PT_   = selectedLepton->pt();
+            lep1ETA_  = selectedLepton->eta();
 
             hwwChi_  = hwwChi;
             hwwLi_  = hwwLi;
@@ -197,10 +195,9 @@ public:
             hhMassBasic_   = hh_basic.mass();
             nAK4Btags_   = std::min(nMedBTags_HbbV,250);
 
-            isMuon1_ = 0;
             isMuon2_ = 0;
-        	lep1PT_  = 0;
         	lep2PT_  = 0;
+        	lep2ETA_ = 0;
         	dilepPT_ = 0;
         	dilepMass_ = 0;
         	dilepDR_   = 0;
@@ -211,6 +208,8 @@ public:
         	isMuon2_ = dilep2->isMuon();
         	lep1PT_  = dilep1->pt();
         	lep2PT_  = dilep2->pt();
+            lep1ETA_  = dilep1->eta();
+            lep2ETA_  = dilep2->eta();
 
         	dilepPT_   = (dilep1->p4()+dilep2->p4()).pt();
         	dilepMass_ = llMass;
@@ -224,9 +223,6 @@ public:
             hhMass_  = hh.mass();
             nAK4Btags_   = std::min(nMedBTags_HbbV,250);
 
-            isMuon_  = 0;
-            lepPT_   = 0;
-            lepETA_  = 0;
             hwwChi_  = 0;
             hwwLi_   = 0;
             wlnuMass_ = 0;
@@ -234,6 +230,7 @@ public:
             wjjTau2o1_ = 0;
             wjjMass_   = 0;
             wjjPT_     = 0;
+            hhMassBasic_ = 0;
         }
 
         if(!isRealData()) {
@@ -373,14 +370,13 @@ public:
     float ht_        = 0;
     float met_       = 0;
 
-    size8 isMuon_    = 0;
-    float lepPT_     = 0;
-    float lepETA_    = 0;
-
     size8 isMuon1_    = 0;
     size8 isMuon2_    = 0;
     float lep1PT_     = 0;
     float lep2PT_     = 0;
+    float lep1ETA_    = 0;
+    float lep2ETA_    = 0;
+
     float dilepPT_    = 0;
     float dilepMass_  = 0;
     float dilepDR_    = 0;

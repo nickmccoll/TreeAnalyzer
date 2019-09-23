@@ -244,8 +244,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
     //||||||||||||||||||||||||| CLASSIFY LEPTON CHANNEL |||||||||||||||||||||||||
     lepChan = NOCHANNEL;
-    if (selectedLepton && passTriggerPreselection) lepChan = SINGLELEP;
-    if (selectedDileptons.size() >= 2 && passTriggerPreselection2l) lepChan = DILEP;
+    if (selectedDileptons.size() > 2) lepChan = NOCHANNEL;
+    else if (selectedDileptons.size() >= 2 && passTriggerPreselection2l) lepChan = DILEP;
+    else if (selectedLepton && passTriggerPreselection) lepChan = SINGLELEP;
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
     if(reader_fatjet) {
