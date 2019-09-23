@@ -308,6 +308,16 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_exclM_distributions.root");
     const std::string fitName = "MJJ_fit1stIt";
 
+    auto mkShapes = [&](std::string catName, bool doExpo) {
+        makeSignal1DShapes(name,filename,signalMassBins,catName,fitName,true,0,iF,doExpo);
+
+        std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+catName+"_"+fitName+".root "
+                +" -var "+MOD_MS +" ";
+        argsP1 += doExpo ? " -minX 700 -maxX 3800 " :" -minX 700 -maxX 3800 ";
+        MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" -g "
+                +  ( doExpo  ?  fitMJJExpo : fitMJJStd ));
+    };
+
     if(channel==0 || channel==1) {
         CatIterator ci;
         while(ci.getBin()){
@@ -315,13 +325,7 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
             if(!ci.is(PURE_I  )) continue;
             if(!ci.is(HAD_LTMB)) continue;
             bool doExpo = ci.is(BTAG_L);
-            makeSignal1DShapes(name,filename,signalMassBins,ci.name(),fitName,true,0,iF,doExpo);
-
-            std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+ci.name()+"_"+fitName+".root "
-                    +" -var "+MOD_MS +" ";
-            argsP1 += doExpo ? " -minX 700 -maxX 3800 " :" -minX 700 -maxX 3800 ";
-            MakeJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json",argsP1+" -g "
-                    +  ( doExpo  ?  fitMJJExpo : fitMJJStd ));
+            mkShapes(ci.name(),doExpo);
         }
     }
 
@@ -331,13 +335,7 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
             if(!ci.is(LEP_INCL )) continue;
             if(!ci.is(SEL_FULL)) continue;
             bool doExpo = ci.is(BTAG_L);
-            makeSignal1DShapes(name,filename,signalMassBins,ci.name(),fitName,true,0,iF,doExpo);
-
-            std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+ci.name()+"_"+fitName+".root "
-                    +" -var "+MOD_MS +" ";
-            argsP1 += doExpo ? " -minX 700 -maxX 3800 " :" -minX 700 -maxX 3800 ";
-            MakeJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json",argsP1+" -g "
-                    +  ( doExpo  ?  fitMJJExpo : fitMJJStd ));
+            mkShapes(ci.name(),doExpo);
         }
     }
 
@@ -348,6 +346,20 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
     auto * iF =  TObjectHelper::getFile(filename+"_"+name+"_exclM_distributions.root");
     const std::string fitName = "MJJ_fit";
 
+    auto mkShapes = [&](std::string catName, bool doExpo) {
+        CJSON oldJSON(     filename+"_"+name+"_"+catName+"_MJJ_fit1stIt.json");
+        oldJSON.fillFunctions(MOD_MS);
+        makeSignal1DShapes(name,filename,signalMassBins,catName,fitName,true,&oldJSON,iF,doExpo);
+
+        std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+catName+"_"+fitName+".root "
+                + " -minX 700 -maxX 3800 "+" -var "+MOD_MS +" ";
+        CJSON newJSON = getJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1
+                +" -g "+  ( doExpo  ?  fitMJJExpo : fitMJJStd ));
+        newJSON.replaceEntry(vnMJ("alpha"), oldJSON.getP(vnMJ("alpha")) );
+        newJSON.replaceEntry(vnMJ("alpha2"), oldJSON.getP(vnMJ("alpha2")) );
+        newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
+    };
+
     if(channel==0 || channel==1) {
         CatIterator ci;
         while(ci.getBin()){
@@ -355,18 +367,7 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
             if(!ci.is(PURE_I  )) continue;
             if(!ci.is(HAD_LTMB)) continue;
             bool doExpo = ci.is(BTAG_L);
-
-            CJSON oldJSON(     filename+"_"+name+"_"+ci.name()+"_MJJ_fit1stIt.json");
-            oldJSON.fillFunctions(MOD_MS);
-            makeSignal1DShapes(name,filename,signalMassBins,ci.name(),fitName,true,&oldJSON,iF,doExpo);
-
-            std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+ci.name()+"_"+fitName+".root "
-                    + " -minX 700 -maxX 3800 "+" -var "+MOD_MS +" ";
-            CJSON newJSON = getJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json",argsP1
-                    +" -g "+  ( doExpo  ?  fitMJJExpo : fitMJJStd ));
-            newJSON.replaceEntry(vnMJ("alpha"), oldJSON.getP(vnMJ("alpha")) );
-            newJSON.replaceEntry(vnMJ("alpha2"), oldJSON.getP(vnMJ("alpha2")) );
-            newJSON.write(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json");
+            mkShapes(ci.name(),doExpo);
         }
     }
 
@@ -376,18 +377,7 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
             if(!ci.is(LEP_INCL )) continue;
             if(!ci.is(SEL_FULL)) continue;
             bool doExpo = ci.is(BTAG_L);
-
-            CJSON oldJSON(     filename+"_"+name+"_"+ci.name()+"_MJJ_fit1stIt.json");
-            oldJSON.fillFunctions(MOD_MS);
-            makeSignal1DShapes(name,filename,signalMassBins,ci.name(),fitName,true,&oldJSON,iF,doExpo);
-
-            std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+ci.name()+"_"+fitName+".root "
-                    + " -minX 700 -maxX 3800 "+" -var "+MOD_MS +" ";
-            CJSON newJSON = getJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json",argsP1
-                    +" -g "+  ( doExpo  ?  fitMJJExpo : fitMJJStd ));
-            newJSON.replaceEntry(vnMJ("alpha"), oldJSON.getP(vnMJ("alpha")) );
-            newJSON.replaceEntry(vnMJ("alpha2"), oldJSON.getP(vnMJ("alpha2")) );
-            newJSON.write(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json");
+            mkShapes(ci.name(),doExpo);
         }
     }
 
@@ -399,17 +389,21 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename,
     const std::string fitName =  ASTypes::strFind(postfix,"exclM")
         ? std::string("MVV_fit1stIt") : postfix + "MVV_fit1stIt";
 
+    auto mkShapes = [&](std::string catName) {
+        makeSignal1DShapes(name,filename,signalMassBins,catName,fitName,false,0,iF,false,true);
+        std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+catName+"_"+fitName+".root "
+                +" -var "+MOD_MS +" ";
+        argsP1 += " -minX 700 -maxX 3800 ";
+        MakeJSON(filename+"_"+name+"_"+catName+"_"+fitName+".json",argsP1+" -g "+ fitMVV);
+    };
+
     if(channel==0 || channel==1) {
         CatIterator ci;
         while(ci.getBin()){
             if(!ci.is(BTAG_LMT )) continue;
             if(!ci.is(PURE_I  )) continue;
             if(!ci.is(HAD_LTMB)) continue;
-            makeSignal1DShapes(name,filename,signalMassBins,ci.name(),fitName,false,0,iF,false,true);
-            std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+ci.name()+"_"+fitName+".root "
-                    +" -var "+MOD_MS +" ";
-            argsP1 += " -minX 700 -maxX 3800 ";
-            MakeJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json",argsP1+" -g "+ fitMVV);
+            mkShapes(ci.name());
         }
     }
 
@@ -418,11 +412,7 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename,
         while(ci.getBin()){
             if(!ci.is(BTAG_LMT )) continue;
             if(!ci.is(SEL_FULL)) continue;
-            makeSignal1DShapes(name,filename,signalMassBins,ci.name(),fitName,false,0,iF,false,true);
-            std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+ci.name()+"_"+fitName+".root "
-                    +" -var "+MOD_MS +" ";
-            argsP1 += " -minX 700 -maxX 3800 ";
-            MakeJSON(filename+"_"+name+"_"+ci.name()+"_"+fitName+".json",argsP1+" -g "+ fitMVV);
+            mkShapes(ci.name());
         }
     }
 }
