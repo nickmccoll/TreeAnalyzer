@@ -199,6 +199,7 @@ void plotYields(std::string name, std::string filename,std::string fitName,
 
 void plotEfficiencies(std::string name, std::string filename,std::string fitName, int signal) {
 //    gROOT->SetBatch(true);
+	throw std::invalid_argument{"need to amend this function with input luminosity, etc"};
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<TObject*> paramPads;
     double inclusiveN  = 1000*35.9; //1000 fb x lumi
@@ -618,35 +619,53 @@ public:
 
 
 
-void plotSignalTests(int cat = 0,int sig = RADION, std::string outName = ""){
-    std:: string inName = "signalInputs";
+void plotSignalTests(int cat = 0,int sig = RADION, bool do1lep = true, std::string outName = ""){
+    std::string inName = "signalInputs";
     std::string filename = inName +"/"+hhFilename;
     std::string name = signals[sig];
     if(outName.size()) outName +=  std::string("/") + name;
 
+    std::vector<std::string> sels = {};
     switch(cat) {
     case 0:
         if(outName.size()) outName += "_yield";
-        plotYields(name,filename,"yield",{"e_L_LP_full","e_M_LP_full","e_T_LP_full",
+        if(do1lep) sels = {"e_L_LP_full","e_M_LP_full","e_T_LP_full",
                 "e_L_HP_full","e_M_HP_full","e_T_HP_full","mu_L_LP_full","mu_M_LP_full",
-                "mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"});
+                "mu_T_LP_full","mu_L_HP_full","mu_M_HP_full","mu_T_HP_full"};
+        else sels = {"SF_L_full","SF_M_full","SF_T_full",
+                "OF_L_full","OF_M_full","OF_T_full"};
+
+        plotYields(name,filename,"yield",sels);
         plotEfficiencies(name,filename,"yield" ,sig);
         break;
     case 1:
         if(outName.size()) outName += "_MJJ_fit1stIt";
-        writeables = testSignal1DFits(name,filename,signalMassBins[sig],MOD_MJ,"MJJ_fit1stIt",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
+        if(do1lep) sels = {"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"};
+        else       sels = {"IF_LMT_full","IF_L_full","IF_M_full","IF_T_full"};
+
+        writeables = testSignal1DFits(name,filename,signalMassBins[sig],MOD_MJ,"MJJ_fit1stIt",sels);
         break;
     case 2:
         if(outName.size()) outName += "_MJJ_fit";
-        writeables = testSignal1DFits(name,filename,signalMassBins[sig],MOD_MJ,"MJJ_fit",{"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"});
+        if(do1lep) sels = {"emu_LMT_I_ltmb","emu_L_I_ltmb","emu_M_I_ltmb","emu_T_I_ltmb"};
+        else       sels = {"IF_LMT_full","IF_L_full","IF_M_full","IF_T_full"};
+
+        writeables = testSignal1DFits(name,filename,signalMassBins[sig],MOD_MJ,"MJJ_fit",sels);
         break;
     case 3:
         if(outName.size()) outName += "_MVV_fit";
-        writeables =  testSignal1DFits(name,filename,signalMassBins[sig],MOD_MR,"MVV_fit1stIt",{"e_LMT_I_ltmb","mu_LMT_I_ltmb"});
+        if(do1lep) sels = {"e_LMT_I_ltmb","mu_LMT_I_ltmb"};
+        else       sels = {"SF_LMT_full","OF_LMT_full"};
+
+        writeables =  testSignal1DFits(name,filename,signalMassBins[sig],MOD_MR,"MVV_fit1stIt",sels);
         break;
     case 4:
         if(outName.size()) outName += "_2D_fit";
-        test2DFits(name,filename,signalMassBins[sig],"2D_fit",false,{"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full","mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full","mu_T_HP_full"});
+        if(do1lep) sels = {"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full",
+        		"mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full",
+				"mu_T_HP_full"};
+        else sels = {"SF_L_full","OF_L_full","SF_M_full","OF_M_full","SF_T_full","OF_T_full"};3
+        test2DFits(name,filename,signalMassBins[sig],"2D_fit",false,sels);
         //run below for an
 //        test2DFits(name,filename,{1600},"2D_fit",false,{"mu_M_LP_full"}); outName +=+"_forAN";
         break;

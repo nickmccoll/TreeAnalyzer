@@ -170,16 +170,16 @@ void go(int step, std::string treeDir) {
 
     if(step == 0){
         MakePlots mcPlots(mcTree,filename+"_ttbarSF_mc_inputPlots.root",
-                mcSamps,sels,vars,"passTrigPUP_30==1",nomW.cut);
+                mcSamps,sels,vars,"1.0",nomW.cut);
         MakePlots dataPlots(dataTree,filename+"_ttbarSF_data_inputPlots.root",
-                dataSamps,sels,vars,"passTrigPUP_30==1","1.0");
+                dataSamps,sels,vars,"1.0","1.0");
 
         fitTTBarSF(filename+"_ttbarSF_mc_inputPlots.root",filename+"_ttbarSF_data_inputPlots.root",
                 "cr_hhMass",filename+"_ttbarSF.json");
         fitTTBarSF(filename+"_ttbarSF_mc_inputPlots.root",filename+"_ttbarSF_data_inputPlots.root",
-                "cr_lmass_hhMass",filename+"lmass_ttbarSF.json");
+                "cr_lmass_hhMass",filename+"_lmass_ttbarSF.json");
         fitTTBarSF(filename+"_ttbarSF_mc_inputPlots.root",filename+"_ttbarSF_data_inputPlots.root",
-                "cr_hmass_hhMass",filename+"hmass_ttbarSF.json");
+                "cr_hmass_hhMass",filename+"_hmass_ttbarSF.json");
     }
 
     if(step==1){
@@ -193,9 +193,9 @@ void go(int step, std::string treeDir) {
         };
 
         MakePlots mcTestPlots(mcTree,filename+"_ttbarSF_mc_testPlots.root",
-                mcTestSamps,sels,vars,"passTrigPUP_30==1",nomW.cut);
+                mcTestSamps,sels,vars,"1.0",nomW.cut);
         MakePlots dataTestPlots(dataTree,filename+"_ttbarSF_data_testPlots.root",
-                dataSamps,sels,vars,"passTrigPUP_30==1","1.0");
+                dataSamps,sels,vars,"1.0","1.0");
     }
 
 }

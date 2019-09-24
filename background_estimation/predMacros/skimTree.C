@@ -1,7 +1,7 @@
 #include "TFile.h"
 #include "TTree.h"
 #include "../predTools/CutConstants.h"
-
+using namespace CutConstants;
 //void skimTree(std::string inFile,std::string outFile, std::string skimString){
 //    TFile * fin = new TFile(inFile.c_str(),"read");
 //    TTree * tin = 0;
@@ -22,8 +22,9 @@ void skimTree(std::string inFile,std::string outPrefix,std::string skimString, b
     fin->GetObject("treeMaker/Events",tin);
     if(tin == 0) return;
 
+
     if(cutByBackground){
-        for(const auto& b : CutConstants::bkgSels){
+        for(const auto& b : bkgSels){
             TFile * fout = new TFile((outPrefix+"_" + b+".root").c_str(),"recreate");
             TDirectory * cdtof = fout->mkdir("treeMaker");
             cdtof->cd();

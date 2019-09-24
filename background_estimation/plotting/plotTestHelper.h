@@ -12,7 +12,7 @@ using namespace CutConstants;
 using namespace ASTypes;
 
 std::vector<std::string> getSRList(REGION reg){
-    auto bcats = (reg == REG_QGCR ? qgBtagCats : btagCats);
+    auto bcats = (reg == REG_NONTOPCR ? qgBtagCats : btagCats);
     std::vector<std::string> sels;
     for(const auto& l :lepCats) for(const auto& b :bcats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU]) continue;
@@ -24,15 +24,27 @@ std::vector<std::string> getSRList(REGION reg){
     return sels;
 }
 
+std::vector<std::string> getDilepSRList(REGION reg){
+    auto bcats = (reg == REG_NONTOPCR ? qgBtagCats : btagCats);
+    std::vector<std::string> sels;
+    for(const auto& l :dilepCats) for(const auto& b :bcats) for(const auto& s :selCuts){
+        if(l == dilepCats[LEP_INCL]) continue;
+        if(b == bcats[BTAG_LMT]) continue;
+        if(s != selCuts[SEL_FULL]) continue;
+        sels.emplace_back(l +"_"+b +"_"+s);
+    }
+    return sels;
+}
+
 std::vector<std::string> getSRListTitles(REGION reg){
-    auto bcats = (reg == REG_QGCR ? qgBtagCats : btagCats);
+    auto bcats = (reg == REG_NONTOPCR ? qgBtagCats : btagCats);
     std::vector<std::string> sels;
     for(const auto& l :lepCats) for(const auto& b :bcats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
         if(l == lepCats[LEP_EMU]) continue;
         if(b == bcats[BTAG_LMT]) continue;
         if(p == purCats[PURE_I]) continue;
         if(h != hadCuts[HAD_FULL]) continue;
-        if(reg==REG_QGCR)
+        if(reg==REG_NONTOPCR)
             sels.emplace_back(l.title +", "+p.title);
         else
             sels.emplace_back(l.title +", "+b.title+", "+p.title);
@@ -40,7 +52,20 @@ std::vector<std::string> getSRListTitles(REGION reg){
     return sels;
 }
 
-
+std::vector<std::string> getDilepSRListTitles(REGION reg){
+    auto bcats = (reg == REG_NONTOPCR ? qgBtagCats : btagCats);
+    std::vector<std::string> sels;
+    for(const auto& l :dilepCats) for(const auto& b :bcats) for(const auto& s :selCuts){
+        if(l == dilepCats[LEP_INCL]) continue;
+        if(b == bcats[BTAG_LMT]) continue;
+        if(s != selCuts[SEL_FULL]) continue;
+        if(reg==REG_NONTOPCR)
+            sels.emplace_back(l.title);
+        else
+            sels.emplace_back(l.title +", "+b.title);
+    }
+    return sels;
+}
 
 
 std::vector<TObject*> test1DKern(std::string name, std::string filename,std::string var,const std::vector<std::string>& sels) {

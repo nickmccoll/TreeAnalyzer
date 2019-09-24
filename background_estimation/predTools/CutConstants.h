@@ -8,10 +8,10 @@ namespace CutConstants{
 
 class CutStr : public std::string{
 public:
+	CutStr() {}
     CutStr(std::string name,std::string cut) : std::string(name), cut(cut){}
     CutStr(std::string name,std::string cut, std::string title) : std::string(name),
             cut(cut), title(title){}
-//    CutStr(const CutStr& str) : std::string(str), cut(str.cut), title(str.title) {}
 
     std::string cut;
     std::string title;
@@ -26,25 +26,26 @@ std::vector<CutStr > processes = {
         CutStr("other"     ,"(process>1&&!(process==2||process==3||process==8))","Other SM")
 };
 
-enum REGION  {REG_SR, REG_TOPCR, REG_QGCR};
+enum REGION  {REG_SR, REG_TOPCR, REG_NONTOPCR};
 
-//CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
-CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N");
+CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
+//CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N");
 
 CutStr aQCD ("aQCD"  , "process!=8");
 
 CutStr wjjBC("wjjBC" , "wjjTau2o1<0.75");
-CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&(hwwChi2<=11)");
+CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&(hwwChi<=11)");
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr abV  ("abV"   , "nAK4Btags!=0");
 
-CutStr dPhiC ("dPhiC"  , "abs(dPhi_metll)<(3.14159/2)");
+CutStr dPhiC ("dPhiC"  , "abs(llMetDphi)<(3.14159/2)");
 CutStr mllV ("mllV"  , "(dilepMass>6)&&(dilepMass<75)");
 CutStr metC ("metC"  , "met/hhMass>0.1");
 CutStr dRC   ("dRC"    , "dilepDR<1.0");
 CutStr drCrC  ("drCrC"   , "dilepDR>0.4");
 
-CutStr preSel("preSel"  , "passPre==1");
+CutStr preSel1("preSel1"  , "lepChan==1");
+CutStr preSel2("preSel2"  , "lepChan==2");
 
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
 CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
@@ -110,30 +111,24 @@ std::string getHHBinningString(bool inclusive){
 
 enum BKGModels  {BKG_QG, BKG_LOSTTW, BKG_MW, BKG_MT};
 std::vector<CutStr > bkgSels = {
-        CutStr("qg"    ,"hbbWQuark==0","q/g bkg."),
-        CutStr("losttw","(hbbWQuark>0)&&(hbbWQuark<=3)","Lost t/W bkg."),
-        CutStr("mw"     ,"hbbWQuark==4","#it{m}_{W} bkg."),
-        CutStr("mt"     ,"hbbWQuark==5","#it{m}_{t} bkg.")
-};
-
-enum BKGModels2L  {BKG_MISB,BKG_REALB};
-std::vector<CutStr > llBkgSels = {
-		CutStr("misB","hbbDecayTypeMC==0","MisID b"),
-		CutStr("trueB","hbbDecayTypeMC>0","Good b")
+        CutStr("qg"    ,"hbbDecayType==0","q/g bkg."),
+        CutStr("losttw","((hbbDecayType>0)&&(hbbDecayType<=3))||(hbbDecayType>5)","Lost t/W bkg."),
+        CutStr("mw"     ,"hbbDecayType==4","#it{m}_{W} bkg."),
+        CutStr("mt"     ,"hbbDecayType==5","#it{m}_{t} bkg.")
 };
 
 enum LEPCats  {LEP_EMU, LEP_E, LEP_MU};
 std::vector<CutStr> lepCats = {
-        CutStr("emu","isMuon>=0","e#mu"),
-        CutStr("e"  ,"isMuon==0","e"),
-        CutStr("mu" ,"isMuon==1","#mu")
+        CutStr("emu","1.0","e#mu"),
+        CutStr("e"  ,"isMuon1==0","e"),
+        CutStr("mu" ,"isMuon1==1","#mu")
 };
 
 enum DILEPCats  {LEP_INCL, LEP_SF, LEP_OF};
 std::vector<CutStr> dilepCats = {
-        CutStr("IF","((isMuon1>=0)&&(isMuon2>=0))","incl flavor"),
-        CutStr("SF","((isMuon1==0)==(isMuon2==0))","same flavor"),
-        CutStr("OF"  ,"((isMuon1==0)!=(isMuon2==0))","opposite flavor"),
+        CutStr("IF","1.0","incl flavor"),
+        CutStr("SF","(isMuon1==isMuon2)","same flavor"),
+        CutStr("OF","(isMuon1!=isMuon2)","opposite flavor"),
 };
 
 enum BTAGCats  {BTAG_LMT, BTAG_L, BTAG_M, BTAG_T};
@@ -159,19 +154,19 @@ std::vector<CutStr > purCats = {
 
 enum HADCuts  {HAD_NONE,HAD_LB,HAD_LT,HAD_LTMB,HAD_FULL};
 std::vector<CutStr > hadCuts = {
-        CutStr("none",preSel.cut,"-ExB -#it{m}_{D} -#it{p}_{T}/#it{m} -#tau_{0.75}"),
-        CutStr("lb"  ,preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut,"-ExB"),
-        CutStr("lt"  ,preSel.cut+"&&"+exA.cut+"&&"+bV.cut,"-#tau_{0.75}"),
-        CutStr("ltmb",preSel.cut+"&&"+exA.cut,"-ExB -#tau_{0.75}"),
-        CutStr("full",preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut,"")
+        CutStr("none",preSel1.cut,"-ExB -#it{m}_{D} -#it{p}_{T}/#it{m} -#tau_{0.75}"),
+        CutStr("lb"  ,preSel1.cut+"&&"+exA.cut+"&&"+wjjBC.cut,"-ExB"),
+        CutStr("lt"  ,preSel1.cut+"&&"+exA.cut+"&&"+bV.cut,"-#tau_{0.75}"),
+        CutStr("ltmb",preSel1.cut+"&&"+exA.cut,"-ExB -#tau_{0.75}"),
+        CutStr("full",preSel1.cut+"&&"+exA.cut+"&&"+wjjBC.cut+"&&"+bV.cut,"")
 
 };
 
 enum SELCuts  {SEL_NONE,SEL_RPhiB,SEL_FULL};
 std::vector<CutStr > selCuts = {
-        CutStr("none",preSel.cut,"-ExB -#it{#DeltaR}_{ll} -#it{M}_{ll} -#it{MET} -#it{#Delta#Phi}_{met,ll}"),
-		CutStr("R_phi_b",preSel.cut+"&&"+dRC.cut+"&&"+mllV.cut+"&&"+metC.cut,"full relax B, phi"),
-        CutStr("full",preSel.cut+"&&"+bV.cut+"&&"+dRC.cut+"&&"+dPhiC.cut+"&&"+mllV.cut+"&&"+metC.cut,"")
+        CutStr("none"   ,preSel2.cut,"-ExB -#it{#DeltaR}_{ll} -#it{M}_{ll} -#it{MET} -#it{#Delta#Phi}_{met,ll}"),
+		CutStr("R_phi_b",preSel2.cut+"&&"+dRC.cut+"&&"+mllV.cut+"&&"+metC.cut,"full relax B, phi"),
+        CutStr("full"   ,preSel2.cut+"&&"+bV.cut+"&&"+dRC.cut+"&&"+dPhiC.cut+"&&"+mllV.cut+"&&"+metC.cut,"")
 
 };
 
@@ -323,16 +318,15 @@ std::string getCategoryLabel(const std::string& inStr){
 std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,1750,
                                  2000,2500,3000,3500,4000};
 
-enum SIGNALS  {RADION,BLKGRAV,DILEP_RADION};
+enum SIGNALS  {RADION,BLKGRAV};
 std::vector<CutStr > signals = {
-        CutStr("radHH"     ,"Radion_hh_hVVhbb_inclusive_narrow","radion"),
-        CutStr("blkHH"     ,"BulkGravTohhTohVVhbb_narrow","bulk graviton"),
-		CutStr("raddHHcomb","spin0")
+        CutStr("radHH"     ,"spin0","radion"),
+        CutStr("blkHH"     ,"spin2","bulk graviton")
 };
 std::vector<std::vector<int> > signalMassBins = {
+		{800,900,1000,2000,2500,3000},
+//        {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
         {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
-        {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
-		{800,900,1000,2000,2500,3000}
 };
 
 //Constants for models when building limits

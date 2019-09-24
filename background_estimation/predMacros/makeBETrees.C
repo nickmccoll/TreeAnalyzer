@@ -68,35 +68,44 @@ public:
         	outTree->addSingle(pu_N_,  "",  "pu_N");
         	outTree->addSingle(lep_N_,  "",  "lep_N");
         	outTree->addSingle(btag_N_,  "",  "btag_N");
+        	outTree->addSingle(hbbDecayType_,  "",  "hbbDecayType");
+        	outTree->addSingle(eQuarksInHbb_,  "",  "eQuarksInHbb");
+        	outTree->addSingle(nLepsTT_,  "",  "nLepsTT");
+            outTree->addSingle(sampParam_,  "",  "sampParam");
         }
 
-    	outTree->addSingle(passPre_,  "",  "passPre");
     	outTree->addSingle(ht_,  "",  "ht");
     	outTree->addSingle(met_,  "",  "met");
-    	outTree->addSingle(isMuon_,  "",  "isMuon");
-    	outTree->addSingle(lepPT_,  "",  "lepPT");
-    	outTree->addSingle(lepETA_,  "",  "lepETA");
+        outTree->addSingle(event_, "", "event");
+        outTree->addSingle(lepChan_,  "",  "lepChan");
+
+        outTree->addSingle(isMuon1_, "", "isMuon1");
+        outTree->addSingle(isMuon2_, "", "isMuon2");
+        outTree->addSingle(lep1PT_, "", "lep1PT");
+        outTree->addSingle(lep2PT_, "", "lep2PT");
+    	outTree->addSingle(lep1ETA_,  "",  "lep1ETA");
+    	outTree->addSingle(lep2ETA_,  "",  "lep2ETA");
+
+        outTree->addSingle(dilepPT_, "", "dilepPT");
+        outTree->addSingle(dilepMass_, "", "dilepMass");
+        outTree->addSingle(dilepDR_, "", "dilepDR");
+        outTree->addSingle(llMetDphi_, "", "llMetDphi");
 
     	outTree->addSingle(hbbMass_,  "",  "hbbMass");
     	outTree->addSingle(hbbPT_,  "",  "hbbPT");
     	outTree->addSingle(hbbCSVCat_,  "",  "hbbCSVCat");
 
     	outTree->addSingle(hhMass_,  "",  "hhMass");
-    	outTree->addSingle(hhMassOld_,  "",  "hhMassOld");
+    	outTree->addSingle(hhMassBasic_,  "",  "hhMassBasic");
     	outTree->addSingle(hwwPT_,  "",  "hwwPT");
-    	outTree->addSingle(hwwChi2_,  "",  "hwwChi2");
-
+    	outTree->addSingle(hwwChi_,  "",  "hwwChi");
+        outTree->addSingle(hwwLi_,  "",  "hwwLi");
     	outTree->addSingle(wjjTau2o1_,  "",  "wjjTau2o1");
     	outTree->addSingle(wjjMass_,  "",  "wjjMass");
-    	outTree->addSingle(wjjPT_,  "",  "wjjPT");
     	outTree->addSingle(wlnuMass_,  "",  "wlnuMass");
     	outTree->addSingle(wlnuPT_,  "",  "wlnuPT");
-    	outTree->addSingle(nAK4Btags_,  "",  "nAK4Btags");
 
-        if(!isRealData()){
-        	outTree->addSingle(hbbWQuark_,  "",  "hbbWQuark");
-        	outTree->addSingle(hbbWEQuark_,  "",  "hbbWEQuark");
-        }
+    	outTree->addSingle(nAK4Btags_,  "",  "nAK4Btags");
 
         if(addUncVariables){
         	outTree->addSingle(w_muIDUp_,  "",  "w_muIDUp");
@@ -114,129 +123,195 @@ public:
         	outTree->addSingle(w_elIDDown_,  "",  "w_elIDDown");
         	outTree->addSingle(w_elISODown_,  "",  "w_elISODown");
 
-//        	outTree->addVector(w_scale_,  "", "w_scale_N", "w_scale",10);
-//        	outTree->addVector(w_pdf_,  "", "w_pdf_N", "w_pdf",10);
-
-//            for(unsigned int i = 1; i < 9; ++i){
-//                if(i == 5 || i ==7)continue; //told to ignore
-//                outTree->addVector((*reader_event->genWeights)[i],  "",   "w_scale");
-//            }
-//            for(unsigned int i = 111; i < 211; ++i) //Number 110 is the nominal
-//                outTree->addVector((*reader_event->genWeights)[i],  "",   "w_pdf");
-
         }
 
     }
 
     bool runEvent() override {
-        bool passPre = true;
-        if(!DefaultSearchRegionAnalyzer::runEvent()) passPre = false;
-        if(!passTriggerPreselection) passPre = false;
-        if(!passEventFilters) passPre = false;
-        if(selectedLeptons.size() != 1) passPre = false;
-        if(!hbbCand)  passPre = false;
-        if(!wjjCand)  passPre = false;
+        bool passPre1 = true;
+        bool passPre2 = true;
+        if(!DefaultSearchRegionAnalyzer::runEvent() || !passEventFilters) {
+        	passPre1 = false;
+        	passPre2 = false;
+        }
+        if(lepChan != SINGLELEP || !hbbCand || !wjjCand)  passPre1 = false;
+        if(lepChan != DILEP || !hbbCand)                  passPre2 = false;
 
-        if(!addUncVariables && !passPre) return false;
-        passPre_ = size8(passPre);
+        if(passPre2)       lepChan_ = DILEP;
+        else if (passPre1) lepChan_ = SINGLELEP;
+        else               lepChan_ = NOCHANNEL;
 
-        ht_ = float(ht_puppi);
+        if(!addUncVariables && lepChan_ == NOCHANNEL) return false;
+
+        ht_        = ht_puppi;
+        met_       = reader_event->met.pt();
+        event_     = *reader_event->event;
+        sampParam_ = *reader_event->sampParam;
+
         if(isRealData()){
-        	dataset_ = size8(*reader_event->dataset);
-        	dataRun_ = size8(*reader_event->dataRun);
-
+            dataset_ = *reader_event->dataset;
+            dataRun_ = *reader_event->dataRun;
         } else {
-        	process_ = size8(*reader_event->process);
-        	dhType_  = size8(diHiggsEvt.type);
-        	xsec_    = float( EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT) );
-        	trig_N_  = float(smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size() ? trigSFProc->getLeptonTriggerSF(ht_, (selectedLepton && selectedLepton->isMuon())) : 1.0 );
-        	pu_N_    = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL));
-        	lep_N_   = 1.0 /*float(leptonSFProc->getSF())*/;
-        	btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
+            process_ = *reader_event->process;
+            dhType_  = diHiggsEvt.type;
+            xsec_    = EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),
+        		    parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT);
+            pu_N_    = puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL);
+            lep_N_   = 1.0 /*float(leptonSFProc->getSF())*/;
+            btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
 
+        	if (smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size()) {
+        	    if (lepChan == SINGLELEP) {
+            		trig_N_ = trigSFProc->getLeptonTriggerSF(ht_, (selectedLepton->isMuon()));
+        	    } else if (lepChan == DILEP) {
+            		trig_N_ = trigSFProc->getLeptonTriggerSF(ht_, (dilep1->isMuon()));
+        		} else {
+        			trig_N_ = 1.0;
+        		}
+        	} else trig_N_ = 1.0;
         }
 
-        met_ = float(reader_event->met.pt());
+        if(lepChan == SINGLELEP){
+            isMuon1_  = selectedLepton->isMuon();
+            lep1PT_   = selectedLepton->pt();
+            lep1ETA_  = selectedLepton->eta();
 
-        if(selectedLepton){
-        	isMuon_  = size8(selectedLepton->isMuon());
-        	lepPT_   = float(selectedLepton->pt());
-        	lepETA_  = float(selectedLepton->eta());
+            hwwChi_  = hwwChi;
+            hwwLi_  = hwwLi;
+            wlnuMass_ = wlnu.mass();
+            wlnuPT_    = wlnu.pt();
+
+            wjjTau2o1_ = wjjCand->tau2otau1();
+            wjjMass_   = wjjCand->sdMom().mass();
+            wjjPT_     = wqq.pt();
+
+            hbbMass_ = hbbMass;
+            hbbPT_ = hbbCand->pt();
+            hbbCSVCat_ = hbbCSVCat;
+            hwwPT_ = hWW.pt();
+            hhMass_  = hh.mass();
+            hhMassBasic_   = hh_basic.mass();
+            nAK4Btags_   = std::min(nMedBTags_HbbV,250);
+
+            isMuon2_ = 0;
+        	lep2PT_  = 0;
+        	lep2ETA_ = 0;
+        	dilepPT_ = 0;
+        	dilepMass_ = 0;
+        	dilepDR_   = 0;
+        	llMetDphi_ = 0;
+
+        } else if (lepChan == DILEP) {
+        	isMuon1_ = dilep1->isMuon();
+        	isMuon2_ = dilep2->isMuon();
+        	lep1PT_  = dilep1->pt();
+        	lep2PT_  = dilep2->pt();
+            lep1ETA_  = dilep1->eta();
+            lep2ETA_  = dilep2->eta();
+
+        	dilepPT_   = (dilep1->p4()+dilep2->p4()).pt();
+        	dilepMass_ = llMass;
+        	dilepDR_   = llDR;
+        	llMetDphi_ = llMetDphi;
+
+            hbbMass_ = hbbMass;
+            hbbPT_ = hbbCand->pt();
+            hbbCSVCat_ = hbbCSVCat;
+            hwwPT_ = hWW.pt();
+            hhMass_  = hh.mass();
+            nAK4Btags_   = std::min(nMedBTags_HbbV,250);
+
+            hwwChi_  = 0;
+            hwwLi_   = 0;
+            wlnuMass_ = 0;
+            wlnuPT_   = 0;
+            wjjTau2o1_ = 0;
+            wjjMass_   = 0;
+            wjjPT_     = 0;
+            hhMassBasic_ = 0;
         }
 
-        hbbMass_ = float(hbbMass);
+        if(!isRealData()) {
 
-        if(hbbCand) hbbPT_ = float(hbbCand->pt());
-        hbbCSVCat_ = size8(hbbCSVCat);
+            auto getDecayType = [&](const FatJet* fjet) {
+        		double maxDR2 = 0.8*0.8;
 
-        hhMass_   = float(hh.mass());
-        hhMassOld_   = float(hh_old.mass());
-        wlnuMass_ = float(wlnu.mass());
-        hwwPT_    = float(hWW.pt());
-        hwwChi2_  = float(hwwChi);
+                int topDecayType = 0; // NONE b wj wjb wjj wjjb bb wjbb wjjbb
+                int maxQuarksFromTop = 0;
+                int totQuarksFromTops = 0;
+                int WDecayType  = 0; // NONE b wj wjb wjj wjjb bb wjbb wjjbb
+                int maxQuarksFromW = 0;
+                int totQuarksFromWs = 0;
+                int numB = 0;
 
-        if(wjjCand){
-        	wjjTau2o1_ = float(wjjCand->tau2otau1());
-        	wjjMass_   = float(wjjCand->sdMom().mass());
-        	wjjPT_     = float(wqq.pt());
-        }
-
-        wlnuPT_    = float(wlnu.pt());
-        nAK4Btags_ = size8(std::min(nMedBTags_HbbV,250));
-
-        if(!isRealData() && hbbCand){
-            const float matchR = 0.8*0.8;
-
-            int topDecayType = 0; //NONE b wj wjb wjj wjjb
-            int maxNTopQuarks = 0;
-            int totNTopQuarks = 0;
-
-            for(const auto& d : smDecayEvt.topDecays  ){
-                if(d.type != TopDecay::HAD){
-                    if(d.type != TopDecay::BAD){
-                        if(PhysicsUtilities::deltaR2(*d.b,*hbbCand) < matchR) totNTopQuarks++;
+                for(const auto& d : smDecayEvt.topDecays) {
+                	if(d.type == TopDecay::BAD) continue;
+                    if(d.type != TopDecay::HAD){
+                		if (PhysicsUtilities::deltaR2(*d.b,*fjet) < maxDR2) {
+                			totQuarksFromTops++;
+                			numB++;
+                			if (maxQuarksFromTop == 0) maxQuarksFromTop = 1;
+                		}
+                    } else {
+                        if (!d.b) continue;
+                        bool passB = (PhysicsUtilities::deltaR2(*d.b,*fjet) < maxDR2);
+                    	int nW = (PhysicsUtilities::deltaR2(*d.W_decay.dau1,*fjet) < maxDR2) +
+                    			(PhysicsUtilities::deltaR2(*d.W_decay.dau2,*fjet) < maxDR2);
+                    	int nT = nW + passB;
+                    	totQuarksFromTops += nT;
+                    	numB += passB;
+                    	if (nT > maxQuarksFromTop) maxQuarksFromTop = nT;
                     }
-                    continue;
                 }
-                bool passB = (PhysicsUtilities::deltaR2(*d.b,*hbbCand) < matchR);
-                int nW =  (PhysicsUtilities::deltaR2(*d.W_decay.dau1,*hbbCand) < matchR) + (PhysicsUtilities::deltaR2(*d.W_decay.dau2,*hbbCand) < matchR);
-                int nT = nW + passB;
-                totNTopQuarks += nT;
-                if(nT <= maxNTopQuarks) continue;
-                maxNTopQuarks = nT;
-                if(nT == 1){
-                    if(passB) topDecayType = 1;
+
+                if (totQuarksFromTops == 1){
+                    if(numB == 1) topDecayType = 1;
                     else topDecayType = 2;
-                } else if(nT == 2){
-                    if(passB) topDecayType = 3;
+                } else if(totQuarksFromTops == 2){
+                    if (numB == 1) topDecayType = 3;
+                    else if (numB == 2) topDecayType = 6;
                     else topDecayType = 4;
-                } else if(nT == 3) topDecayType = 5;
+                } else if(totQuarksFromTops == 3) {
+                	if (numB == 1) topDecayType = 5;
+                	else topDecayType = 7;
+                } else if (totQuarksFromTops == 4) topDecayType = 8;
+
+                for (const auto& d : smDecayEvt.bosonDecays) {
+                    if(d.type != BosonDecay::Z_HAD && d.type != BosonDecay::W_HAD ) continue;
+                    int nW = (PhysicsUtilities::deltaR2(*d.dau1,*fjet) < maxDR2) +
+                    		(PhysicsUtilities::deltaR2(*d.dau2,*fjet) < maxDR2);
+                    if (d.dau1->absPdgId() == ParticleInfo::p_b &&
+                    		PhysicsUtilities::deltaR2(*d.dau1,*fjet) < maxDR2) numB++;
+                    if (d.dau2->absPdgId() == ParticleInfo::p_b &&
+                    		PhysicsUtilities::deltaR2(*d.dau2,*fjet) < maxDR2) numB++;
+
+                    totQuarksFromWs += nW;
+                    if (nW > maxQuarksFromW) maxQuarksFromW = nW;
+                }
+
+                if (totQuarksFromWs == 1) WDecayType = 2;
+                else if (totQuarksFromWs == 2) WDecayType = 4;
+
+                size8 decayType = 0;
+                size8 nExtraQuarks = 0;
+                if(maxQuarksFromTop >= maxQuarksFromW){
+                    decayType = topDecayType;
+                    nExtraQuarks = (totQuarksFromTops - maxQuarksFromTop) + totQuarksFromWs;
+                } else {
+                    decayType = WDecayType;
+                    nExtraQuarks = (totQuarksFromWs - maxQuarksFromW) + totQuarksFromTops;
+                }
+
+                return std::make_pair(decayType,nExtraQuarks);
+            };
+
+            if (hbbCand) {
+            	std::pair<size8,size8> beVars = getDecayType(hbbCand);
+            	hbbDecayType_ = beVars.first;
+            	eQuarksInHbb_ = beVars.second;
             }
 
-            int maxNWQuarks = 0;
-            int totNWQuarks = 0;
-            int WDecayType  = 0;//NONE b wj wjb wjj wjjb
-            for(const auto& d : smDecayEvt.bosonDecays  ){
-                if(d.type != BosonDecay::Z_HAD && d.type != BosonDecay::W_HAD ) continue;
-                int nW = (PhysicsUtilities::deltaR2(*d.dau1,*hbbCand) < matchR) +  (PhysicsUtilities::deltaR2(*d.dau2,*hbbCand) < matchR);
-                totNWQuarks += nW;
-                if(nW <= maxNWQuarks) continue;
-                maxNWQuarks = nW;
-                if(nW == 1) WDecayType = 2;
-                else if(nW == 2) WDecayType = 4;
-            }
-            size8 decayType = 0;
-            size8 nExtraQuarks = 0;
-            if(maxNTopQuarks >= maxNWQuarks){
-                decayType = topDecayType;
-                nExtraQuarks = (totNTopQuarks - maxNTopQuarks) + totNWQuarks;
-            } else {
-                decayType = WDecayType;
-                nExtraQuarks = (totNWQuarks - maxNWQuarks) + totNTopQuarks;
-            }
-
-            hbbWQuark_   = size8(decayType);
-            hbbWEQuark_  = size8(nExtraQuarks);
+            if (smDecayEvt.nLepsTT != -1) nLepsTT_ = smDecayEvt.nLepsTT;
         }
 
         if(addUncVariables){
@@ -284,33 +359,50 @@ public:
     float pu_N_       = 0;
     float lep_N_      = 0;
     float btag_N_     = 0;
-    size8 passPre_    = 0;
+
+    size8 lepChan_    = 0;
+    size64 event_     = 0;
+    size16 sampParam_ = 0;
 
     //SR variables
     float ht_        = 0;
     float met_       = 0;
-    size8 isMuon_    = 0;
-    float lepPT_     = 0;
-    float lepETA_    = 0;
+
+    size8 isMuon1_    = 0;
+    size8 isMuon2_    = 0;
+    float lep1PT_     = 0;
+    float lep2PT_     = 0;
+    float lep1ETA_    = 0;
+    float lep2ETA_    = 0;
+
+    float dilepPT_    = 0;
+    float dilepMass_  = 0;
+    float dilepDR_    = 0;
+    float llMetDphi_  = 0;
+
     float hbbMass_   = 0;
     float hbbPT_     = 0;
     size8 hbbCSVCat_ = 0;
 
     float hhMass_    = 0;
     float hwwPT_     = 0;
-    float hhMassOld_ = 0;
-    float hwwChi2_   = 0;
+    float hhMassBasic_ = 0;
+    float hwwChi_   = 0;
+    float hwwLi_   = 0;
 
     float wjjTau2o1_ = 0;
     float wjjMass_   = 0;
     float wjjPT_     = 0;
     float wlnuMass_  = 0;
     float wlnuPT_    = 0;
+
     size8 nAK4Btags_ = 0;
 
     //BE extra variables
-    size8 hbbWQuark_   =0;
-    size8 hbbWEQuark_   =0;
+    size8 hbbDecayType_   = 0;
+    size8 eQuarksInHbb_   = 0;
+
+    size8 nLepsTT_ = 250;
 
     //systematic variables
     float w_muIDUp_      = 0;

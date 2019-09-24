@@ -80,7 +80,7 @@ void DefaultSearchRegionAnalyzer::loadVariables()  {
     reader_event       =loadReader<EventReader>   ("event",isRealData());
     reader_fatjet      =loadReader<FatJetReader>  ("ak8PuppiJet",isRealData());
     reader_fatjet_noLep=loadReader<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false,false);
-    reader_jet_chs     =loadReader<JetReader>     ("ak4Jet",isRealData());
+//    reader_jet_chs     =loadReader<JetReader>     ("ak4Jet",isRealData());
     reader_jet         =loadReader<JetReader>     ("ak4PuppiJet",isRealData(),false);
     reader_electron    =loadReader<ElectronReader>("electron");
     reader_muon        =loadReader<MuonReader>    ("muon");
@@ -189,13 +189,26 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //|||||||||||||||||||||||||||||| GEN PARTICLES ||||||||||||||||||||||||||||||
     if(reader_genpart){
         if(mcProc == FillerConstants::SIGNAL) diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
-        smDecayEvt.setDecayInfo(reader_genpart->genParticles,reader_event->sampParam.val());
+        smDecayEvt.setDecayInfo(reader_genpart->genParticles,*reader_event->sampParam);
     }
 
     //|||||||||||||||||||||||||||||| CHS JETS ||||||||||||||||||||||||||||||
-    if(reader_jet_chs){
-        jets_chs = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,30);
-        ht_chs = JetKinematics::ht(jets_chs);
+//    if(reader_jet_chs){
+//        jets_chs = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,30);
+//        ht_chs = JetKinematics::ht(jets_chs);
+//    }
+
+    //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
+    if(reader_jet){
+        jets_puppi = PhysicsUtilities::selObjsMom(reader_jet->jets,30);
+        ht_puppi = JetKinematics::ht(jets_puppi);
+
+        jets = PhysicsUtilities::selObjsMom(reader_jet->jets,
+                parameters.jets.minJetPT,parameters.jets.maxJetETA,
+                [&](const Jet* j){return (j->*parameters.jets.passJetID)();} );
+        nMedBTags = PhysicsUtilities::selObjsMomD(jets,
+                parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
+                [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
     }
 
     //|||||||||||||||||||||||||||||| LEPTONS ||||||||||||||||||||||||||||||
@@ -206,37 +219,81 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
         selectedDileptons = DileptonProcessor::getLeptons(parameters.dileptons,*reader_muon,*reader_electron);
         if (selectedDileptons.size() >= 2) {
-        	dilep1 = selectedDileptons[0];
-        	dilep2 = selectedDileptons[1];
+            dilep1 = selectedDileptons[0];
+            dilep2 = selectedDileptons[1];
+            llMass = (dilep1->p4()+dilep2->p4()).mass();
+            llDR = PhysicsUtilities::deltaR(*dilep1,*dilep2);
+            llMetDphi = PhysicsUtilities::absDeltaPhi(reader_event->met,(dilep1->p4()+dilep2->p4()));
         } else {
-        	dilep1 = 0;
-        	dilep2 = 0;
+            dilep1 = 0;
+            dilep2 = 0;
+            llMass = 1000;
+            llDR = 1000;
+            llMetDphi = 1000;
         }
     }
 
+    //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
+    passEventFilters= EventSelection::passEventFilters(parameters.event,*reader_event);
+    passTriggerPreselection= EventSelection::passTriggerPreselection(
+            parameters.event,*reader_event,ht_puppi,selectedLeptons);
+    passTriggerPreselection2l = EventSelection::passTriggerPreselection(
+            parameters.event,*reader_event,ht_puppi,selectedDileptons);
+
+    //||||||||||||||||||||||||| CLASSIFY LEPTON CHANNEL |||||||||||||||||||||||||
+    lepChan = NOCHANNEL;
+    if (selectedDileptons.size() == 2 && passTriggerPreselection2l) lepChan = DILEP;
+    else if (selectedDileptons.size() < 2 && selectedLepton && passTriggerPreselection) lepChan = SINGLELEP;
+
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
-    if(reader_fatjet && reader_fatjet_noLep &&  selectedLepton){
-        fjProc->loadFatJets(parameters.fatJets,*reader_fatjet,*reader_fatjet_noLep,selectedLepton);
-        hbbCand     = fjProc->getHBBCand();
-        wjjCand     = fjProc->getWjjCand();
-        hbbCSVCat   = hbbCand ? BTagging::getCSVSJCat(parameters.jets,hbbCand->subJets())
-        : BTagging::CSVSJ_INCL ;
-        wjjCSVCat   = wjjCand ? BTagging::getCSVSJCat(parameters.jets,wjjCand->subJets())
-        : BTagging::CSVSJ_INCL ;
+    if(reader_fatjet) {
+        if (lepChan == SINGLELEP && reader_fatjet_noLep) {
+            fjProc->loadFatJets(parameters.fatJets,*reader_fatjet,*reader_fatjet_noLep,selectedLepton);
+            hbbCand     = fjProc->getHBBCand();
+            wjjCand     = fjProc->getWjjCand();
+            hbbCSVCat   = hbbCand ? BTagging::getCSVSJCat(parameters.jets,hbbCand->subJets())
+            : BTagging::CSVSJ_INCL ;
+            wjjCSVCat   = wjjCand ? BTagging::getCSVSJCat(parameters.jets,wjjCand->subJets())
+            : BTagging::CSVSJ_INCL ;
+        } else if (lepChan == DILEP) {
+            fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,dilep1,dilep2);
+            hbbCand     = fjProc->getDilepHbbCand();
+            hbbCSVCat   = hbbCand ? BTagging::getCSVSJCat(parameters.jets,hbbCand->subJets())
+            : BTagging::CSVSJ_INCL ;
+
+            wjjCand = 0;
+            wjjCSVCat = BTagging::CSVSJ_INCL;
+        } else {
+            hbbCand = 0;
+            wjjCand = 0;
+            hbbCSVCat = BTagging::CSVSJ_INCL;
+            wjjCSVCat = BTagging::CSVSJ_INCL;
+        }
     } else {
-        wjjCand    =  0;
-        hbbCand    =  0;
-        hbbCSVCat   = BTagging::CSVSJ_INCL;
-        wjjCSVCat   = BTagging::CSVSJ_INCL;
+        hbbCand = 0;
+        wjjCand = 0;
+        hbbCSVCat = BTagging::CSVSJ_INCL;
+        wjjCSVCat = BTagging::CSVSJ_INCL;
     }
 
+    if (hbbCand) {
+        hbbMass = isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
 
-    if(hbbCand)
-        hbbMass    =   isCorrOn(CORR_SDMASS) ?
-                hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
-    else
-        hbbMass     = 0;
+        if (reader_jet) {
+            jets_HbbV = PhysicsUtilities::selObjsD(jets,
+                    [&](const Jet* j){return  PhysicsUtilities::deltaR2(*j,*hbbCand ) >= 1.2*1.2;});
+            nMedBTags_HbbV = PhysicsUtilities::selObjsMomD(jets_HbbV,
+                    parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
+                    [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
+        }
 
+    } else {
+        hbbMass = 0;
+        if (reader_jet) {
+            jets_HbbV = jets;
+            nMedBTags_HbbV = nMedBTags;
+        }
+    }
 
     HSolverLiInfo  hwwInfoLi;
     HSolverLiInfo  hwwInfoBkgLi;
@@ -264,89 +321,31 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         wwDM        =  0;
     }
 
-    if(hbbCand && wjjCand){
+    if (hbbCand && lepChan == DILEP) {
+        hWW = Hww2lSolver::getSimpleHiggsMom(dilep1->p4()+dilep2->p4(),reader_event->met,
+                parameters.hww.dilepInvMassGuess);
+        hh = hbbCand->p4() + hWW.p4();
+
+        hh_chi     =  MomentumF();
+        hh_basic   =  MomentumF();
+        metOhhMass = reader_event->met.pt();
+    } else if (hbbCand && wjjCand) {
         hh =  hWW.p4() + hbbCand->p4();
         hh_chi   =  hbbCand->p4() + hwwInfoChi.hWW;
 
         auto oldN =  HSolverBasic::getInvisible(reader_event->met,
                 (selectedLepton->p4() + wjjCand->p4()) );
         hh_basic =  hbbCand->p4() + oldN.p4() + selectedLepton->p4() + wjjCand->p4();
+
+        metOhhMass = 0;
     } else {
+        hWW        =  MomentumF();
         hh         =  MomentumF();
         hh_chi     =  MomentumF();
         hh_basic   =  MomentumF();
+        metOhhMass = 0;
     }
 
-    if(reader_fatjet && selectedDileptons.size() >= 2){
-
-        fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,selectedDileptons.front(),selectedDileptons.back());
-        hbbCand_2l  = fjProc->getDilepHbbCand();
-        hbbCSVCat_2l   = hbbCand_2l ? BTagging::getCSVSJCat(parameters.jets,hbbCand_2l->subJets())
-        : BTagging::CSVSJ_INCL ;
-
-        hWW_2l = Hww2lSolver::getSimpleHiggsMom(dilep1->p4()+dilep2->p4(),reader_event->met,55);
-        dilepChan = DileptonProcessor::getDilepChan(dilep1,dilep2);
-
-    } else {
-        hbbCand_2l    =  0;
-        hbbCSVCat_2l  = BTagging::CSVSJ_INCL;
-        hWW_2l        = MomentumF();
-        dilepChan = DileptonProcessor::LL_BAD;
-    }
-
-    if(hbbCand_2l){
-        hbbMass_2l =   isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand_2l) : hbbCand_2l->sdMom().mass();
-        hh_2l = hWW_2l.p4() + hbbCand_2l->p4();
-    } else {
-        hbbMass_2l    = 0;
-        hh_2l         = MomentumF();
-    }
-
-    //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
-
-    if(reader_jet){
-        jets_puppi = PhysicsUtilities::selObjsMom(reader_jet->jets,30);
-        ht_puppi = JetKinematics::ht(jets_puppi);
-
-
-        jets = PhysicsUtilities::selObjsMom(reader_jet->jets,
-                parameters.jets.minJetPT,parameters.jets.maxJetETA,
-                [&](const Jet* j){return (j->*parameters.jets.passJetID)();} );
-        nMedBTags = PhysicsUtilities::selObjsMomD(jets,
-                parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
-                [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
-        if(hbbCand){
-            jets_HbbV = PhysicsUtilities::selObjsD(jets,
-                    [&](const Jet* j){return  PhysicsUtilities::deltaR2(*j,*hbbCand ) >= 1.2*1.2;});
-            nMedBTags_HbbV = PhysicsUtilities::selObjsMomD(jets_HbbV,
-                    parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
-                    [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
-        } else {
-            jets_HbbV = jets;
-            nMedBTags_HbbV = nMedBTags;
-        }
-
-        if (hbbCand_2l) {
-            jets_NoDilepOverlap = PhysicsUtilities::selObjsMom(reader_jet->jets,30,2.4,[&](const Jet* j){return (PhysicsUtilities::deltaR2(*j,*dilep1) > 0.4*0.4
-                		&& PhysicsUtilities::deltaR2(*j,*dilep2) > 0.4*0.4);} );
-            ht_NoDilepOverlap = JetKinematics::ht(jets_NoDilepOverlap);
-
-            jets_HbbV_2l = PhysicsUtilities::selObjsD(jets,
-                    [&](const Jet* j){return  PhysicsUtilities::deltaR2(*j,*hbbCand_2l ) >= 1.2*1.2;});
-            nMedBTags_HbbV_2l = PhysicsUtilities::selObjsMomD(jets_HbbV_2l,
-                    parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
-                    [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
-        } else {
-        	jets_HbbV_2l = jets;
-        	nMedBTags_HbbV_2l = nMedBTags;
-        }
-    }
-
-
-    //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
-    passEventFilters= EventSelection::passEventFilters(parameters.event,*reader_event);
-    passTriggerPreselection= EventSelection::passTriggerPreselection(
-            parameters.event,*reader_event,ht_puppi,selectedLeptons);
 
     //|||||||||||||||||||||||||||||| EVENT WEIGHTS ||||||||||||||||||||||||||||||
     weight = 1;
@@ -356,8 +355,12 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
                     *reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT);
         }
         if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size())) {
-            weight *= trigSFProc->getLeptonTriggerSF(
-                    ht_puppi, (selectedLepton && selectedLepton->isMuon()));
+        	if (lepChan == DILEP) {
+                weight *= trigSFProc->getLeptonTriggerSF(ht_puppi, (dilep1->isMuon()));
+        	} else {
+                weight *= trigSFProc->getLeptonTriggerSF(
+                        ht_puppi, (selectedLepton && selectedLepton->isMuon()));
+        	}
         }
         if(isCorrOn(CORR_PU) ) {
         	float pucorr = puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);
