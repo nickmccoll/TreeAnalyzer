@@ -16,7 +16,8 @@ namespace EventWeights {
     //If this is a data event, set cross section to -1
     //If it is not, will calculate it on the fly
     float getNormalizedEventWeight(const EventReader& reader_event, const float cross,
-            const float numE, const EventParameters& evtParam, const float genMtt, const int nLepsTT);
+            const float numE, const EventParameters& evtParam, const float genMtt=-1,
+            const int nLepsTT=-1);
 }
 
 class PUScaleFactors {
