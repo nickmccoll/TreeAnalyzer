@@ -202,7 +202,10 @@ struct ParameterSet {
 };
 //--------------------------------------------------------------------------------------------------
 namespace ReaderConstants{
+ParameterSet setCommonParameters();
+ParameterSet set2016Parameters();
 ParameterSet set2017Parameters();
+ParameterSet set2018Parameters();
 }
 }
 
