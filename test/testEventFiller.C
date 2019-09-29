@@ -36,21 +36,38 @@ public:
         }
 
         if(reader_event->triggerAccepts.data){
+            bool passOne = false;
+            plotter.getOrMake1D("trigger_accept",";trigger",64,-0.5,63.5)->Fill(62,eventWeight);
+
+            unsigned int nTriggers = 0;
+            if(*reader_event->dataEra == FillerConstants::ERA_2016)
+                nTriggers = FillerConstants::HLT16_NTrig;
+            else if(*reader_event->dataEra == FillerConstants::ERA_2017)
+                nTriggers = FillerConstants::HLT17_NTrig;
+            else if(*reader_event->dataEra == FillerConstants::ERA_2018)
+                nTriggers = FillerConstants::HLT18_NTrig;
+
+
             for(unsigned int iT = 0; iT <= FillerConstants::HLT17_NTrig; ++iT ){
                         if(FillerConstants::doesPass(*reader_event->triggerAccepts, iT)){
                             plotter.getOrMake1D("trigger_accept",";trigger",64,-0.5,63.5)->Fill(iT,eventWeight);
-                            for(unsigned int iT2 = iT+1; iT2 <= FillerConstants::HLT17_NTrig; ++iT2 ){
+                            passOne = true;
+
+
+                            for(unsigned int iT2 = iT+1; iT2 <= nTriggers; ++iT2 ){
                                 if(FillerConstants::doesPass(*reader_event->triggerAccepts, iT2)){
                                     plotter.getOrMake2D("trigger_accept2D",";trigger;trigger",64,-0.5,63.5,64,-0.5,63.5)->Fill(iT,iT2,eventWeight);
+                                    passOne = true;
                                 }
                             }
                         }
                     }
+            if(passOne) plotter.getOrMake1D("trigger_accept",";trigger",64,-0.5,63.5)->Fill(63,eventWeight);
         }
 
 
         if(reader_event->metFilters.data){
-            for(unsigned int iT = 0; iT <= 25; ++iT ){
+            for(unsigned int iT = 0; iT < FillerConstants::Flag_NFilters; ++iT ){
                 if(FillerConstants::doesPass(*reader_event->metFilters,iT))
                     plotter.getOrMake1D("metfilters",";metfilters",33,-1.5,31.5)->Fill(iT);
             }
