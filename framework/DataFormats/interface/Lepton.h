@@ -23,8 +23,8 @@ public :
 
     ~Lepton() {}
 
-    void setIsos(  float miniIso,  float pfIso, float trackerIso, float ptRel, float ptRatio)
-    { _miniIso=miniIso;_pfIso=pfIso;_trackerIso=trackerIso;_ptRel=ptRel;_ptRatio=ptRatio;};
+    void setIsos(  float miniIso,  float pfIso, float ptRel, float ptRatio)
+    { _miniIso=miniIso;_pfIso=pfIso;_ptRel=ptRel;_ptRatio=ptRatio;};
     void setSysts (float dRnorm, const float lepAct_o_pt){_dRnorm =dRnorm;_lepAct_o_pt=lepAct_o_pt;}
 
     int   q           () const {return _q      ;}
@@ -34,7 +34,6 @@ public :
 
     float miniIso     () const {return _miniIso;}
     float pfIso       () const {return _pfIso;}
-    float trackerIso  () const {return _trackerIso;}
     float ptRel       () const {return _ptRel;}
     float ptRatio     () const {return _ptRatio;}
 
@@ -55,7 +54,6 @@ protected :
     float          _sip3D       = 0;
     float          _miniIso     = 0;
     float          _pfIso       = 0;
-    float          _trackerIso  = 0;
     float          _ptRel       = 0;
     float          _ptRatio     = 0;
 

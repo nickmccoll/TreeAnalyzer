@@ -32,7 +32,6 @@ public:
 	ra_float miniIso               ;
 	ra_float miniIsoFP             ;
 	ra_float eaRelIso              ;
-	ra_float trackerIso           ;
 	ra_float dRnorm                ;
 	ra_float lepAct_o_pt           ;
 	ra_float sc_act_o_pt           ;

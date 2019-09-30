@@ -83,7 +83,7 @@ void DefaultSearchRegionAnalyzer::loadVariables()  {
 //    reader_jet_chs     =loadReader<JetReader>     ("ak4Jet",isRealData());
     reader_jet         =loadReader<JetReader>     ("ak4PuppiJet",isRealData(),false);
     reader_electron    =loadReader<ElectronReader>("electron");
-    reader_muon        =loadReader<MuonReader>    ("muon");
+    reader_muon        =loadReader<MuonReader>    ("muon",isRealData());
 
     if(!isRealData()){
         reader_genpart =loadReader<GenParticleReader>   ("genParticle");

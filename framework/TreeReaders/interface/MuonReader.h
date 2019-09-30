@@ -7,13 +7,14 @@ namespace TAna{
 //--------------------------------------------------------------------------------------------------
 class MuonReader: public BaseReader {
 public:
-    MuonReader(std::string branchName);
+    MuonReader(std::string branchName,bool isRealData);
 	virtual ~MuonReader();
 	virtual void setup(TreeReaderWrapper * wrapper);
 	virtual void processVars();
 
 private:
-	//settings
+    //settings
+    bool realData   ;
 
 public:
 	//branches from the tree
@@ -27,11 +28,11 @@ public:
      ra_float sip3D        ;
      ra_float miniIso      ;
      ra_float dBRelISO     ;
-     ra_float trackerIso   ;
      ra_float ptRel        ;
      ra_float ptRatio      ;
      ra_float dRnorm       ;
      ra_float lepAct_o_pt  ;
+     ra_int8  simType      ;
 
 
 	//objects created in process
