@@ -30,7 +30,6 @@ public:
 	ra_float sip3D                ;
 	ra_float mvaID                 ;
 	ra_float miniIso               ;
-	ra_float miniIsoFP             ;
 	ra_float eaRelIso              ;
 	ra_float dRnorm                ;
 	ra_float lepAct_o_pt           ;

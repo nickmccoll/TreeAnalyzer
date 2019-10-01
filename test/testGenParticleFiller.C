@@ -25,7 +25,7 @@ public:
     bool runEvent() override {
 
         SMDecayEvent    smDecayEvt;
-        smDecayEvt.setDecayInfo(reader_genParticles->genParticles);
+        smDecayEvt.setDecayInfo(reader_genParticles->genParticles,*reader_event->sampParam);
         MomentumF topMom;
         for(const auto& t : smDecayEvt.topDecays){
             topMom.p4() += t.top->p4();

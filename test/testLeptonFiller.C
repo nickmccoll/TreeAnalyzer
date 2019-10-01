@@ -19,11 +19,12 @@ public:
     }
     void loadVariables() override {
         reader_event =  loadReader<EventReader>("event",isRealData());
-        reader_electrons = loadReader<ElectronReader>("electron",true);
-        reader_muons = loadReader<MuonReader>("muon");
+        reader_electrons = loadReader<ElectronReader>("electron",false);
+        reader_muons = loadReader<MuonReader>("muon",true);
     }
 
     bool runEvent() override {
+
         const double weight = reader_event->weight;
         const auto& electrons = reader_electrons->electrons;
         const auto& muons = reader_muons->muons;
@@ -51,31 +52,31 @@ public:
             plotEIso(l,"_");
 
             const int idx = l.index();
-            bool flag = l.passMedID() && !l.passMedID_noIso();
-            if(l.passHEEPID_noIso() != l.passHEEPID()) flag = true;
-            if(flag){
-            std::cout << "!M! "<< l.passMedID  () <<" "<< l.passMedID_noIso() <<" "<< l.pfIso()<<" "<<reader_electrons->HoE[idx]  <<" :: ";
-            for(unsigned int iC = 0; iC < 16;++iC){
-                std::cout << FillerConstants::doesPass(reader_electrons->passMedCutBased[idx],iC) <<" ";
-            }
-            std::cout << std::endl;
-            std::cout << "!T! "<< l.passTightID  () <<" "<< l.passTightID_noIso() <<" "<< l.pfIso() <<" :: ";
-            for(unsigned int iC = 0; iC < 16;++iC){
-                std::cout << FillerConstants::doesPass(reader_electrons->passTightCutBased[idx],iC) <<" ";
-            }
-            std::cout << std::endl;
-            std::cout << "!H! "<< l.passHEEPID  () <<" "<< l.passHEEPID_noIso()
-                    <<" "<< l.trackerIso()*reader_electrons->uncorPt[idx] <<" :: ";
-             std::cout << std::endl;
-            }
+//            bool flag = l.passMedID() && !l.passMedID_noIso();
+//            if(l.passHEEPID_noIso() != l.passHEEPID()) flag = true;
+//            if(flag){
+//            std::cout << "!M! "<< l.passMedID  () <<" "<< l.passMedID_noIso() <<" "<< l.pfIso()<<" "<<reader_electrons->HoE[idx]  <<" :: ";
+//            for(unsigned int iC = 0; iC < 16;++iC){
+//                std::cout << FillerConstants::doesPass(reader_electrons->passMedCutBased[idx],iC) <<" ";
+//            }
+//            std::cout << std::endl;
+//            std::cout << "!T! "<< l.passTightID  () <<" "<< l.passTightID_noIso() <<" "<< l.pfIso() <<" :: ";
+//            for(unsigned int iC = 0; iC < 16;++iC){
+//                std::cout << FillerConstants::doesPass(reader_electrons->passTightCutBased[idx],iC) <<" ";
+//            }
+//            std::cout << std::endl;
+//            std::cout << "!H! "<< l.passHEEPID  () <<" "<< l.passHEEPID_noIso()
+//                    <<" "<< l.trackerIso()*reader_electrons->uncorPt[idx] <<" :: ";
+//             std::cout << std::endl;
+//            }
 
             plotter.getOrMake1D("electron_d0"       ,";d0"      , 500, 0,5)->Fill(l.d0(),weight);
             plotter.getOrMake1D("electron_dz"       ,";dz"      , 500, 0,5)->Fill(l.dz(),weight);
             plotter.getOrMake1D("electron_sip3D"    ,";sip3D"   , 500, 0,5)->Fill(l.sip3D(),weight);
             plotter.getOrMake1D("electron_miniIso"  ,";miniIso" , 500, 0,5)->Fill(l.miniIso(),weight);
-            plotter.getOrMake1D("electron_miniIsoFP"  ,";miniIsoFP" , 500, 0,5)->Fill(l.miniIsoFP(),weight);
+//            plotter.getOrMake1D("electron_miniIsoFP"  ,";miniIsoFP" , 500, 0,5)->Fill(l.miniIsoFP(),weight);
             plotter.getOrMake1D("electron_eaRelISO" ,";pfIso", 500, 0,5)->Fill(l.pfIso(),weight);
-            plotter.getOrMake1D("electron_trackerIso"  ,";miniIso" , 500, 0,5)->Fill(l.trackerIso(),weight);
+//            plotter.getOrMake1D("electron_trackerIso"  ,";miniIso" , 500, 0,5)->Fill(l.trackerIso(),weight);
             plotter.getOrMake1D("electron_mvaID"    ,";mvaID"   , 500, 0,5)->Fill(l.mvaID(),weight);
         }
 
@@ -104,12 +105,13 @@ public:
         for(const auto& l : muons){
             plotMIso(l,"_");
 
+            plotter.getOrMake1D("simType"       ,";simType" , 257, -128.5,128.5)->Fill(reader_muons->simType[l.index()],weight);
             plotter.getOrMake1D("muon_d0"       ,";d0"      , 500, 0,5)->Fill(l.d0(),weight);
             plotter.getOrMake1D("muon_dz"       ,";dz"      , 500, 0,5)->Fill(l.dz(),weight);
             plotter.getOrMake1D("muon_sip3D"    ,";sip3D"   , 500, 0,5)->Fill(l.sip3D(),weight);
             plotter.getOrMake1D("muon_miniIso"  ,";miniIso" , 500, 0,5)->Fill(l.miniIso(),weight);
             plotter.getOrMake1D("muon_pfISO" ,";pfIso", 500, 0,5)->Fill(l.pfIso(),weight);
-            plotter.getOrMake1D("muon_trackerISO" ,";trackerIso", 500, 0,5)->Fill(l.trackerIso(),weight);
+//            plotter.getOrMake1D("muon_trackerISO" ,";trackerIso", 500, 0,5)->Fill(l.trackerIso(),weight);
 
             if(FillerConstants::doesPass(l.id(),FillerConstants::MUID_CutBasedIdMediumPrompt) ){
                 plotter.getOrMake1D("muon_medPrompt_d0"       ,";d0"      , 500, 0,5)->Fill(l.d0(),weight);
@@ -124,7 +126,7 @@ public:
             if(FillerConstants::doesPass(l.id(),FillerConstants::MUID_PFIsoTight) )
                 plotter.getOrMake1D("muon_pfT_pfISO" ,";pfIso", 500, 0,5)->Fill(l.pfIso(),weight);
             if(FillerConstants::doesPass(l.id(),FillerConstants::MUID_TkIsoLoose) )
-                plotter.getOrMake1D("muon_tkL_trackerISO" ,";pfIso", 500, 0,5)->Fill(l.trackerIso(),weight);
+//                plotter.getOrMake1D("muon_tkL_trackerISO" ,";pfIso", 500, 0,5)->Fill(l.trackerIso(),weight);
             if(FillerConstants::doesPass(l.id(),FillerConstants::MUID_MiniIsoLoose) )
                 plotter.getOrMake1D("muon_mL_miniIso"  ,";miniIso" , 500, 0,5)->Fill(l.miniIso(),weight);
             if(FillerConstants::doesPass(l.id(),FillerConstants::MUID_MiniIsoMedium) )

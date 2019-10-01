@@ -190,7 +190,6 @@ enum Triggers_2017 {
 enum Triggers_2018 {
      HLT18_Ele28_WPTight_Gsf
     ,HLT18_Ele28_eta2p1_WPTight_Gsf_HT150
-    ,HLT18_Ele28_HighEta_SC20_Mass55
     ,HLT18_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned
     ,HLT18_Ele32_WPTight_Gsf
     ,HLT18_Ele15_IsoVVVL_PFHT450
@@ -199,12 +198,11 @@ enum Triggers_2018 {
     ,HLT18_IsoMu24
     ,HLT18_Mu15_IsoVVVL_PFHT450
     ,HLT18_Mu50
-    ,HLT18_Mu25_TkMu0_Phi
     ,HLT18_AK8PFJet400_TrimMass30
     ,HLT18_AK8PFHT800_TrimMass50
     ,HLT18_PFHT1050
-    ,HLT18_AK8PFJet330_TrimMass30_PFAK8BoostedDoubleB
-    ,HLT18_AK8PFJet330_TrimMass30_PFAK8BTagCSV
+    ,HLT18_AK8PFJet330_TrimMass30_PFAK8BoostedDoubleB_np4
+    ,HLT18_AK8PFJet330_TrimMass30_PFAK8BTagCSV_p1
     ,HLT18_PFHT500_PFMET100_PFMHT100_IDTight
     ,HLT18_PFHT700_PFMET85_PFMHT85_IDTight
     ,HLT18_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60

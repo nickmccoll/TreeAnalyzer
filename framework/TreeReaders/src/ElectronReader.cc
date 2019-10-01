@@ -26,7 +26,6 @@ void ElectronReader::setup(TreeReaderWrapper * wrapper){
     wrapper->setBranch(branchName,"sip3D"       ,sip3D      ,true);
     wrapper->setBranch(branchName,"mvaID"       ,mvaID      ,true);
     wrapper->setBranch(branchName,"miniIso"     ,miniIso    ,true);
-    wrapper->setBranch(branchName,"miniIsoFP"   ,miniIsoFP  ,true);
     wrapper->setBranch(branchName,"eaRelIso"    ,eaRelIso   ,true);
     wrapper->setBranch(branchName,"dRnorm"      ,dRnorm     ,true);
     wrapper->setBranch(branchName,"lepAct_o_pt" ,lepAct_o_pt,true);
@@ -60,7 +59,7 @@ void ElectronReader::processVars() {
                 q[iO],d0[iO],dz[iO],sip3D[iO]);
         electrons.back().setIsos(miniIso[iO],eaRelIso[iO],0,0);
         electrons.back().setSysts(dRnorm[iO],lepAct_o_pt[iO]);
-        electrons.back().addElectronInfo(scEta[iO],scE[iO],mvaID[iO],miniIsoFP[iO],id[iO],
+        electrons.back().addElectronInfo(scEta[iO],scE[iO],mvaID[iO],id[iO],
                  sc_act_o_pt[iO],sc_dr_act[iO] );
     }
     std::sort(electrons.begin(), electrons.end(), PhysicsUtilities::greaterPT<Electron>());
