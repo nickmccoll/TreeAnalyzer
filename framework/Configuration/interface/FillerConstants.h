@@ -47,7 +47,7 @@ const std::vector<std::string> MCProcessNames = { "NONE","signal","ttbar","wjets
 enum SignalType  {NOSIGNAL,RADION,BLKGRAV};
 const std::vector<std::string> SignalTypeNames = {"NONE", "radion","blkgrav"};
 
-enum JetIDStatus { JETID_PU_L,JETID_PU_M,JETID_PU_T, JETID_LOOSE, JETID_TIGHT, JETID_TIGHTNOLEP};
+enum JetIDStatus { JETID_PU_L,JETID_PU_M,JETID_PU_T, JETID_TIGHT, JETID_TIGHTNOLEP};
 
 enum ElectronID {
      ELID_cut_loose
@@ -145,6 +145,9 @@ enum Triggers_2016 {
     ,HLT16_Mu15_IsoVVVL_PFHT400
     ,HLT16_Ele27_WPTight_Gsf
     ,HLT16_Ele45_WPLoose_Gsf
+    ,HLT16_Ele25_eta2p1_WPTight_Gsf
+    ,HLT16_Ele45_CaloIdVT_GsfTrkIdT_PFJet200_PFJet50
+    ,HLT16_Ele50_CaloIdVT_GsfTrkIdT_PFJet165
     ,HLT16_Ele115_CaloIdVT_GsfTrkIdT
     ,HLT16_Ele15_IsoVVVL_PFHT350
     ,HLT16_Ele15_IsoVVVL_PFHT400
@@ -154,6 +157,7 @@ enum Triggers_2016 {
     ,HLT16_PFHT900
     ,HLT16_PFMETNoMu110_PFMHTNoMu110_IDTight
     ,HLT16_PFMETNoMu120_PFMHTNoMu120_IDTight
+    ,HLT16_Photon175
     ,HLT16_NTrig
 };
 
@@ -165,17 +169,15 @@ enum Triggers_2017 {
     ,HLT17_PFHT1050
     ,HLT17_PFMET120_PFMHT120_IDTight
     ,HLT17_PFMET120_PFMHT120_IDTight_PFHT60
-    ,HLT17_PFMET140_PFMHT140_IDTight
     ,HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight
     ,HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60
-    ,HLT17_PFMETNoMu140_PFMHTNoMu140_IDTight
     ,HLT17_PFMETTypeOne120_PFMHT120_IDTight
     ,HLT17_PFMETTypeOne120_PFMHT120_IDTight_PFHT60
-    ,HLT17_PFMETTypeOne140_PFMHT140_IDTight
     ,HLT17_Ele115_CaloIdVT_GsfTrkIdT
     ,HLT17_Ele15_IsoVVVL_PFHT450
     ,HLT17_Ele28_eta2p1_WPTight_Gsf_HT150
     ,HLT17_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned
+    ,HLT17_Ele27_WPTight_Gsf
     ,HLT17_Ele32_WPTight_Gsf
     ,HLT17_Ele32_WPTight_Gsf_L1DoubleEG
     ,HLT17_Ele35_WPTight_Gsf
@@ -188,8 +190,7 @@ enum Triggers_2017 {
 };
 
 enum Triggers_2018 {
-     HLT18_Ele28_WPTight_Gsf
-    ,HLT18_Ele28_eta2p1_WPTight_Gsf_HT150
+     HLT18_Ele28_eta2p1_WPTight_Gsf_HT150
     ,HLT18_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned
     ,HLT18_Ele32_WPTight_Gsf
     ,HLT18_Ele15_IsoVVVL_PFHT450
