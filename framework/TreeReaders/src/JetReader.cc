@@ -6,9 +6,10 @@
 
 namespace TAna{
 //--------------------------------------------------------------------------------------------------
-JetReader::JetReader(std::string branchName, bool isRealData,
-        bool fillGenJets,  bool fillRecoJets) : BaseReader("JetReader",branchName),
-                realData(isRealData),fillGenJets(fillGenJets),fillRecoJets(fillRecoJets)
+JetReader::JetReader(std::string branchName, bool isRealData, bool fillGenJets,
+        bool fillRecoJets,bool fillBTagging) : BaseReader("JetReader",branchName),
+        realData(isRealData),fillGenJets(fillGenJets),fillRecoJets(fillRecoJets),
+        fillBTagging(fillBTagging)
 {};
 
 JetReader::~JetReader(){}
@@ -22,8 +23,11 @@ void JetReader::setup(TreeReaderWrapper * wrapper){
         wrapper->setBranch(branchName,"toRawFact"   ,toRawFact   ,true);
         wrapper->setBranch(branchName,"metUnc_rawPx",metUnc_rawPx,true);
         wrapper->setBranch(branchName,"metUnc_rawPy",metUnc_rawPy,true);
-        wrapper->setBranch(branchName,"csv"         ,csv         ,true);
-        wrapper->setBranch(branchName,"deep_csv"    ,deep_csv    ,true);
+        if(fillBTagging){
+            wrapper->setBranch(branchName,"csv"         ,csv         ,true);
+            wrapper->setBranch(branchName,"deep_csv"    ,deep_csv    ,true);
+            wrapper->setBranch(branchName,"deep_flavor"    ,deep_flavor    ,true);
+        }
         wrapper->setBranch(branchName,"id"          ,id          ,true);
         if(!realData){
             wrapper->setBranch(branchName,"hadronFlavor",hadronFlavor,true);
@@ -63,8 +67,10 @@ void JetReader::processVars() {
         for(unsigned int iO = 0; iO < pt.size(); ++iO){
 
             jets.emplace_back(ASTypes::CylLorentzVectorF(pt[iO],eta[iO],phi[iO],mass[iO]),iO,
-                    toRawFact[iO],csv[iO],deep_csv[iO]);
-            jets.back().addExtraInfo(id[iO]);
+                    toRawFact[iO],id[iO]);
+            if(fillBTagging)
+                jets.back().addBTagging(deep_csv[iO],csv[iO],deep_flavor[iO]);
+
             if(!realData){
                 GenJet *gj = fillGenJets && genIDX[iO] != 255 ?
                         genInd[genIDX[iO]] : 0;

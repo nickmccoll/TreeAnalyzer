@@ -7,10 +7,10 @@
 namespace TAna{
 //--------------------------------------------------------------------------------------------------
 FatJetReader::FatJetReader(std::string branchName, bool isRealData,
-        bool fillGenFatJets,bool fillBTagging, bool fillLSFInfo) :
+        bool fillGenFatJets,bool fillBTagging, bool fillWTagging, bool fillLSFInfo) :
                 BaseReader("FatJetReader",branchName),
                 realData(isRealData),fillGenFatJets(fillGenFatJets),fillBTagging(fillBTagging),
-                fillLSFInfo(fillLSFInfo)
+                fillWTagging(fillWTagging),fillLSFInfo(fillLSFInfo)
 {};
 
 FatJetReader::~FatJetReader(){}
@@ -23,7 +23,15 @@ void FatJetReader::setup(TreeReaderWrapper * wrapper){
     wrapper->setBranch(branchName,"mass"     ,mass     ,true);
     wrapper->setBranch(branchName,"toRawFact",toRawFact,true);
     wrapper->setBranch(branchName,"id"       ,id       ,true);
-    if(fillBTagging) wrapper->setBranch(branchName,"bbt",bbt,true);
+    if(fillBTagging){
+        wrapper->setBranch(branchName,"bbt",bbt,true);
+        wrapper->setBranch(branchName,"deep_MDZHbb",deep_MDZHbb,true);
+        wrapper->setBranch(branchName,"deep_MDHbb" ,deep_MDHbb,true);
+        wrapper->setBranch(branchName,"deep_Hbb"   ,deep_Hbb,true);
+    }
+    if(fillWTagging){
+        wrapper->setBranch(branchName,"deep_W"   ,deep_W,true);
+    }
     wrapper->setBranch(branchName,"tau1"     ,tau1     ,true);
     wrapper->setBranch(branchName,"tau2"     ,tau2     ,true);
     if(fillLSFInfo){
@@ -61,7 +69,6 @@ void FatJetReader::setup(TreeReaderWrapper * wrapper){
     wrapper->setBranch(branchName,"sj_mass"     ,sj_mass     ,true);
     wrapper->setBranch(branchName,"sj_toRawFact",sj_toRawFact,true);
     if(fillBTagging){
-        wrapper->setBranch(branchName,"sj_csv"     ,sj_csv     ,true);
         wrapper->setBranch(branchName,"sj_deep_csv",sj_deep_csv,true);
     }
     if(!realData){
@@ -94,10 +101,12 @@ void FatJetReader::processVars() {
 
     for(unsigned int iO = 0; iO < pt.size(); ++iO){
         jets.emplace_back(ASTypes::CylLorentzVectorF(pt[iO],eta[iO],phi[iO],mass[iO]),iO,
-                toRawFact[iO]);
+                toRawFact[iO],id[iO],tau1[iO],tau2[iO]);
+        if(fillBTagging)
+            jets.back().addFJBtagging(bbt[iO],deep_MDZHbb[iO],deep_MDHbb[iO],deep_Hbb[iO]);
+        if(fillWTagging)
+            jets.back().addWTaging(deep_W[iO]);
 
-        const float doubleBT = fillBTagging ? bbt[iO] : 0;
-        jets.back().addExtraInfo(id[iO],doubleBT,tau1[iO],tau2[iO]);
 
         if(!realData){
             GenJet *gj = fillGenFatJets && genIDX[iO] != 255 ?
@@ -106,10 +115,10 @@ void FatJetReader::processVars() {
         }
 
         for(unsigned int iSJ = sjIDX1[iO]; iSJ < sjIDX1[iO]+sjnum[iO]; ++iSJ ){
-            const float sjcsv = fillBTagging ? sj_csv[iSJ] : 0;
-            const float sjdcsv = fillBTagging ? sj_deep_csv[iSJ] : 0;
             SubJet subJet(ASTypes::CylLorentzVectorF(sj_pt[iSJ],sj_eta[iSJ],sj_phi[iSJ],sj_mass[iSJ])
-                    ,iSJ,sj_toRawFact[iSJ], sjcsv,sjdcsv);
+                    ,iSJ,sj_toRawFact[iSJ]);
+            if(fillBTagging)
+                subJet.addBTagging(sj_deep_csv[iSJ]);
             if(!realData)
                 subJet.addMCInfo(sj_hadronFlavor[iSJ],sj_partonFlavor[iSJ],sj_JECUnc[iSJ]);
             jets.back().addSubJet(subJet);
