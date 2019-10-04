@@ -71,28 +71,28 @@ public:
             plotter.getOrMake1DPre(prefix, "mhh",";#it{m}_{HH}",40,0,4000)
                     ->Fill(lHH,weight);
 
-            plotter.getOrMake1DPre(prefix+"_mIncl", "likeli",";likeli",205,0.95,3)
+            plotter.getOrMake1DPre(prefix+"_mIncl", "likeli",";likeli",255,-1,50)
                     ->Fill(lV,weight);
 
             if(std::abs(lHH - 800) < 800*0.10)
-            plotter.getOrMake1DPre(prefix+"_m800", "likeli",";likeli",205,0.95,3)
+            plotter.getOrMake1DPre(prefix+"_m800", "likeli",";likeli",255,-1,50)
                     ->Fill(lV,weight);
             if(std::abs(lHH - 1000) < 1000*0.10)
-            plotter.getOrMake1DPre(prefix+"_m1000", "likeli",";likeli",205,0.95,3)
+            plotter.getOrMake1DPre(prefix+"_m1000", "likeli",";likeli",255,-1,50)
                     ->Fill(lV,weight);
             if(std::abs(lHH - 2000) < 2000*0.10)
-            plotter.getOrMake1DPre(prefix+"_m2000", "likeli",";likeli",205,0.95,3)
+            plotter.getOrMake1DPre(prefix+"_m2000", "likeli",";likeli",255,-1,50)
                     ->Fill(lV,weight);
             if(std::abs(lHH - 2500) < 2500*0.10)
-            plotter.getOrMake1DPre(prefix+"_m2500", "likeli",";likeli",205,0.95,3)
+            plotter.getOrMake1DPre(prefix+"_m2500", "likeli",";likeli",255,-1,50)
                     ->Fill(lV,weight);
             if(std::abs(lHH - 3000) < 3000*0.10)
-            plotter.getOrMake1DPre(prefix+"_m3000", "likeli",";likeli",205,0.95,3)
+            plotter.getOrMake1DPre(prefix+"_m3000", "likeli",";likeli",255,-1,50)
                     ->Fill(lV,weight);
 
         };
 
-        auto mkCutLEPPlts = [&](const TString& prefix, float l1){
+        auto mkCutLEPPlts = [&](const TString& prefix, float ll){
             mkDPlts(prefix+"_emu", ll);
             if(*isMuon == 1)
                 mkDPlts(prefix+"_mu", ll);
@@ -101,7 +101,7 @@ public:
         };
 
 
-        auto mkCutBTAGPlts = [&](const TString& prefix, float l1){
+        auto mkCutBTAGPlts = [&](const TString& prefix, float ll){
             mkCutLEPPlts(prefix+"_LMT", ll);
             if(*hbbCat == 4)
                 mkCutLEPPlts(prefix+"_L", ll);
@@ -150,9 +150,9 @@ public:
             }
 
 
-            if((*qqJet_t2ot1 < 0.75&& ll<1.45) && (ll>=1.1 || *qqJet_t2ot1 >= 0.55) )
+            if((*qqJet_t2ot1 < 0.75&& ll<11) && (ll>=2.5 || *qqJet_t2ot1 >= 0.55) )
                 mkCutBTAGPlts(prefix+"_nLP",ll);
-            if(ll<1.1 && *qqJet_t2ot1 < 0.55)
+            if(ll<2.5 && *qqJet_t2ot1 < 0.55)
                 mkCutBTAGPlts(prefix+"_nHP",ll);
 
         };

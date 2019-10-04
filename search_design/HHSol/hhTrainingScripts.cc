@@ -40,9 +40,9 @@ rr -b -q 'HHSol/getHHTraining.C+(4,"","")'
     
     
 
-rr -b -q 'HHSol/getHHTraining.C+(5,"trees/hhSolTrees_bkg.root","bkg")' &    
-rr -b -q 'HHSol/getHHTraining.C+(5,"trees/hhSolTrees_radion.root","radion")' &
-rr -b -q 'HHSol/getHHTraining.C+(5,"trees/hhSolTrees_bulkgrav.root","bulkgrav")' &
+rr -b -q 'HHSol/getHHTraining.C+(5,"treesWCSV/hhSolTrees_bkg.root","bkg")' &    
+rr -b -q 'HHSol/getHHTraining.C+(5,"treesWCSV/hhSolTrees_radion.root","radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(5,"treesWCSV/hhSolTrees_bulkgrav.root","bulkgrav")' &
 hadd -f hSolTrees_test.root hSolTrees_test_*.root
 
 
@@ -55,6 +55,12 @@ rr -b -q 'HHSol/getHHTraining.C+(9,"trees/hhSolTrees_bkg.root","bkg")' &
 rr -b -q 'HHSol/getHHTraining.C+(9,"trees/hhSolTrees_radion.root","radion")' &
 rr -b -q 'HHSol/getHHTraining.C+(9,"trees/hhSolTrees_bulkgrav.root","bulkgrav")' &
 hadd -f hSolTrees_qcdTempStudy.root hSolTrees_qcdTempStudy_*.root   
+    
+    
+    rr -b -q 'HHSol/getHHCuts.C+(0,"treesWCSV/hhSolTrees_bkg.root","bkg")' &    
+    rr -b -q 'HHSol/getHHCuts.C+(0,"treesWCSV/hhSolTrees_radion.root","radion")' &
+    rr -b -q 'HHSol/getHHCuts.C+(0,"treesWCSV/hhSolTrees_bulkgrav.root","bulkgrav")' &
+    hadd -f hSolTrees_getCuts.root hSolTrees_getCuts_*.root
 
 
 //Fit HHRes
@@ -277,7 +283,7 @@ TEST RESULTS
   // std::vector<TString> vars = {"chi2","likeli","OSQQ","OSQQPZ","VQQ","VQQPZ"};
   // std::vector<TString> vars = {"chi2","likeli","likeli_nAlt","alt"};
     // std::vector<TString> vars = {"chi2","Blikeli","Blikeli_nAlt","bAlt"};
-        std::vector<TString> vars = {"chi2","likeli","likeli_nAlt","likeli_nAlt2"};
+        std::vector<TString> vars = {"chi2","likeli","likeli2"};
   
   
   // std::vector<TString> sigs = {"radion_m1000","radion_m2000","radion_m3000","ttbar_m1000","wjets_m1000"};
@@ -294,13 +300,13 @@ TEST RESULTS
       TH1* h = 0;
       f->GetObject(sigs[iS]+"_"+vars[iV],h);
       if(h==0) continue;
-      // h = PlotTools::getIntegral(h,false,true);
+      h = PlotTools::getIntegral(h,false,true);
       // p->addHistLine(h,sigNs[iS]);
       p->addHistLine(h,sigs[iS]);
     }
     p->setBotMinMax(0,2);
-    p->drawSplitRatio(0,"stack",false,false,vars[iV]);
-    p->normalize();
+    // p->drawSplitRatio(0,"stack",false,false,vars[iV]);
+    // p->normalize();
     // p->rebin(4);
     p->setXTitle("miniminized -2*log(L)");
     p->draw(false,vars[iV]);
@@ -581,16 +587,17 @@ TEST RESULTS
 ///ROC CURVES
 {
   TFile * f = new TFile("hSolTrees_test.root");
-  // std::vector<TString> sigs = {"radion_m1000","radion_m2000"};
-  // std::vector<TString> bkgCs = {"m1000","m2000"};
+  std::vector<TString> sigs = {"radion_m1000","radion_m2000"};
+  std::vector<TString> bkgCs = {"m1000","m2000"};
   
   
   
   
-  std::vector<TString> sigs = {"radion_m1000"};
-  std::vector<TString> bkgCs = {"m1000"};
+  // std::vector<TString> sigs = {"radion_m1000"};
+  // std::vector<TString> bkgCs = {"m1000"};
   std::vector<TString> sigNs = {""};
-  std::vector<TString> varNss = {"signal L","bkg. L", "L ratio"};
+  // std::vector<TString> varNss = {"signal L","bkg. L", "L ratio"};
+  std::vector<TString> varNss = {"ratio1","ratio2", "raw"};
   
   // std::vector<TString> sigs = {"radion_m1000_lllt32"};
   // std::vector<TString> bkgCs = {"lllt32"};
@@ -603,7 +610,7 @@ TEST RESULTS
   
     // std::vector<TString> vars = {"Blikeli","Blikeli_nAlt"};
     // std::vector<TString> vars = {"SoBlikeli","SoBNlikeli"};
-    std::vector<TString> vars = {"likeli","likeli_nAlt","likeli_nAlt2"};
+    std::vector<TString> vars = {"likeli","likeli2"};
   
   
 

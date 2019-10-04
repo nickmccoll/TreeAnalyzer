@@ -946,10 +946,13 @@ public:
 
 
 
-            plotter.getOrMake1DPre(prefix, "likeli",";likeli",200,0,100)
+            plotter.getOrMake1DPre(prefix, "likeli",";likeli",200,0,5)
                     ->Fill(hwwInfo.likeli,weight);
 
-            plotter.getOrMake1DPre(prefix, "likeli_raw",";likeli",200,0,5)
+            plotter.getOrMake1DPre(prefix, "likeli2",";likeli",200,-50,100)
+                    ->Fill(hwwInfo.rawLikeli-altHWWInfo.rawLikeli,weight);
+
+            plotter.getOrMake1DPre(prefix, "likeli_raw",";likeli",200,0,100)
                     ->Fill(hwwInfo.rawLikeli,weight);
 
             plotter.getOrMake1DPre(prefix, "alt",";likeli",200,0,100)

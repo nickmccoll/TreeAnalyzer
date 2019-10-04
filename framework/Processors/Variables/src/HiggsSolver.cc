@@ -756,7 +756,7 @@ double HSolverLi::minimize(const MomentumF& lepton, const MomentumF& met, const 
     const double rawLikeli = fit(lepton,met,qqJet,qqSDMass,out, osqq_sol,vqq_sol);
     const double normLikeli = fitNormalization(qqSDMass,nom_sol);
 
-    out.likeli = rawLikeli / normLikeli;
+    out.likeli = rawLikeli - normLikeli;
     return out.likeli;
 }
 //--------------------------------------------------------------------------------------------------
