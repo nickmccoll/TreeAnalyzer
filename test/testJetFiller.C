@@ -18,13 +18,13 @@ public:
     }
     void loadVariables() override {
         reader_event = loadReader<EventReader>("event",isRealData());
-        reader_jets =  loadReader<JetReader>("ak4Jet",isRealData());
+        reader_jet         =loadReader<JetReader>     ("ak4Jet",isRealData());
     }
 
     bool runEvent() override {
         const double weight = reader_event->weight;
-        const auto& jets = reader_jets->jets;
-        const auto& genjets = reader_jets->genJets;
+        const auto& jets = reader_jet->jets;
+        const auto& genjets = reader_jet->genJets;
 
         auto getJS =[] (float pt)-> TString {
             TString jetstr = "pt_";
@@ -49,7 +49,6 @@ public:
             Fill(std::abs(j.hadronFlv()),std::abs(j.partonFlv()), weight);
             plotter.getOrMake1D("incl_pt",";p_{T}", 20, 0,200)->Fill(j.pt(),weight);
             if(j.passPUID()) plotter.getOrMake1D("passPU_pt"      ,";p_{T}", 20, 0,200)->Fill(j.pt(),weight);
-            if(j.passLooseID()) plotter.getOrMake1D("passLoose_pt",";p_{T}", 20, 0,200)->Fill(j.pt(),weight);
             if(j.passTightID()) plotter.getOrMake1D("passTight_pt",";p_{T}", 20, 0,200)->Fill(j.pt(),weight);
             if(j.passTightNoLepID()) plotter.getOrMake1D("passTightNoLep_pt",";p_{T}", 20, 0,200)->Fill(j.pt(),weight);
             if(j.pt() > 30) n20++;
@@ -59,6 +58,7 @@ public:
 
             plotter.getOrMake1D("csv",";csv", 80, -2,2)->Fill(j.csv(),weight);
             plotter.getOrMake1D("deep_csv",";deep csv", 80, -2,2)->Fill(j.deep_csv(),weight);
+            plotter.getOrMake1D("deep_flavor",";deep csv", 80, -2,2)->Fill(j.deep_flavor(),weight);
 
 
         }
@@ -70,8 +70,8 @@ public:
 
     void write(TString fileName){ plotter.write(fileName);}
 
-    std::shared_ptr<EventReader> reader_event = 0;
-    std::shared_ptr<JetReader> reader_jets = 0;
+    std::shared_ptr<EventReader      > reader_event    ;
+    std::shared_ptr<JetReader        > reader_jet        ;
     HistGetter plotter;
 
 };

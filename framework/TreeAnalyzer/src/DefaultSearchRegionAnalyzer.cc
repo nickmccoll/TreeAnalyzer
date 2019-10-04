@@ -46,7 +46,6 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     hbbFJSFProc .reset(new HbbFatJetScaleFactors (dataDirectory));
     topPTProc   .reset(new TopPTWeighting (dataDirectory));
 
-    JERAK4PuppiProc .reset(new JERCorrector (dataDirectory, "corrections/Summer16_25nsV1_MC_PtResolution_AK4PFPuppi.txt",randGen));;
     JERAK4CHSProc   .reset(new JERCorrector (dataDirectory, "corrections/Summer16_25nsV1_MC_PtResolution_AK4PFCHS.txt",randGen));;
     JERAK8PuppiProc .reset(new JERCorrector (dataDirectory, "corrections/Summer16_25nsV1_MC_PtResolution_AK8PFPuppi.txt",randGen));;
     JESUncProc . reset(new JESUncShifter());
@@ -116,12 +115,10 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_JER) && !reader_fatjet) mkErr("fatjet","CORR_JER");
     if(isCorrOn(CORR_JER) && !reader_fatjet_noLep) mkErr("fatjet_noLep","CORR_JER");
     if(isCorrOn(CORR_JER) && !reader_jet) mkErr("jet","CORR_JER");
-    if(isCorrOn(CORR_JER) && !reader_jet_chs) mkErr("jet_chs","CORR_JER");
 
     if(isCorrOn(CORR_JES) && !reader_fatjet) mkErr("fatjet","CORR_JES");
     if(isCorrOn(CORR_JES) && !reader_fatjet_noLep) mkErr("fatjet_noLep","CORR_JES");
     if(isCorrOn(CORR_JES) && !reader_jet) mkErr("jet","CORR_JES");
-    if(isCorrOn(CORR_JES) && !reader_jet_chs) mkErr("jet_chs","CORR_JES");
 }
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::setupParameters(){
@@ -165,16 +162,12 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         if(isCorrOn(CORR_JES) ){
             Met dummyMET =reader_event->met;
             JESUncProc ->processJets(*reader_jet,reader_event->met);
-            JESUncProc ->processJets(*reader_jet_chs,dummyMET);
             JESUncProc ->processFatJets(reader_fatjet_noLep->jets);
             JESUncProc ->processFatJets(reader_fatjet->jets);
         }
         if(isCorrOn(CORR_JER) ){
-            Met dummyMET =reader_event->met;
-            JERAK4PuppiProc ->processJets(
-                    *reader_jet,reader_event->met,reader_jet_chs->genJets,reader_event->rho.val());
             JERAK4CHSProc   ->processJets(
-                    *reader_jet_chs,dummyMET,reader_jet_chs->genJets,reader_event->rho.val());
+                    *reader_jet,reader_event->met,reader_jet->genJets,reader_event->rho.val());
             JERAK8PuppiProc ->processFatJets(
                     reader_fatjet_noLep->jets,std::vector<GenJet>(),reader_event->rho.val());
             JERAK8PuppiProc ->processFatJets(
