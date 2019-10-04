@@ -23,8 +23,8 @@ public :
 
     ~Lepton() {}
 
-    void setIsos(  float miniIso,  float pfIso, float ptRel, float ptRatio)
-    { _miniIso=miniIso;_pfIso=pfIso;_ptRel=ptRel;_ptRatio=ptRatio;};
+    void setIsos(  float miniIso,  float pfIso, float ptRel, float ptRatio, float ttHMVA)
+    { _miniIso=miniIso;_pfIso=pfIso;_ptRel=ptRel;_ptRatio=ptRatio;_ttHMVA=ttHMVA;};
     void setSysts (float dRnorm, const float lepAct_o_pt){_dRnorm =dRnorm;_lepAct_o_pt=lepAct_o_pt;}
 
     int   q           () const {return _q      ;}
@@ -36,6 +36,7 @@ public :
     float pfIso       () const {return _pfIso;}
     float ptRel       () const {return _ptRel;}
     float ptRatio     () const {return _ptRatio;}
+    float ttHMVA      () const {return _ttHMVA;}
 
     bool isMuon       () const {return _muon;}
     bool isElectron   () const {return !_muon;}
@@ -56,6 +57,7 @@ protected :
     float          _pfIso       = 0;
     float          _ptRel       = 0;
     float          _ptRatio     = 0;
+    float          _ttHMVA     = 0;
 
     bool           _muon        = false;
 

@@ -27,6 +27,7 @@ void MuonReader::setup(TreeReaderWrapper * wrapper){
     wrapper->setBranch(branchName,"ptRatio"    ,ptRatio    ,true);
     wrapper->setBranch(branchName,"dRnorm"     ,dRnorm     ,true);
     wrapper->setBranch(branchName,"lepAct_o_pt",lepAct_o_pt,true);
+    wrapper->setBranch(branchName,"tthMVA"      ,tthMVA     ,true);
     if(realData) wrapper->setBranch(branchName,"simType",simType,true);
 }
 //--------------------------------------------------------------------------------------------------
@@ -35,7 +36,7 @@ void MuonReader::processVars() {
     for(unsigned int iO = 0; iO < pt.size(); ++iO){
         muons.emplace_back(ASTypes::CylLorentzVectorF(pt[iO],eta[iO],phi[iO],0),iO,
                 q[iO],d0[iO],dz[iO],sip3D[iO]);
-        muons.back().setIsos(miniIso[iO],dBRelISO[iO],ptRel[iO],ptRatio[iO]);
+        muons.back().setIsos(miniIso[iO],dBRelISO[iO],ptRel[iO],ptRatio[iO],tthMVA[iO]);
         muons.back().setSysts(dRnorm[iO],lepAct_o_pt[iO]);
         muons.back().setMuonInfo(id[iO]);
     }

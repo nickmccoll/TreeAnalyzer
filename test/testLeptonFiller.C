@@ -78,6 +78,7 @@ public:
             plotter.getOrMake1D("electron_eaRelISO" ,";pfIso", 500, 0,5)->Fill(l.pfIso(),weight);
 //            plotter.getOrMake1D("electron_trackerIso"  ,";miniIso" , 500, 0,5)->Fill(l.trackerIso(),weight);
             plotter.getOrMake1D("electron_mvaID"    ,";mvaID"   , 500, 0,5)->Fill(l.mvaID(),weight);
+            plotter.getOrMake1D("electron_TTHmvaID"    ,";tthmvaID"   , 500, -2,2)->Fill(l.ttHMVA(),weight);
         }
 
         for(unsigned int iL1 = 0; iL1 < electrons.size(); ++iL1){
@@ -112,6 +113,7 @@ public:
             plotter.getOrMake1D("muon_miniIso"  ,";miniIso" , 500, 0,5)->Fill(l.miniIso(),weight);
             plotter.getOrMake1D("muon_pfISO" ,";pfIso", 500, 0,5)->Fill(l.pfIso(),weight);
 //            plotter.getOrMake1D("muon_trackerISO" ,";trackerIso", 500, 0,5)->Fill(l.trackerIso(),weight);
+            plotter.getOrMake1D("muon_TTHmvaID"    ,";tthmvaID"   , 500, -2,2)->Fill(l.ttHMVA(),weight);
 
             if(FillerConstants::doesPass(l.id(),FillerConstants::MUID_CutBasedIdMediumPrompt) ){
                 plotter.getOrMake1D("muon_medPrompt_d0"       ,";d0"      , 500, 0,5)->Fill(l.d0(),weight);

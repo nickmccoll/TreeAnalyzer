@@ -31,6 +31,7 @@ void ElectronReader::setup(TreeReaderWrapper * wrapper){
     wrapper->setBranch(branchName,"lepAct_o_pt" ,lepAct_o_pt,true);
     wrapper->setBranch(branchName,"sc_act_o_pt" ,sc_act_o_pt,true);
     wrapper->setBranch(branchName,"sc_dr_act"   ,sc_dr_act  ,true);
+    wrapper->setBranch(branchName,"tthMVA"      ,tthMVA     ,true);
     if(storeIDVars){
         wrapper->setBranch(branchName,"passMedCutBased"      ,passMedCutBased      ,false);
         wrapper->setBranch(branchName,"passTightCutBased"    ,passTightCutBased    ,false);
@@ -57,7 +58,7 @@ void ElectronReader::processVars() {
     for(unsigned int iO = 0; iO < pt.size(); ++iO){
         electrons.emplace_back(ASTypes::CylLorentzVectorF(pt[iO],eta[iO],phi[iO],0),iO,
                 q[iO],d0[iO],dz[iO],sip3D[iO]);
-        electrons.back().setIsos(miniIso[iO],eaRelIso[iO],0,0);
+        electrons.back().setIsos(miniIso[iO],eaRelIso[iO],0,0,tthMVA[iO]);
         electrons.back().setSysts(dRnorm[iO],lepAct_o_pt[iO]);
         electrons.back().addElectronInfo(scEta[iO],scE[iO],mvaID[iO],id[iO],
                  sc_act_o_pt[iO],sc_dr_act[iO] );

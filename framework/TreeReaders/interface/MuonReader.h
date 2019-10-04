@@ -32,6 +32,7 @@ public:
      ra_float ptRatio      ;
      ra_float dRnorm       ;
      ra_float lepAct_o_pt  ;
+     ra_float tthMVA                ;
      ra_int8  simType      ;
 
 
