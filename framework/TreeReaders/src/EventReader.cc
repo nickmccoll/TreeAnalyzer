@@ -26,6 +26,8 @@ void EventReader::setup(TreeReaderWrapper * wrapper){
     wrapper->setBranch(branchName,"met_raw_phi"       , met_raw_phi      , false);
     wrapper->setBranch(branchName,"met_van_pt"        , met_van_pt       , false);
     wrapper->setBranch(branchName,"met_van_phi"       , met_van_phi      , false);
+    wrapper->setBranch(branchName,"met_puppi_pt"      , met_puppi_pt       , false);
+    wrapper->setBranch(branchName,"met_puppi_phi"     , met_puppi_phi      , false);
     wrapper->setBranch(branchName,"dataEra"           , dataEra          , false);
     if(!realData){
         wrapper->setBranch(branchName,"nTruePUInts"       ,nTruePUInts   , false);
