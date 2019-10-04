@@ -295,7 +295,6 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     }
 
     HSolverLiInfo  hwwInfoLi;
-    HSolverLiInfo  hwwInfoBkgLi;
     HSolverChiInfo hwwInfoChi;
     if(wjjCand){
         const double qqSDMass = wjjCand->sdMom().mass();

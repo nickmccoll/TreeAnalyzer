@@ -34,6 +34,8 @@ void FatJetReader::setup(TreeReaderWrapper * wrapper){
     }
     wrapper->setBranch(branchName,"tau1"     ,tau1     ,true);
     wrapper->setBranch(branchName,"tau2"     ,tau2     ,true);
+    wrapper->setBranch(branchName,"sdMass_z0p15",sdMass_z0p15     ,true);
+    wrapper->setBranch(branchName,"sdMass_z0p05",sdMass_z0p05     ,true);
     if(fillLSFInfo){
         wrapper->setBranch(branchName,"ecfN2"      ,ecfN2      ,true);
         wrapper->setBranch(branchName,"ecfM2"      ,ecfM2      ,true);
@@ -101,11 +103,12 @@ void FatJetReader::processVars() {
 
     for(unsigned int iO = 0; iO < pt.size(); ++iO){
         jets.emplace_back(ASTypes::CylLorentzVectorF(pt[iO],eta[iO],phi[iO],mass[iO]),iO,
-                toRawFact[iO],id[iO],tau1[iO],tau2[iO]);
+                toRawFact[iO],id[iO]);
         if(fillBTagging)
             jets.back().addFJBtagging(bbt[iO],deep_MDZHbb[iO],deep_MDHbb[iO],deep_Hbb[iO]);
         if(fillWTagging)
             jets.back().addWTaging(deep_W[iO]);
+        jets.back().addSubStructure(tau1[iO],tau2[iO],sdMass_z0p15[iO],sdMass_z0p05[iO]);
 
 
         if(!realData){
@@ -115,7 +118,8 @@ void FatJetReader::processVars() {
         }
 
         for(unsigned int iSJ = sjIDX1[iO]; iSJ < sjIDX1[iO]+sjnum[iO]; ++iSJ ){
-            SubJet subJet(ASTypes::CylLorentzVectorF(sj_pt[iSJ],sj_eta[iSJ],sj_phi[iSJ],sj_mass[iSJ])
+            SubJet subJet(
+                    ASTypes::CylLorentzVectorF(sj_pt[iSJ],sj_eta[iSJ],sj_phi[iSJ],sj_mass[iSJ])
                     ,iSJ,sj_toRawFact[iSJ]);
             if(fillBTagging)
                 subJet.addBTagging(sj_deep_csv[iSJ]);

@@ -38,6 +38,8 @@ public:
     ra_float deep_W             ;
     ra_float tau1               ;
     ra_float tau2               ;
+    ra_float sdMass_z0p15       ;
+    ra_float sdMass_z0p05       ;
 
     ra_float ecfN2              ;
     ra_float ecfM2              ;
