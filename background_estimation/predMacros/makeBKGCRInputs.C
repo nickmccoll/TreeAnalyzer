@@ -6,7 +6,7 @@
 void makeBKGCRInputs(bool doTopRegion = true, int bkgToDo = BKG_QG, int channel = 0, std::string treeDir = "../trees/"){
 	if(doTopRegion){
 	    hadCuts[HAD_NONE].cut = preSel1.cut;
-	    hadCuts[HAD_LB].cut   = preSel1.cut+"&&"+wjjBC.cut;
+	    hadCuts[HAD_LB].cut   = preSel1.cut+ "&&"+wjjBC.cut;
 	    hadCuts[HAD_LT].cut   = preSel1.cut+ "&&"+abV.cut;
 	    hadCuts[HAD_LTMB].cut = preSel1.cut;
 	    hadCuts[HAD_FULL].cut = preSel1.cut + "&&"+abV.cut+"&&"+wjjBC.cut;

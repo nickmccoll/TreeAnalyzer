@@ -34,7 +34,7 @@ CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
 CutStr aQCD ("aQCD"  , "process!=8");
 
 CutStr wjjBC("wjjBC" , "wjjTau2o1<0.75");
-CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&(hwwChi<=11)");
+CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&(hwwLi<1.45)");
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr abV  ("abV"   , "nAK4Btags!=0");
 
@@ -148,8 +148,8 @@ CutStr inclBtagCat("I","hbbCSVCat>=0");
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
         CutStr("I","1.0","LHP"),
-        CutStr("LP" ,"wjjTau2o1>=0.55","LP"),
-        CutStr("HP"  ,"wjjTau2o1<0.55","HP")
+        CutStr("LP" ,"(wjjTau2o1>=0.55||hwwLi>=1.1)","LP"),
+        CutStr("HP" ,"(wjjTau2o1<0.55&&hwwLi<1.1)"  ,"HP")
 };
 
 enum HADCuts  {HAD_NONE,HAD_LB,HAD_LT,HAD_LTMB,HAD_FULL};

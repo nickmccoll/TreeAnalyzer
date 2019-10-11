@@ -164,7 +164,7 @@ void makeBackgroundShapes2DConditional(const std::string name, const std::string
     tempFile += inclName+"_2D_cond_template.root";
 
     std::string inclCut = std::string("((")+baseSel+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut
-    		+"&&"+hadCuts[HAD_LTMB]+")";
+    		+"&&"+hadCuts[HAD_LTMB].cut+")";
     if(addQCDSF) inclCut += "*"+getQCDSF(name,filename,LEP_EMU,PURE_I,HAD_LTMB);
     inclCut += ")";
     inclCut += "||("+dilepCats[LEP_INCL].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+selCuts[SEL_RPhiB].cut+")";
@@ -301,6 +301,10 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,
 
     for(const auto& l :lepCats) for(const auto& b :srPCrBtagCats)
         for(const auto& p :purCats)  for(const auto& h :hadCuts){
+
+        	// hack
+        	if(l=="e" && b=="T" && p=="HP") continue;
+
             const std::string catName = l +"_"+b+"_"+p +"_"+h;
             std::string args = "-nF "+distName +" -nH " + catName + "_"+hhMCS.cut
                     + " -nN "+ name+"_"+processes[QCD] + " -nD "+ name+"_"+processes[WJETS]
@@ -346,6 +350,7 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
             sels.emplace_back(ci1.name(),
                     ci1.cut()+"*"+getQCDSF(name,filename,ci1.l,ci1.p,ci1.h));
             sels.emplace_back( std::string("noQCDSF_") +  ci1.name(),ci1.cut());
+
         } else {
             sels.emplace_back(ci1.name(),ci1.cut());
         }
@@ -356,16 +361,16 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
         sels.emplace_back(ci2.name(),ci2.cut());
     }
 
+    // combined 1l + 2l distributions
     CatIterator cit1;
     while (cit1.getBin()) {
     	if(!cit1.is(LEP_EMU)) continue;
     	if(!cit1.is(PURE_I)) continue;
-    	if(!cit1.is(BTAG_LMT)) continue;
 
     	DilepCatIterator cit2;
     	while (cit2.getBin()) {
         	if(!cit2.is(LEP_INCL)) continue;
-        	if(!cit2.is(BTAG_LMT)) continue;
+        	if(cit1.b != cit2.b)   continue;
 
         	sels.emplace_back(cit1.name()+"_"+cit2.name(),"("+cit1.cut()+")||("+cit2.cut()+")");
     	}
@@ -611,7 +616,7 @@ void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename
     // do the inclusive 1l + 2l category (do each btagging cat)
     for (const auto& b : btagCats) {
         std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_NONE]
-        					+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts[SEL_NONE];
+        				+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts[SEL_NONE];
         mkShapes(inclCatName);
     }
 
@@ -964,7 +969,7 @@ void go(int modelToDo, int channel, std::string treeDir) {
     }
 
     //Turn on TTBar scaling
-    nomW.cut = nomW.cut+"*" +getTTBarSF("../supportInputs/HHbb1o2l") ;
+    nomW.cut = nomW.cut+"*"+getTTBarSF("../supportInputs/HHbb1o2l") ;
 
     std::string treeAreaIncl = treeDir + "../betrees_mc.root";
 
@@ -978,7 +983,6 @@ void go(int modelToDo, int channel, std::string treeDir) {
                 hhInclRange.cut+"&&"+hbbInclRange.cut,true,true,
                 {{bkgSels[BKG_QG],genSel},{bkgSels[BKG_QG]+"_wQCD",bkgSels[BKG_QG].cut}}
         );
-
         makeFittingDistributions(name,filename,treeArea,
                 hhRange.cut+"&&"+hbbRange.cut,false,true,
                 {{bkgSels[BKG_QG],genSel},{bkgSels[BKG_QG]+"_wQCD",bkgSels[BKG_QG].cut}}
@@ -986,6 +990,7 @@ void go(int modelToDo, int channel, std::string treeDir) {
 
         makeBackgroundShapes2DConditional(name,filename,treeArea,
                 genSel,false,true,0.4,1,0.75,3);//P(hbb|hh)
+
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,channel,true,1,3);
         mergeBackgroundShapes(name,filename,channel,true);
         fitBackgroundShapes2DConditional(name,filename,true,channel);
@@ -1002,9 +1007,9 @@ void go(int modelToDo, int channel, std::string treeDir) {
         makeFittingDistributions(name,filename,treeArea,
                 genSel+ "&&"+ hhRange.cut+"&&"+hbbRange.cut,false);
 
-
         makeBackgroundShapes2DConditional(name,filename,treeArea,
                 genSel,false,true,0.5,3,0.75,5);//P(hbb|hh) 0.5,2,0.75,8 old values
+
         makeBackgroundShapesMVVAdaKernel(name,filename,treeArea,genSel+"&&"+hbbRange.cut,channel,false,1,4);
         mergeBackgroundShapes(name,filename,channel,true);
         fitBackgroundShapes2DConditional(name,filename,true,channel);
