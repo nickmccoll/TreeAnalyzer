@@ -919,7 +919,7 @@ public:
 
 
         auto bN = HSolverBasic::getInvisible(met, (qqJet.p4()+lepton.p4()));
-
+        const double oHH = (qqJet.p4()+lepton.p4()+bN.p4()+ bbJet.p4()).mass();
 
         const double lHH = (hwwInfo.hWW + bbJet.p4()).mass();
 
@@ -958,7 +958,7 @@ public:
             plotter.getOrMake1DPre(prefix, "alt",";likeli",200,0,100)
                     ->Fill(altHWWInfo.rawLikeli,weight);
 
-            plotter.getOrMake1DPre(prefix, "md",";MD",200,0,200)
+            plotter.getOrMake1DPre(prefix, "md",";MD",300,0,300)
                     ->Fill(md,weight);
 
 
@@ -989,9 +989,16 @@ public:
         mkDiscPlts(smpName);
         if(lHH>1000) mkDiscPlts(smpName +"_m1000");
         if(lHH>2000) mkDiscPlts(smpName +"_m2000");
+
+        if(oHH>1000) mkDiscPlts(smpName +"_om1000");
+        if(oHH>2000) mkDiscPlts(smpName +"_om2000");
+
+
         if(hwwInfo.likeli < 1.45)  mkDiscPlts(smpName +"_lllt1p45");
         if(hwwInfo.likeli < 1.45 && lHH>1000)  mkDiscPlts(smpName +"_m1000_lllt1p45");
         if(hwwInfo.likeli < 1.45 && lHH>2000)  mkDiscPlts(smpName +"_m2000_lllt1p45");
+
+
 
         if(md < 125 && lHH>1000)  mkDiscPlts(smpName +"_m1000_mdlt125");
         if(md < 125 && lHH>2000)  mkDiscPlts(smpName +"_m2000_mdlt125");

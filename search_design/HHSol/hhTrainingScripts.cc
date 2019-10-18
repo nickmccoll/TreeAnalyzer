@@ -258,8 +258,10 @@ TEST RESULTS
   //Mass shape comparison
 {
   TFile * f = new TFile("hSolTrees_test.root");
-  std::vector<TString> sigs = {"radion_m1000","radion_m2000","ttbar","wjets"};
-  std::vector<TString> vars = {"simpleHH","chi2HH","likeliHH"};
+  std::vector<TString> sigs = {"radion_m1000","radion_m2000","radion_m3000","ttbar","wjets"};
+  // std::vector<TString> vars = {"simpleHH","chi2HH","likeliHH"};
+    std::vector<TString> vars = {"simpleHH","likeliHH"};
+  std::vector<TString> varNs = {"Old method","Likelihood method"};
 
   for(unsigned int iS = 0; iS < sigs.size(); ++iS){
     Plotter * p = new Plotter();
@@ -267,9 +269,12 @@ TEST RESULTS
       TH1* h = 0;
       f->GetObject(sigs[iS]+"_"+vars[iV],h);
       if(h==0) continue;
-      p->addHistLine(h,vars[iV]);
+      p->addHistLine(h,varNs[iV]);
     }
+    p->rebin(2);
     p->setBotMinMax(0,2);
+    p->setXTitle("#it{m}_{HH} [GeV]");
+    p->setYTitle("Arbitary units");
     p->drawSplitRatio(0,"stack",false,false,sigs[iS]);
   }
 
@@ -279,11 +284,14 @@ TEST RESULTS
 //Efficiency curves of the likli/chi
 {
   TFile * f = new TFile("hSolTrees_test.root");
-  std::vector<TString> sigs = {"radion_m1000","radion_m2000","radion_m4000","ttbar_m1000","wjets_m1000","ttbar_m2000","wjets_m2000"};
+  // std::vector<TString> sigs = {"radion_m1000","radion_m2000","radion_m4000","ttbar_m1000","wjets_m1000","ttbar_m2000","wjets_m2000"};
+    std::vector<TString> sigs = {"radion_m1000","radion_m2000","ttbar_m1000","wjets_m1000"};
+    std::vector<TString> sigNs = {"1 TeV #it{m}_{X}","2 TeV #it{m}_{X}","t#bar{t}","W+jets"};
   // std::vector<TString> vars = {"chi2","likeli","OSQQ","OSQQPZ","VQQ","VQQPZ"};
   // std::vector<TString> vars = {"chi2","likeli","likeli_nAlt","alt"};
     // std::vector<TString> vars = {"chi2","Blikeli","Blikeli_nAlt","bAlt"};
-        std::vector<TString> vars = {"chi2","likeli","likeli2"};
+        // std::vector<TString> vars = {"chi2","likeli","likeli2"};
+        std::vector<TString> vars = {"md"};
   
   
   // std::vector<TString> sigs = {"radion_m1000","radion_m2000","radion_m3000","ttbar_m1000","wjets_m1000"};
@@ -300,15 +308,16 @@ TEST RESULTS
       TH1* h = 0;
       f->GetObject(sigs[iS]+"_"+vars[iV],h);
       if(h==0) continue;
-      h = PlotTools::getIntegral(h,false,true);
-      // p->addHistLine(h,sigNs[iS]);
-      p->addHistLine(h,sigs[iS]);
+        // h = PlotTools::getIntegral(h,false,true);
+      p->addHistLine(h,sigNs[iS]);
+      // p->addHistLine(h,sigs[iS]);
     }
     p->setBotMinMax(0,2);
     // p->drawSplitRatio(0,"stack",false,false,vars[iV]);
-    // p->normalize();
-    // p->rebin(4);
-    p->setXTitle("miniminized -2*log(L)");
+    p->normalize();
+    p->rebin(2);
+    // p->setXTitle("miniminized -2*log(L)");
+      p->setXTitle("#it{D}");
     p->draw(false,vars[iV]);
   }
   
@@ -587,8 +596,8 @@ TEST RESULTS
 ///ROC CURVES
 {
   TFile * f = new TFile("hSolTrees_test.root");
-  std::vector<TString> sigs = {"radion_m1000","radion_m2000"};
-  std::vector<TString> bkgCs = {"m1000","m2000"};
+  std::vector<TString> sigs = {"radion_m2000"};
+  std::vector<TString> bkgCs = {"m2000"};
   
   
   
@@ -597,7 +606,7 @@ TEST RESULTS
   // std::vector<TString> bkgCs = {"m1000"};
   std::vector<TString> sigNs = {""};
   // std::vector<TString> varNss = {"signal L","bkg. L", "L ratio"};
-  std::vector<TString> varNss = {"ratio1","ratio2", "raw"};
+  std::vector<TString> varNss = {"#it{D} (new)","#it{m}_{D} (old)"};
   
   // std::vector<TString> sigs = {"radion_m1000_lllt32"};
   // std::vector<TString> bkgCs = {"lllt32"};
@@ -610,7 +619,7 @@ TEST RESULTS
   
     // std::vector<TString> vars = {"Blikeli","Blikeli_nAlt"};
     // std::vector<TString> vars = {"SoBlikeli","SoBNlikeli"};
-    std::vector<TString> vars = {"likeli","likeli2"};
+    std::vector<TString> vars = {"likeli2","md"};
   
   
 
@@ -627,10 +636,14 @@ TEST RESULTS
         f->GetObject(bkgs[iB]+"_"+bkgCs[iS]+"_"+vars[iV],hb);     
         if(hb==0)continue;
         hb=(TH1*)hb->Clone();
-        
+        PlotTools::toUnderflow(hs);
+        PlotTools::toOverflow(hs);
+        PlotTools::toUnderflow(hb);
+        PlotTools::toOverflow(hb);
         auto * roc = PlotTools::getRocCurve(hs,hb,iV==cutGT, "signal eff","bkg. eff");
-        p->addGraph(roc,sigs[iS]+"_"+vars[iV]);   
-                // p->addGraph(roc,varNss[iV]);
+        // p->addGraph(roc,sigs[iS]+"_"+vars[iV]);
+        // p->addGraph(roc,sigs[iS]+"_"+vars[iV]);
+                p->addGraph(roc,varNss[iV]);
                         // p->addGraph(roc,vars[iV]); 
       }                  
     }
@@ -801,5 +814,104 @@ for(unsigned int iB = 0; iB < bkgs.size(); ++iB){
     
   }
 }
+  
+}
+
+
+////////////// PLOTS for the Meeting ///////////////////
+{
+  TFile * f = new TFile("hhSol_templates.root","read");
+  std::vector<TString> hists = {
+  "signal_low_vqq_hWW","signal_low_osqq_hWW",
+  "signal_low_vqq_Wlnu","signal_low_osqq_Wlnu",
+  "signal_low_vqq_extraMetPerp","signal_low_osqq_extraMetPerp",
+  "signal_low_vqq_extraMetParRelhwwMag","signal_low_osqq_extraMetParRelhwwMag",
+  "signal_low_vqq_wqqPTRes","signal_low_osqq_wqqPTRes",
+  "signal_low_vqq_qqSDMassCoarse","signal_low_osqq_qqSDMassCoarse",
+
+};
+  
+  std::vector<TString> xtitles = {
+    "#it{m}_{#it{l}#nu qq'}","#it{m}_{#it{l}#nu qq'}",
+    "#it{m}_{#it{l}#nu}","#it{m}_{#it{l}#nu}",
+    "extra perpendicular #it{p}^{miss}_{T}","extra perpendicular #it{p}^{miss}_{T}",
+    "relative extra parallel #it{p}^{miss}_{T}","relative extra parallel #it{p}^{miss}_{T}",
+    "qq' jet #it{p}_{T} response","qq' jet #it{p}_{T} response",
+    "#it{m}_{jet} [GeV]","#it{m}_{jet} [GeV]"
+  };
+    
+    
+  TString ytitle = "Prob. density";
+  TString ytitle2 = "Probability";
+  int yt2 = 10;
+  
+  for(unsigned int iH = 0; iH < hists.size(); ++iH){
+    TH1* h = 0;
+    f->GetObject(hists[iH],h);
+    if(!h) continue;
+    h->SetXTitle(xtitles[iH]);    
+    if(iH>= yt2){
+      h->GetYaxis()->SetRangeUser(0,1);
+      h->SetYTitle(ytitle2);  
+    } else {
+      h->SetYTitle(ytitle);        
+    }
+    h->GetXaxis()->SetTitleOffset(1.0); 
+    h->GetYaxis()->SetTitleOffset(1.45); 
+    auto * c = new TCanvas();
+    h->Draw("hist");
+    c->Print("plots/"+hists[iH] +".pdf");
+  }
+}
+
+{
+  Plotter * p = new Plotter();
+  p->addStackHist(radion_m1000_onshellSD_qqSDMass,"Virtual W#rightarrow#it{l}#nu");
+  p->addStackHist(radion_m1000_virtualSD_qqSDMass,"Virtual W#rightarrowqq'");
+  p->rebin(4);
+  p->normalize();
+  p->setXTitle("#it{m}_{jet} [GeV]");
+  p->setYTitle("arbitrary units");
+  p->draw();
+  
+}
+
+{
+  std::vector<double> masses = {800 ,900 ,1000,2000,2500,3000};
+  // std::vector<double> oldV = {0.135254, 0.0766602, 0.0522461, 0.0112305, 0.00927734, 0.00732422};
+  // std::vector<double> newV = { 0.0922852, 0.0532227, 0.0366211, 0.00927734, 0.0078125, 0.00732422}
+  
+  std::vector<double> oldV = {0.059082, 0.0356445, 0.0258789, 0.00634766, 0.00537109, 0.00439453};
+  std::vector<double> newV = {0.0512695, 0.0307617, 0.0219727, 0.00634766, 0.00439453, 0.00439453};
+  ;
+  
+  TGraph * go = new TGraph();
+  TGraph * gn = new TGraph();
+  TGraph * gr = new TGraph();
+  for(unsigned int iP = 0; iP < masses.size(); ++iP){
+    go->SetPoint(iP,masses[iP],oldV[iP]*1000);
+    gn->SetPoint(iP,masses[iP],newV[iP]*1000);
+    gr->SetPoint(iP,masses[iP],newV[iP]/oldV[iP]);
+  }
+  Plotter*p = new Plotter();
+  p->addGraph(go,"Old");
+  p->addGraph(gn,"New");
+  p->setXTitle("#it{m}_{X} [GeV]");
+  p->setYTitle("#sigma#it{B}(X#rightarrowHH) [fb]");
+  p->setMinMax(1,300.);
+  auto *c = p->draw(true,"plots/12l_diff.pdf");
+  c->SetLogy();
+  c->Update();
+  
+  
+  Plotter*p2 = new Plotter();
+  p2->addGraph(gr,"New/Old");
+  p2->setXTitle("#it{m}_{X} [GeV]");
+  p2->setYTitle("Relative limit (new/old)");
+  // p->setMinMax(1,300.);
+  p2->draw(true,"plots/12lrat.pdf");
+
+  
+  
   
 }
