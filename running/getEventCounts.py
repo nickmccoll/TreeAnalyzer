@@ -28,6 +28,7 @@ def get_num_mc_events(filelist, prefix=''):
         hist = file.Get(args.histName)
         totnegentries += hist.GetBinContent(3)
         totposentries += hist.GetBinContent(2)
+        file.Close()
     return totposentries, totnegentries
 def get_num_data_events(filelist, prefix=''):
     totposentries = 0
