@@ -90,7 +90,6 @@ public:
     std::shared_ptr<FatJetReader     > reader_fatjet   ;
     std::shared_ptr<FatJetReader     > reader_fatjet_noLep;
     std::shared_ptr<JetReader        > reader_jet        ;
-    std::shared_ptr<JetReader        > reader_jet_chs    ;
 
     FillerConstants::MCProcess mcProc = FillerConstants::NOPROCESS;
     int             signal_mass=0;
@@ -158,7 +157,6 @@ public:
     std::unique_ptr<SubJetBTagScaleFactors> sjbtagSFProc ;
     std::unique_ptr<HbbFatJetScaleFactors>  hbbFJSFProc ;
     std::unique_ptr<TopPTWeighting>         topPTProc ;
-    std::unique_ptr<JERCorrector>         JERAK4PuppiProc ;
     std::unique_ptr<JERCorrector>         JERAK4CHSProc ;
     std::unique_ptr<JERCorrector>         JERAK8PuppiProc ;
     std::unique_ptr<JESUncShifter>        JESUncProc ;

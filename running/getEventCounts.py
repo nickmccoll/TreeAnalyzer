@@ -11,13 +11,13 @@ parser = argparse.ArgumentParser(description='Prepare and submit ntupling jobs')
 parser.add_argument("-i", "--inputData", dest="inputData", default="datasets.conf", help="Input dataset. [Default: datasets.conf]")
 parser.add_argument("-o", "--outputData", dest="outputData", default="procdatasets.conf", help="output dataset. [Default: procdatasets.conf]")
 parser.add_argument("-d", "--dataDir", dest="dataDir", default="/eos/uscms/store/user/${USER}/13TeV/processed", help="Location of data [Default: \"/eos/uscms/store/user/${USER}/13TeV/ntuples\"]")
-parser.add_argument("-t", "--treeName", dest="treeName", default="treeMaker/Events", help="data tree [Default: \"treeMaker/Events\"]")
+parser.add_argument("-t", "--histName", dest="histName", default="eventCounter/eventWeights", help="data tree [Default: \"treeMaker/Events\"]")
 if len(sys.argv)==1:
     parser.print_help()
     sys.exit(1)
 args = parser.parse_args()
 
-def get_num_mc_events(filelist, prefix='', selection=''):
+def get_num_mc_events(filelist, prefix=''):
     totposentries = 0
     totnegentries = 0
     for filename in filelist :
@@ -25,19 +25,20 @@ def get_num_mc_events(filelist, prefix='', selection=''):
         file = TFile.Open(filepath)
         if not file:
             continue
-        tree = file.Get(args.treeName)
-        totnegentries += tree.GetEntries('event_genWeight<0' + selection)
-        totposentries += tree.GetEntries('event_genWeight>0' + selection)
+        hist = file.Get(args.histName)
+        totnegentries += hist.GetBinContent(3)
+        totposentries += hist.GetBinContent(2)
+        file.Close()
     return totposentries, totnegentries
-def get_num_data_events(filelist, prefix='', selection=''):
+def get_num_data_events(filelist, prefix=''):
     totposentries = 0
     for filename in filelist :
         filepath = '/'.join(['%s' % prefix, '%s' % filename])
         file = TFile.Open(filepath)
         if not file:
             continue
-        tree = file.Get(args.treeName)
-        totposentries += tree.GetEntries(selection)
+        hist = file.Get(args.histName)
+        totposentries += hist.GetBinContent(2)
     return totposentries
 
 def addSample(name,datarun,cross,dasName,configs) :
@@ -49,8 +50,8 @@ def addSample(name,datarun,cross,dasName,configs) :
     	cmd = (" eos root://cmseos.fnal.gov find -f %s | egrep '.*%s(-ext[0-9]*|)_[0-9]*.root'" % ( args.dataDir, name))
     	prefix = "root://cmseos:1094/"
     else:
-    	cmd = ("find %s -f | egrep '.*%s(-ext[0-9]*|)_[0-9]*.root'" % (args.dataDir, name))
-    	prefix = ""
+    	cmd = ("find %s | egrep '.*%s(-ext[0-9]*|)_[0-9]*.root'" % (args.dataDir, name))
+    	prefix = "/"
     ps = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     result = ps.communicate()
     filelist = result[0].rstrip('\n').split('\n')

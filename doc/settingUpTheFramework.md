@@ -15,6 +15,7 @@ make
 If you want to use some background estimation macros that depend on combine, you have to compile and setup combine. In the case of using linux (with CMSSW) you can use the built in combine...otherwise you have to install it.
 
 #### CMSSW based instructions
+Note: Macros based on CombinedLimit are no longer supported for running w/ CMSSW. This can be added back in if necessary.
 ```Shell
 cd $CMSSW_BASE/src/
 cmsenv

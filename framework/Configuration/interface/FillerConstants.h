@@ -47,7 +47,7 @@ const std::vector<std::string> MCProcessNames = { "NONE","signal","ttbar","wjets
 enum SignalType  {NOSIGNAL,RADION,BLKGRAV};
 const std::vector<std::string> SignalTypeNames = {"NONE", "radion","blkgrav"};
 
-enum JetIDStatus { JETID_PU_L,JETID_PU_M,JETID_PU_T, JETID_LOOSE, JETID_TIGHT, JETID_TIGHTNOLEP};
+enum JetIDStatus { JETID_PU_L,JETID_PU_M,JETID_PU_T, JETID_TIGHT, JETID_TIGHTNOLEP};
 
 enum ElectronID {
      ELID_cut_loose
@@ -132,33 +132,52 @@ enum METFilters{
     ,Flag_trkPOG_toomanystripclus53X
     ,Flag_trkPOG_logErrorTooManyClusters
     ,Flag_METFilters
+    ,FLAG_ecalBadCalibFilterUpdate
     ,Flag_NFilters
 };
 
-
+enum Triggers_2016 {
+     HLT16_TkMu50
+    ,HLT16_Mu50
+    ,HLT16_IsoMu24
+    ,HLT16_IsoTkMu24
+    ,HLT16_Mu15_IsoVVVL_PFHT350
+    ,HLT16_Mu15_IsoVVVL_PFHT400
+    ,HLT16_Ele27_WPTight_Gsf
+    ,HLT16_Ele45_WPLoose_Gsf
+    ,HLT16_Ele25_eta2p1_WPTight_Gsf
+    ,HLT16_Ele45_CaloIdVT_GsfTrkIdT_PFJet200_PFJet50
+    ,HLT16_Ele50_CaloIdVT_GsfTrkIdT_PFJet165
+    ,HLT16_Ele115_CaloIdVT_GsfTrkIdT
+    ,HLT16_Ele15_IsoVVVL_PFHT350
+    ,HLT16_Ele15_IsoVVVL_PFHT400
+    ,HLT16_AK8PFJet450
+    ,HLT16_AK8PFJet360_TrimMass30
+    ,HLT16_PFHT800
+    ,HLT16_PFHT900
+    ,HLT16_PFMETNoMu110_PFMHTNoMu110_IDTight
+    ,HLT16_PFMETNoMu120_PFMHTNoMu120_IDTight
+    ,HLT16_Photon175
+    ,HLT16_NTrig
+};
 
 
 enum Triggers_2017 {
-    HLT17_PFHT500_PFMET100_PFMHT100_IDTight
-    ,HLT17_PFHT700_PFMET85_PFMHT85_IDTight
-    ,HLT17_PFHT800_PFMET75_PFMHT75_IDTight
-    ,HLT17_AK8PFHT850_TrimMass50
+     HLT17_AK8PFHT850_TrimMass50
     ,HLT17_AK8PFJet400_TrimMass30
     ,HLT17_AK8PFJet500
     ,HLT17_PFHT1050
     ,HLT17_PFMET120_PFMHT120_IDTight
     ,HLT17_PFMET120_PFMHT120_IDTight_PFHT60
-    ,HLT17_PFMET140_PFMHT140_IDTight
     ,HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight
     ,HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60
-    ,HLT17_PFMETNoMu140_PFMHTNoMu140_IDTight
     ,HLT17_PFMETTypeOne120_PFMHT120_IDTight
     ,HLT17_PFMETTypeOne120_PFMHT120_IDTight_PFHT60
-    ,HLT17_PFMETTypeOne140_PFMHT140_IDTight
     ,HLT17_Ele115_CaloIdVT_GsfTrkIdT
     ,HLT17_Ele15_IsoVVVL_PFHT450
     ,HLT17_Ele28_eta2p1_WPTight_Gsf_HT150
     ,HLT17_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned
+    ,HLT17_Ele27_WPTight_Gsf
     ,HLT17_Ele32_WPTight_Gsf
     ,HLT17_Ele32_WPTight_Gsf_L1DoubleEG
     ,HLT17_Ele35_WPTight_Gsf
@@ -168,6 +187,28 @@ enum Triggers_2017 {
     ,HLT17_Mu50
     ,HLT17_Photon200
     ,HLT17_NTrig
+};
+
+enum Triggers_2018 {
+     HLT18_Ele28_eta2p1_WPTight_Gsf_HT150
+    ,HLT18_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned
+    ,HLT18_Ele32_WPTight_Gsf
+    ,HLT18_Ele15_IsoVVVL_PFHT450
+    ,HLT18_Ele115_CaloIdVT_GsfTrkIdT
+    ,HLT18_Ele50_CaloIdVT_GsfTrkIdT_PFJet165
+    ,HLT18_IsoMu24
+    ,HLT18_Mu15_IsoVVVL_PFHT450
+    ,HLT18_Mu50
+    ,HLT18_AK8PFJet400_TrimMass30
+    ,HLT18_AK8PFHT800_TrimMass50
+    ,HLT18_PFHT1050
+    ,HLT18_AK8PFJet330_TrimMass30_PFAK8BoostedDoubleB_np4
+    ,HLT18_AK8PFJet330_TrimMass30_PFAK8BTagCSV_p1
+    ,HLT18_PFHT500_PFMET100_PFMHT100_IDTight
+    ,HLT18_PFHT700_PFMET85_PFMHT85_IDTight
+    ,HLT18_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60
+    ,HLT18_PFMETTypeOne140_PFMHT140_IDTight
+    ,HLT18_NTrig
 };
 
 

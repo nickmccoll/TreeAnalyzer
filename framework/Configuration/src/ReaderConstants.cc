@@ -10,7 +10,7 @@
 namespace TAna {
 
 namespace ReaderConstants{
-ParameterSet set2017Parameters() {
+ParameterSet setCommonParameters() {
     ParameterSet paramSet;
     paramSet.event.lumi = 41.53; //https://twiki.cern.ch/twiki/bin/view/CMS/TWikiLUM
     paramSet.event.mcFilters = {
@@ -19,9 +19,7 @@ ParameterSet set2017Parameters() {
             FillerConstants::Flag_HBHENoiseFilter,
             FillerConstants::Flag_HBHENoiseIsoFilter,
             FillerConstants::Flag_EcalDeadCellTriggerPrimitiveFilter,
-            FillerConstants::Flag_BadPFMuonFilter,
-            FillerConstants::Flag_BadChargedCandidateFilter,
-            FillerConstants::Flag_ecalBadCalibFilter
+            FillerConstants::Flag_BadPFMuonFilter
     };
     paramSet.event.dataFilters = paramSet.event.mcFilters;
     paramSet.event.dataFilters.push_back(FillerConstants::Flag_eeBadScFilter);
@@ -138,6 +136,22 @@ ParameterSet set2017Parameters() {
 
     paramSet.hww.dilepInvMassGuess = 55;
 
+    return paramSet;
+}
+ParameterSet set2016Parameters() {
+    ParameterSet paramSet = setCommonParameters();
+    return paramSet;
+}
+ParameterSet set2017Parameters() {
+    ParameterSet paramSet = setCommonParameters();
+    paramSet.event.mcFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
+    paramSet.event.dataFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
+    return paramSet;
+}
+ParameterSet set2018Parameters() {
+    ParameterSet paramSet = setCommonParameters();
+    paramSet.event.mcFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
+    paramSet.event.dataFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
     return paramSet;
 }
 }

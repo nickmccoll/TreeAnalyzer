@@ -28,13 +28,11 @@ bool passTriggerSuite2017(const EventReader& reader_event   ) {
 
     const bool passMET = passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight)
             || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)
-            || passTrig(HLT17_PFMETNoMu140_PFMHTNoMu140_IDTight)
 			|| passTrig(HLT17_PFMETTypeOne120_PFMHT120_IDTight)
 			|| passTrig(HLT17_PFMETTypeOne120_PFMHT120_IDTight_PFHT60)
-			|| passTrig(HLT17_PFMETTypeOne140_PFMHT140_IDTight)
 			|| passTrig(HLT17_PFMET120_PFMHT120_IDTight)
 			|| passTrig(HLT17_PFMET120_PFMHT120_IDTight_PFHT60)
-			|| passTrig(HLT17_PFMET140_PFMHT140_IDTight);
+			;
 
     const bool passJetHT = passTrig(HLT17_PFHT1050) || passTrig(HLT17_AK8PFJet500) ||
             passTrig(HLT17_AK8PFJet400_TrimMass30) || passTrig(HLT17_AK8PFHT850_TrimMass50);

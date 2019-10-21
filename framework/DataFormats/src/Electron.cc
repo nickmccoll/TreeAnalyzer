@@ -6,11 +6,10 @@ using namespace FillerConstants;
 namespace TAna {
 //--------------------------------------------------------------------------------------------------
 void Electron::addElectronInfo(float scEta,float scE, float mvaID,
-        float miniIsoFP, ASTypes::size16 id, float sc_act_o_pt, float sc_dr_act){
+        ASTypes::size16 id, float sc_act_o_pt, float sc_dr_act){
     _scEta   =  scEta   ;
     _scE   =  scE   ;
     _mvaID   =  mvaID   ;
-    _miniIsoFP=  miniIsoFP   ;
     _id      =  id      ;
     _sc_act_o_pt = sc_act_o_pt;
     _sc_dr_act = sc_dr_act;
@@ -18,7 +17,6 @@ void Electron::addElectronInfo(float scEta,float scE, float mvaID,
 //--------------------------------------------------------------------------------------------------
 float Electron::scEta      () const {return _scEta;}
 float Electron::mvaID      () const {return _mvaID;}
-float Electron::miniIsoFP   () const {return _miniIsoFP;}
 float Electron::sc_act_o_pt() const {return _sc_act_o_pt;}
 float Electron::sc_dr_act  () const {return _sc_dr_act;}
 //--------------------------------------------------------------------------------------------------

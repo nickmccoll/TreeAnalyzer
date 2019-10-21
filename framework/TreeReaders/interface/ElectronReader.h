@@ -30,13 +30,12 @@ public:
 	ra_float sip3D                ;
 	ra_float mvaID                 ;
 	ra_float miniIso               ;
-	ra_float miniIsoFP             ;
 	ra_float eaRelIso              ;
-	ra_float trackerIso           ;
 	ra_float dRnorm                ;
 	ra_float lepAct_o_pt           ;
 	ra_float sc_act_o_pt           ;
 	ra_float sc_dr_act            ;
+	ra_float tthMVA                ;
 	ra_size16 passMedCutBased      ;
 	ra_size16 passTightCutBased    ;
 	ra_float  full5x5_sigmaIetaIeta;

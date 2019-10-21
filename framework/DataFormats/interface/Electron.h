@@ -22,12 +22,11 @@ public :
     ~Electron() {}
 
     void addElectronInfo(float scEta,float scE, float mvaID,
-            float miniIsoFP, ASTypes::size16 id, float sc_act_o_pt, float sc_dr_act);
+            ASTypes::size16 id, float sc_act_o_pt, float sc_dr_act);
 
     float scEta      () const;
     float scE        () const;
     float mvaID      () const;
-    float miniIsoFP  () const;
     float sc_act_o_pt() const;
     float sc_dr_act  () const;
 
@@ -52,7 +51,6 @@ protected :
     float           _scEta      =0;
     float           _scE        =0;
     float           _mvaID      =0;
-    float           _miniIsoFP  =0;
     ASTypes::size16 _id         =0;
     float           _sc_act_o_pt=0;
     float           _sc_dr_act  =0;

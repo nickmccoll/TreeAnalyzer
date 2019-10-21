@@ -29,24 +29,28 @@ public :
     template <class InputCoordSystem>
     FatJet(const ROOT::Math::LorentzVector<InputCoordSystem> &mom,
             const int idx,
-            const float toRaw=0, const float csv=0, const float deep_csv=0)
-            : Jet(mom, idx,toRaw,csv,deep_csv){}
+            const float toRaw,
+            const ASTypes::size8 jetID)
+            : Jet(mom, idx,toRaw,jetID){}
     virtual ~FatJet() {}
 
-    void addExtraInfo(const float jetID,
-            const float bbt, const float tau1, const float tau2);
+    void addFJBtagging( const float bbt, const float deep_MDZHbb, const float deep_MDHbb
+            , const float deep_Hbb);
+    void addWTaging(const float deep_W);
+    void addSubStructure(const float tau1, const float tau2, const float sdUp, const float sdDown);
 
     void addSubJet(const SubJet& sj);
 
     float     bbt()       const;
+    float     deep_MDZHbb()       const;
+    float     deep_MDHbb ()       const;
+    float     deep_Hbb   ()       const;
+    float     deep_W     ()       const;
     float     tau1()      const;
     float     tau2()      const;
-    float     tau3()      const;
     float     tau2otau1() const;
-    float     tau3otau1() const;
-    float     tau3otau2() const;
-    float     ecfb1()     const;
-    float     ecfb2()     const;
+    float     rawSDMassUp()   const;
+    float     rawSDMassDown() const;
 
     ASTypes::size      nSubJets()  const;
     MomentumF sdMom()     const;
@@ -58,10 +62,16 @@ public :
     const std::vector<SubJet>& subJets() const;
 
 protected :
-
-    float _bbt  =0;
     float _tau1 =0;
     float _tau2 =0;
+    float _sdUp =0;
+    float _sdDown =0;
+    float _bbt          =0;
+    float _deep_MDZHbb  =0;
+    float _deep_MDHbb   =0;
+    float _deep_Hbb     =0;
+    float _deep_W       =0;
+
     std::vector<SubJet> _sjs;
 
 

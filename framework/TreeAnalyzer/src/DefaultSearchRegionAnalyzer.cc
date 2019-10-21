@@ -46,7 +46,6 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     hbbFJSFProc .reset(new HbbFatJetScaleFactors (dataDirectory));
     topPTProc   .reset(new TopPTWeighting (dataDirectory));
 
-    JERAK4PuppiProc .reset(new JERCorrector (dataDirectory, "corrections/Summer16_25nsV1_MC_PtResolution_AK4PFPuppi.txt",randGen));;
     JERAK4CHSProc   .reset(new JERCorrector (dataDirectory, "corrections/Summer16_25nsV1_MC_PtResolution_AK4PFCHS.txt",randGen));;
     JERAK8PuppiProc .reset(new JERCorrector (dataDirectory, "corrections/Summer16_25nsV1_MC_PtResolution_AK8PFPuppi.txt",randGen));;
     JESUncProc . reset(new JESUncShifter());
@@ -78,12 +77,11 @@ void DefaultSearchRegionAnalyzer::turnOffCorr(Corrections corr)
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::loadVariables()  {
     reader_event       =loadReader<EventReader>   ("event",isRealData());
-    reader_fatjet      =loadReader<FatJetReader>  ("ak8PuppiJet",isRealData());
-    reader_fatjet_noLep=loadReader<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false,false);
-//    reader_jet_chs     =loadReader<JetReader>     ("ak4Jet",isRealData());
-    reader_jet         =loadReader<JetReader>     ("ak4PuppiJet",isRealData(),false);
+    reader_fatjet      =loadReader<FatJetReader>  ("ak8PuppiJet",isRealData(),true,true);
+    reader_fatjet_noLep=loadReader<FatJetReader>  ("ak8PuppiNoLepJet",isRealData(),false,false,true);
+    reader_jet         =loadReader<JetReader>     ("ak4Jet",isRealData());
     reader_electron    =loadReader<ElectronReader>("electron");
-    reader_muon        =loadReader<MuonReader>    ("muon");
+    reader_muon        =loadReader<MuonReader>    ("muon",isRealData());
 
     if(!isRealData()){
         reader_genpart =loadReader<GenParticleReader>   ("genParticle");
@@ -117,12 +115,10 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
     if(isCorrOn(CORR_JER) && !reader_fatjet) mkErr("fatjet","CORR_JER");
     if(isCorrOn(CORR_JER) && !reader_fatjet_noLep) mkErr("fatjet_noLep","CORR_JER");
     if(isCorrOn(CORR_JER) && !reader_jet) mkErr("jet","CORR_JER");
-    if(isCorrOn(CORR_JER) && !reader_jet_chs) mkErr("jet_chs","CORR_JER");
 
     if(isCorrOn(CORR_JES) && !reader_fatjet) mkErr("fatjet","CORR_JES");
     if(isCorrOn(CORR_JES) && !reader_fatjet_noLep) mkErr("fatjet_noLep","CORR_JES");
     if(isCorrOn(CORR_JES) && !reader_jet) mkErr("jet","CORR_JES");
-    if(isCorrOn(CORR_JES) && !reader_jet_chs) mkErr("jet_chs","CORR_JES");
 }
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::setupParameters(){
@@ -149,7 +145,10 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     } else {
         mcProc = FillerConstants::MCProcess(*(reader_event->process));
         signal_mass = *reader_event->sampParam;
-        if (mcProc == FillerConstants::SIGNAL) smpName = TString::Format("m%i",signal_mass);
+        if (mcProc == FillerConstants::SIGNAL){
+            smpName = TString::Format("%s_m%i",
+                    FillerConstants::SignalTypeNames[*reader_event->signalType].data(),signal_mass);
+        }
         else smpName = FillerConstants::MCProcessNames[mcProc];
     }
 
@@ -166,16 +165,12 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         if(isCorrOn(CORR_JES) ){
             Met dummyMET =reader_event->met;
             JESUncProc ->processJets(*reader_jet,reader_event->met);
-            JESUncProc ->processJets(*reader_jet_chs,dummyMET);
             JESUncProc ->processFatJets(reader_fatjet_noLep->jets);
             JESUncProc ->processFatJets(reader_fatjet->jets);
         }
         if(isCorrOn(CORR_JER) ){
-            Met dummyMET =reader_event->met;
-            JERAK4PuppiProc ->processJets(
-                    *reader_jet,reader_event->met,reader_jet_chs->genJets,reader_event->rho.val());
             JERAK4CHSProc   ->processJets(
-                    *reader_jet_chs,dummyMET,reader_jet_chs->genJets,reader_event->rho.val());
+                    *reader_jet,reader_event->met,reader_jet->genJets,reader_event->rho.val());
             JERAK8PuppiProc ->processFatJets(
                     reader_fatjet_noLep->jets,std::vector<GenJet>(),reader_event->rho.val());
             JERAK8PuppiProc ->processFatJets(
@@ -296,7 +291,6 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     }
 
     HSolverLiInfo  hwwInfoLi;
-    HSolverLiInfo  hwwInfoBkgLi;
     HSolverChiInfo hwwInfoChi;
     if(wjjCand){
         const double qqSDMass = wjjCand->sdMom().mass();

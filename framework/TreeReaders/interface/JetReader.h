@@ -10,7 +10,7 @@ namespace TAna{
 class JetReader: public BaseReader {
 public:
     JetReader(std::string branchName, bool isRealData,
-            bool fillGenJets = true,  bool fillRecoJets = true);
+            bool fillGenJets = true,  bool fillRecoJets = true, bool fillBTagging=true);
 	virtual ~JetReader();
 	virtual void setup(TreeReaderWrapper * wrapper);
 	virtual void processVars();
@@ -20,6 +20,7 @@ private:
 	bool realData   ;
 	bool fillGenJets;
 	bool fillRecoJets;
+	bool fillBTagging;
 public:
 	//branches from the tree
     ra_float pt                 ;
@@ -31,6 +32,7 @@ public:
     ra_float metUnc_rawPy       ;
     ra_float csv                ;
     ra_float deep_csv           ;
+    ra_float deep_flavor        ;
     ra_size8 id                 ;
     ra_int8  hadronFlavor       ;
     ra_int8  partonFlavor       ;
