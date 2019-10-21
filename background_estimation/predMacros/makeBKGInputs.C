@@ -306,7 +306,7 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,
         	if(l=="e" && b=="T" && p=="HP") continue;
 
             const std::string catName = l +"_"+b+"_"+p +"_"+h;
-            std::string args = "-nF "+distName +" -nH " + catName + "_"+hhMCS.cut
+            std::string args = "-nF "+distName +" -nH " + catName + "_"+hhMCS
                     + " -nN "+ name+"_"+processes[QCD] + " -nD "+ name+"_"+processes[WJETS]
                     + " -b 0,500,600,700,800,900,1000,1100,1250,1500,2500,3100,5050 -lb "
                     +" -g mix -fVar "+ MOD_MS + " -fMin "  +flt2Str(minHHMass)

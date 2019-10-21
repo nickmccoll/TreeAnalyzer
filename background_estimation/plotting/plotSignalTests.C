@@ -202,7 +202,7 @@ void plotEfficiencies(std::string name, std::string filename,std::string fitName
 	throw std::invalid_argument{"need to amend this function with input luminosity, etc"};
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<TObject*> paramPads;
-    double inclusiveN  = 1000*35.9; //1000 fb x lumi
+    double inclusiveN  = 1000*41.53; //1000 fb x lumi
     inclusiveN *= CutConstants::HHtobbVVBF; //BR to bbWW or bbZZ
 //    inclusiveN *= 2*.676*(.216+.108*.3524);
     //BR of WW to he, hmu or htau where the tau is leptonic...for the AN
@@ -664,7 +664,7 @@ void plotSignalTests(int cat = 0,int sig = RADION, bool do1lep = true, std::stri
         if(do1lep) sels = {"e_L_LP_full","mu_L_LP_full","e_M_LP_full","mu_M_LP_full","e_T_LP_full",
         		"mu_T_LP_full","e_L_HP_full","mu_L_HP_full","e_M_HP_full","mu_M_HP_full","e_T_HP_full",
 				"mu_T_HP_full"};
-        else sels = {"SF_L_full","OF_L_full","SF_M_full","OF_M_full","SF_T_full","OF_T_full"};3
+        else sels = {"SF_L_full","OF_L_full","SF_M_full","OF_M_full","SF_T_full","OF_T_full"};
         test2DFits(name,filename,signalMassBins[sig],"2D_fit",false,sels);
         //run below for an
 //        test2DFits(name,filename,{1600},"2D_fit",false,{"mu_M_LP_full"}); outName +=+"_forAN";
