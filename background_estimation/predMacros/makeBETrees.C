@@ -36,8 +36,6 @@ public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
         addUncVariables = (treeType == TREE_OTHER);
-        filename = fileName;
-
     }
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
@@ -171,8 +169,6 @@ public:
         			trig_N_ = 1.0;
         		}
         	} else trig_N_ = 1.0;
-
-        	if (filename.Contains("Glu")) xsec_ = xsec_ * 0.26;
         }
 
         if(lepChan == SINGLELEP){
