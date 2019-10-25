@@ -30,6 +30,4 @@ for f in fileList:
         print ("copy %s" %(f))
         ps2 = subprocess.Popen(cpcmd, shell=True)
         ps2.wait()
-        
-        
-%EXAMPLES
+            
