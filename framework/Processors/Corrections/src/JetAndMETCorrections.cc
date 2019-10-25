@@ -10,27 +10,17 @@
 namespace TAna {
 using namespace CorrHelp;
 //--------------------------------------------------------------------------------------------------
-JERCorrector::JERCorrector (const std::string& dataDir,const std::string& resFile,std::shared_ptr<TRandom3> rndGen, const CorrHelp::CORRTYPE cT )
-: cT(cT),resObj(dataDir+resFile),rndGen(rndGen){
+JERCorrector::JERCorrector (const std::string& dataDir,std::shared_ptr<TRandom3> rndGen, const CorrHelp::CORRTYPE cT )
+: dataDir(dataDir), cT(cT),rndGen(rndGen){
 
 }
 //--------------------------------------------------------------------------------------------------
-float JERCorrector::getSF(const CorrHelp::CORRTYPE cT, const float absETA) const {
-    if(cT == CorrHelp::NONE) return 1;
-    if(absETA < 0.522 ) return (cT == CorrHelp::NOMINAL ? 1.1595 : (cT== CorrHelp::DOWN ? 1.095  : 1.224  ));
-    if(absETA < 0.783 ) return (cT == CorrHelp::NOMINAL ? 1.1948 : (cT== CorrHelp::DOWN ? 1.1296 : 1.26   ));
-    if(absETA < 1.131 ) return (cT == CorrHelp::NOMINAL ? 1.1464 : (cT== CorrHelp::DOWN ? 1.0832 : 1.2096 ));
-    if(absETA < 1.305 ) return (cT == CorrHelp::NOMINAL ? 1.1609 : (cT== CorrHelp::DOWN ? 1.0584 : 1.2634 ));
-    if(absETA < 1.740 ) return (cT == CorrHelp::NOMINAL ? 1.1278 : (cT== CorrHelp::DOWN ? 1.0292 : 1.2264 ));
-    if(absETA < 1.930 ) return (cT == CorrHelp::NOMINAL ? 1.1000 : (cT== CorrHelp::DOWN ? 0.9921 : 1.2079 ));
-    if(absETA < 2.043 ) return (cT == CorrHelp::NOMINAL ? 1.1426 : (cT== CorrHelp::DOWN ? 1.0212 : 1.264  ));
-    if(absETA < 2.322 ) return (cT == CorrHelp::NOMINAL ? 1.1512 : (cT== CorrHelp::DOWN ? 1.0372 : 1.2652 ));
-    if(absETA < 2.500 ) return (cT == CorrHelp::NOMINAL ? 1.2963 : (cT== CorrHelp::DOWN ? 1.0592 : 1.5334 ));
-    if(absETA < 2.853 ) return (cT == CorrHelp::NOMINAL ? 1.3418 : (cT== CorrHelp::DOWN ? 1.1327 : 1.5509 ));
-    if(absETA < 2.964 ) return (cT == CorrHelp::NOMINAL ? 1.7788 : (cT== CorrHelp::DOWN ? 1.578  : 1.9796 ));
-    if(absETA < 3.139 ) return (cT == CorrHelp::NOMINAL ? 1.1869 : (cT== CorrHelp::DOWN ? 1.0626 : 1.3112 ));
-    else                return (cT == CorrHelp::NOMINAL ? 1.1922 : (cT== CorrHelp::DOWN ? 1.0434 : 1.341  ));
+void JERCorrector::setParameters(const JetParameters& param) {
 
+    ak8Puppi_resObj  .reset(new JMEStand::JetResolutionObject(dataDir+param.jer_AK8Puppi_resFile));
+    ak8Puppi_sfObj   .reset(new JMEStand::JetResolutionObject(dataDir+param.jer_AK8Puppi_sfFile ));
+    ak4CHS_resObj    .reset(new JMEStand::JetResolutionObject(dataDir+param.jer_AK4CHS_resFile  ));
+    ak4CHS_sfObj     .reset(new JMEStand::JetResolutionObject(dataDir+param.jer_AK4CHS_sfFile   ));
 }
 //--------------------------------------------------------------------------------------------------
 void JERCorrector::processJets(JetReader& jetreader,Met& met,const GenJetCollection& genjets, const float rho){
@@ -53,7 +43,14 @@ void JERCorrector::processJets(JetReader& jetreader,Met& met,const GenJetCollect
         float eta = j.eta() < -4.7 ? -4.7 : (j.eta() > 4.7 ? 4.7 : j.eta());
         parameters.setJetEta(eta);
         auto oRawFact = j.toRawFactor();
-        auto ptSF = correctJet(&j,gjptrs,parameters);
+
+        const float jres = ak4CHS_resObj->evaluateFormula(*ak4CHS_resObj
+                ->getRecord(parameters),parameters);
+        const float jSF =  ak4CHS_sfObj->getRecord(parameters)
+                 ->getParametersValues()[getSFCount(cT)];
+
+        auto ptSF = correctJet(&j,gjptrs,jres,jSF,0.4);
+
         deltaMX += ((jetreader.metUnc_rawPx)[j.index()]/oRawFact)*(1.0 - ptSF);
         deltaMY += ((jetreader.metUnc_rawPy)[j.index()]/oRawFact)*(1.0 - ptSF);
 //        std::cout << std::sqrt((*jetreader.metUnc_rawPx)[j.index()]*(*jetreader.metUnc_rawPx)[j.index()] + (*jetreader.metUnc_rawPy)[j.index()]*(*jetreader.metUnc_rawPy)[j.index()] )/oRawFact <<","<<
@@ -78,15 +75,33 @@ void JERCorrector::processFatJets(FatJetCollection& jets,const GenFatJetCollecti
         parameters.setJetPt(j.pt());
         float eta = j.eta() < -4.7 ? -4.7 : (j.eta() > 4.7 ? 4.7 : j.eta());
         parameters.setJetEta(eta);
-        correctJet(&j,gjptrs,parameters);
+
+        const float jres = ak8Puppi_resObj->evaluateFormula(*ak8Puppi_resObj
+                ->getRecord(parameters),parameters);
+        const float jSF =  ak8Puppi_sfObj->getRecord(parameters)
+                ->getParametersValues()[getSFCount(cT)];
+
+        correctJet(&j,gjptrs,jres,jSF,0.8);
     }
     std::sort(jets.begin(),jets.end(),PhysicsUtilities::greaterPT<FatJet>());
 }
 
 //--------------------------------------------------------------------------------------------------
-float JERCorrector::correctJet(Jet* jet, const std::vector<const GenJet*> genjets, JMEStand::JetParameters& params){
-    const float jres = resObj.evaluateFormula(*resObj.getRecord(params),params);
-    const float resSF = getSF(cT,jet->absEta());
+int JERCorrector::getSFCount(const CORRTYPE c) {
+    switch(c){
+    case NOMINAL:
+        return 0;
+    case DOWN:
+        return 1;
+    case UP:
+        return 2;
+    default:
+        throw std::invalid_argument(std::string("JERCorrector cannot be used with NONE"));
+    }
+};
+//--------------------------------------------------------------------------------------------------
+float JERCorrector::correctJet(Jet* jet, const std::vector<const GenJet*> genjets, const float jres,
+        const float resSF, const float coneR){
 
     double nearDR = 0;
     int idx = PhysicsUtilities::findNearestDRDeref(*jet,genjets,nearDR);
@@ -95,7 +110,7 @@ float JERCorrector::correctJet(Jet* jet, const std::vector<const GenJet*> genjet
 //    else std::cout << "-1,";
 //    std::cout << jres <<","<<resSF<<",";
     float ptSF = 1.0;
-    if(idx>= 0 && nearDR < 0.4/2.0 && std::fabs(jet->pt()-genjets[idx]->pt()) <3.0*jres*jet->pt() ){
+    if(idx>= 0 && nearDR < coneR/2.0 && std::fabs(jet->pt()-genjets[idx]->pt()) <3.0*jres*jet->pt() ){
         ptSF = 1 + (resSF-1.0)*(jet->pt()-genjets[idx]->pt())/jet->pt();
 //        std::cout <<(jet->pt()-genjets[idx]->pt())/jet->pt() <<","<<ptSF<<")";
     } else{

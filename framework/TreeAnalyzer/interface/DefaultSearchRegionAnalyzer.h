@@ -157,8 +157,7 @@ public:
     std::unique_ptr<SubJetBTagScaleFactors> sjbtagSFProc ;
     std::unique_ptr<HbbFatJetScaleFactors>  hbbFJSFProc ;
     std::unique_ptr<TopPTWeighting>         topPTProc ;
-    std::unique_ptr<JERCorrector>         JERAK4CHSProc ;
-    std::unique_ptr<JERCorrector>         JERAK8PuppiProc ;
+    std::unique_ptr<JERCorrector>         JERProc ;
     std::unique_ptr<JESUncShifter>        JESUncProc ;
     std::unique_ptr<METUncShifter>          METUncProc;
     std::unique_ptr<HSolverChi>             hSolverChi;

@@ -46,8 +46,8 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     hbbFJSFProc .reset(new HbbFatJetScaleFactors (dataDirectory));
     topPTProc   .reset(new TopPTWeighting (dataDirectory));
 
-    JERAK4CHSProc   .reset(new JERCorrector (dataDirectory, "corrections/Summer16_25nsV1_MC_PtResolution_AK4PFCHS.txt",randGen));;
-    JERAK8PuppiProc .reset(new JERCorrector (dataDirectory, "corrections/Summer16_25nsV1_MC_PtResolution_AK8PFPuppi.txt",randGen));;
+    JERProc   .reset(new JERCorrector (dataDirectory,randGen));;
+
     JESUncProc . reset(new JESUncShifter());
     METUncProc . reset(new METUncShifter());
     hSolverChi . reset(new HSolverChi());
@@ -123,8 +123,14 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::setupParameters(){
     switch(FillerConstants::DataEra(*reader_event->dataEra)){
+    case FillerConstants::ERA_2018:
+        parameters = ReaderConstants::set2018Parameters();
+        break;
     case FillerConstants::ERA_2017:
         parameters = ReaderConstants::set2017Parameters();
+        break;
+    case FillerConstants::ERA_2016:
+        parameters = ReaderConstants::set2016Parameters();
         break;
     default:
         throw std::invalid_argument(
@@ -134,6 +140,8 @@ void DefaultSearchRegionAnalyzer::setupParameters(){
     if(isCorrOn(CORR_AK4BTAG)) ak4btagSFProc->setParameters(parameters.jets);
     if(isCorrOn(CORR_TRIG))    trigSFProc->setParameters(parameters.event);
     if(isCorrOn(CORR_PU))      puSFProc->setParameters(parameters.event);
+    if(isCorrOn(CORR_JER))     JERProc->setParameters(parameters.jets);
+
 
     hSolverLi->setParamters(parameters.hww);
 }
@@ -169,11 +177,11 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
             JESUncProc ->processFatJets(reader_fatjet->jets);
         }
         if(isCorrOn(CORR_JER) ){
-            JERAK4CHSProc   ->processJets(
+            JERProc   ->processJets(
                     *reader_jet,reader_event->met,reader_jet->genJets,reader_event->rho.val());
-            JERAK8PuppiProc ->processFatJets(
+            JERProc ->processFatJets(
                     reader_fatjet_noLep->jets,std::vector<GenJet>(),reader_event->rho.val());
-            JERAK8PuppiProc ->processFatJets(
+            JERProc ->processFatJets(
                     reader_fatjet->jets,reader_fatjet->genJets,reader_event->rho.val());
         }
         if(isCorrOn(CORR_MET) ){
