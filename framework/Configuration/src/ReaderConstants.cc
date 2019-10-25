@@ -12,7 +12,7 @@ namespace TAna {
 namespace ReaderConstants{
 ParameterSet setCommonParameters() {
     ParameterSet paramSet;
-    paramSet.event.lumi = 41.53; //https://twiki.cern.ch/twiki/bin/view/CMS/TWikiLUM
+    paramSet.event.lumi = 1; //https://twiki.cern.ch/twiki/bin/view/CMS/TWikiLUM
     paramSet.event.mcFilters = {
             FillerConstants::Flag_goodVertices,
             FillerConstants::Flag_globalSuperTightHalo2016Filter,
@@ -140,16 +140,19 @@ ParameterSet setCommonParameters() {
 }
 ParameterSet set2016Parameters() {
     ParameterSet paramSet = setCommonParameters();
+    paramSet.event.lumi = 35.9;
     return paramSet;
 }
 ParameterSet set2017Parameters() {
     ParameterSet paramSet = setCommonParameters();
+    paramSet.event.lumi = 41.5;
     paramSet.event.mcFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
     paramSet.event.dataFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
     return paramSet;
 }
 ParameterSet set2018Parameters() {
     ParameterSet paramSet = setCommonParameters();
+    paramSet.event.lumi = 59.7;
     paramSet.event.mcFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
     paramSet.event.dataFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
     return paramSet;
