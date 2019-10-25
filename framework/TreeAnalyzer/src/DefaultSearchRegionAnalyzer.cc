@@ -188,15 +188,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     }
 
     //|||||||||||||||||||||||||||||| CHS JETS ||||||||||||||||||||||||||||||
-//    if(reader_jet_chs){
-//        jets_chs = PhysicsUtilities::selObjsMom(reader_jet_chs->jets,30);
-//        ht_chs = JetKinematics::ht(jets_chs);
-//    }
-
-    //|||||||||||||||||||||||||||||| PUPPI JETS ||||||||||||||||||||||||||||||
     if(reader_jet){
-        jets_puppi = PhysicsUtilities::selObjsMom(reader_jet->jets,30);
-        ht_puppi = JetKinematics::ht(jets_puppi);
+        jets_ht = PhysicsUtilities::selObjsMom(reader_jet->jets,30);
+        ht = JetKinematics::ht(jets_ht);
 
         jets = PhysicsUtilities::selObjsMom(reader_jet->jets,
                 parameters.jets.minJetPT,parameters.jets.maxJetETA,
@@ -231,9 +225,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
     passEventFilters= EventSelection::passEventFilters(parameters.event,*reader_event);
     passTriggerPreselection= EventSelection::passTriggerPreselection(
-            parameters.event,*reader_event,ht_puppi,selectedLeptons);
+            parameters.event,*reader_event,ht,selectedLeptons);
     passTriggerPreselection2l = EventSelection::passTriggerPreselection(
-            parameters.event,*reader_event,ht_puppi,selectedDileptons);
+            parameters.event,*reader_event,ht,selectedDileptons);
 
     //||||||||||||||||||||||||| CLASSIFY LEPTON CHANNEL |||||||||||||||||||||||||
     lepChan = NOCHANNEL;
@@ -281,7 +275,6 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
                     parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
                     [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
         }
-
     } else {
         hbbMass = 0;
         if (reader_jet) {
@@ -322,7 +315,6 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
         hh_chi     =  MomentumF();
         hh_basic   =  MomentumF();
-        metOhhMass = reader_event->met.pt();
     } else if (hbbCand && wjjCand) {
         hh =  hWW.p4() + hbbCand->p4();
         hh_chi   =  hbbCand->p4() + hwwInfoChi.hWW;
@@ -330,14 +322,11 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         auto oldN =  HSolverBasic::getInvisible(reader_event->met,
                 (selectedLepton->p4() + wjjCand->p4()) );
         hh_basic =  hbbCand->p4() + oldN.p4() + selectedLepton->p4() + wjjCand->p4();
-
-        metOhhMass = 0;
     } else {
         hWW        =  MomentumF();
         hh         =  MomentumF();
         hh_chi     =  MomentumF();
         hh_basic   =  MomentumF();
-        metOhhMass = 0;
     }
 
 
@@ -350,10 +339,10 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         }
         if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size())) {
         	if (lepChan == DILEP) {
-                weight *= trigSFProc->getLeptonTriggerSF(ht_puppi, (dilep1->isMuon()));
+                weight *= trigSFProc->getLeptonTriggerSF(ht, (dilep1->isMuon()));
         	} else {
                 weight *= trigSFProc->getLeptonTriggerSF(
-                        ht_puppi, (selectedLepton && selectedLepton->isMuon()));
+                        ht, (selectedLepton && selectedLepton->isMuon()));
         	}
         }
         if(isCorrOn(CORR_PU) ) {

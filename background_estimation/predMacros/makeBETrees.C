@@ -39,7 +39,6 @@ public:
     }
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
-        JERAK4PuppiProc ->setCorrType(jerUNC);
         JERAK4CHSProc   ->setCorrType(jerUNC);
         JERAK8PuppiProc ->setCorrType(jerUNC);
         if(jesUNC == UP || jesUNC == DOWN ){
