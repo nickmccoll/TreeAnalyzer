@@ -42,17 +42,17 @@ class Lepton            ;
 class DefaultSearchRegionAnalyzer : public BaseTreeAnalyzer {
 public:
     //corrections that can be applied
-    enum Corrections {CORR_XSEC    =(1<<0)
-                     ,CORR_TRIG    =(1<<1)
-                     ,CORR_PU      =(1<<2)
-                     ,CORR_LEP     =(1<<3)
-                     ,CORR_SJBTAG  =(1<<4)
-                     ,CORR_AK4BTAG =(1<<5)
-                     ,CORR_SDMASS  =(1<<6)
-                     ,CORR_TOPPT   =(1<<7)
-                     ,CORR_JER     =(1<<8)
-                     ,CORR_JES     =(1<<9)
-                     ,CORR_MET     =(1<<10)
+    enum Corrections {CORR_XSEC
+                     ,CORR_TRIG
+                     ,CORR_PU
+                     ,CORR_LEP
+                     ,CORR_SJBTAG
+                     ,CORR_AK4BTAG
+                     ,CORR_SDMASS
+                     ,CORR_TOPPT
+                     ,CORR_JER
+                     ,CORR_JES
+                     ,CORR_MET
     };
 
     enum LepChannels {NOCHANNEL, SINGLELEP, DILEP};
