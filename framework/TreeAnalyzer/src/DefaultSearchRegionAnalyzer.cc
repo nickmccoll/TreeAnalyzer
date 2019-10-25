@@ -123,9 +123,15 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::setupParameters(){
     switch(FillerConstants::DataEra(*reader_event->dataEra)){
+    case FillerConstants::ERA_2016:
+        parameters = ReaderConstants::set2016Parameters();
+        break;
     case FillerConstants::ERA_2017:
         parameters = ReaderConstants::set2017Parameters();
         break;
+    case FillerConstants::ERA_2018:
+    	parameters = ReaderConstants::set2018Parameters();
+    	break;
     default:
         throw std::invalid_argument(
                 "DefaultSearchRegionAnalyzer -> The era needs to be set to use this class");
