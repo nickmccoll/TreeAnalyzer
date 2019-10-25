@@ -142,7 +142,7 @@ public:
 
         if(!addUncVariables && lepChan_ == NOCHANNEL) return false;
 
-        ht_        = ht_puppi;
+        ht_        = ht;
         met_       = reader_event->met.pt();
         event_     = *reader_event->event;
         sampParam_ = *reader_event->sampParam;
