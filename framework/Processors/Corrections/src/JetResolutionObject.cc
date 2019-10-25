@@ -178,9 +178,12 @@ namespace JMEStand {
     }
 
     void JetResolutionObject::Definition::init() {
-        if (m_formula_str.size())
-            m_formula = std::shared_ptr<TFormula>(new TFormula("jet_resolution_formula", m_formula_str.c_str()));
-
+        if (!m_formula_str.empty())
+#ifndef STANDALONE
+            m_formula = std::make_shared<reco::FormulaEvaluator>(m_formula_str);
+#else
+            m_formula = std::make_shared<TFormula>("jet_resolution_formula", m_formula_str.c_str());
+#endif
         for (const auto& bin: m_bins_name) {
             const auto& b = JetParameters::binning_to_string.right.find(bin);
             if (b == JetParameters::binning_to_string.right.cend()) {
@@ -242,12 +245,12 @@ namespace JMEStand {
         }
 
         for (std::string line; std::getline(f, line); ) {
-            if ((line.size() == 0) || (line[0] == '#'))
+            if ((line.empty()) || (line[0] == '#'))
                 continue;
 
             std::string definition = getDefinitionLine(line);
 
-            if (definition.size() > 0) {
+            if (!definition.empty()) {
                 m_definition = Definition(definition);
             } else {
                 m_records.push_back(Record(line, m_definition));
@@ -386,25 +389,38 @@ namespace JMEStand {
         if (! m_valid)
             return 1;
 
+#ifndef STANDALONE
+        const auto* formula = m_definition.getFormula();
+#else
         // Set parameters
-        TFormula* formula = m_definition.getFormula();
-        if (! formula)
+        auto const* pFormula = m_definition.getFormula();
+        if (! pFormula)
             return 1;
-
+        auto formula = *pFormula;
+#endif
         // Create vector of variables value. Throw if some values are missing
         std::vector<float> variables = variables_parameters.createVector(m_definition.getVariables());
-
-        const std::vector<float>& parameters = record.getParametersValues();
-        for (size_t index = 0; index < parameters.size(); index++) {
-            formula->SetParameter(index, parameters[index]);
-        }
 
         double variables_[4] = {0};
         for (size_t index = 0; index < m_definition.nVariables(); index++) {
             variables_[index] = clip(variables[index], record.getVariablesRange()[index].min, record.getVariablesRange()[index].max);
         }
+        const std::vector<float>& parameters = record.getParametersValues();
 
-        return formula->EvalPar(variables_);
+#ifndef STANDALONE
+        //ArrayAdaptor only takes doubles
+        std::vector<double> parametersD(parameters.begin(),parameters.end());
+        return formula->evaluate(
+            reco::formula::ArrayAdaptor(variables_,m_definition.nVariables()),
+            reco::formula::ArrayAdaptor(parametersD.data(),parametersD.size())
+        );
+#else
+        for (size_t index = 0; index < parameters.size(); index++) {
+            formula.SetParameter(index, parameters[index]);
+        }
+
+        return formula.EvalPar(variables_);
+#endif
     }
 }
 
