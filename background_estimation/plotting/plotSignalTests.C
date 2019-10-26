@@ -197,12 +197,26 @@ void plotYields(std::string name, std::string filename,std::string fitName,
 
 }
 
-void plotEfficiencies(std::string name, std::string filename,std::string fitName, int signal) {
-//    gROOT->SetBatch(true);
+void plotEfficiencies(std::string name, std::string filename,std::string fitName, int signal, int year) {
 	throw std::invalid_argument{"need to amend this function with input luminosity, etc"};
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<TObject*> paramPads;
-    double inclusiveN  = 1000*41.53; //1000 fb x lumi
+
+    double inclusiveN = 1000;
+    switch (year) {
+    case 2016:
+    	inclusiveN *= 35.9;
+    	break;
+    case 2017:
+    	inclusiveN *= 41.5;
+    	break;
+    case 2018:
+    	inclusiveN *= 59.7;
+    	break;
+    default:
+    	throw std::invalid_argument("year needs to be set properly");
+    }
+
     inclusiveN *= CutConstants::HHtobbVVBF; //BR to bbWW or bbZZ
 //    inclusiveN *= 2*.676*(.216+.108*.3524);
     //BR of WW to he, hmu or htau where the tau is leptonic...for the AN
@@ -619,12 +633,15 @@ public:
 
 
 
-void plotSignalTests(int cat = 0,int sig = RADION, bool do1lep = true, std::string outName = ""){
+void plotSignalTests(int cat = 0,int sig = RADION, bool do1lep = true, int year = 2016, std::string outName = ""){
     std::string inName = "signalInputs";
     std::string filename = inName +"/"+hhFilename;
     std::string name = signals[sig];
     if(outName.size()) outName +=  std::string("/") + name;
 
+    if (year != 2016 && year != 2017 && year != 2018) {
+    	throw std::invalid_argument("year must be either 2016, 2017, or 2018");
+    }
     std::vector<std::string> sels = {};
     switch(cat) {
     case 0:
@@ -636,7 +653,7 @@ void plotSignalTests(int cat = 0,int sig = RADION, bool do1lep = true, std::stri
                 "OF_L_full","OF_M_full","OF_T_full"};
 
         plotYields(name,filename,"yield",sels);
-        plotEfficiencies(name,filename,"yield" ,sig);
+        plotEfficiencies(name,filename,"yield" ,sig,year);
         break;
     case 1:
         if(outName.size()) outName += "_MJJ_fit1stIt";
