@@ -141,11 +141,19 @@ ParameterSet setCommonParameters() {
 ParameterSet set2016Parameters() {
     ParameterSet paramSet = setCommonParameters();
     paramSet.event.lumi = 35.9;
+    paramSet.jets.jer_AK4CHS_resFile    ="corrections/JER/Summer16_25nsV1_MC/Summer16_25nsV1_MC_PtResolution_AK4PFchs.txt";
+    paramSet.jets.jer_AK4CHS_sfFile     ="corrections/JER/Summer16_25nsV1_MC/Summer16_25nsV1_MC_SF_AK4PFchs.txt";
+    paramSet.jets.jer_AK8Puppi_resFile  ="corrections/JER/Summer16_25nsV1_MC/Summer16_25nsV1_MC_PtResolution_AK8PFPuppi.txt";
+    paramSet.jets.jer_AK8Puppi_sfFile   ="corrections/JER/Summer16_25nsV1_MC/Summer16_25nsV1_MC_SF_AK8PFPuppi.txt";
     return paramSet;
 }
 ParameterSet set2017Parameters() {
     ParameterSet paramSet = setCommonParameters();
     paramSet.event.lumi = 41.5;
+    paramSet.jets.jer_AK4CHS_resFile    ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_PtResolution_AK4PFchs.txt";
+    paramSet.jets.jer_AK4CHS_sfFile     ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_SF_AK4PFchs.txt";
+    paramSet.jets.jer_AK8Puppi_resFile  ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_PtResolution_AK8PFPuppi.txt";
+    paramSet.jets.jer_AK8Puppi_sfFile   ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_SF_AK8PFPuppi.txt";
     paramSet.event.mcFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
     paramSet.event.dataFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
     return paramSet;
@@ -153,6 +161,10 @@ ParameterSet set2017Parameters() {
 ParameterSet set2018Parameters() {
     ParameterSet paramSet = setCommonParameters();
     paramSet.event.lumi = 59.7;
+    paramSet.jets.jer_AK4CHS_resFile    ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_PtResolution_AK4PFchs.txt";
+    paramSet.jets.jer_AK4CHS_sfFile     ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_SF_AK4PFchs.txt";
+    paramSet.jets.jer_AK8Puppi_resFile  ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_PtResolution_AK8PFPuppi.txt";
+    paramSet.jets.jer_AK8Puppi_sfFile   ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_SF_AK8PFPuppi.txt";
     paramSet.event.mcFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
     paramSet.event.dataFilters.push_back(FillerConstants::FLAG_ecalBadCalibFilterUpdate);
     return paramSet;

@@ -163,6 +163,12 @@ struct JetParameters {
     std::string          sjBtagCorrEffFile;
 
 
+    std::string          jer_AK4CHS_resFile  ;
+    std::string          jer_AK4CHS_sfFile   ;
+    std::string          jer_AK8Puppi_resFile;
+    std::string          jer_AK8Puppi_sfFile ;
+
+
 };
 
 struct HWWParameters {

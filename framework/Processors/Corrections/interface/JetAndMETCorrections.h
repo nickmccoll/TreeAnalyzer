@@ -10,6 +10,7 @@
 #include "JetResolutionObject.h"
 #include "DataFormats/interface/Met.h"
 #include "DataFormats/interface/FatJet.h"
+#include "Configuration/interface/ReaderConstants.h"
 
 namespace TAna {
 class JetReader;
@@ -17,17 +18,26 @@ class EventReader;
 
 class JERCorrector {
 public:
-    JERCorrector (const std::string& dataDir,const std::string& resFile, std::shared_ptr<TRandom3> rndGen, const CorrHelp::CORRTYPE cT = CorrHelp::NOMINAL );
+    JERCorrector (const std::string& dataDir, std::shared_ptr<TRandom3> rndGen, const CorrHelp::CORRTYPE cT = CorrHelp::NOMINAL );
     ~JERCorrector(){}
+
+    void setParameters(const JetParameters& param);
+
     void setCorrType(const CorrHelp::CORRTYPE newCT) {cT=newCT;}
+    int getSFCount(const CorrHelp::CORRTYPE c) ;
     void processFatJets(FatJetCollection& jets,const GenFatJetCollection& genjets, const float rho);
     void processJets(JetReader& jetreader,Met& met,const GenJetCollection& genjets, const float rho);
 
     float getSF(const CorrHelp::CORRTYPE cT, const float absETA) const ;
 private:
-    float correctJet(Jet* jet,const std::vector<const GenJet*> genjets, JMEStand::JetParameters& params);
+    float correctJet(Jet* jet,const std::vector<const GenJet*> genjets, const float jres,
+            const float jSF,const float coneR);
+    const std::string dataDir;
     CorrHelp::CORRTYPE cT;
-    JMEStand::JetResolutionObject resObj;
+    std::unique_ptr<JMEStand::JetResolutionObject> ak8Puppi_resObj;
+    std::unique_ptr<JMEStand::JetResolutionObject> ak8Puppi_sfObj ;
+    std::unique_ptr<JMEStand::JetResolutionObject> ak4CHS_resObj  ;
+    std::unique_ptr<JMEStand::JetResolutionObject> ak4CHS_sfObj   ;
     std::shared_ptr<TRandom3> rndGen;
 };
 
