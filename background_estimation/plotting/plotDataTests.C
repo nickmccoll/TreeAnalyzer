@@ -1222,7 +1222,8 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, const s
 
 
     if(step==0) {//run post fit
-        runPostFit(limitBaseName+"/combined.root",postFitFilename,0,0); // may want option to do one channel at a time
+    	int chan = do1lep ? 1 : 2;
+        runPostFit(limitBaseName+"/combined.root",postFitFilename,0,chan); // may want option to do one channel at a time
     }
 
 

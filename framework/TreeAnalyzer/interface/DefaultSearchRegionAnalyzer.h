@@ -95,14 +95,13 @@ public:
     int             signal_mass=0;
     TString         smpName  = "";
 
+    std::vector<const Jet*> jets_ht;
+    float ht;
+
     std::vector<const Jet*> jets;
     std::vector<const Jet*> jets_HbbV;
     int nMedBTags = 0;
     int nMedBTags_HbbV = 0;
-
-    std::vector<const Jet*> jets_puppi;
-    float                   ht_puppi    =0;
-
 
     ASTypes::size   corrections=0; //list of corrections to carry out
     float           weight     =0; //std weight after all corrections
@@ -143,7 +142,6 @@ public:
     float llMass = 0;
     float llDR = 0;
     float llMetDphi = 0;
-    float metOhhMass = 0;
 
     ParameterSet parameters;
     FillerConstants::DataEra lastEra = FillerConstants::NOERA; //See if we need to load new params.

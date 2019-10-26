@@ -34,7 +34,9 @@ CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
 CutStr aQCD ("aQCD"  , "process!=8");
 
 CutStr wjjBC("wjjBC" , "wjjTau2o1<0.75");
-CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&(hwwChi<=11)");
+
+CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&(hwwLi<11.0)");
+
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr abV  ("abV"   , "nAK4Btags!=0");
 
@@ -49,6 +51,7 @@ CutStr preSel2("preSel2"  , "lepChan==2");
 
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
 CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
+//CutStr hhMCS ("hhMass" ,"((lepChan==1)*hhMassBasic+(lepChan==2)*hhMass)","#it{m}_{HH} [GeV]");
 
 unsigned int nHbbMassBins   =30;
 double minHbbMass = 30  ;
@@ -148,8 +151,9 @@ CutStr inclBtagCat("I","hbbCSVCat>=0");
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
         CutStr("I","1.0","LHP"),
-        CutStr("LP" ,"wjjTau2o1>=0.55","LP"),
-        CutStr("HP"  ,"wjjTau2o1<0.55","HP")
+        CutStr("LP" ,"(wjjTau2o1>=0.55||hwwLi>=2.5)","LP"),
+        CutStr("HP" ,"(wjjTau2o1<0.55&&hwwLi<2.5)"  ,"HP")
+
 };
 
 enum HADCuts  {HAD_NONE,HAD_LB,HAD_LT,HAD_LTMB,HAD_FULL};

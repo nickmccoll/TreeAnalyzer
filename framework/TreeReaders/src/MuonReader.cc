@@ -28,7 +28,7 @@ void MuonReader::setup(TreeReaderWrapper * wrapper){
     wrapper->setBranch(branchName,"dRnorm"     ,dRnorm     ,true);
     wrapper->setBranch(branchName,"lepAct_o_pt",lepAct_o_pt,true);
     wrapper->setBranch(branchName,"tthMVA"      ,tthMVA     ,true);
-    if(realData) wrapper->setBranch(branchName,"simType",simType,true);
+    if(!realData) wrapper->setBranch(branchName,"simType",simType,true);
 }
 //--------------------------------------------------------------------------------------------------
 void MuonReader::processVars() {

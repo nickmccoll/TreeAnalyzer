@@ -405,19 +405,25 @@ void DiHiggsEvent::setDecayInfo(const GenParticleCollection& genparts) {
             // classify bbtautau dilepton decays
             else if (quarleps.size() == 2 && (wDecays.size() + zbosons.size() == 0)) {
             	// make sure here that the only two higgs daughters are tau leptons
-            	if (quarleps[0]->absPdgId() == 15 && quarleps[1]->absPdgId() == 15) {
+            	if (quarleps[0]->absPdgId() == ParticleInfo::p_tauminus && quarleps[1]->absPdgId() == ParticleInfo::p_tauminus) {
             		w1 = quarleps[0];
             		w2 = quarleps[1];
+
+            		if (!ParticleInfo::isLastInChain(w1) || !ParticleInfo::isLastInChain(w2)) {
+            			std::cout<<"at least one tau in bbtautau is not last in chain!"<<std::endl;
+            			w1 = ParticleInfo::getFinal(w1);
+            			w2 = ParticleInfo::getFinal(w2);
+            		}
 
             		for (unsigned int k=0; k < w1->numberOfDaughters(); k++) {
             			auto dau = w1->daughter(k);
             			if (ParticleInfo::isLepton(dau->pdgId())) w1_d1 = dau;
-            			else if (ParticleInfo::isANeutrino(dau->pdgId()) && dau->absPdgId() != 16) w1_d2 = dau;
+            			else if (ParticleInfo::isANeutrino(dau->pdgId()) && dau->absPdgId() != ParticleInfo::p_nu_tau) w1_d2 = dau;
             		}
             		for (unsigned int k=0; k < w2->numberOfDaughters(); k++) {
             			auto dau = w2->daughter(k);
             			if (ParticleInfo::isLepton(dau->pdgId())) w2_d1 = dau;
-            			else if (ParticleInfo::isANeutrino(dau->pdgId()) && dau->absPdgId() != 16) w2_d2 = dau;
+            			else if (ParticleInfo::isANeutrino(dau->pdgId()) && dau->absPdgId() != ParticleInfo::p_nu_tau) w2_d2 = dau;
             		}
 
             		if (w1_d1 && w2_d1 && w2_d1 && w2_d2) type = DILEP;

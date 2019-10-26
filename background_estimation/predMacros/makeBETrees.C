@@ -39,7 +39,6 @@ public:
     }
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
-        JERAK4PuppiProc ->setCorrType(jerUNC);
         JERAK4CHSProc   ->setCorrType(jerUNC);
         JERAK8PuppiProc ->setCorrType(jerUNC);
         if(jesUNC == UP || jesUNC == DOWN ){
@@ -143,7 +142,7 @@ public:
 
         if(!addUncVariables && lepChan_ == NOCHANNEL) return false;
 
-        ht_        = ht_puppi;
+        ht_        = ht;
         met_       = reader_event->met.pt();
         event_     = *reader_event->event;
         sampParam_ = *reader_event->sampParam;
@@ -426,6 +425,7 @@ public:
 //    spv_float w_pdf_     = make_spv_float();
 
     bool addUncVariables = false;
+    TString filename = "";
 
 };
 

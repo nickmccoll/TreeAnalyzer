@@ -145,7 +145,8 @@ void plotResBkgTests(int step = 0, bool doMT = true, int inreg = REG_SR, bool do
         break;
     case 6:
     	std::vector<std::string> bins = {"emu_LMT_I_full","e_LMT_I_full","mu_LMT_I_full"};
-    	if (!do1lep) bins = {"IF_LMT_full","OF_LMT_full","SF_LMT_full"};
+    	if (!do1lep) bins = {"IF_LMT_full","OF_LMT_full","SF_LMT_full","OF_L_full","SF_L_full",
+        		"OF_M_full","SF_M_full","OF_T_full","SF_T_full"};
 
         if(outName.size()) outName += "_all_2DComp";
         writeables = test2DModel({bkgSels[BKG_QG],bkgSels[BKG_LOSTTW],bkgSels[BKG_MW],bkgSels[BKG_MT] },
