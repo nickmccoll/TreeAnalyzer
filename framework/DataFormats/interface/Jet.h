@@ -33,6 +33,8 @@ public :
     void setRawFactor(float nrw) {_toRaw=nrw;}
     float toRawFactor() const {return _toRaw;}
     float deep_csv() const {return _deep_csv;}
+    float csv() const {return _csv;}
+    float deep_flavor() const {return _deep_flavor;}
     int  hadronFlv() const {return _hadronFlv;}
     int  partonFlv() const {return _partonFlv;}
     float  jecUnc() const {return _JECUnc;}
@@ -43,6 +45,8 @@ public :
 protected :
     float          _toRaw     = 0;
     float          _deep_csv  = 0;
+    float          _csv       = 0;
+    float          _deep_flavor       = 0;
     ASTypes::int8  _hadronFlv = 0;
     ASTypes::int8  _partonFlv = 0;
     float          _JECUnc    = 0;
@@ -71,8 +75,6 @@ public :
     bool passPUID() const;
     bool passTightID() const;
     bool passTightNoLepID()  const;
-    float csv() const {return _csv;}
-    float deep_flavor() const {return _deep_flavor;}
 
     ASTypes::size8 jetID() const {return _jetID;}
 
@@ -83,8 +85,6 @@ public :
 
 protected :
     ASTypes::size8 _jetID     = 0;
-    float          _csv       = 0;
-    float          _deep_flavor       = 0;
     GenJet  *      _gj        = 0;
 
 };
