@@ -36,11 +36,11 @@ public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
         addUncVariables = (treeType == TREE_OTHER);
+        turnOffCorr(CORR_JER);
     }
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
-        JERAK4CHSProc   ->setCorrType(jerUNC);
-        JERAK8PuppiProc ->setCorrType(jerUNC);
+        JERProc->setCorrType(jerUNC);
         if(jesUNC == UP || jesUNC == DOWN ){
             JESUncProc ->setCorrType(jesUNC);
             turnOnCorr(CORR_JES);
