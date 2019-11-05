@@ -144,6 +144,7 @@ struct JetParameters {
 
     std::vector<float> CSV_WP;
     std::vector<float> DeepCSV_WP;
+    std::vector<float> DeepFlavor_WP;
     float minBtagJetPT  ;
     float maxBTagJetETA ;
 
@@ -212,6 +213,10 @@ ParameterSet setCommonParameters();
 ParameterSet set2016Parameters();
 ParameterSet set2017Parameters();
 ParameterSet set2018Parameters();
+
+void setJetWorkingPoints(JetParameters& jetParams, std::vector<float> wps);
+void setSubjetWorkingPoints(JetParameters& jetParams, std::vector<float> wps);
+
 }
 }
 
