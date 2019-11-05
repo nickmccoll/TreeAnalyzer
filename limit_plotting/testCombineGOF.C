@@ -32,6 +32,69 @@ const double hh2_scaleUnc = 0.005*0.005;
 
 TRandom3 * rnd;
 
+std::string mkParamInput(const std::string cardname) {
+    const std::string fn = std::string("cardInput_") + cardname+".root";
+    TFile *f = new TFile(fn.c_str(),"recreate");
+
+    TH1 * hD    = new TH1F("dataobs",";MR",nBins,lowM,highM);
+    TH1 * hO    = new TH1F("mc_dist",";MR",nBins,lowM,highM);
+//    TH1 * hO2    = new TH1F("mc_dist2",";MR",nBins,lowM,highM);
+    TH1 * hM    = new TH1F("model",";MR",nBins,lowM,highM);
+    TH1 * hUP   = new TH1F("model_PTUp",";MR",nBins,lowM,highM);
+    TH1 * hDOWN = new TH1F("model_PTDown",";MR",nBins,lowM,highM);
+
+    TH1 * hUP2   = new TH1F("model_PT2Up",";MR",nBins,lowM,highM);
+    TH1 * hDOWN2 = new TH1F("model_PT2Down",";MR",nBins,lowM,highM);
+
+
+
+    for(unsigned int iB = 1; iB <= nBins; ++iB){
+        const double x1 = hD->GetBinLowEdge(iB);
+        const double x2 = x1+ hD->GetBinWidth(iB);
+        const double x = hD->GetBinCenter(iB);
+        double pIntegral = exp_a*( std::exp(exp_b*x2)-std::exp(exp_b*x1))/exp_b;
+
+//        double pIntegral = exp_a*std::exp(exp_b*x)*(x2-x1);
+        double dI = pIntegral;//*3.7/(1+hh2_scaleUnc*x*x);
+//        if(x>1200) dI *=  (1+1200*1200)/(1+x*x);
+
+        double dv = rnd->Poisson(dI);
+
+        hD->SetBinContent(iB,dv);
+        hD->SetBinError(iB,std::sqrt(dv));
+        hO->SetBinContent(iB,pIntegral);
+        hM->SetBinContent(iB,pIntegral);
+
+
+        hUP->SetBinContent(iB,pIntegral*(1. + hh_scaleUnc*x));
+        hDOWN->SetBinContent(iB,pIntegral/(1. + hh_scaleUnc*x));
+
+        hUP2->SetBinContent(iB,pIntegral*(1. + hh2_scaleUnc*x*x));
+        hDOWN2->SetBinContent(iB,pIntegral/(1. + hh2_scaleUnc*x*x));
+    }
+
+    hUP->Scale(1./hUP->Integral());
+    hDOWN->Scale(1./hDOWN->Integral());
+
+    hUP2->Scale(1./hUP2->Integral());
+    hDOWN2->Scale(1./hDOWN2->Integral());
+
+    hM->Scale(1./hM->Integral());
+
+    hD   ->Write();
+    hO   ->Write();
+    hM   ->Write();
+    hUP  ->Write();
+    hDOWN->Write();
+    hUP2  ->Write();
+    hDOWN2->Write();
+
+    f->Close();
+    delete f;
+    return fn;
+}
+
+
 std::string mkInput(const std::string cardname) {
     const std::string fn = std::string("cardInput_") + cardname+".root";
     TFile *f = new TFile(fn.c_str(),"recreate");
@@ -180,6 +243,124 @@ std::string mkInput2D(const std::string cardname) {
     return fn;
 }
 
+
+void mkParamCard (const std::string cardname) {
+    const std::string iFN = mkInput(cardname);
+
+    auto card = DataCardMaker("a","b" ,"c",1,"cardname");
+    // saved card will be: datacard_CARDNAME_a_b_c.txt
+    card.addVar(mR,(lowM+highM)/2,lowM,highM,false);
+    card.addVar(mS,(lowM+highM)/2,true);
+
+    card.addFixedYieldFromFile("bkg",1,iFN,"mc_dist");
+    card.addSystematic("yield","lnN",{{"sig",1.1}});
+    card.addSystematic("bkg_norm","lnN",{{"bkg",1.5}});
+    card.addParamSystematic("jes",0.0,0.02);
+
+    card.addVar("bkg_expConstant",exp_b,true);
+    RooExponential modelB("bkg_cardname_a_b_c","bkg_cardname_a_b_c",*card.w->var(mR.c_str()),
+            *card.w->var("bkg_expConstant"));
+    card.w->import(modelB);
+
+    card.addVar("sig_sig",2000*.06,true);
+    RooFormulaVar varF("sig_mean","sig_mean","(2000.)*(1.+jes)", RooArgList(*card.w->var("jes")));
+    card.w->import(varF);
+
+    RooGaussian modelS("sig_cardname_a_b_c","sig_cardname_a_b_c",*card.w->var(mR.c_str()),
+            *card.w->function("sig_mean"),*card.w->var("sig_sig"));
+    card.w->import(modelS);
+    card.addFixedYield("sig",0,10);
+
+
+    card.importBinnedData(iFN,"dataobs",{mR});
+    card.makeCard();
+
+}
+
+void mkParamCardVan () {
+
+    //Constants used here:
+    //Binning of the observable "MR"
+    const int nBins = 132;
+    const double xMin = 700;
+    const double xMax = 4000;
+    //Background model exponential parameter
+    const double bExpo = -0.009;
+    //The exponential normalization factor
+    const double bNorm = 100;
+
+
+
+    //Make the outputfile that we will store the roofit workspace
+    TFile * outFile = new TFile(std::string("datacardInputs_cardname_a_b_c.root").c_str(),"RECREATE");
+    outFile->SetCompressionAlgorithm(1); //just in case compatibility for old root versions
+    outFile->cd();
+    auto * w = new RooWorkspace("w","w");
+
+    //setup the binning of the observable
+    w->factory(TString::Format("MR[2000,%.0f,%.0f]", xMin,xMax).Data());
+    w->var("MR")->setBinning(RooBinning(nBins,xMin,xMax));
+
+    //The true signal mass (MH) will be set to a constant value
+    w->factory(TString::Format("MH[2000,%.0f,%.0f]", xMin,xMax).Data());
+    w->var("MH")->setConstant(true);
+
+    //Create the signal model, a gaussian. We have two systematics, one on yield, and one for JES.
+    //The JES systematic will shift the mean of the gaussian
+    //we want a 2% JES uncertainty. It will be encoded as (1. + jes), so jes is centered at 0 and
+    //bounded to be within 4 sigma of the uncertainty
+    w->factory("jes[0.0,-0.08,0.08]");
+    ///the nominal reconstructed signal mean (constant here)
+    w->factory("sig_nomMean[2000]");
+    w->var("sig_nomMean")->setConstant(true);
+    //The mean with allowed JES fluctuations
+    RooFormulaVar varF("sig_mean","sig_mean","(sig_nomMean)*(1.+jes)",
+            RooArgList(*w->var("sig_nomMean"),*w->var("jes")));
+    w->import(varF);
+    //keep the signal gaussian sigma constant
+    w->factory("sig_sig[120]");
+    w->var("sig_sig")->setConstant(true);
+    //Import the complete signal model
+    RooGaussian modelS("sig_cardname_a_b_c","sig_cardname_a_b_c",*w->var("MR"),
+            *w->function("sig_mean"),*w->var("sig_sig"));
+    w->import(modelS);
+
+    //The background is a simple exponential. We will allow the normalization of background to
+    // shift but will keep the shape constant.
+    w->factory(TString::Format("bkg_expConstant[%f]", bExpo).Data());
+    w->var("bkg_expConstant")->setConstant(true);
+    RooExponential modelB("bkg_cardname_a_b_c","bkg_cardname_a_b_c",*w->var("MR"),
+            *w->var("bkg_expConstant"));
+    w->import(modelB);
+
+    //Now we make some fake data
+    TH1 * dataobs = new TH1F("dataHist","dataHist",nBins,xMin,xMax);
+    for(unsigned int iB = 1; iB <= nBins; ++iB){
+        //calculate integral of an exponential within the bin bounds
+        const double x1 = dataobs->GetBinLowEdge(iB);
+        const double x2 = x1+ dataobs->GetBinWidth(iB);
+        const double x = dataobs->GetBinCenter(iB);
+        double pIntegral = bNorm*( std::exp(bExpo*x2)-std::exp(bExpo*x1))/bExpo;
+
+        //random poisson sampling for data
+        double dv = rnd->Poisson(pIntegral);
+
+        dataobs->SetBinContent(iB,dv);
+        dataobs->SetBinError(iB,std::sqrt(dv));
+    }
+
+    //Now turn the histogram into a RooDataHist and import
+    RooArgList dataHisArgs;
+    dataHisArgs.add(*w->var("MR"));
+    RooDataHist dH("data_obs","data_obs",dataHisArgs,dataobs);
+    w->import(dH);
+
+    //finish up by writing the root file
+    outFile->cd();
+    w->Write();
+    outFile->Close();
+}
+
 void mkCard2D (const std::string cardname) {
     const std::string iFN = mkInput2D(cardname);
 
@@ -235,5 +416,7 @@ void mkCard2D (const std::string cardname) {
 void testCombineGOF(){
     rnd = new TRandom3(1234);
 //    mkCard2D("test");
-    mkCard("test");
+//    mkCard("test");
+//    mkParamCard("test");
+    mkParamCardVan();
 }
