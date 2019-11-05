@@ -17,10 +17,10 @@ public:
         DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
 
 
-        turnOffCorr(CORR_LEP );
-        turnOffCorr(CORR_SJBTAG);
-        turnOffCorr(CORR_AK4BTAG);
-        turnOffCorr(CORR_JER);
+//        turnOffCorr(CORR_LEP );
+//        turnOffCorr(CORR_SJBTAG);
+//        turnOffCorr(CORR_AK4BTAG);
+//        turnOffCorr(CORR_JER);
 
 
 
@@ -41,8 +41,8 @@ public:
 
         if(hh.mass() < 700) return false;
         if(hbbMass < 30 || hbbMass > 210 ) return false;
-        if(wjjCand->tau2otau1() > 0.75) return false;
-        if(hwwLi>= 11) return false;
+//        if(wjjCand->tau2otau1() > 0.75) return false;
+//        if(hwwLi>= 11) return false;
 
         const bool HP = (wjjCand->tau2otau1() < 0.55 && hwwLi < 2.5);
         const bool LP = !HP;

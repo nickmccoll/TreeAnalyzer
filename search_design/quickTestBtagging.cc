@@ -1,7 +1,8 @@
 {
-  TFile * f = new TFile("getHbbBtagging_plots.root");
-  std::vector<TString> sigs = {"m800","m1000","m2000","m2500","m3000"};
-        std::vector<TString> bkgs = {"wjets"};
+  TFile * f = new TFile("outPlots_HBBTag.root");
+  // std::vector<TString> sigs = {"m800","m1000","m2000","m2500","m3000"};
+    std::vector<TString> sigs = {"m1000"};
+        std::vector<TString> bkgs = {"wjets","ttbar"};
         // std::vector<TString> cuts = {"emu_LHP_HbbIncl","emu_LHP_Hbb2SJ","emu_LHP_Hbb2SJTMass"};
                 // std::vector<TString> cuts = {"emu_LHP_HbbTMass","emu_LHP_Hbb2SJ","emu_LHP_Hbb2SJTMass"};
                 std::vector<TString> cuts = {"emu_LHP_HbbTMass"};
@@ -10,8 +11,10 @@
                 std::vector<TString> vars = {"bbt","mdZHbb","Hbb","sJBTagging"};  
                 std::vector<TString> varNs = {"H#rightarrow b#bar{b} tagger","H/Z#rightarrow b#bar{b} tagger"
                                               ,"H/Z#rightarrow b#bar{b} w/ mass info.","subjet b tagging"};
-        TString sigName = "blkgrav";
-  
+        TString sigName = "radion";
+
+          // TString sigName = "blkgrav"
+            
   for(unsigned int iS = 0; iS < sigs.size(); ++iS){
       for(unsigned int iB = 0; iB < bkgs.size(); ++iB){
           for(unsigned int iC = 0; iC < cuts.size(); ++iC){
@@ -22,7 +25,7 @@
           for(unsigned int iV = 0; iV < vars.size(); ++iV){
             TH1* hs = 0;
             f->GetObject(sigName + "_"+sigs[iS]+"_"+cuts[iC]+"_"+sigs[iS]+"_"+vars[iV],hs);
-            
+
             TH1* hb = 0;
             f->GetObject(bkgs[iB]+"_"+cuts[iC]+"_"+sigs[iS]+"_"+vars[iV],hb);      
             
