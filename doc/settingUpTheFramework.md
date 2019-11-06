@@ -115,10 +115,10 @@ Download the data directory:
 ```Shell
 mkdir data
 cd data
-wget -O data.zip  https://www.dropbox.com/sh/xo9djqy4trdtoww/AAAKKZK4xez-ICT09xgIDu7Aa?dl=1
+wget -O data.zip  {DROPBOX LINK}
 unzip data.zip
 rm data.zip
 cd ..
 ```
 
-You can download it into your work directory, jobs will run automatically if they are run with the "data" directory in the execution directory. Otherwise you can set an enviornment variable to pick it up from some other location: `export TREEANALYZER_DATA="/Users/nmccoll/Dropbox/Work/Projects/HHbbWW/hbbww_data/"`
+You can download it into your work directory, jobs will run automatically if they are run with the "data" directory in the execution directory. Otherwise you can set an enviornment variable to pick it up from some other location: `export TREEANALYZER_DATA="/Users/nmccoll/Dropbox/Work/Projects/HHbbWW/hbbww_data/"` We save the {DROPBOX LINK} internally.
