@@ -145,7 +145,7 @@ This macro makes the search region variable plots for the paper. You can turn of
 
 ## Running limits and statistical tests  
 
-###Asymptotic limits  
+### Asymptotic limits  
     nohup combine -m 800   -M AsymptoticLimits --run expected  --rMax 0.5 -v 2 combinedCard.txt &  
 __Parameters__  
 
