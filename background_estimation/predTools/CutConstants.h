@@ -151,13 +151,13 @@ CutStr inclBtagCat("I","hbbCSVCat>=0");
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
         CutStr("I","1.0","LHP"),
-        CutStr("LP" ,"(wjjTau2o1>=0.55||hwwLi>=2.5)","LP"),
-        CutStr("HP" ,"(wjjTau2o1<0.55&&hwwLi<2.5)"  ,"HP")
+        CutStr("LP" ,"(wjjTau2o1>=0.45||hwwLi>=2.5)","LP"),
+        CutStr("HP" ,"(wjjTau2o1<0.45&&hwwLi<2.5)"  ,"HP")
 
 };
 
-enum HADCuts  {HAD_NONE,HAD_LB,HAD_LT,HAD_LTMB,HAD_FULL};
-std::vector<CutStr > hadCuts = {
+enum SELCuts1  {SEL1_NONE,SEL1_LB,SEL1_LT,SEL1_LTMB,SEL1_FULL};
+std::vector<CutStr > selCuts1 = {
         CutStr("none",preSel1.cut,"-ExB -#it{m}_{D} -#it{p}_{T}/#it{m} -#tau_{0.75}"),
         CutStr("lb"  ,preSel1.cut+"&&"+exA.cut+"&&"+wjjBC.cut,"-ExB"),
         CutStr("lt"  ,preSel1.cut+"&&"+exA.cut+"&&"+bV.cut,"-#tau_{0.75}"),
@@ -166,8 +166,8 @@ std::vector<CutStr > hadCuts = {
 
 };
 
-enum SELCuts  {SEL_NONE,SEL_RPhiB,SEL_FULL};
-std::vector<CutStr > selCuts = {
+enum SELCuts2  {SEL2_NONE,SEL2_RPhiB,SEL2_FULL};
+std::vector<CutStr > selCuts2 = {
         CutStr("none"   ,preSel2.cut,"-ExB -#it{#DeltaR}_{ll} -#it{M}_{ll} -#it{MET} -#it{#Delta#Phi}_{met,ll}"),
 		CutStr("R_phi_b",preSel2.cut+"&&"+dRC.cut+"&&"+mllV.cut+"&&"+metC.cut,"full relax B, phi"),
         CutStr("full"   ,preSel2.cut+"&&"+bV.cut+"&&"+dRC.cut+"&&"+dPhiC.cut+"&&"+mllV.cut+"&&"+metC.cut,"")
@@ -179,42 +179,42 @@ struct CatIterator{
     LEPCats  l =LEP_EMU;
     BTAGCats b =BTAG_LMT;
     PURCats  p =PURE_I;
-    HADCuts  h =HAD_NONE;
+    SELCuts1  h =SEL1_NONE;
     bool is(const LEPCats  cl ) const {return l == cl;}
     bool is(const BTAGCats cb ) const {return b == cb;}
     bool is(const PURCats  cp ) const {return p == cp;}
-    bool is(const HADCuts  ch ) const {return h == ch;}
+    bool is(const SELCuts1  ch ) const {return h == ch;}
     std::string name() const {
-        return lepCats[l] +"_"+btagCats[b]+"_"+purCats[p] +"_"+hadCuts[h];
+        return lepCats[l] +"_"+btagCats[b]+"_"+purCats[p] +"_"+selCuts1[h];
     }
     std::string cut() const {
-        return "("+lepCats[l].cut+"&&"+btagCats[b].cut+"&&"+purCats[p].cut +"&&"+hadCuts[h].cut+")";
+        return "("+lepCats[l].cut+"&&"+btagCats[b].cut+"&&"+purCats[p].cut +"&&"+selCuts1[h].cut+")";
     }
     bool getBin() {
         if(firstBin){
             firstBin = false;
             return true;
         }
-        if(h < hadCuts.size()-1){
-            h = HADCuts(h+1);
+        if(h < selCuts1.size()-1){
+            h = SELCuts1(h+1);
             return true;
         }
         else if(p < purCats.size()-1){
             p= PURCats(p+1);
-            h=HAD_NONE;
+            h=SEL1_NONE;
             return true;
         }
         else if(b < btagCats.size()-1){
             b= BTAGCats(b+1);
             p=PURE_I;
-            h=HAD_NONE;
+            h=SEL1_NONE;
             return true;
         }
         else if(l < lepCats.size()-1){
             l= LEPCats(l+1);
             b=BTAG_LMT;
             p=PURE_I;
-            h=HAD_NONE;
+            h=SEL1_NONE;
             return true;
         }
         return false;
@@ -224,7 +224,7 @@ struct CatIterator{
         l =LEP_EMU;
         b =BTAG_LMT;
         p =PURE_I;
-        h =HAD_NONE;
+        h =SEL1_NONE;
     }
 };
 
@@ -232,34 +232,34 @@ struct DilepCatIterator{
     bool firstBin = true;
     DILEPCats  l =LEP_INCL;
     BTAGCats b =BTAG_LMT;
-    SELCuts  s =SEL_NONE;
+    SELCuts2  s =SEL2_NONE;
     bool is(const DILEPCats  cl ) const {return l == cl;}
     bool is(const BTAGCats cb ) const {return b == cb;}
-    bool is(const SELCuts  cs ) const {return s == cs;}
+    bool is(const SELCuts2  cs ) const {return s == cs;}
     std::string name() const {
-        return dilepCats[l] +"_"+btagCats[b] +"_"+selCuts[s];
+        return dilepCats[l] +"_"+btagCats[b] +"_"+selCuts2[s];
     }
     std::string cut() const {
-        return "("+dilepCats[l].cut+"&&"+btagCats[b].cut +"&&"+selCuts[s].cut+")";
+        return "("+dilepCats[l].cut+"&&"+btagCats[b].cut +"&&"+selCuts2[s].cut+")";
     }
     bool getBin() {
         if(firstBin){
             firstBin = false;
             return true;
         }
-        if(s < selCuts.size()-1){
-            s = SELCuts(s+1);
+        if(s < selCuts2.size()-1){
+            s = SELCuts2(s+1);
             return true;
         }
         else if(b < btagCats.size()-1){
             b= BTAGCats(b+1);
-            s=SEL_NONE;
+            s=SEL2_NONE;
             return true;
         }
         else if(l < dilepCats.size()-1){
             l= DILEPCats(l+1);
             b=BTAG_LMT;
-            s=SEL_NONE;
+            s=SEL2_NONE;
             return true;
         }
         return false;
@@ -268,7 +268,7 @@ struct DilepCatIterator{
         firstBin = true;
         l =LEP_INCL;
         b =BTAG_LMT;
-        s =SEL_NONE;
+        s =SEL2_NONE;
     }
 };
 
@@ -293,7 +293,7 @@ std::string getCategoryLabel(const std::string& inStr){
     if(tokens.size()){lep = getTitle(tokens[0],lepCats);}
     if(tokens.size()>1){btag = getTitle(tokens[1],btagCats);}
     if(tokens.size()>2){pur = getTitle(tokens[2],purCats);}
-    if(tokens.size()>3){ex = getTitle(tokens[3],hadCuts);}
+    if(tokens.size()>3){ex = getTitle(tokens[3],selCuts1);}
     if(lep.size()){
         title += lep;
         if(btag.size() || pur.size()) title+=", ";

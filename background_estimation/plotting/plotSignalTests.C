@@ -217,15 +217,13 @@ void plotEfficiencies(std::string name, std::string filename,std::string fitName
     	throw std::invalid_argument("year needs to be set properly");
     }
 
-    inclusiveN *= CutConstants::HHtobbVVBF; //BR to bbWW or bbZZ
-//    inclusiveN *= 2*.676*(.216+.108*.3524);
     //BR of WW to he, hmu or htau where the tau is leptonic...for the AN
     for(auto& l : lepCats){
         if(l == lepCats[LEP_EMU]) continue;
         for(auto& p : purCats){
             if(p == purCats[PURE_I]) continue;
-            for(auto& h : hadCuts){
-                if(h != hadCuts[HAD_FULL]) continue;
+            for(auto& h : selCuts1){
+                if(h != selCuts1[SEL1_FULL]) continue;
                 Plotter * plot = new Plotter();
                 for(auto& b : btagCats){
                     if(b == btagCats[BTAG_LMT]) continue;
@@ -286,12 +284,12 @@ void plotNormSysts(std::string name, std::string filename,const std::vector<int>
     const std::string inName =  filename+"_"+name + "_normSyst_distributions.root";
     TFile * f = new TFile(inName.c_str(), "read");
     std::vector<std::string> sels;
-    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
-    sels.push_back(lepCats[LEP_E]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
-    sels.push_back(lepCats[LEP_MU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
-    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_L]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
-    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_M]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
-    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_T]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
+    sels.push_back(lepCats[LEP_E]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
+    sels.push_back(lepCats[LEP_MU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_L]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_M]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_T]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
 //    for(auto& l : lepCats)for(auto& b : btagCats)for(auto& p : purCats)for(auto& h : hadCuts){
 //        if(l == lepCats[LEP_EMU]) continue;
 //        if(b == btagCats[BTAG_LMT]) continue;
@@ -357,7 +355,7 @@ void plotPDFSysts(std::string name, std::string filename,const std::vector<int>&
 
 
     std::vector<std::string> sels;
-    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
 
         gROOT->SetBatch(true);
         std::vector<TObject*>plots;
@@ -457,12 +455,12 @@ void plotShapeSystNorms(std::string name, std::string filename,const std::vector
         systDownFs.push_back(new TFile((filename+"_"+name + "_"+systs[iS]+"Down_distributions.root").c_str()));
     }
     std::vector<std::string> sels;
-    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
-    sels.push_back(lepCats[LEP_E]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
-    sels.push_back(lepCats[LEP_MU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
-    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_L]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
-    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_M]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
-    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_T]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
+    sels.push_back(lepCats[LEP_E]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
+    sels.push_back(lepCats[LEP_MU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_L]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_M]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_T]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
 
     TF1 *f1 = new TF1("f1","pol0",750,3600);
     for(unsigned int iS = 0; iS < systs.size(); ++iS ){
@@ -538,7 +536,7 @@ void plotShapeSystParams(std::string name, std::string filename,const std::vecto
         systDownFs.push_back(new TFile((filename+"_"+name + "_"+systs[iS]+"Down_distributions.root").c_str()));
     }
     std::vector<std::string> sels;
-    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]);
+    sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB]);
 //    sels.push_back(lepCats[LEP_E]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]);/
 //    sels.push_back(lepCats[LEP_MU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]);
     std::vector<std::string> params = {"meanMR","sigmaMR"};

@@ -173,7 +173,7 @@ void doComp(REGION region, const unsigned int nToys, const std::string& postFitF
 
 class DataPlotter {
 public:
-    DataPlotter(const DataPlotPrefs& plotPrefs, const std::string& inputPrefix, const std::string& postFitFilename, const bool is1l ) : prefs(plotPrefs)
+    DataPlotter(const DataPlotPrefs& plotPrefs, const std::string& inputPrefix, const std::string& postFitFilename, const int year ) : prefs(plotPrefs), dataYear(year)
 {
 
         if(prefs.addData) dataFile  = new TFile((inputPrefix+"_data_distributions.root").c_str(),"read");
@@ -528,13 +528,13 @@ public:
                 p->setXTitle( (prefs.binInY ? hbbMCS : hhMCS) .title.c_str());
                 p->setYTitle((std::string("Events / ") + flt2Str(binWidth) +" GeV").c_str() );
                 if(prefs.isSupp || preliminary){
-                    p->setCMSLumi(0);
+                    p->setCMSLumi(dataYear,0);
                     if( prefs.isSupp) p->setCMSLumiExtraText("Supplementary");
                     else  p->setCMSLumiExtraText("Preliminary");
                     p->setCMSLumiPosition(0,1.05);
 
                 } else {
-                    p->setCMSLumi(10);
+                    p->setCMSLumi(dataYear,10);
                 }
 
                 float startY = (prefs.isSupp||preliminary) ? 0.83 : 0.75;
@@ -734,16 +734,17 @@ public:
     std::vector<std::vector<TH2*>> signalHists;//[selection] [signal]
     TFile * postfitFile= 0;
     TFile * dataFile = 0;
+    int dataYear = 0;
 };
 
 
-std::vector<TObject*> doDataPlot(const DataPlotPrefs& dataPlot, const std::string& inputPrefix, const std::string& postFitFilename, const bool is1l){
-    DataPlotter a(dataPlot,inputPrefix,postFitFilename,is1l);
+std::vector<TObject*> doDataPlot(const DataPlotPrefs& dataPlot, const std::string& inputPrefix, const std::string& postFitFilename, const int year){
+    DataPlotter a(dataPlot,inputPrefix,postFitFilename,year);
     return a.makePlots();
 }
 
-std::vector<TObject*> doStatTest(const DataPlotPrefs& dataPlot, const std::string& inputPrefix, const std::string& postFitFilename, const std::string& outNamePrefix, const bool is1l){
-    DataPlotter a(dataPlot,inputPrefix,postFitFilename,is1l);
+std::vector<TObject*> doStatTest(const DataPlotPrefs& dataPlot, const std::string& inputPrefix, const std::string& postFitFilename, const std::string& outNamePrefix, const int year){
+    DataPlotter a(dataPlot,inputPrefix,postFitFilename,year);
     return a.makeStatTest(outNamePrefix);
 }
 
@@ -1164,20 +1165,20 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
     fitter.addVariable(MOD_MR);
 
     if (channel == 0 || channel == 1) {
-        for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats) for(const auto& h :hadCuts){
+        for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats) for(const auto& h :selCuts1){
             if(l == lepCats[LEP_EMU] ) continue;
             if(b == btagCats[BTAG_LMT]) continue;
             if(p == purCats[PURE_I] ) continue;
-            if(h != hadCuts[HAD_FULL] ) continue;
+            if(h != selCuts1[SEL1_FULL] ) continue;
             const std::string wsName = "std_"+ l +"_"+b+"_"+p +"_"+h+"_13TeV";
             fitter.addCategory(l +"_"+b+"_"+p +"_"+h,wsName);
         }
     }
     if (channel == 0 || channel == 2) {
-        for(const auto& l :dilepCats) for(const auto& b :btagCats) for(const auto& s :selCuts){
+        for(const auto& l :dilepCats) for(const auto& b :btagCats) for(const auto& s :selCuts2){
             if(l == dilepCats[LEP_INCL] ) continue;
             if(b == btagCats[BTAG_LMT]) continue;
-            if(s != selCuts[SEL_FULL] ) continue;
+            if(s != selCuts2[SEL2_FULL] ) continue;
             const std::string wsName = "std_"+ l +"_"+b+"_"+s+"_13TeV";
             fitter.addCategory(l +"_"+b+"_"+s,wsName);
         }
@@ -1190,7 +1191,7 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
 }
 
 
-void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, const std::string limitBaseName = ""){
+void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, int year = 2016, const std::string limitBaseName = ""){
     REGION reg = REGION(inreg);
 
     std::vector<std::string> srList, srListTitles;
@@ -1237,12 +1238,12 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, const s
         hhPlot.sels = srList;
         hhPlot.titles = srListTitles;
 
-        writeables = doDataPlot(hhPlot,filename,postFitFilename,do1lep);
+        writeables = doDataPlot(hhPlot,filename,postFitFilename,year);
         DataPlotPrefs hbbPlot = hhPlot;
         hbbPlot.bins = {700,4000};
         hbbPlot.binInY = true;
 
-        auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename,do1lep);
+        auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename,year);
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         Dummy d(outName);
 
@@ -1290,7 +1291,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, const s
         hhPlot.addRatio = true;
         hhPlot.addErrorBars = true;
         //        hhPlot.addData = false;
-        writeables = doDataPlot(hhPlot,filename,postFitFilename,do1lep);
+        writeables = doDataPlot(hhPlot,filename,postFitFilename,year);
 
         DataPlotPrefs hbbPlot = hhPlot;
         hbbPlot.bins = {700,4000};
@@ -1300,7 +1301,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, const s
         hbbPlot.minTop =400;
         hbbPlot.maxTop =400;
         if(inreg == REG_SR && blind) hbbPlot.blindRange ={100,150};
-        auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename,do1lep);
+        auto writeables2 = doDataPlot(hbbPlot,filename,postFitFilename,year);
 
         writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         Dummy d(outName);
@@ -1318,7 +1319,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, const s
         hhTest.sels = srList;
         hhTest.titles = srListTitles;
         hhTest.addErrorBars =true;
-        writeables = doStatTest(hhTest,filename,postFitFilename,outName + "statTest",do1lep);
+        writeables = doStatTest(hhTest,filename,postFitFilename,outName + "statTest",year);
 
         DataPlotPrefs hbbTest = hhTest;
         hbbTest.binInY = true;
@@ -1329,7 +1330,7 @@ void plotDataTests(int step = 0, int inreg = REG_SR, bool do1lep = true, const s
         } else {
             //                        hhTest.bins = {30,210,30,100,150,210};
             //            hbbTest.bins = {700,4000};
-            auto writeables2 = doStatTest(hbbTest,filename,postFitFilename,outName + "statTest",do1lep);
+            auto writeables2 = doStatTest(hbbTest,filename,postFitFilename,outName + "statTest",year);
             writeables.insert( writeables.end(), writeables2.begin(), writeables2.end() );
         }
 
