@@ -28,7 +28,7 @@ ParameterSet setCommonParameters() {
     paramSet.event.minTriggerEl  =30;
     paramSet.event.minTriggerMu  =27;
     paramSet.event.leptonCorrSFFile = "corrections/triggerSF_17.root";
-    paramSet.event.puCorrSFFile = "corrections/puSF_17.root";
+    paramSet.event.puCorrSFFile = "";
     paramSet.event.ttbarXSecSF_1000toInf_nLep0 = 0.000718573;
     paramSet.event.ttbarXSecSF_1000toInf_nLep1 = 0.000739261;
     paramSet.event.ttbarXSecSF_1000toInf_nLep2 = 0.000523889;
@@ -154,6 +154,8 @@ void setSubjetWorkingPoints(JetParameters& jetParams, std::vector<float> wps) {
 ParameterSet set2016Parameters() {
     ParameterSet paramSet = setCommonParameters();
     paramSet.event.lumi = 35.9;
+    paramSet.event.puCorrSFFile = "corrections/puSF_2016.root";
+
     paramSet.jets.jer_AK4CHS_resFile    ="corrections/JER/Summer16_25nsV1_MC/Summer16_25nsV1_MC_PtResolution_AK4PFchs.txt";
     paramSet.jets.jer_AK4CHS_sfFile     ="corrections/JER/Summer16_25nsV1_MC/Summer16_25nsV1_MC_SF_AK4PFchs.txt";
     paramSet.jets.jer_AK8Puppi_resFile  ="corrections/JER/Summer16_25nsV1_MC/Summer16_25nsV1_MC_PtResolution_AK8PFPuppi.txt";
@@ -169,6 +171,8 @@ ParameterSet set2016Parameters() {
 ParameterSet set2017Parameters() {
     ParameterSet paramSet = setCommonParameters();
     paramSet.event.lumi = 41.5;
+    paramSet.event.puCorrSFFile = "corrections/puSF_2017.root";
+
     paramSet.jets.jer_AK4CHS_resFile    ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_PtResolution_AK4PFchs.txt";
     paramSet.jets.jer_AK4CHS_sfFile     ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_SF_AK4PFchs.txt";
     paramSet.jets.jer_AK8Puppi_resFile  ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_PtResolution_AK8PFPuppi.txt";
@@ -187,6 +191,8 @@ ParameterSet set2017Parameters() {
 ParameterSet set2018Parameters() {
     ParameterSet paramSet = setCommonParameters();
     paramSet.event.lumi = 59.7;
+    paramSet.event.puCorrSFFile = "corrections/puSF_2018.root";
+
     paramSet.jets.jer_AK4CHS_resFile    ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_PtResolution_AK4PFchs.txt";
     paramSet.jets.jer_AK4CHS_sfFile     ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_SF_AK4PFchs.txt";
     paramSet.jets.jer_AK8Puppi_resFile  ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_PtResolution_AK8PFPuppi.txt";

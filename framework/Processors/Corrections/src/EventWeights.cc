@@ -53,7 +53,7 @@ PUScaleFactors::PUScaleFactors(const std::string& dataDir){
 
 void PUScaleFactors::setParameters(const EventParameters& evtParam, bool verbose) {
     TFile * file = TObjectHelper::getFile(dataDirectory+evtParam.puCorrSFFile,"read",verbose);
-    nominalSF.reset(new  TObjectHelper::Hist1DContainer(file,"puSF_nominal",verbose) );
+    nominalSF.reset(new  TObjectHelper::Hist1DContainer(file,"puSF_nom",verbose) );
     downSF.reset(new  TObjectHelper::Hist1DContainer(file,"puSF_down",verbose) );
     upSF.reset(new  TObjectHelper::Hist1DContainer(file,"puSF_up",verbose) );
     delete file;
