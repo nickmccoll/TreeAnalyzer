@@ -29,12 +29,12 @@ ParameterSet setCommonParameters() {
     paramSet.event.minTriggerMu  =27;
     paramSet.event.leptonCorrSFFile = "corrections/triggerSF_17.root";
     paramSet.event.puCorrSFFile = "";
-    paramSet.event.ttbarXSecSF_1000toInf_nLep0 = 0.000718573;
-    paramSet.event.ttbarXSecSF_1000toInf_nLep1 = 0.000739261;
-    paramSet.event.ttbarXSecSF_1000toInf_nLep2 = 0.000523889;
-    paramSet.event.ttbarXSecSF_700to1000_nLep0 = 0.00123404;
-    paramSet.event.ttbarXSecSF_700to1000_nLep1 = 0.00129566;
-    paramSet.event.ttbarXSecSF_700to1000_nLep2 = 0.000767859;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep0 = -1;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep1 = -1;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep2 = -1;
+    paramSet.event.ttbarXSecSF_700to1000_nLep0 = -1;
+    paramSet.event.ttbarXSecSF_700to1000_nLep1 = -1;
+    paramSet.event.ttbarXSecSF_700to1000_nLep2 = -1;
     paramSet.event.doTTBarStitching = true;
 
     paramSet.fatJets.cand_minPT     = 50                   ;
@@ -98,7 +98,7 @@ ParameterSet setCommonParameters() {
     paramSet.jets.CSV_WP        = {-100,100,100,100};
     paramSet.jets.DeepCSV_WP    = {-100,100,100,100};
     paramSet.jets.DeepFlavor_WP = {-100,100,100,100};
-    paramSet.jets.minBtagJetPT  = 20;
+    paramSet.jets.minBtagJetPT  = 30;
     paramSet.jets.maxBTagJetETA = 2.4;
 
     paramSet.jets.getJetBTagVal = &BaseRecoJet::deep_flavor;
@@ -172,6 +172,12 @@ ParameterSet set2017Parameters() {
     ParameterSet paramSet = setCommonParameters();
     paramSet.event.lumi = 41.5;
     paramSet.event.puCorrSFFile = "corrections/puSF_2017.root";
+    paramSet.event.ttbarXSecSF_700to1000_nLep0 = 0.00122835;
+    paramSet.event.ttbarXSecSF_700to1000_nLep1 = 0.00129256;
+    paramSet.event.ttbarXSecSF_700to1000_nLep2 = 0.00076952;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep0 = 0.000719423;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep1 = 0.000741457;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep2 = 0.00052646;
 
     paramSet.jets.jer_AK4CHS_resFile    ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_PtResolution_AK4PFchs.txt";
     paramSet.jets.jer_AK4CHS_sfFile     ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_SF_AK4PFchs.txt";
@@ -192,6 +198,12 @@ ParameterSet set2018Parameters() {
     ParameterSet paramSet = setCommonParameters();
     paramSet.event.lumi = 59.7;
     paramSet.event.puCorrSFFile = "corrections/puSF_2018.root";
+    paramSet.event.ttbarXSecSF_700to1000_nLep0 = 0.000748296;
+    paramSet.event.ttbarXSecSF_700to1000_nLep1 = 0.000776814;
+    paramSet.event.ttbarXSecSF_700to1000_nLep2 = 0.000800626;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep0 = 0.00050157;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep1 = 0.000514053;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep2 = 0.000517094;
 
     paramSet.jets.jer_AK4CHS_resFile    ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_PtResolution_AK4PFchs.txt";
     paramSet.jets.jer_AK4CHS_sfFile     ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_SF_AK4PFchs.txt";
