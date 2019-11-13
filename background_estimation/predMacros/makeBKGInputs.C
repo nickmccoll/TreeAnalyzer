@@ -34,9 +34,9 @@ std::string getTTBarSF(const std::string& filename){
 }
 
 std::string getQCDSF(const std::string& name, const std::string& filename,
-        const LEPCats l,const PURCats p,const HADCuts h, double sf=1.0 ){
+        const LEPCats l,const PURCats p,const SELCuts1 h, double sf=1.0 ){
     CJSON json(filename+"_"+name+"_"
-            +lepCats[l]+"_"+inclBtagCat+"_"+purCats[p]+"_"+hadCuts[h]
+            +lepCats[l]+"_"+inclBtagCat+"_"+purCats[p]+"_"+selCuts1[h]
                                                                    +"_QCDSF.json");
     std::string qToW = json.getP(0).second;
     auto replace = [&](const std::string& vn, const std::string tf1n){
@@ -91,18 +91,18 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
         while(ci.getBin()){
             if(strFind(name,bkgSels[BKG_QG])){
                 if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(HAD_LTMB)) continue;
+                if(!ci.is(SEL1_LTMB)) continue;
             }
             if(strFind(name,bkgSels[BKG_LOSTTW])){
                 if(!ci.is(LEP_EMU )) continue;
                 if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(HAD_LTMB)) continue;
+                if(!ci.is(SEL1_LTMB)) continue;
             }
             if(strFind(name,bkgSels[BKG_MT])||strFind(name,bkgSels[BKG_MW])){
                 if(!ci.is(LEP_EMU )) continue;
                 if(!ci.is(BTAG_LMT)) continue;
                 if(!ci.is(PURE_I  )) continue;
-                if(!ci.is(HAD_LT  )) continue;
+                if(!ci.is(SEL1_LT  )) continue;
             }
             std::string tempFile=filename+"_"+name+"_"+ci.name()+"_MVV_incl_template.root";
             std::string cut =  std::string("(")+baseSel+"&&"+ci.cut()+")";
@@ -124,17 +124,17 @@ void makeBackgroundShapesMVVAdaKernel(const std::string& name, const std::string
         while(ci.getBin()){
             if(strFind(name,bkgSels[BKG_QG])){
                 if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(SEL_RPhiB)) continue;
+                if(!ci.is(SEL2_RPhiB)) continue;
             }
             if(strFind(name,bkgSels[BKG_LOSTTW])){
                 if(!ci.is(LEP_INCL )) continue;
                 if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(SEL_RPhiB)) continue;
+                if(!ci.is(SEL2_RPhiB)) continue;
             }
             if(strFind(name,bkgSels[BKG_MT])||strFind(name,bkgSels[BKG_MW])){
                 if(!ci.is(LEP_INCL )) continue;
                 if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(SEL_RPhiB  )) continue;
+                if(!ci.is(SEL2_RPhiB  )) continue;
             }
 
             std::string tempFile=filename+"_"+name+"_"+ci.name()+"_MVV_incl_template.root";
@@ -159,15 +159,15 @@ void makeBackgroundShapes2DConditional(const std::string name, const std::string
 
 	// make 2D templates using a combined and relaxed 1l and 2l selection
     std::string tempFile=filename+"_"+name+"_";
-    std::string inclName = lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]+"_"+
-    		dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts[SEL_RPhiB];
+    std::string inclName = lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB]+"_"+
+    		dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_RPhiB];
     tempFile += inclName+"_2D_cond_template.root";
 
     std::string inclCut = std::string("((")+baseSel+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut
-    		+"&&"+hadCuts[HAD_LTMB].cut+")";
-    if(addQCDSF) inclCut += "*"+getQCDSF(name,filename,LEP_EMU,PURE_I,HAD_LTMB);
+    		+"&&"+selCuts1[SEL1_LTMB].cut+")";
+    if(addQCDSF) inclCut += "*"+getQCDSF(name,filename,LEP_EMU,PURE_I,SEL1_LTMB);
     inclCut += ")";
-    inclCut += "||("+dilepCats[LEP_INCL].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+selCuts[SEL_RPhiB].cut+")";
+    inclCut += "||("+dilepCats[LEP_INCL].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+selCuts2[SEL2_RPhiB].cut+")";
 
 
     std::string args = std::string("-v -n histo ") + " -vx "+ hbbMCS.cut+ " -vy "+hhMCS.cut
@@ -191,19 +191,19 @@ void makeBackgroundShapes2DConditional(const std::string name, const std::string
 void mergeBackgroundShapes(const std::string& name, const std::string& filename, int channel, bool xIsCond){
 
 	// use the combined 1+2 lep channel 2D templates
-    std::string inFile2D=filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]
-    		+"_"+dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts[SEL_RPhiB]+"_2D_cond_template.root";
+    std::string inFile2D=filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB]
+    		+"_"+dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_RPhiB]+"_2D_cond_template.root";
 
     if (channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
             if(strFind(name,bkgSels[BKG_QG])){
                 if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(HAD_LTMB)) continue;
+                if(!ci.is(SEL1_LTMB)) continue;
             } else {
                 if(!ci.is(LEP_EMU)) continue;
                 if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(HAD_LTMB)) continue;
+                if(!ci.is(SEL1_LTMB)) continue;
             }
             std::string inFile1D=filename+"_"+name+"_"+ ci.name()+"_"+(xIsCond? "MVV":"MJJ") +"_incl_template.root";
 
@@ -221,11 +221,11 @@ void mergeBackgroundShapes(const std::string& name, const std::string& filename,
         while(ci.getBin()){
             if(strFind(name,bkgSels[BKG_QG])){
                 if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(SEL_RPhiB)) continue;
+                if(!ci.is(SEL2_RPhiB)) continue;
             } else {
                 if(!ci.is(LEP_INCL)) continue;
                 if(!ci.is(BTAG_LMT)) continue;
-                if(!ci.is(SEL_RPhiB)) continue;
+                if(!ci.is(SEL2_RPhiB)) continue;
             }
             std::string inFile1D=filename+"_"+name+"_"+ ci.name()+"_"+(xIsCond? "MVV":"MJJ") +"_incl_template.root";
 
@@ -249,7 +249,7 @@ void cutMVVTemplate(const std::string& name, const std::string& filename, int ch
 	        if(!ci.is(LEP_EMU))continue;
 	        if(!ci.is(BTAG_LMT))continue;
 	        if(!ci.is(PURE_I))continue;
-	        if(!ci.is(HAD_LT))continue;
+	        if(!ci.is(SEL1_LT))continue;
 	        std::string inFileX=filename+"_"+name+"_"+ci.name()+"_MVV_incl_template.root";
 	        std::string outFileX=filename+"_"+name+"_"+ci.name()+"_MVV_cut_template.root";
 	        std::string args = std::string("-v -n histo ") + " -i "+  inFileX
@@ -262,7 +262,7 @@ void cutMVVTemplate(const std::string& name, const std::string& filename, int ch
 	    while(ci.getBin()){
 	        if(!ci.is(LEP_INCL))continue;
 	        if(!ci.is(BTAG_LMT))continue;
-	        if(!ci.is(SEL_RPhiB))continue;
+	        if(!ci.is(SEL2_RPhiB))continue;
 	        std::string inFileX=filename+"_"+name+"_"+ci.name()+"_MVV_incl_template.root";
 	        std::string outFileX=filename+"_"+name+"_"+ci.name()+"_MVV_cut_template.root";
 	        std::string args = std::string("-v -n histo ") + " -i "+  inFileX
@@ -291,7 +291,7 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,
 
     std::vector<PlotSel> sels;
     for(const auto& l :lepCats) for(const auto& b :srPCrBtagCats)
-        for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        for(const auto& p :purCats)  for(const auto& h :selCuts1){
             sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
                     l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
         }
@@ -300,7 +300,7 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,
     MakePlots a(inputFile,distName,samps,sels,vars,cut,nomW.cut);
 
     for(const auto& l :lepCats) for(const auto& b :srPCrBtagCats)
-        for(const auto& p :purCats)  for(const auto& h :hadCuts){
+        for(const auto& p :purCats)  for(const auto& h :selCuts1){
 
         	// hack
         	if(l=="e" && b=="T" && p=="HP") continue;
@@ -397,11 +397,11 @@ void fitBackgroundShapes2DConditional(std::string name, const std::string& filen
             std::string outName = filename + "_"+name+"_"+ci.name()+"_2D_template.root";
 
             std::string tempFile= filename+"_"+name+"_"
-                    +lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[ci.p]+"_"+hadCuts[HAD_LTMB]
+                    +lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[ci.p]+"_"+selCuts1[SEL1_LTMB]
                     +"_2D_merged_template.root";
             if(strFind(name,bkgSels[BKG_QG])){
                 tempFile=filename+"_"+name+"_"
-                        +lepCats[ci.l]+"_"+btagCats[BTAG_LMT]+"_"+purCats[ci.p]+"_"+hadCuts[HAD_LTMB]
+                        +lepCats[ci.l]+"_"+btagCats[BTAG_LMT]+"_"+purCats[ci.p]+"_"+selCuts1[SEL1_LTMB]
                         +"_2D_merged_template.root";
             }
 
@@ -419,11 +419,11 @@ void fitBackgroundShapes2DConditional(std::string name, const std::string& filen
             std::string outName = filename + "_"+name+"_"+ci.name()+"_2D_template.root";
 
             std::string tempFile= filename+"_"+name+"_"
-                    +dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts[SEL_RPhiB]
+                    +dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_RPhiB]
                     +"_2D_merged_template.root";
             if(strFind(name,bkgSels[BKG_QG])){
                 tempFile=filename+"_"+name+"_"
-                        +dilepCats[ci.l]+"_"+btagCats[BTAG_LMT]+"_"+selCuts[SEL_RPhiB]
+                        +dilepCats[ci.l]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_RPhiB]
                         +"_2D_merged_template.root";
             }
 
@@ -447,7 +447,7 @@ void fitBackgroundShapesMVV(std::string name, const std::string& filename, int c
         while(ci.getBin()){
             std::string hName = name+"_"+ci.name()+"_"+hhMCS;
             std::string inName = filename + "_"+name+"_"
-                    +lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LT]
+                    +lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LT]
                     +"_MVV_cut_template.root";
             std::string outName = filename + "_"+name+"_"+ci.name()+"_MVV_template.root";
             std::string args = std::string("-v ") + "-fT "+ inName+" -nT histo -s PT,OPT "
@@ -460,7 +460,7 @@ void fitBackgroundShapesMVV(std::string name, const std::string& filename, int c
         while(ci.getBin()){
             std::string hName = name+"_"+ci.name()+"_"+hhMCS;
             std::string inName = filename + "_"+name+"_"
-                    +dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts[SEL_RPhiB]
+                    +dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_RPhiB]
                     +"_MVV_cut_template.root";
             std::string outName = filename + "_"+name+"_"+ci.name()+"_MVV_template.root";
             std::string args = std::string("-v ") + "-fT "+ inName+" -nT histo -s PT,OPT "
@@ -550,7 +550,7 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
         while(ci.getBin()){
             if(!ci.is(LEP_EMU)) continue;
             if(!ci.is(PURE_I)) continue;
-            if(!ci.is(HAD_NONE)) continue;
+            if(!ci.is(SEL1_NONE)) continue;
             mkShapes(ci.name());
         }
     }
@@ -558,15 +558,15 @@ void makeResWMJJShapes1stIt(const std::string& name, const std::string& filename
         DilepCatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_INCL)) continue;
-            if(!ci.is(SEL_NONE)) continue;
+            if(!ci.is(SEL2_NONE)) continue;
             mkShapes(ci.name());
         }
     }
 
     // do the inclusive 1l + 2l category
     for (const auto& b : btagCats) {
-        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_NONE]
-        				+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts[SEL_NONE];
+        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_NONE]
+        				+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts2[SEL2_NONE];
         mkShapes(inclCatName);
     }
 
@@ -600,7 +600,7 @@ void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename
         while(ci.getBin()){
             if(!ci.is(LEP_EMU)) continue;
             if(!ci.is(PURE_I)) continue;
-            if(!ci.is(HAD_NONE)) continue;
+            if(!ci.is(SEL1_NONE)) continue;
             mkShapes(ci.name());
         }
     }
@@ -608,15 +608,15 @@ void makeResWMJJShapes2ndIt(const std::string& name, const std::string& filename
         DilepCatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_INCL)) continue;
-            if(!ci.is(SEL_NONE)) continue;
+            if(!ci.is(SEL2_NONE)) continue;
             mkShapes(ci.name());
         }
     }
 
     // do the inclusive 1l + 2l category (do each btagging cat)
     for (const auto& b : btagCats) {
-        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_NONE]
-        				+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts[SEL_NONE];
+        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_NONE]
+        				+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts2[SEL2_NONE];
         mkShapes(inclCatName);
     }
 
@@ -643,7 +643,7 @@ void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filena
         while(ci.getBin()){
             if(!ci.is(LEP_EMU)) continue;
             if(!ci.is(PURE_I)) continue;
-            if(!ci.is(HAD_NONE)) continue;
+            if(!ci.is(SEL1_NONE)) continue;
             mkShapes(ci.name());
         }
     }
@@ -651,15 +651,15 @@ void makeResTopMJJShapes1stIt(const std::string& name, const std::string& filena
         DilepCatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_INCL)) continue;
-            if(!ci.is(SEL_NONE)) continue;
+            if(!ci.is(SEL2_NONE)) continue;
             mkShapes(ci.name());
         }
     }
 
     // do the inclusive 1l + 2l category
     for(const auto& b : btagCats) {
-        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_NONE]
-        				+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts[SEL_NONE];
+        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_NONE]
+        				+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts2[SEL2_NONE];
         mkShapes(inclCatName);
     }
 
@@ -692,7 +692,7 @@ void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filena
         while(ci.getBin()){
             if(!ci.is(LEP_EMU )) continue;
             if(!ci.is(PURE_I  )) continue;
-            if(!ci.is(HAD_NONE)) continue;
+            if(!ci.is(SEL1_NONE)) continue;
             mkShapes(ci.name());
         }
     }
@@ -700,15 +700,15 @@ void makeResTopMJJShapes2ndIt(const std::string& name, const std::string& filena
         DilepCatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_INCL )) continue;
-            if(!ci.is(SEL_NONE)) continue;
+            if(!ci.is(SEL2_NONE)) continue;
             mkShapes(ci.name());
         }
     }
 
     // do the inclusive 1l + 2l category (do each btagging cat)
     for (const auto& b : btagCats) {
-        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_NONE]
-        			+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts[SEL_NONE];
+        std::string inclCatName = lepCats[LEP_EMU] +"_"+b+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_NONE]
+        			+"_"+dilepCats[LEP_INCL] +"_"+b+"_"+selCuts2[SEL2_NONE];
         mkShapes(inclCatName);
     }
 
@@ -719,8 +719,8 @@ void fitMJJSF(const std::string& name, const std::string& filename, const int ch
     std::string fittingFileName = filename+"_"+name+"_distributions.root";
 
     // input template
-    std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_NONE];
-    jsonFile += std::string("_")+dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts[SEL_NONE] +"_MJJ_fit.json";
+    std::string jsonFile = filename+"_"+name+"_"+lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_NONE];
+    jsonFile += std::string("_")+dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_NONE] +"_MJJ_fit.json";
 
     if (channel == 0 || channel == 1) {
         CatIterator ci;
@@ -898,7 +898,7 @@ void makePseudoData(const std::string& name, const std::string& filename, const 
         while(ci.getBin()){
             if(ci.is(LEP_EMU)) continue;
             if(ci.is(PURE_I)) continue;
-            if(!ci.is(HAD_FULL)) continue;
+            if(!ci.is(SEL1_FULL)) continue;
             generatePD(ci.name());
         }
     }
@@ -906,7 +906,7 @@ void makePseudoData(const std::string& name, const std::string& filename, const 
         DilepCatIterator ci;
         while(ci.getBin()){
             if(ci.is(LEP_INCL)) continue;
-            if(!ci.is(SEL_FULL)) continue;
+            if(!ci.is(SEL2_FULL)) continue;
             generatePD(ci.name());
         }
     }
@@ -938,14 +938,14 @@ void makeDataDistributions(const std::string& name, const std::string& filename,
     if (channel == 0 || channel == 1) {
         CatIterator ci;
         while(ci.getBin()){
-            if(!ci.is(HAD_FULL)) continue;
+            if(!ci.is(SEL1_FULL)) continue;
             sels.emplace_back(ci.name(),ci.cut());
         }
     }
     if (channel == 0 || channel == 2) {
         DilepCatIterator ci;
         while(ci.getBin()){
-            if(!ci.is(SEL_FULL)) continue;
+            if(!ci.is(SEL2_FULL)) continue;
             sels.emplace_back(ci.name(),ci.cut());
         }
     }

@@ -2,6 +2,7 @@
 #if !defined(__CINT__) || defined(__MAKECINT__)
 #include "../predTools/makePlots.C"
 #include "../predTools/CutConstants.h"
+#include "../../framework/Configuration/interface/FillerConstants.h"
 #include "HistoPlotting/include/Plotter.h"
 #include "HistoPlotting/include/Drawing.h"
 #include "HistoPlotting/include/StyleInfo.h"
@@ -10,8 +11,8 @@
 #include "TGraphAsymmErrors.h"
 
 using namespace CutConstants;
-//CutStr blindCut = CutStr("blindCut",std::string("(")+hbbMCS.cut+"<100||"+hbbMCS.cut+">150)");
-CutStr blindCut = CutStr("blindCut",std::string("(1.0)"));
+CutStr blindCut = CutStr("blindCut",std::string("(")+hbbMCS.cut+"<100||"+hbbMCS.cut+">150)");
+//CutStr blindCut = CutStr("blindCut",std::string("(1.0)"));
 std::vector<PlotVar> vars;
 std::vector<std::string> varUnits;
 std::vector<PlotSamp> samps;
@@ -19,32 +20,40 @@ float SIG_CROSS = 2; //in pb
 bool preliminary = false;
 
 
-
-void makeDataDistributions(const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut,bool isData){
+void makeDataDistributions(const int channel, const std::string& name, const std::string& filename,  const std::string inputFile, const std::string& cut,bool isData){
     std::vector<PlotSel> sels;
-    sels.emplace_back("full"                ,btagCats[BTAG_LMT].cut+"&&"+hadCuts[HAD_FULL].cut);
-    sels.emplace_back("loose_hhMass"        ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+hadCuts[HAD_FULL].cut);
-    sels.emplace_back("loose_hbbMass"       ,btagCats[BTAG_LMT].cut+"&&"+hadCuts[HAD_FULL].cut);
-    sels.emplace_back("loose_nAK4Btags"     ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+preSel.cut+"&&"+exA.cut+"&&"+wjjBC.cut);
-    sels.emplace_back("loose_wjjTau2o1"     ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+preSel.cut+"&&"+exA.cut+"&&"+bV.cut);
-    sels.emplace_back("loose_hwwPT_o_hhMass",blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+preSel.cut+"&&"+"wwDM<125"+"&&"+wjjBC.cut+"&&"+bV.cut);
-    sels.emplace_back("loose_wwDM"          ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+preSel.cut+"&&"+"(hwwPT/hhMass>0.3)"+"&&"+wjjBC.cut+"&&"+bV.cut);
-    sels.emplace_back("loose_hbbCSVCat"     ,blindCut.cut +"&&"+ hadCuts[HAD_FULL].cut);
+    if (channel == 1) {
+        sels.emplace_back("full"                ,btagCats[BTAG_LMT].cut+"&&"+selCuts1[SEL1_FULL].cut);
+        sels.emplace_back("loose_hhMass"        ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+selCuts1[SEL1_FULL].cut);
+        sels.emplace_back("loose_hbbMass"       ,btagCats[BTAG_LMT].cut+"&&"+selCuts1[SEL1_FULL].cut);
+        sels.emplace_back("loose_nAK4Btags"     ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+preSel1.cut+"&&"+exA.cut+"&&"+wjjBC.cut);
+        sels.emplace_back("loose_wjjTau2o1"     ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+preSel1.cut+"&&"+exA.cut+"&&"+bV.cut);
+        sels.emplace_back("loose_hwwPT_o_hhMass",blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+preSel1.cut+"&&"+"hwwLi<11.0"+"&&"+wjjBC.cut+"&&"+bV.cut);
+        sels.emplace_back("loose_hwwLi"         ,blindCut.cut +"&&"+ btagCats[BTAG_LMT].cut+"&&"+preSel1.cut+"&&"+"(hwwPT/hhMass>0.3)"+"&&"+wjjBC.cut+"&&"+bV.cut);
+        sels.emplace_back("loose_hbbCSVCat"     ,blindCut.cut +"&&"+ selCuts1[SEL1_FULL].cut);
+    } else if (channel == 2) {
+    	sels.emplace_back("full"              ,btagCats[BTAG_LMT].cut+"&&"+selCuts2[SEL2_FULL].cut);
+    	sels.emplace_back("loose_hhMass"      ,blindCut.cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+selCuts2[SEL2_FULL].cut);
+    	sels.emplace_back("loose_hbbMass"     ,btagCats[BTAG_LMT].cut+"&&"+selCuts2[SEL2_FULL].cut);
+    	sels.emplace_back("loose_nAK4Btags"   ,blindCut.cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+preSel2.cut+"&&"+dPhiC.cut+"&&"+mllV.cut+"&&"+dRC.cut+"&&"+metC.cut);
+    	sels.emplace_back("loose_met_o_hhMass",blindCut.cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+preSel2.cut+"&&"+dPhiC.cut+"&&"+mllV.cut+"&&"+dRC.cut+"&&"+bV.cut);
+    	sels.emplace_back("loose_dilepDR"     ,blindCut.cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+preSel2.cut+"&&"+dPhiC.cut+"&&"+mllV.cut+"&&"+bV.cut+"&&"+metC.cut);
+    	sels.emplace_back("loose_dilepMass"   ,blindCut.cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+preSel2.cut+"&&"+dPhiC.cut+"&&"+bV.cut+"&&"+dRC.cut+"&&"+metC.cut);
+    	sels.emplace_back("loose_llMetDphi"   ,blindCut.cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+preSel2.cut+"&&"+bV.cut+"&&"+mllV.cut+"&&"+dRC.cut+"&&"+metC.cut);
+    	sels.emplace_back("loose_hbbCSVCat"   ,blindCut.cut+"&&"+selCuts2[SEL2_FULL].cut);
+    }
 
-
-
-    std::string outFileName=filename+"_"+name+  "_srVarDistributions.root";
+    std::string outFileName=filename+"_"+std::to_string(channel)+"l_"+name+"_srVarDistributions.root";
     MakePlots a(inputFile,outFileName,samps,sels,vars,cut,isData ? "1.0" : nomW.cut);
 }
 
-void compilePlots(const std::string& prefix, const std::string& mcFile, const std::string& dataFile,  const std::vector<std::string> signalFiles,  const std::vector<std::string> signalNames){
+void compilePlots(const int year, const std::string& prefix, const std::string& mcFile, const std::string& dataFile,  const std::vector<std::string> signalFiles,  const std::vector<std::string> signalNames){
     TFile * fd = new TFile((dataFile).c_str(),"READ");
     TFile * fm = new TFile((mcFile  ).c_str(),"READ");
 
     for(unsigned int iV = 1; iV < vars.size(); ++iV){
         Plotter * p = new Plotter;
         std::vector<Drawing::TLegendEntryDef> legEntries;
-
 
         int rebinFactor = 0;
         switch(iV){
@@ -56,7 +65,6 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             break;
         }
 
-
         for(unsigned int iP = 0; iP < processes.size(); ++iP){
             TH1 * hm = 0;
             fm->GetObject((processes[iP]+"_loose_"+vars[iV].varName+"_"+vars[iV].varName).c_str(),hm);
@@ -64,7 +72,6 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             if(rebinFactor) hm->Rebin(rebinFactor);
             auto * g = p->addStackHist(hm,processes[iP].title);
             legEntries.push_back(std::make_tuple(10+processes.size() +iP,g,processes[iP].title.c_str(),"f"));
-
         }
 
         auto * tot = (TH1*)p->getTotStack()->Clone();
@@ -91,15 +98,13 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             if(iV==1){
                 const auto& hs =p->getStackHists();
                 std::cout << iB <<" "<< x <<" "<< y << " "<< err;
-                        for(const auto& h : hs){
-                            std::cout << "(" <<((const TH1*)h.obj)->GetBinContent(iB)<<","<<((const TH1*)h.obj)->GetBinError(iB)<<") ";
-                        }
+                for(const auto& h : hs){
+                    std::cout << "(" <<((const TH1*)h.obj)->GetBinContent(iB)<<","<<((const TH1*)h.obj)->GetBinError(iB)<<") ";
+                }
 
-
-                        std::cout <<std::endl;
-
+               std::cout <<std::endl;
             }
-            if(iB == tot->GetNbinsX() ) setPt(iB+1,x+tot->GetBinWidth(iB)/2.);
+            if(iB == tot->GetNbinsX()) setPt(iB+1,x+tot->GetBinWidth(iB)/2.);
         }
 
         p->clearTotStackError();
@@ -120,20 +125,20 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
             TH1 * hm = 0;
             f->GetObject((std::string("all_loose_")+vars[iV].varName+"_"+vars[iV].varName).c_str(),hm);
             if(hm == 0) continue;
+
             //Scale so that we get 1pb normalization
             hm->Scale(CutConstants::HHtobbVVBF* SIG_CROSS);
             if(rebinFactor) hm->Rebin(rebinFactor);
             hm->SetName((signalNames[iS]+vars[iV].varName).c_str());
             auto * g = p->addHistLine(hm,signalNames[iS],signalColors[iS]);
             legEntries.push_back(std::make_tuple(100+iS,g,signalNames[iS],"L"));
-
         }
 
         TH1 * hd = 0;
         fd->GetObject((std::string("all_loose_")+vars[iV].varName+"_"+vars[iV].varName).c_str(),hd);
         if(hd == 0) continue;
         if(rebinFactor) hd->Rebin(rebinFactor);
-         p->addHist(hd,"Data",kBlack,1,2,20,0.5,true,true,true);
+        p->addHist(hd,"Data",kBlack,1,2,20,0.5,true,true,true);
         TGraphAsymmErrors * g_d = new TGraphAsymmErrors;
         g_d->SetLineColor  (kBlack);
         g_d->SetLineWidth  (2);
@@ -144,7 +149,7 @@ void compilePlots(const std::string& prefix, const std::string& mcFile, const st
         legEntries.push_back(std::make_tuple(0,g_d,"Data","P E"));
         legEntries.push_back(std::make_tuple(1,(TObject*)(0),"",""));
 
-        p->setCMSLumi(10);
+        p->setCMSLumi(year,10);
 
         bool sup = false;
         switch(iV){
@@ -310,75 +315,95 @@ void categoryPlots(const std::string& prefix, const std::string& mcFile){
 
 #endif
 
-void plotSRVariables( int step, int reg,std::string tree, std::string name){
+void plotSRVariables(int step, int nLep, int year, int reg, std::string tree, std::string name){
     std::string prefix = "srVarDists/";
     if(reg == REG_TOPCR){
         prefix+="TopCR_";
         hhFilename += "_TopCR";
         blindCut.cut = "(1.0)";
-        hadCuts[HAD_NONE].cut = preSel.cut;
-        hadCuts[HAD_LB].cut   = preSel.cut+"&&"+wjjBC.cut;
-        hadCuts[HAD_LT].cut   = preSel.cut+ "&&"+abV.cut;
-        hadCuts[HAD_LTMB].cut = preSel.cut ;
-        hadCuts[HAD_FULL].cut = preSel.cut + "&&"+abV.cut+"&&"+wjjBC.cut;
-    } else if(reg==REG_QGCR){
-        prefix+="QGCR_";
-        btagCats = qgBtagCats;
-        hhFilename +="_QGCR";
-        blindCut.cut = "(1.0)";
-    }
+	    selCuts1[SEL1_NONE].cut = preSel1.cut;
+	    selCuts1[SEL1_LB].cut   = preSel1.cut+ "&&"+wjjBC.cut;
+	    selCuts1[SEL1_LT].cut   = preSel1.cut+ "&&"+abV.cut;
+	    selCuts1[SEL1_LTMB].cut = preSel1.cut;
+	    selCuts1[SEL1_FULL].cut = preSel1.cut + "&&"+abV.cut+"&&"+wjjBC.cut;
 
+        selCuts2[SEL2_NONE].cut  = preSel2.cut;
+        selCuts2[SEL2_RPhiB].cut = preSel2.cut+"&&"+abV.cut+"&&"+drCrC.cut+"&&"+mllV.cut+"&&"+metC.cut;
+        selCuts2[SEL2_FULL].cut  = preSel2.cut+"&&"+abV.cut+"&&"+drCrC.cut+"&&"+mllV.cut+"&&"+metC.cut+"&&"+dPhiC.cut;
+
+    } else if(reg==REG_NONTOPCR){
+        prefix+="NonTopCR_";
+        hhFilename +="_NonTopCR";
+        blindCut.cut = "(1.0)";
+        btagCats = qgBtagCats;
+    }
 
     bool isData = ASTypes::strFind(tree,"data");
     std::string cut =hhRange.cut+"&&"+hbbRange.cut ;
     std::string out = "srVarDists/"+hhFilename;
     if(ASTypes::strFind(tree,"radion")) blindCut.cut = "(1.0)";
     if(isData) cut += "&&"+blindCut.cut;
+
     vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,
             minHbbMass,maxHbbMass,hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins
             ,minHHMass,maxHHMass );
     vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass);
     vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
-    vars.emplace_back("nAK4Btags" ,"; N. of AK4 jet b tags","nAK4Btags",4,-0.5,3.5);
-    vars.emplace_back("wjjTau2o1" ,"; q#bar{q}' #tau_{2}/#tau_{1}","wjjTau2o1",50,0,1);
-    vars.emplace_back("hwwPT_o_hhMass" ,"; #it{p}_{T}/#it{m}","hwwPT/hhMass",50,0,1);
-    vars.emplace_back("wwDM","; #it{m}_{D} [GeV]","wwDM",50,0,500);
-    vars.emplace_back("hbbCSVCat","; hbbCSVCat","(hbbCSVCat-1)",6,-0.5,5.5);
+    varUnits.emplace_back("GeV");
+    varUnits.emplace_back("GeV");
+    varUnits.emplace_back("GeV");
 
-    varUnits.emplace_back("GeV");
-    varUnits.emplace_back("GeV");
-    varUnits.emplace_back("GeV");
+    vars.emplace_back("hbbCSVCat","; hbbCSVCat","(hbbCSVCat-1)",6,-0.5,5.5);
+    vars.emplace_back("nAK4Btags" ,"; N. of AK4 jet b tags","nAK4Btags",4,-0.5,3.5);
     varUnits.emplace_back("-1");
     varUnits.emplace_back("units");
-    varUnits.emplace_back("units");
-    varUnits.emplace_back("GeV");
-    varUnits.emplace_back("-1");
+
+    if (nLep == 1) {
+        vars.emplace_back("wjjTau2o1" ,"; q#bar{q}' #tau_{2}/#tau_{1}","wjjTau2o1",50,0,1);
+        vars.emplace_back("hwwPT_o_hhMass" ,"; #it{p}_{T}/#it{m}","hwwPT/hhMass",50,0,1);
+        vars.emplace_back("hwwLi","; #it{#lambda}_{H\rightarrow WW^*}","hwwLi",50,0,20);
+        varUnits.emplace_back("-1");
+        varUnits.emplace_back("-1");
+        varUnits.emplace_back("units");
+
+    } else if (nLep == 2) {
+    	vars.emplace_back("dilepMass",";m_{#ell #ell}","dilepMass",50,0,100);
+    	vars.emplace_back("dilepDR",";#DeltaR_{#ell #ell}","dilepDR",50,0,5);
+    	vars.emplace_back("llMetDphi",";#Delta#phi (MET,p_{#ell #ell})","llMetDphi",50,0,TMath::Pi());
+    	vars.emplace_back("met_o_hhMass",";MET/m_{HH})","met/hhMass",50,0,1);
+        varUnits.emplace_back("GeV");
+        varUnits.emplace_back("units");
+        varUnits.emplace_back("units");
+        varUnits.emplace_back("-1");
+    }
+
     std::cout <<vars[1].varTitle << std::endl;
 
     samps.emplace_back("all","1.0");
     if(!isData){
-        samps.emplace_back(processes[TTBAR],std::string("(0.72*(")+processes[TTBAR].cut+"))");
+        samps.emplace_back(processes[TTBAR],std::string("(0.81*(")+processes[TTBAR].cut+"))");
         samps.emplace_back(processes[WJETS],processes[WJETS].cut);
         samps.emplace_back(processes[QCD],processes[QCD].cut);
         samps.emplace_back(processes[OTHER],processes[OTHER].cut);
         samps.emplace_back(bkgSels[BKG_QG],bkgSels[BKG_QG].cut);
-        samps.emplace_back(bkgSels[BKG_LOSTTW],std::string("(0.76*(")+bkgSels[BKG_LOSTTW].cut+"))");
-        samps.emplace_back(bkgSels[BKG_MW],std::string("(0.76*(")+bkgSels[BKG_MW].cut+"))");
-        samps.emplace_back(bkgSels[BKG_MT],std::string("(0.76*(")+bkgSels[BKG_MT].cut+"))");
+        // WARNING: hard-coding in ttbar sf
+        samps.emplace_back(bkgSels[BKG_LOSTTW],std::string("(0.81*(")+bkgSels[BKG_LOSTTW].cut+")*(1*(process!=2)+(0.81*(process==2))))");
+        samps.emplace_back(bkgSels[BKG_MW],std::string("(0.81*(")+bkgSels[BKG_MW].cut+")*(1*(process!=2)+(0.81*(process==2))))");
+        samps.emplace_back(bkgSels[BKG_MT],std::string("(0.81*(")+bkgSels[BKG_MT].cut+")*(1*(process!=2)+(0.81*(process==2))))");
     }
 
 
     if(step==0){
-        makeDataDistributions(name,out,tree,cut ,isData);
+        makeDataDistributions(nLep,name,out,tree,cut,isData);
     }
     if(step==1){
 
         if(reg==REG_SR){
-            compilePlots(prefix,out+"_mc_srVarDistributions.root",out+"_data_srVarDistributions.root",
+            compilePlots(year,prefix,out+"_mc_srVarDistributions.root",out+"_data_srVarDistributions.root",
                     {out+"_m1000_srVarDistributions.root",out+"_m2500_srVarDistributions.root"},
                     {"1 TeV X_{spin-0}","2.5 TeV X_{spin-0}"});
         } else{
-            compilePlots(prefix,out+"_mc_srVarDistributions.root",out+"_data_srVarDistributions.root"
+            compilePlots(year,prefix,out+"_mc_srVarDistributions.root",out+"_data_srVarDistributions.root"
                     ,{},{});
 
         }
