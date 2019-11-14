@@ -11,8 +11,8 @@ void makeSignalPDFSystDists(const std::string& name, const std::string& filename
     int nameIDX =  inputFile.find("XXX", 0);
     std::vector<PlotVar> vars;
     std::vector<PlotSel> sels;
-    sels.emplace_back(lepCats[LEP_EMU] +"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I] +"_"+hadCuts[HAD_FULL],
-            lepCats[LEP_EMU].cut +"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+hadCuts[HAD_FULL].cut+"&&"+hhRange.cut+"&&"+hbbRange.cut);
+    sels.emplace_back(lepCats[LEP_EMU] +"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I] +"_"+selCuts1[SEL1_FULL],
+            lepCats[LEP_EMU].cut +"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut+"&&"+selCuts1[SEL1_FULL].cut+"&&"+hhRange.cut+"&&"+hbbRange.cut);
     sels.emplace_back("incl","1.0");
 
     vars.emplace_back("yield",std::string("; yield"),"0.0",1,-1,1.0 );
@@ -46,8 +46,8 @@ void makeSignalNormSystDists(const std::string& name, const std::string& filenam
     int nameIDX =  inputFile.find("XXX", 0);
     std::vector<PlotVar> vars;
     std::vector<PlotSel> sels;
-    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
-        if(h != hadCuts[HAD_FULL]) continue;
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :selCuts1){
+        if(h != selCuts1[SEL1_FULL]) continue;
         sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
                 l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
     }
@@ -93,8 +93,8 @@ void makeSignalShapeSystDists(const std::string& name, const std::string& filena
     int nameIDX =  inputFile.find("XXX", 0);
     std::vector<PlotVar> vars;
     std::vector<PlotSel> sels;
-    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :hadCuts){
-        if(h != hadCuts[HAD_FULL] && h != hadCuts[HAD_LTMB]) continue;
+    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :selCuts1){
+        if(h != selCuts1[SEL1_FULL] && h != selCuts1[SEL1_LTMB]) continue;
         sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
                 l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
     }
@@ -182,8 +182,8 @@ void makeSignalYields(const std::string& name, const std::string& filename,
             }
             double error = 0;
             double integral = hh_H->IntegralAndError(1,hh_H->GetNbinsX(),error);
-            yieldGraph->SetPoint(n,signalMassBins[iS],integral*HHtobbVVBF);
-            yieldGraph->SetPointError(n,0.0,error*HHtobbVVBF);
+            yieldGraph->SetPoint(n,signalMassBins[iS],integral);
+            yieldGraph->SetPointError(n,0.0,error);
             n++;
         }
         plotter.addFit(yieldGraph,"yield");
@@ -323,7 +323,7 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
         while(ci.getBin()){
             if(!ci.is(LEP_EMU )) continue;
             if(!ci.is(PURE_I  )) continue;
-            if(!ci.is(HAD_LTMB)) continue;
+            if(!ci.is(SEL1_LTMB)) continue;
             bool doExpo = ci.is(BTAG_L);
             mkShapes(ci.name(),doExpo);
         }
@@ -333,7 +333,7 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
         DilepCatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_INCL )) continue;
-            if(!ci.is(SEL_FULL)) continue;
+            if(!ci.is(SEL2_FULL)) continue;
             bool doExpo = ci.is(BTAG_L);
             mkShapes(ci.name(),doExpo);
         }
@@ -365,7 +365,7 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
         while(ci.getBin()){
             if(!ci.is(LEP_EMU )) continue;
             if(!ci.is(PURE_I  )) continue;
-            if(!ci.is(HAD_LTMB)) continue;
+            if(!ci.is(SEL1_LTMB)) continue;
             bool doExpo = ci.is(BTAG_L);
             mkShapes(ci.name(),doExpo);
         }
@@ -375,7 +375,7 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
         DilepCatIterator ci;
         while(ci.getBin()){
             if(!ci.is(LEP_INCL )) continue;
-            if(!ci.is(SEL_FULL)) continue;
+            if(!ci.is(SEL2_FULL)) continue;
             bool doExpo = ci.is(BTAG_L);
             mkShapes(ci.name(),doExpo);
         }
@@ -402,7 +402,7 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename,
         while(ci.getBin()){
             if(!ci.is(BTAG_LMT )) continue;
             if(!ci.is(PURE_I  )) continue;
-            if(!ci.is(HAD_LTMB)) continue;
+            if(!ci.is(SEL1_LTMB)) continue;
             mkShapes(ci.name());
         }
     }
@@ -411,7 +411,7 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename,
         DilepCatIterator ci;
         while(ci.getBin()){
             if(!ci.is(BTAG_LMT )) continue;
-            if(!ci.is(SEL_FULL)) continue;
+            if(!ci.is(SEL2_FULL)) continue;
             mkShapes(ci.name());
         }
     }
@@ -737,13 +737,13 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
             if(ci.is(LEP_EMU)) continue;
             if(ci.is(BTAG_LMT )) continue;
             if(ci.is(PURE_I  )) continue;
-            if(!ci.is(HAD_FULL)) continue;
+            if(!ci.is(SEL1_FULL)) continue;
             bool doExpo = ci.is(BTAG_L);
 
             std::string mjjCatName = lepCats[LEP_EMU]+"_"+btagCats[ci.b]
-                    +"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB];
+                    +"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB];
             std::string mvvCatName = lepCats[ci.l]+"_"+btagCats[BTAG_LMT]+"_"
-                    +purCats[PURE_I]+"_"+hadCuts[HAD_LTMB];
+                    +purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB];
 
             CJSON mjjJSON(     filename+"_"+name+"_"+mjjCatName+"_MJJ_fit.json");
             mjjJSON.fillFunctions(MOD_MS);
@@ -770,13 +770,13 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
         while(ci.getBin()){
             if(ci.is(LEP_INCL)) continue;
             if(ci.is(BTAG_LMT )) continue;
-            if(!ci.is(SEL_FULL)) continue;
+            if(!ci.is(SEL2_FULL)) continue;
             bool doExpo = ci.is(BTAG_L);
 
             std::string mjjCatName = dilepCats[LEP_INCL]+"_"+btagCats[ci.b]
-                    +"_"+selCuts[SEL_FULL];
+                    +"_"+selCuts2[SEL2_FULL];
             std::string mvvCatName = dilepCats[ci.l]+"_"+btagCats[BTAG_LMT]
-                    +"_"+selCuts[SEL_FULL];
+                    +"_"+selCuts2[SEL2_FULL];
 
             CJSON mjjJSON(     filename+"_"+name+"_"+mjjCatName+"_MJJ_fit.json");
             mjjJSON.fillFunctions(MOD_MS);
