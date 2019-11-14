@@ -41,6 +41,8 @@ public:
 
         if(hh.mass() < 700) return false;
         if(hbbMass < 30 || hbbMass > 210 ) return false;
+        if(nMedBTags_HbbV) return false;
+
 //        if(wjjCand->tau2otau1() > 0.75) return false;
 //        if(hwwLi>= 11) return false;
 
