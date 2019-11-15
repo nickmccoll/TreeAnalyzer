@@ -120,16 +120,16 @@ Most of the tests are done with `plotDataTests.C`. We pretty much assume that yo
 __Parameters__ 
 
 1. Step of the test  
-    *__0__ Run the post-fit so you can make post-fit plots (takes some time)
-    *__1__ Test the pre-fit model
-    *__2__ Test the post-fit model, as used in the AN
-    *__3__ Do the saturated GOF test for projections of the model
-    *__4__ Make summary plots, this is the global GOF test and the systematic pulls. This requires that you have run GoodnessOfFit and FitDiagnostic steps of the statistical tests.
-    *__5__ Plot the bias test results. Requires that you run the bias tests.
-    *__6__ Post-fit CR plots for the paper
-    *__7__ Post-fit SR plots for the paper
-    *__8__ Supplemental post-fit SR plots
-    *__9__ More Supplemental post-fit SR plots
+    * __0__ Run the post-fit so you can make post-fit plots (takes some time)
+    * __1__ Test the pre-fit model
+    * __2__ Test the post-fit model, as used in the AN
+    * __3__ Do the saturated GOF test for projections of the model
+    * __4__ Make summary plots, this is the global GOF test and the systematic pulls. This requires that you have run GoodnessOfFit and FitDiagnostic steps of the statistical tests.
+    * __5__ Plot the bias test results. Requires that you run the bias tests.
+    * __6__ Post-fit CR plots for the paper
+    * __7__ Post-fit SR plots for the paper
+    * __8__ Supplemental post-fit SR plots
+    * __9__ More Supplemental post-fit SR plots
 2. What region you are running
 3. Data card directory
 
