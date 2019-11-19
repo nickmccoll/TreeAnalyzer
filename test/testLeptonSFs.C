@@ -21,16 +21,15 @@ using namespace TAna::CorrHelp;
 class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt){
-        turnOffCorr(CORR_XSEC);
-        turnOffCorr(CORR_PU  );
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed)
+        : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt, randSeed){
     }
 
 
     bool runEvent() override {
         if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
         cout <<"---------------------------------------------------"<<endl;
-        if(reader_event->process == FillerConstants::SIGNAL){
+        if(isSignal()){
             cout <<"HH decays: "<<endl;
             cout << "["<< diHiggsEvt.type; if(diHiggsEvt.w1_d1) cout << *diHiggsEvt.w1_d1; cout <<"] ";
         }
@@ -46,14 +45,27 @@ public:
         }
         cout <<std::endl;
 
-        const auto& pM = leptonSFProc->getPromptMuons();
-        const auto& pE = leptonSFProc->getPromptElectrons();
-        std::vector<bool> isPrompt(selectedLeptons.size());
+
+        if(lepChan == SINGLELEP){
+            cout << "1L OFFLINE "<< endl;
+        } else if(lepChan == DILEP){
+            cout << "2L OFFLINE "<< endl;
+        } else {
+            cout << "OTHER OFFLINE "<< endl;
+        }
+
+        auto lepProc = &*(lepChan==DILEP ? dileptonSFProc : leptonSFProc);
+        auto lepList = (lepChan==DILEP ? selectedDileptons : selectedLeptons);
+
+
+        const auto& pM = lepProc->getPromptMuons();
+        const auto& pE = lepProc->getPromptElectrons();
+        std::vector<bool> isPrompt(lepList.size());
         std::vector<bool> isFilledM(pM.size(),false);
         std::vector<bool> isFilledE(pE.size(),false);
 
-        for(unsigned int iS = 0; iS < selectedLeptons.size(); ++iS){
-            const auto* sl = selectedLeptons[iS];
+        for(unsigned int iS = 0; iS < lepList.size(); ++iS){
+            const auto* sl = lepList[iS];
             if(sl->isMuon()){
                 for(unsigned int iP = 0; iP < pM.size(); ++iP){
                     if(sl->index() == pM[iP]->index()){
@@ -76,10 +88,9 @@ public:
         for(auto b : isFilledE) if(!b) std:: cout<< std::endl << "BAD E!!!!!!!"<<std::endl;
 
 
-
         cout <<"Selected leptons: ";
-        for(unsigned int iS = 0; iS < selectedLeptons.size(); ++iS){
-            const auto* sl = selectedLeptons[iS];
+        for(unsigned int iS = 0; iS < lepList.size(); ++iS){
+            const auto* sl = lepList[iS];
             cout << "["<< (sl->isMuon() ? "M" : "E") << (isPrompt[iS] ? "P" : "F")  << *sl <<
                     (sl->isElectron() ?  ASTypes::flt2Str( ((const Electron*)sl)->sc_act_o_pt()) + ","+ASTypes::flt2Str( ((const Electron*)sl)->sc_dr_act())
             : ASTypes::flt2Str(sl->lepAct_o_pt()) + ","+ASTypes::flt2Str(sl->dRnorm()) )  <<"] ";
@@ -87,16 +98,19 @@ public:
         cout << endl;
 
         cout <<"Weights: ";
-        cout << "T: "<<weight <<" L: "<< leptonSFProc->getSF();
+        cout << "T: "<<weight <<" L: "<< lepProc->getSF();
         cout << endl;
-        cout <<"E ("<<leptonSFProc->getElectronSF(DOWN,NONE,NONE) <<","<< leptonSFProc->getElectronSF(NOMINAL,NONE,NONE)<<","<< leptonSFProc->getElectronSF(UP,NONE,NONE)<<") "
-              <<" ("<<leptonSFProc->getElectronSF(NONE,DOWN,NONE) <<","<< leptonSFProc->getElectronSF(NONE,NOMINAL,NONE)<<","<< leptonSFProc->getElectronSF(NONE,UP,NONE)<<") "
-              <<" ("<<leptonSFProc->getElectronSF(NONE,NONE,DOWN) <<","<< leptonSFProc->getElectronSF(NONE,NONE,NOMINAL)<<","<< leptonSFProc->getElectronSF(NONE,NONE,UP)<<") "<<endl;
-        cout <<"M  ("<<leptonSFProc->getMuonSF(DOWN,NONE,NONE) <<","<< leptonSFProc->getMuonSF(NOMINAL,NONE,NONE)<<","<< leptonSFProc->getMuonSF(UP,NONE,NONE)<<") "
-              <<" ("<<leptonSFProc->getMuonSF(NONE,DOWN,NONE) <<","<< leptonSFProc->getMuonSF(NONE,NOMINAL,NONE)<<","<< leptonSFProc->getMuonSF(NONE,UP,NONE)<<") "
-              <<" ("<<leptonSFProc->getMuonSF(NONE,NONE,DOWN) <<","<< leptonSFProc->getMuonSF(NONE,NONE,NOMINAL)<<","<< leptonSFProc->getMuonSF(NONE,NONE,UP)<<") "<<endl;
+        cout <<"E ("<<lepProc->getElectronSF(DOWN,NONE,NONE) <<","<< lepProc->getElectronSF(NOMINAL,NONE,NONE)<<","<< lepProc->getElectronSF(UP,NONE,NONE)<<") "
+              <<" ("<<lepProc->getElectronSF(NONE,DOWN,NONE) <<","<< lepProc->getElectronSF(NONE,NOMINAL,NONE)<<","<< lepProc->getElectronSF(NONE,UP,NONE)<<") "
+//              <<" ("<<lepProc->getElectronSF(NONE,NONE,DOWN) <<","<< lepProc->getElectronSF(NONE,NONE,NOMINAL)<<","<< lepProc->getElectronSF(NONE,NONE,UP)<<") "
+              <<endl;
+        cout <<"M"
+//               <<" ("<<lepProc->getMuonSF(DOWN,NONE,NONE) <<","<< lepProc->getMuonSF(NOMINAL,NONE,NONE)<<","<< lepProc->getMuonSF(UP,NONE,NONE)<<") "
+              <<" ("<<lepProc->getMuonSF(NONE,DOWN,NONE) <<","<< lepProc->getMuonSF(NONE,NOMINAL,NONE)<<","<< lepProc->getMuonSF(NONE,UP,NONE)<<") "
+//              <<" ("<<lepProc->getMuonSF(NONE,NONE,DOWN) <<","<< lepProc->getMuonSF(NONE,NONE,NOMINAL)<<","<< lepProc->getMuonSF(NONE,NONE,UP)<<") "
+              <<endl;
 
-        for(unsigned int iS = 0; iS < selectedLeptons.size(); ++iS){
+        for(unsigned int iS = 0; iS < lepList.size(); ++iS){
             if(!isPrompt[iS]) ParticleInfo::printGenInfo(reader_genpart->genParticles);
         }
 
@@ -114,13 +128,9 @@ public:
 
 #endif
 
-void testLeptonSFs(std::string fileName, int treeInt, std::string outFileName){
-    Analyzer a(fileName,"treeMaker/Events",treeInt);
-    a.analyze(1000,1000);
-    a.write(outFileName);
-}
-void testLeptonSFs(std::string fileName, int treeInt, std::string outFileName, float xSec, float numEvent){
-    Analyzer a(fileName,"treeMaker/Events",treeInt);
+void testLeptonSFs(std::string fileName, int treeInt, int randSeed, std::string outFileName,
+        float xSec=-1, float numEvent=-1){
+    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed);
     a.setSampleInfo(xSec,numEvent);
     a.analyze();
     a.write(outFileName);

@@ -156,6 +156,11 @@ ParameterSet set2016Parameters() {
     paramSet.event.lumi = 35.9;
     paramSet.event.puCorrSFFile = "corrections/puSF_2016.root";
 
+    paramSet.leptons.el_SFFile          ="corrections/lepton/electron_1l_2016_SF.root";
+    paramSet.leptons.mu_SFFile          ="corrections/lepton/muon_1l_2016_SF.root";
+    paramSet.dileptons.el_SFFile        ="corrections/lepton/electron_2l_2016_SF.root";
+    paramSet.dileptons.mu_SFFile        ="corrections/lepton/muon_2l_2016_SF.root";
+
     paramSet.jets.jer_AK4CHS_resFile    ="corrections/JER/Summer16_25nsV1_MC/Summer16_25nsV1_MC_PtResolution_AK4PFchs.txt";
     paramSet.jets.jer_AK4CHS_sfFile     ="corrections/JER/Summer16_25nsV1_MC/Summer16_25nsV1_MC_SF_AK4PFchs.txt";
     paramSet.jets.jer_AK8Puppi_resFile  ="corrections/JER/Summer16_25nsV1_MC/Summer16_25nsV1_MC_PtResolution_AK8PFPuppi.txt";
@@ -178,6 +183,11 @@ ParameterSet set2017Parameters() {
     paramSet.event.ttbarXSecSF_1000toInf_nLep0 = 0.000719423;
     paramSet.event.ttbarXSecSF_1000toInf_nLep1 = 0.000741457;
     paramSet.event.ttbarXSecSF_1000toInf_nLep2 = 0.00052646;
+
+    paramSet.leptons.el_SFFile          ="corrections/lepton/electron_1l_2017_SF.root";
+    paramSet.leptons.mu_SFFile          ="corrections/lepton/muon_1l_2017_SF.root";
+    paramSet.dileptons.el_SFFile        ="corrections/lepton/electron_2l_2017_SF.root";
+    paramSet.dileptons.mu_SFFile        ="corrections/lepton/muon_2l_2017_SF.root";
 
     paramSet.jets.jer_AK4CHS_resFile    ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_PtResolution_AK4PFchs.txt";
     paramSet.jets.jer_AK4CHS_sfFile     ="corrections/JER/Fall17_V3_MC/Fall17_V3_MC_SF_AK4PFchs.txt";
@@ -204,6 +214,11 @@ ParameterSet set2018Parameters() {
     paramSet.event.ttbarXSecSF_1000toInf_nLep0 = 0.00050157;
     paramSet.event.ttbarXSecSF_1000toInf_nLep1 = 0.000514053;
     paramSet.event.ttbarXSecSF_1000toInf_nLep2 = 0.000517094;
+
+    paramSet.leptons.el_SFFile          ="corrections/lepton/electron_1l_2018_SF.root";
+    paramSet.leptons.mu_SFFile          ="corrections/lepton/muon_1l_2018_SF.root";
+    paramSet.dileptons.el_SFFile        ="corrections/lepton/electron_2l_2018_SF.root";
+    paramSet.dileptons.mu_SFFile        ="corrections/lepton/muon_2l_2018_SF.root";
 
     paramSet.jets.jer_AK4CHS_resFile    ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_PtResolution_AK4PFchs.txt";
     paramSet.jets.jer_AK4CHS_sfFile     ="corrections/JER/Autumn18_V7_MC/Autumn18_V7_MC_SF_AK4PFchs.txt";

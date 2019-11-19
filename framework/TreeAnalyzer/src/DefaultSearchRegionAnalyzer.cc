@@ -40,7 +40,8 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
     fjProc      .reset(new FatJetProcessor ());
     trigSFProc  .reset(new TriggerScaleFactors (dataDirectory));
     puSFProc    .reset(new PUScaleFactors (dataDirectory));
-    leptonSFProc.reset(new ActParamScaleFactors(dataDirectory));
+    leptonSFProc.reset(new POGLeptonScaleFactors(dataDirectory));
+    dileptonSFProc.reset(new POGLeptonScaleFactors(dataDirectory));
     ak4btagSFProc.reset(new JetBTagScaleFactors (dataDirectory));
     sjbtagSFProc.reset(new SubJetBTagScaleFactors (dataDirectory));
     hbbFJSFProc .reset(new HbbFatJetScaleFactors (dataDirectory));
@@ -141,6 +142,8 @@ void DefaultSearchRegionAnalyzer::setupParameters(){
     if(isCorrOn(CORR_TRIG))    trigSFProc->setParameters(parameters.event);
     if(isCorrOn(CORR_PU))      puSFProc->setParameters(parameters.event);
     if(isCorrOn(CORR_JER))     JERProc->setParameters(parameters.jets);
+    if(isCorrOn(CORR_LEP))     leptonSFProc->setParameters(parameters.leptons);
+    if(isCorrOn(CORR_LEP))     dileptonSFProc->setParameters(parameters.dileptons);
 
 
     hSolverLi->setParamters(parameters.hww);
@@ -214,7 +217,8 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
                 *reader_muon,*reader_electron);
         selectedLepton = selectedLeptons.size() ? selectedLeptons.front() : 0;
 
-        selectedDileptons = DileptonProcessor::getLeptons(parameters.dileptons,*reader_muon,*reader_electron);
+        selectedDileptons = DileptonProcessor::getLeptons(
+                parameters.dileptons,*reader_muon,*reader_electron);
         if (selectedDileptons.size() >= 2) {
             dilep1 = selectedDileptons[0];
             dilep2 = selectedDileptons[1];
@@ -240,7 +244,8 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
     //||||||||||||||||||||||||| CLASSIFY LEPTON CHANNEL |||||||||||||||||||||||||
     lepChan = NOCHANNEL;
     if (selectedDileptons.size() == 2 && passTriggerPreselection2l) lepChan = DILEP;
-    else if (selectedDileptons.size() < 2 && selectedLepton && passTriggerPreselection) lepChan = SINGLELEP;
+    else if (selectedDileptons.size() < 2 && selectedLepton && passTriggerPreselection)
+        lepChan = SINGLELEP;
 
     //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
     if(reader_fatjet) {
@@ -358,8 +363,13 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
             weight *= pucorr;
         }
         if(isCorrOn(CORR_LEP)){
+            dileptonSFProc->load(smDecayEvt,selectedDileptons);
             leptonSFProc->load(smDecayEvt,selectedLeptons);
-            weight *= leptonSFProc->getSF();
+            if (lepChan == DILEP) {
+                weight *= dileptonSFProc->getSF();
+            } else {
+                weight *= leptonSFProc->getSF();
+            }
         }
         if(isCorrOn(CORR_SJBTAG)){
             weight    *= sjbtagSFProc->getSF(parameters.jets,{hbbCand});

@@ -108,19 +108,19 @@ public:
 
         if(addUncVariables){
         	outTree->addSingle(w_muIDUp_,  "",  "w_muIDUp");
-        	outTree->addSingle(w_muISOUp_,  "",  "w_muISOUp");
+//        	outTree->addSingle(w_muISOUp_,  "",  "w_muISOUp");
         	outTree->addSingle(w_elRecoUp_,  "",  "w_elRecoUp");
         	outTree->addSingle(w_elIDUp_,  "",  "w_elIDUp");
-        	outTree->addSingle(w_elISOUp_,  "",  "w_elISOUp");
+//        	outTree->addSingle(w_elISOUp_,  "",  "w_elISOUp");
         	outTree->addSingle(w_b_realUp_,  "",  "w_b_realUp");
         	outTree->addSingle(w_b_fakeUp_,  "",  "w_b_fakeUp");
         	outTree->addSingle(w_puUp_,  "",  "w_puUp");
         	outTree->addSingle(w_puDown_,  "",  "w_puDown");
         	outTree->addSingle(w_muIDDown_,  "",  "w_muIDDown");
-        	outTree->addSingle(w_muISODown_,  "",  "w_muISODown");
+//        	outTree->addSingle(w_muISODown_,  "",  "w_muISODown");
         	outTree->addSingle(w_elRecoDown_,  "",  "w_elRecoDown");
         	outTree->addSingle(w_elIDDown_,  "",  "w_elIDDown");
-        	outTree->addSingle(w_elISODown_,  "",  "w_elISODown");
+//        	outTree->addSingle(w_elISODown_,  "",  "w_elISODown");
 
         }
 
@@ -156,7 +156,7 @@ public:
             xsec_    = EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),
         		    parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT);
             pu_N_    = puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL);
-            lep_N_   = 1.0 /*float(leptonSFProc->getSF())*/;
+            lep_N_   = (lepChan==DILEP ? dileptonSFProc : leptonSFProc)->getSF();
             btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
 
         	if (smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size()) {
@@ -314,23 +314,24 @@ public:
         }
 
         if(addUncVariables){
-            const float nomMu = leptonSFProc->getMuonSF();
-            const float nomEl = leptonSFProc->getElectronSF();
+            auto lepProc = &*(lepChan==DILEP ? dileptonSFProc : leptonSFProc);
+            const float nomMu = lepProc->getMuonSF();
+            const float nomEl = lepProc->getElectronSF();
 
-            w_muIDUp_     = float(leptonSFProc->getMuonSF(NONE,UP,NOMINAL)*nomEl);
-            w_muISOUp_    = float(leptonSFProc->getMuonSF(NONE,NOMINAL,UP)*nomEl);
-            w_elRecoUp_   = float(leptonSFProc->getElectronSF(UP,NOMINAL,NOMINAL)*nomMu);
-            w_elIDUp_     = float(leptonSFProc->getElectronSF(NOMINAL,UP,NOMINAL)*nomMu);
-            w_elISOUp_    = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,UP)*nomMu);
+            w_muIDUp_     = float(lepProc->getMuonSF(NONE,UP)*nomEl);
+//            w_muISOUp_    = float(leptonSFProc->getMuonSF(NONE,NOMINAL,UP)*nomEl);
+            w_elRecoUp_   = float(lepProc->getElectronSF(UP,NOMINAL)*nomMu);
+            w_elIDUp_     = float(lepProc->getElectronSF(NOMINAL,UP)*nomMu);
+//            w_elISOUp_    = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,UP)*nomMu);
             w_b_realUp_   = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,UP)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,UP));
             w_b_fakeUp_   = float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},UP,NOMINAL));
             w_puUp_       = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::UP));
 
-            w_muIDDown_   = float(leptonSFProc->getMuonSF(NONE,DOWN,NOMINAL)*nomEl);
-            w_muISODown_  = float(leptonSFProc->getMuonSF(NONE,NOMINAL,DOWN)*nomEl);
-            w_elRecoDown_ = float(leptonSFProc->getElectronSF(DOWN,NOMINAL,NOMINAL)*nomMu);
-            w_elIDDown_   = float(leptonSFProc->getElectronSF(NOMINAL,DOWN,NOMINAL)*nomMu);
-            w_elISODown_  = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,DOWN)*nomMu);
+            w_muIDDown_   = float(lepProc->getMuonSF(NONE,DOWN)*nomEl);
+//            w_muISODown_  = float(leptonSFProc->getMuonSF(NONE,NOMINAL,DOWN)*nomEl);
+            w_elRecoDown_ = float(lepProc->getElectronSF(DOWN,NOMINAL)*nomMu);
+            w_elIDDown_   = float(lepProc->getElectronSF(NOMINAL,DOWN)*nomMu);
+//            w_elISODown_  = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,DOWN)*nomMu);
             w_b_realDown_ = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,DOWN));
             w_b_fakeDown_ = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},DOWN,NOMINAL));
             w_puDown_     = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::DOWN));
@@ -405,18 +406,18 @@ public:
 
     //systematic variables
     float w_muIDUp_      = 0;
-    float w_muISOUp_     = 0;
+//    float w_muISOUp_     = 0;
     float w_elRecoUp_    = 0;
     float w_elIDUp_      = 0;
-    float w_elISOUp_     = 0;
+//    float w_elISOUp_     = 0;
     float w_b_realUp_    = 0;
     float w_b_fakeUp_    = 0;
     float w_puUp_        = 0;
     float w_muIDDown_    = 0;
-    float w_muISODown_   = 0;
+//    float w_muISODown_   = 0;
     float w_elRecoDown_  = 0;
     float w_elIDDown_    = 0;
-    float w_elISODown_   = 0;
+//    float w_elISODown_   = 0;
     float w_b_realDown_  = 0;
     float w_b_fakeDown_  = 0;
     float w_puDown_      = 0;
