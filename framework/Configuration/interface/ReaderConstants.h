@@ -85,6 +85,7 @@ struct LeptonParameters {
     float el_maxISO ;
     LeptonProcessor::elFunBool el_getID ;
     LeptonProcessor::elFunFloat el_getISO;
+    std::string el_SFFile;
 
     float mu_minPT  ;
     float mu_maxETA ;
@@ -94,6 +95,7 @@ struct LeptonParameters {
     float mu_maxISO ;
     LeptonProcessor::muFunBool mu_getID ;
     LeptonProcessor::muFunFloat mu_getISO;
+    std::string mu_SFFile;
 };
 
 //--------------------------------------------------------------------------------------------------
@@ -113,6 +115,7 @@ struct DileptonParameters {
     DileptonProcessor::elFunBool el_getID1 ;
     DileptonProcessor::elFunBool el_getID2 ;
     DileptonProcessor::elFunFloat el_getISO;
+    std::string el_SFFile;
 
     float mu_minPT  ;
     float mu_maxETA ;
@@ -123,6 +126,7 @@ struct DileptonParameters {
     DileptonProcessor::muFunBool mu_getID1 ;
     DileptonProcessor::muFunBool mu_getID2 ;
     DileptonProcessor::muFunFloat mu_getISO;
+    std::string mu_SFFile;
 
 };
 //--------------------------------------------------------------------------------------------------
