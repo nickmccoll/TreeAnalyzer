@@ -314,7 +314,7 @@ public:
         }
 
         if(addUncVariables){
-            auto lepProc = (lepChan==DILEP ? dileptonSFProc : leptonSFProc);
+            auto lepProc = &*(lepChan==DILEP ? dileptonSFProc : leptonSFProc);
             const float nomMu = lepProc->getMuonSF();
             const float nomEl = lepProc->getElectronSF();
 
