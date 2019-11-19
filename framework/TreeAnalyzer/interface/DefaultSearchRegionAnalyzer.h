@@ -151,6 +151,7 @@ public:
     std::unique_ptr<TriggerScaleFactors>    trigSFProc ;
     std::unique_ptr<PUScaleFactors>         puSFProc ;
     std::unique_ptr<LeptonScaleFactors>     leptonSFProc ;
+    std::unique_ptr<LeptonScaleFactors>     dileptonSFProc ;
     std::unique_ptr<JetBTagScaleFactors>    ak4btagSFProc ;
     std::unique_ptr<SubJetBTagScaleFactors> sjbtagSFProc ;
     std::unique_ptr<HbbFatJetScaleFactors>  hbbFJSFProc ;
