@@ -107,10 +107,10 @@ public:
     ) const;
 
     float flatSFUNC_m_reco = 0.00;
-    float flatSFUnc_m_id   = 0.00;
+    float flatSFUnc_m_id   = 0.02;
     float flatSFUnc_m_iso  = 0.00;
     float flatSFUNC_e_reco = 0.00;
-    float flatSFUnc_e_id   = 0.00;
+    float flatSFUnc_e_id   = 0.02;
     float flatSFUnc_e_iso  = 0.00;
 
 private:
