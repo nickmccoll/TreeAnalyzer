@@ -73,7 +73,7 @@ SignalHelper::SignalHelper(DiHiggsEvent dhEvt, std::shared_ptr<MuonReader> reade
 			glep2_0 = dhEvt.w1_d1;
 		}
 
-		if (glep1_0 && glep2_0 && (glep1_0->pdgId()<0 != glep2_0->pdgId()<0)) {
+		if (glep1_0 && glep2_0 && ((glep1_0->pdgId()<0) != (glep2_0->pdgId()<0))) {
 
 	    	if (glep1_0->absPdgId() == ParticleInfo::p_tauminus) genlep1 = getGenLepFromTau(glep1_0);
 	    	else genlep1 = glep1_0;

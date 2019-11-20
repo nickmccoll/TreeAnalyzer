@@ -1,10 +1,6 @@
 #include "TH1.h"
-#include "TGraph.h"
-#include "TH2.h"
 #include "TFile.h"
-#include <iostream>
 #include "TString.h"
-#include "/Users/brentstone/Dropbox/Physics/GitRepos/HistoPlotting/include/Plotter.h"
 using namespace std;
 
 // run using: rr -b -q 'makePUSF.C(year)'

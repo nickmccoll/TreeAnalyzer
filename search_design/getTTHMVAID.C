@@ -42,59 +42,6 @@ public:
         turnOffCorr(CORR_TOPPT);
         turnOffCorr(CORR_JER);
 
-        fjProc2      .reset(new FatJetProcessor ());
-    }
-
-    const FatJet* getMatchedFJ(const MomentumF& genJet, bool doHbb, const std::vector<FatJet>& fatjets, const std::vector<FatJet>& fatjets_nolep) {
-    	double nearestDR = 10;
-    	if (genJet.pt() < 200) return 0;
-    	if (doHbb){
-    		if (!fatjets.size()) return 0;
-        	int idx = PhysicsUtilities::findNearestDR(genJet,fatjets,nearestDR,0.2);
-        	if (idx < 0) return 0;
-        	else return &fatjets[idx];
-    	} else {
-    		if (!fatjets_nolep.size()) return 0;
-        	int idx = PhysicsUtilities::findNearestDR(genJet,fatjets_nolep,nearestDR,0.2);
-        	if (idx < 0) return 0;
-        	else return &fatjets_nolep[idx];
-    	}
-    }
-
-    const Lepton* getMatchedLepton(const GenParticle* genLep,const std::vector<const Muon*> muons, const std::vector<const Electron*> electrons, double maxDR, bool chargeMatch) {
-       if(genLep->absPdgId() == ParticleInfo::p_muminus){
-           double nearestDR =10;
-           int idx = -1;
-       	   for (const auto& mu : muons) {
-       	       if (chargeMatch) {
-       		       if ((mu->q() > 0) == (genLep->pdgId() > 0)) continue;
-       	       }
-       	       double dr = PhysicsUtilities::deltaR(*genLep,*mu);
-       	       if (dr < nearestDR) {
-       	    	   nearestDR = dr;
-           	       idx = mu->index();
-       	       }
-       	   }
-       	   if (nearestDR > maxDR) return 0;
-       	   if (idx < 0) return 0;
-       	   return &reader_muon->muons[idx];
-       } else {
-           double nearestDR =10;
-           int idx = -1;
-       	   for (const auto& el : electrons) {
-       	       if (chargeMatch) {
-       		       if ((el->q() > 0) == (genLep->pdgId() > 0)) continue;
-       	       }
-       	       double dr = PhysicsUtilities::deltaR(*genLep,*el);
-       	       if (dr < nearestDR) {
-       	    	   nearestDR = dr;
-           	       idx = el->index();
-       	       }
-       	   }
-       	   if (nearestDR > maxDR) return 0;
-       	   if (idx < 0) return 0;
-       	   return &reader_electron->electrons[idx];
-       }
     }
 
     void plot(TString sn, const Lepton *lep1, const Lepton *lep2, bool is1l) {
@@ -136,119 +83,6 @@ public:
 
     }
 
-    const GenParticle *getGenLepFromTau(const GenParticle* tau) {
-    	if (tau->absPdgId() != ParticleInfo::p_tauminus) return 0;
-    	if (!ParticleInfo::isLastInChain(tau)) {
-    		cout<<"tau not last in chain"<<endl;
-    		return 0;
-    	}
-
-    	const GenParticle* gp=0;
-    	int nlepsfromtau = 0;
-    	for (unsigned int k = 0; k < tau->numberOfDaughters(); k++) {
-    		const auto* dau = tau->daughter(k);
-    		if (dau->absPdgId() == ParticleInfo::p_muminus || dau->absPdgId() == ParticleInfo::p_eminus) {
-
-    			if (nlepsfromtau >= 1) {
-    				cout<<"already a lep in the tau decay!!"<<endl;
-    				continue;
-    			}
-    			gp = dau;
-    			nlepsfromtau++;
-    		}
-    	}
-    	if (!gp) return 0;
-    	if (nlepsfromtau > 1) {
-    		cout<<"Found "<<nlepsfromtau<<" leps in tau decay!!!!"<<endl;
-    		return 0;
-    	}
-
-    	return gp;
-    }
-
-    bool passLepSelNoID(const Lepton* lep1, const Lepton* lep2) {
-    	bool passIP1 = fabs(lep1->dz()) < 0.1 && fabs(lep1->d0()) < 0.05;
-    	bool passIP2 = fabs(lep2->dz()) < 0.1 && fabs(lep2->d0()) < 0.05;
-
-    	bool passIso = lep1->miniIso() < 0.15 && lep2->miniIso() < 0.15;
-
-    	bool pass = passIP1 && passIP2 && passIso;
-
-    	if (pass) return true;
-    	else      return false;
-    }
-
-    void doSignalDilep(TString sn) {
-    	const GenParticle* glep1_0 = diHiggsEvt.w1_d1->pt() > diHiggsEvt.w2_d1->pt() ? diHiggsEvt.w1_d1 : diHiggsEvt.w2_d1;
-    	const GenParticle* glep2_0 = diHiggsEvt.w1_d1->pt() > diHiggsEvt.w2_d1->pt() ? diHiggsEvt.w2_d1 : diHiggsEvt.w1_d1;
-
-    	if (glep1_0->pdgId()<0 == glep2_0->pdgId()<0) return;
-    	const GenParticle *glep1=0;
-    	const GenParticle *glep2=0;
-
-    	if (glep1_0->absPdgId() == 15) glep1 = getGenLepFromTau(glep1_0);
-    	else glep1 = glep1_0;
-
-    	if (glep2_0->absPdgId() == 15) glep2 = getGenLepFromTau(glep2_0);
-    	else glep2 = glep2_0;
-
-    	if (!glep1 || !glep2) return;
-
-//    	if (glep1->pt() < 10 || glep2->pt() < 10) return;
-//    	bool goodPt1 = glep1->absPdgId() == 13 ? (glep1->pt() > 27) : (glep1->pt() > 30);
-//    	bool goodPt2 = glep2->absPdgId() == 13 ? (glep2->pt() > 27) : (glep2->pt() > 30);
-//    	if (!goodPt1 && !goodPt2) return;
-
-    	const auto muons = PhysicsUtilities::selObjsMom(reader_muon->muons,10,2.4);
-    	const auto electrons = PhysicsUtilities::selObjsMom(reader_electron->electrons,10,2.5);
-    	const Lepton* matchLep1 = getMatchedLepton(glep1,muons,electrons,0.1,true);
-    	const Lepton* matchLep2 = getMatchedLepton(glep2,muons,electrons,0.1,true);
-
-    	if (!matchLep1 || !matchLep2) return;
-    	if ((matchLep1->isMuon() == matchLep2->isMuon()) && (matchLep1->index() == matchLep2->index())) return; // discard if these are the same RECO lep
-
-    	// RECO lepton pt cuts
-//    	if (matchLep1->pt() < 10 || matchLep2->pt() < 10) return;
-//    	goodPt1 = matchLep1->isMuon() ? (matchLep1->pt() > 27) : (matchLep1->pt() > 30);
-//    	goodPt2 = matchLep2->isMuon() ? (matchLep2->pt() > 27) : (matchLep2->pt() > 30);
-//    	if (!goodPt1 && !goodPt2) return;
-
-//    	if (!passLepSelNoID(matchLep1,matchLep2)) return;
-
-    	plot(sn,matchLep1,matchLep2,false);
-    }
-
-    void doSignalSingleLep(TString sn) {
-    	const GenParticle* glep0 = 0;
-    	if (ParticleInfo::isLepton(diHiggsEvt.w1_d1->absPdgId())) glep0 = diHiggsEvt.w1_d1;
-    	else if (ParticleInfo::isLepton(diHiggsEvt.w2_d1->absPdgId())) glep0 = diHiggsEvt.w2_d1;
-
-    	if (!glep0) return;
-    	const GenParticle *glep=0;
-
-    	if (glep0->absPdgId() == 15) glep = getGenLepFromTau(glep0);
-    	else glep = glep0;
-
-    	if (!glep) return;
-
-//    	bool goodPt = glep->absPdgId() == 13 ? (glep->pt() > 27) : (glep->pt() > 30);
-//    	if (!goodPt) return;
-
-    	const auto muons = PhysicsUtilities::selObjsMom(reader_muon->muons,10,2.4);
-    	const auto electrons = PhysicsUtilities::selObjsMom(reader_electron->electrons,10,1.479);
-    	const Lepton* matchLep1 = getMatchedLepton(glep,muons,electrons,0.1,true);
-    	if (!matchLep1) return;
-
-    	// RECO lepton pt cuts
-//    	goodPt = matchLep1->isMuon() ? (matchLep1->pt() > 27) : (matchLep1->pt() > 30);
-//    	if (!goodPt) return;
-
-//    	if (matchLep1->miniIso() > 0.2) return;
-//    	if (matchLep1->sip3D() > 4 || std::fabs(matchLep1->dz()) > 0.1 || std::fabs(matchLep1->d0()) > 0.05) return;
-
-    	plot(sn,matchLep1,0,true);
-    }
-
     void testSigHelper(TString sn, SignalHelper& helper) {
     	bool passGenLepPt = false;
     	bool passRecoLepPt = false;
@@ -267,8 +101,8 @@ public:
     		passRecoLepPt = hasHighPt && (helper.recolep1->pt() > 10 && helper.recolep2->pt() > 10);
 
     		passIsoIP = helper.recolep1->miniIso() < 0.15 && helper.recolep2->miniIso() < 0.15
-    				&& helper.recolep1->sip3D() < 4.0 && fabs(helper.recolep1->dz()) < 0.1 && fabs(helper.recolep1->d0()) < 0.05
-					&& helper.recolep2->sip3D() < 4.0 && fabs(helper.recolep2->dz()) < 0.1 && fabs(helper.recolep2->d0()) < 0.05;
+    				&& fabs(helper.recolep1->dz()) < 0.1 && fabs(helper.recolep1->d0()) < 0.05
+					&& fabs(helper.recolep2->dz()) < 0.1 && fabs(helper.recolep2->d0()) < 0.05;
     	} else {
     		if (!helper.recolep1 || !helper.genlep1) return;
 
@@ -297,6 +131,7 @@ public:
     		if (fabs(el->dz()) > 0.1) return false;
     		if (fabs(el->d0()) > 0.05) return false;
     		if (el->miniIso() > 0.2) return false;
+    		return true;
     	};
 
     	auto passElSelNoID2 = [&](const Electron* el) {
@@ -305,26 +140,29 @@ public:
     		if (fabs(el->dz()) > 0.1) return false;
     		if (fabs(el->d0()) > 0.05) return false;
     		if (el->miniIso() > 0.15) return false;
+    		return true;
     	};
 
-    	auto passMuSelNoID1 = [&](const Electron* el) {
-    		if (el->pt() < 27) return false;
-    		if (el->absEta() > 2.4) return false;
-    		if (el->sip3D() > 4.0) return false;
-    		if (fabs(el->dz()) > 0.1) return false;
-    		if (fabs(el->d0()) > 0.05) return false;
-    		if (el->miniIso() > 0.2) return false;
+    	auto passMuSelNoID1 = [&](const Muon* mu) {
+    		if (mu->pt() < 27) return false;
+    		if (mu->absEta() > 2.4) return false;
+    		if (mu->sip3D() > 4.0) return false;
+    		if (fabs(mu->dz()) > 0.1) return false;
+    		if (fabs(mu->d0()) > 0.05) return false;
+    		if (mu->miniIso() > 0.2) return false;
+    		return true;
     	};
 
-    	auto passMuSelNoID2 = [&](const Electron* el) {
-    		if (el->pt() < 10) return false;
-    		if (el->absEta() > 2.4) return false;
-    		if (fabs(el->dz()) > 0.1) return false;
-    		if (fabs(el->d0()) > 0.05) return false;
-    		if (el->miniIso() > 0.15) return false;
+    	auto passMuSelNoID2 = [&](const Muon* mu) {
+    		if (mu->pt() < 10) return false;
+    		if (mu->absEta() > 2.4) return false;
+    		if (fabs(mu->dz()) > 0.1) return false;
+    		if (fabs(mu->d0()) > 0.05) return false;
+    		if (mu->miniIso() > 0.15) return false;
+    		return true;
     	};
 
-    	auto getLeptons = [&](bool is1l) {
+    	auto getLeptons = [&](bool is1l, bool doID) {
         	std::vector<const Electron*> els;
         	std::vector<const Muon*> mus;
 
@@ -334,11 +172,17 @@ public:
         		} else {
         			if (!passElSelNoID2(&el)) continue;
         		}
-    			if (doStd) {
-    				if (!el.passMVA90ID_noIso()) continue;
-    			} else {
-    				if (el.ttHMVA() < 0.8) continue;
-    			}
+        		if(doID) {
+        			if (doStd) {
+        				if (is1l) {
+        					if (!el.passMVA90ID_noIso()) continue;
+        				} else {
+        					if (!el.passMedID_noIso()) continue;
+        				}
+        			} else {
+        				if (el.ttHMVA() < 0.8) continue;
+        			}
+        		}
         		els.push_back(&el);
         	}
         	for (const auto& mu : reader_muon->muons) {
@@ -347,11 +191,18 @@ public:
         		} else {
         			if (!passMuSelNoID2(&mu)) continue;
         		}
-    			if (doStd) {
-    				if (!mu.passMedID()) continue;
-    			} else {
-    				if (mu.ttHMVA() < 0.85) continue;
-    			}
+        		if(doID) {
+        			if (doStd) {
+        				if (is1l) {
+        					if (!mu.passMedID()) continue;
+        				} else {
+        					if (!mu.passLooseID()) continue;
+        				}
+        			} else {
+        				if (mu.ttHMVA() < 0.85) continue;
+        			}
+        		}
+
         		mus.push_back(&mu);
         	}
 
@@ -363,8 +214,8 @@ public:
             return leps;
     	};
 
-    	vector<const Lepton*> singleleps = getLeptons(true);
-    	vector<const Lepton*> dileps = getLeptons(false);
+    	vector<const Lepton*> singleleps = getLeptons(true,true);
+    	vector<const Lepton*> dileps = getLeptons(false,true);
 
     	bool goodDilepPt = false;
     	if (dileps.size() >= 2) {
@@ -374,14 +225,38 @@ public:
 
     	TString chS;
     	if (dileps.size() == 2 && goodDilepPt) chS = "2l";
-    	else if (dileps.size() < 2) chS = "1l";
+    	else if (dileps.size() < 2 && singleleps.size()) chS = "1l";
     	else return;
 
     	plotter.getOrMake1DPre(sn+"_"+chS,"ht",";ht",1000,0,4000)->Fill(ht,weight);
-//    	if (!doStd) {
-//        	plotter.getOrMake1DPre(sn+"_"+chS,"ht",";ht",1000,0,4000)->Fill(ht,weight);
-//    	}
+    	if (!doStd) {
+    		if (chS == "1l") {
+        		TString lS = (singleleps[0]->isMuon() ? "m1" : "e1");
+            	plotter.getOrMake1DPre(sn+"_"+chS+"_"+lS,"tthMVA",";",100,-1,1)->Fill(singleleps[0]->ttHMVA(),weight);
+    		} else {
+        		TString lS1 = (dileps[0]->isMuon() ? "m1" : "e1");
+        		TString lS2 = (dileps[1]->isMuon() ? "m2" : "e2");
+            	plotter.getOrMake1DPre(sn+"_"+chS+"_"+lS1,"tthMVA",";",100,-1,1)->Fill(dileps[0]->ttHMVA(),weight);
+            	plotter.getOrMake1DPre(sn+"_"+chS+"_"+lS2,"tthMVA",";",100,-1,1)->Fill(dileps[1]->ttHMVA(),weight);
+    		}
+    	}
+    }
 
+    void validateBkg(TString sn) {
+    	if (lepChan == NOCHANNEL) return;
+    	TString chS;
+    	if (lepChan == SINGLELEP) {
+    		chS = "1l";
+    		TString lS = (selectedLepton->isMuon() ? "m1" : "e1");
+        	plotter.getOrMake1DPre(sn+"_"+chS+"_"+lS,"tthMVA",";",100,-1,1)->Fill(selectedLepton->ttHMVA(),weight);
+    	} else if (lepChan == DILEP) {
+    		chS = "2l";
+    		TString lS1 = (dilep1->isMuon() ? "m1" : "e1");
+    		TString lS2 = (dilep2->isMuon() ? "m2" : "e2");
+        	plotter.getOrMake1DPre(sn+"_"+chS+"_"+lS1,"tthMVA",";",100,-1,1)->Fill(dilep1->ttHMVA(),weight);
+        	plotter.getOrMake1DPre(sn+"_"+chS+"_"+lS2,"tthMVA",";",100,-1,1)->Fill(dilep2->ttHMVA(),weight);
+    	}
+    	plotter.getOrMake1DPre(sn+"_"+chS,"ht",";ht",1000,0,4000)->Fill(ht,weight);
     }
 
     bool runEvent() override {
@@ -412,10 +287,10 @@ public:
         		sigInfo.setRecoLeptons(0.1);
         		testSigHelper(sn,sigInfo);
         	}
-
         } else {
         	testBkg(sn+"_passSTD",true);
         	testBkg(sn+"_passTTH",false);
+        	validateBkg(sn+"_true");
         }
 
         return true;
@@ -423,7 +298,6 @@ public:
 
     void write(TString fileName){ plotter.write(fileName);}
     HistGetter plotter;
-    std::unique_ptr<FatJetProcessor>        fjProc2     ;
 
 };
 
