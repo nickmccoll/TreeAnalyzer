@@ -3,6 +3,7 @@
 #include "AnalysisSupport/Utilities/interface/ParticleInfo.h"
 #include "DataFormats/interface/Electron.h"
 #include "DataFormats/interface/Muon.h"
+#include "DataFormats/interface/FatJet.h"
 #include "DataFormats/interface/GenParticle.h"
 #include "Configuration/interface/FillerConstants.h"
 #include "TreeReaders/interface/ElectronReader.h"
@@ -11,13 +12,13 @@
 
 namespace TAna {
 //_____________________________________________________________________________
-//FatJet* getMatchedFJ(const MomentumF& genJet, const std::vector<FatJet>& fatjets, double maxDR) {
-//	double nearestDR = 99;
-//	if (!fatjets.size()) return 0;
-//    int idx = PhysicsUtilities::findNearestDR(genJet,fatjets,nearestDR,maxDR);
-//    if (idx < 0) return 0;
-//    else return &fatjets[idx];
-//}
+FatJet* SignalHelper::getMatchedFJ(const MomentumF& genJet, std::vector<FatJet>& fatjets, double maxDR) {
+	double nearestDR = 99;
+	if (!fatjets.size()) return 0;
+    int idx = PhysicsUtilities::findNearestDR(genJet,fatjets,nearestDR,maxDR);
+    if (idx < 0) return 0;
+    else return &fatjets[idx];
+}
 //_____________________________________________________________________________
 const GenParticle* SignalHelper::getGenLepFromTau(const GenParticle* TAU) {
 	if (TAU->absPdgId() != ParticleInfo::p_tauminus) return 0;
@@ -61,6 +62,7 @@ SignalHelper::SignalHelper(DiHiggsEvent dhEvt, std::shared_ptr<MuonReader> reade
 	muReader = reader_muon;
 
 	type = dhEvt.type;
+	genHbb = dhEvt.hbb;
 	if (type == DiHiggsEvent::DILEP) {
 		const GenParticle* glep1_0 = 0;
 		const GenParticle* glep2_0 = 0;
@@ -154,6 +156,19 @@ void SignalHelper::setRecoLeptons(double matchDR) {
 	}
 
 }
+
+void SignalHelper::setRecoHbb(std::vector<FatJet>& fatjets, double matchDR) {
+	if (!fatjets.size()) {
+		recoHbb = 0;
+		return;
+	}
+	if (!genHbb) {
+		recoHbb = 0;
+		return;
+	}
+	recoHbb = getMatchedFJ(genHbb->p4(),fatjets,matchDR);
+}
+
 
 bool SignalHelper::hasMatchedSingleLep() {
 	if (!genlep1 || !recolep1) return false;
