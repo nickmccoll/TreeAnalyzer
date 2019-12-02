@@ -36,7 +36,7 @@ public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
         addUncVariables = (treeType == TREE_OTHER);
-        turnOffCorr(CORR_JER);
+//        turnOffCorr(CORR_JER);
     }
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
@@ -67,6 +67,7 @@ public:
         	outTree->addSingle(pu_N_,  "",  "pu_N");
         	outTree->addSingle(lep_N_,  "",  "lep_N");
         	outTree->addSingle(btag_N_,  "",  "btag_N");
+        	outTree->addSingle(topPt_N_, "",  "topPt_N");
         	outTree->addSingle(hbbDecayType_,  "",  "hbbDecayType");
         	outTree->addSingle(eQuarksInHbb_,  "",  "eQuarksInHbb");
         	outTree->addSingle(nLepsTT_,  "",  "nLepsTT");
@@ -158,6 +159,7 @@ public:
             pu_N_    = puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL);
             lep_N_   = (lepChan==DILEP ? dileptonSFProc : leptonSFProc)->getSF();
             btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
+            topPt_N_ = topPTProc->getCorrection(mcProc,smDecayEvt);
 
         	if (smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size()) {
         	    if (lepChan == SINGLELEP) {
@@ -359,6 +361,7 @@ public:
     float pu_N_       = 0;
     float lep_N_      = 0;
     float btag_N_     = 0;
+    float topPt_N_    = 0;
 
     size8 lepChan_    = 0;
     size64 event_     = 0;

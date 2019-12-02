@@ -19,23 +19,23 @@ float getNormalizedEventWeight(const EventReader& reader_event, const float cros
 
     if (evtParam.doTTBarStitching && reader_event.process.val() == FillerConstants::TTBAR) {
     	if (reader_event.sampParam.val() == 1000) {
-    		if (genMtt >= 1010) {
+    		if (genMtt >= 1000) {
     			if      (nLepsTT==0) return evtParam.ttbarXSecSF_1000toInf_nLep0 * evtParam.lumi * sgn;
     			else if (nLepsTT==1) return evtParam.ttbarXSecSF_1000toInf_nLep1 * evtParam.lumi * sgn;
     			else if (nLepsTT==2) return evtParam.ttbarXSecSF_1000toInf_nLep2 * evtParam.lumi * sgn;
     		} else return 0;
     	} else if (reader_event.sampParam.val() == 700) {
-    		if (genMtt >= 710 && genMtt <= 960) {
+    		if (genMtt >= 700 && genMtt < 1000) {
     			if      (nLepsTT==0) return evtParam.ttbarXSecSF_700to1000_nLep0 * evtParam.lumi * sgn;
     			else if (nLepsTT==1) return evtParam.ttbarXSecSF_700to1000_nLep1 * evtParam.lumi * sgn;
     			else if (nLepsTT==2) return evtParam.ttbarXSecSF_700to1000_nLep2 * evtParam.lumi * sgn;
     		} else return 0;
     	} else {
-    		if (genMtt >= 1010) {
+    		if (genMtt >= 1000) {
     			if      (nLepsTT==0) return evtParam.ttbarXSecSF_1000toInf_nLep0 * evtParam.lumi * sgn;
     			else if (nLepsTT==1) return evtParam.ttbarXSecSF_1000toInf_nLep1 * evtParam.lumi * sgn;
     			else if (nLepsTT==2) return evtParam.ttbarXSecSF_1000toInf_nLep2 * evtParam.lumi * sgn;
-    		} else if (genMtt >= 710 && genMtt <= 960) {
+    		} else if (genMtt >= 700 && genMtt < 1000) {
     			if      (nLepsTT==0) return evtParam.ttbarXSecSF_700to1000_nLep0 * evtParam.lumi * sgn;
     			else if (nLepsTT==1) return evtParam.ttbarXSecSF_700to1000_nLep1 * evtParam.lumi * sgn;
     			else if (nLepsTT==2) return evtParam.ttbarXSecSF_700to1000_nLep2 * evtParam.lumi * sgn;
