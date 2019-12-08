@@ -841,6 +841,8 @@ public:
     	if(passCross || passMET) plotter.getOrMake1DPre(prefix+"_CrossoMet",chS+"_ht",";ht",1000,0,4000)->Fill(ht,weight);
     	if(passSingleLep || passCross || passMET || passJet) {
     		plotter.getOrMake1DPre(prefix+"_passAny",chS+"_ht",";ht",1000,0,4000)->Fill(ht,weight);
+    		if (chS=="2l") plotter.getOrMake2DPre(prefix+"_passAny",chS+"_htpt2",";ht;pt2",
+    				htbins.size()-1,&htbins[0],ptbins.size()-1,&ptbins[0])->Fill(ht,sigInfo.recolep2->pt(),weight);
     	}
     }
 
@@ -861,7 +863,7 @@ public:
         tagLeptonParam.mu_getISO = &Muon::pfIso;
         tagLeptonParam.mu_maxISO = 0.15;
 
-        tagLeptonParam.el_minPT = 30;
+        tagLeptonParam.el_minPT = 32;
         tagLeptonParam.el_getISO = &Electron::pfIso;
         tagLeptonParam.el_maxISO = 0.15;
 
@@ -902,31 +904,39 @@ public:
         bool passCross = false;
         bool isMuon = false;
         if (tagLepton->isMuon()) {
-        	passSingleLep = passTrig(HLT17_IsoMu27) || passTrig(HLT17_Mu50);
+        	passSingleLep = passTrig(HLT17_IsoMu27);
 //        	passCross = passTrig17(HLT17_Ele15_IsoVVVL_PFHT450) || passTrig17(HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
         	passCross = passTrig17(HLT17_Mu15_IsoVVVL_PFHT450);
         	isMuon = true;
         } else {
-        	passSingleLep = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG)
-        			|| passTrig17(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150);
+        	passSingleLep = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
+//        			|| passTrig17(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150);
 //        	passCross = passTrig17(HLT17_Mu15_IsoVVVL_PFHT450);
         	passCross = passTrig17(HLT17_Ele15_IsoVVVL_PFHT450) || passTrig17(HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);        }
 
     	bool passJet = passTrig17(HLT17_AK8PFHT850_TrimMass50) || passTrig17(HLT17_PFHT1050) ||
 				passTrig17(HLT17_AK8PFJet400_TrimMass30) || passTrig17(HLT17_AK8PFJet500);
-    	bool passMET = passTrig17(HLT17_PFMET120_PFMHT120_IDTight_PFHT60) || passTrig17(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)
+    	bool passMET = passTrig17(HLT17_PFMET120_PFMHT120_IDTight_PFHT60)
     			|| passTrig17(HLT17_PFMETTypeOne120_PFMHT120_IDTight_PFHT60);
 
+    	bool passMetNoMu = passTrig17(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60);
+
     	bool passNonLepPath = passJet || passMET;
+    	bool passNonLepPathwMetNoMu = passNonLepPath || passMetNoMu;
     	bool passNonLepAndCrossPath = passNonLepPath || passCross;
 
-    	auto plt = [&](TString idS) {
+    	auto plt = [&](TString idS, double sf=1) {
     		TString name = (isMuon ? "_mu_" : "_el_") + idS;
-    		plotter.getOrMake1DPre(prefix+name,"pt",";pt",2000,0,2000)->Fill(tagLepton->pt(),weight);
-    		plotter.getOrMake1DPre(prefix+name,"ht",";ht",4000,0,4000)->Fill(ht,weight);
+    		plotter.getOrMake1DPre(prefix+name,"pt",";pt",2000,0,2000)->Fill(tagLepton->pt(),weight*sf);
+    		plotter.getOrMake1DPre(prefix+name,"ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
 
     		if(ht > 400) {
-        		plotter.getOrMake1DPre(prefix+name+"_ht400","pt",";pt",2000,0,2000)->Fill(tagLepton->pt(),weight);
+        		plotter.getOrMake1DPre(prefix+name+"_ht400","pt",";pt",2000,0,2000)->Fill(tagLepton->pt(),weight*sf);
+        		if(ht > 700) {
+        			plotter.getOrMake1DPre(prefix+name+"_ht700","pt",";pt",2000,0,2000)->Fill(tagLepton->pt(),weight*sf);
+        		} else {
+        			plotter.getOrMake1DPre(prefix+name+"_ht400to700","pt",";pt",2000,0,2000)->Fill(tagLepton->pt(),weight*sf);
+        		}
     		}
     	};
 
@@ -934,10 +944,31 @@ public:
     	if(passCross)     plt("tt1_Cross");
     	if(passSingleLep || passCross) plt("tt1_SingleLepoCross");
 
+    	double lumiwt = 0.884;
     	if(!passSingleLep) return;
     	plt("tt1_passSLep");
     	if(passNonLepPath) plt("tt1_passSLepAndMetHT");
-    	if(passNonLepAndCrossPath) plt("tt1_passSLepAndMetHTCross");
+    	if(passNonLepPathwMetNoMu) plt("tt1_passSLepAndMetHTwMetNoMu");
+    	if(passNonLepAndCrossPath) {
+    		plt("tt1_passSLepAndMetHTCross");
+    		if (passCross && !passNonLepPath) plt("tt1_passSLepAndMetHTCross_lumiwt",lumiwt);
+    		else plt("tt1_passSLepAndMetHTCross_lumiwt",1);
+    	}
+
+    	// also try requiring an AK4 bjet near the tag lepton
+    	bool hasBjetNearLep = false;
+    	for (const auto& j : reader_jet->jets) {
+    		if (PhysicsUtilities::deltaR2(j,*fatjet) < 1.2*1.2) continue;
+    		if (PhysicsUtilities::deltaR2(j,*tagLepton) > 1.6*1.6) continue;
+    		if (!BTagging::passJetBTagWP(parameters.jets,j)) continue;
+    		hasBjetNearLep = true;
+    	}
+
+    	if(!hasBjetNearLep) return;
+    	plt("tt1_wB_passSLep");
+    	if(passNonLepPath) plt("tt1_wB_passSLepAndMetHT");
+    	if(passNonLepPathwMetNoMu) plt("tt1_wB_passSLepAndMetHTwMetNoMu");
+    	if(passNonLepAndCrossPath) plt("tt1_wB_passSLepAndMetHTCross");
 
     }
 
@@ -947,13 +978,9 @@ public:
     	// than tag lep), and MET triggers. Also want to require AK8 b-jet to increase purity.
 
         LeptonParameters tagLeptonParam = parameters.leptons;
-    	tagLeptonParam.mu_minPT = 10;
-        tagLeptonParam.mu_getID = &Muon::passTightID;
         tagLeptonParam.mu_getISO = &Muon::pfIso;
         tagLeptonParam.mu_maxISO = 0.15;
 
-        tagLeptonParam.el_minPT = 10;
-        tagLeptonParam.el_getID = &Electron::passTightID_noIso;
         tagLeptonParam.el_getISO = &Electron::pfIso;
         tagLeptonParam.el_maxISO = 0.15;
 
@@ -1008,6 +1035,7 @@ public:
     		if(ht > 400) {
         		plotter.getOrMake1DPre(prefix+name+"_ht400","pt1",";pt",2000,0,2000)->Fill(lep1->pt(),weight);
         		plotter.getOrMake1DPre(prefix+name+"_ht400","pt2",";pt",2000,0,2000)->Fill(lep2->pt(),weight);
+        		plotter.getOrMake2DPre(prefix+name+"_ht400","pt12",";pt;pt",2000,0,2000,2000,0,2000)->Fill(lep1->pt(),lep2->pt(),weight);
     		}
     	};
 
@@ -1030,50 +1058,168 @@ public:
     	bool passNonLepPath = passJet || passMET;
     	bool passNonLepAndCrossPath = passNonLepPath || passCross;
 
-    	if(passSLep) plt("dy_SingleLep");
     	if(passCross)     plt("dy_Cross");
-    	if(passSLep || passCross) plt("dy_SingleLepoCross");
+    	if(passSLep || passCross) plt("dy_SLepoCross");
 
-    	if(!passSLep) return;
-    	plt("dy_passSLep");
-    	if(passNonLepPath) plt("dy_passSLepAndMetHT");
-    	if(passNonLepAndCrossPath) plt("dy_passSLepAndMetHTCross");
+    	if(passSLep) plt("dy_passSLep");
+    	if(passSLep && passNonLepPath) plt("dy_passSLepAndMetHT");
+    	if(passSLep && passNonLepAndCrossPath) plt("dy_passSLepAndMetHTCross");
+
+    	if(passJet) plt("dy_passJet");
+    	if(passJet && passSLep) plt("dy_passJetAndSLep");
+    	if(passJet && (passSLep || passCross)) plt("dy_passJetAndSLepoCross");
+    }
+
+    void testDileptonInDrellYan(TString prefix) {
+ //   	std::cout<<"dbg00"<<std::endl;
+    	auto leps = DileptonProcessor::getLeptons(parameters.dileptons,*reader_muon,*reader_electron);
+    	if (leps.size() != 2) return;
+    	if (leps[0]->isMuon() != leps[1]->isMuon()) return;
+//std::cout<<"dbg0"<<std::endl;
+    	bool isDimuon = leps[0]->isMuon() ? true : false;
+        bool hasHighPt = isDimuon ? (leps[0]->pt() > 27) : (leps[0]->pt() > 30);
+
+    	double dr2 = PhysicsUtilities::deltaR2(*leps[0],*leps[1]);
+    	MomentumF dilepMom = leps[0]->p4() + leps[1]->p4();
+//    	std::cout<<"dbg1"<<std::endl;
+        if(!hasHighPt) return;
+        if(dr2 > 1.2*1.2) return;
+        if(dilepMom.mass() < 70 || dilepMom.mass() > 110) return;
+//        std::cout<<"dbg2"<<std::endl;
+        // Now should have just two nearby isolated leptons in the event
+        plotter.getOrMake1DPre(prefix,"twoLep","ht",1000,0,4000)->Fill(ht,weight);
+
+        // select fatjet away from leptons
+        if (reader_fatjet->jets.size() != 1) return;
+        const FatJet* fatjet = &reader_fatjet->jets[0];
+        if (fatjet->pt() < 30) return;
+        if (PhysicsUtilities::deltaR2(*fatjet,dilepMom) < 1.6*1.6) return;
+        if (PhysicsUtilities::deltaR2(*fatjet,*leps[0]) < 0.8*0.8) return;
+        if (PhysicsUtilities::deltaR2(*fatjet,*leps[1]) < 0.8*0.8) return;
+//        std::cout<<"dbg3"<<std::endl;
+        plotter.getOrMake1DPre(prefix,"twoLep_FatJet","ht",4000,0,4000)->Fill(ht,weight);
+
+    	auto plt = [&](TString idS) {
+    		TString name = (isDimuon ? "_mu_" : "_el_") + idS;
+    		plotter.getOrMake1DPre(prefix+name,"pt1",";pt",2000,0,2000)->Fill(leps[0]->pt(),weight);
+    		plotter.getOrMake1DPre(prefix+name,"pt2",";pt",2000,0,2000)->Fill(leps[1]->pt(),weight);
+    		plotter.getOrMake1DPre(prefix+name,"ht",";ht",4000,0,4000)->Fill(ht,weight);
+
+    		if(ht > 400) {
+        		plotter.getOrMake1DPre(prefix+name+"_ht400","pt1",";pt",2000,0,2000)->Fill(leps[0]->pt(),weight);
+        		plotter.getOrMake1DPre(prefix+name+"_ht400","pt2",";pt",2000,0,2000)->Fill(leps[1]->pt(),weight);
+        		plotter.getOrMake2DPre(prefix+name+"_ht400","pt12",";pt;pt",2000,0,2000,2000,0,2000)->Fill(leps[0]->pt(),leps[1]->pt(),weight);
+    		}
+    	};
+
+    	bool passSLep = false;
+    	bool passCross = false;
+    	if (isDimuon) {
+        	passSLep = passTrig(HLT17_IsoMu27) || passTrig(HLT17_Mu50);
+        	passCross = passTrig17(HLT17_Mu15_IsoVVVL_PFHT450);
+    	} else {
+        	passSLep = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG)
+        			|| passTrig17(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150);
+        	passCross = passTrig17(HLT17_Ele15_IsoVVVL_PFHT450) || passTrig17(HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
+    	}
+
+    	bool passJet = passTrig17(HLT17_AK8PFHT850_TrimMass50) || passTrig17(HLT17_PFHT1050) ||
+				passTrig17(HLT17_AK8PFJet400_TrimMass30) || passTrig17(HLT17_AK8PFJet500);
+    	bool passMET = passTrig17(HLT17_PFMET120_PFMHT120_IDTight_PFHT60) || passTrig17(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)
+    			|| passTrig17(HLT17_PFMETTypeOne120_PFMHT120_IDTight_PFHT60);
+
+    	bool passNonLepPath = passJet || passMET;
+    	bool passNonLepAndCrossPath = passNonLepPath || passCross;
+//    	std::cout<<"dbg4"<<std::endl;
+    	if(passCross)     plt("dy_Cross");
+    	if(passSLep || passCross) plt("dy_SLepoCross");
+
+    	if(passSLep) plt("dy_passSLep");
+    	if(passSLep && passNonLepPath) plt("dy_passSLepAndMetHT");
+    	if(passSLep && passNonLepAndCrossPath) plt("dy_passSLepAndMetHTCross");
+
+    	if(passJet) plt("dy_passJet");
+    	if(passJet && passSLep) plt("dy_passJetAndSLep");
+    	if(passJet && (passSLep || passCross)) plt("dy_passJetAndSLepoCross");
     }
 
     void testMuonInDileptonTTBar(TString sn, std::vector<const Electron*> tagElectrons, std::vector<const Muon*> probeMuons) {
-    	// filter out dilepton ttbar events with taus
-//    	if (smDecayEvt.nLepsTT != 2) return;
-//    	if (smDecayEvt.topDecays.size() != 2) return;
-//    	if (smDecayEvt.topDecays[0].type < TopDecay::MU) return;
-//    	if (smDecayEvt.topDecays[1].type < TopDecay::MU) return;
 
     	if(!tagElectrons.size()) return;
     	if(!probeMuons.size()) return;
 
-    	bool passSingleEl = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG)
-    			|| passTrig(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150);
+    	bool passSingleEl = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
     	if(!passSingleEl) return;
 
-    	bool passMuPath = passTrig(HLT17_IsoMu27) || passTrig(HLT17_Mu50);
-    	bool passCross = passTrig(HLT17_Mu15_IsoVVVL_PFHT450);
-        bool passMetNoMu = passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight);
+    	FillerConstants::DataEra year = FillerConstants::DataEra(*reader_event->dataEra);
 
-        passMuPath = passMuPath || passMetNoMu;
+    	// muon triggers
+    	bool passMuPath = passSingleMuTriggers(year);
+    	bool passCross = passMuCrossTriggers(year);
+
+//    	bool passMuPath = passTrig(HLT17_IsoMu27) || passTrig(HLT17_Mu50);
+//    	bool passCross = passTrig(HLT17_Mu15_IsoVVVL_PFHT450);
+//        bool passMetNoMu = passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight);
+
+        // jet and met triggers
+    	bool passJet = passJetTriggers(year);
+    	bool passMet = passMetTriggers(year);
+
+//    	bool passJet = passTrig17(HLT17_AK8PFHT850_TrimMass50) || passTrig17(HLT17_PFHT1050) ||
+//				passTrig17(HLT17_AK8PFJet400_TrimMass30) || passTrig17(HLT17_AK8PFJet500);
+//    	bool passMET = passTrig17(HLT17_PFMET120_PFMHT120_IDTight_PFHT60)
+//    			|| passTrig17(HLT17_PFMETTypeOne120_PFMHT120_IDTight_PFHT60);
+
         bool passSingleCross = passMuPath || passCross;
 
-    	auto plt = [&](TString idS) {
-    		TString name = "_mu_" + idS;
-    		plotter.getOrMake1DPre(sn+name,"ht",";ht",4000,0,4000)->Fill(ht,weight);
-    		plotter.getOrMake1DPre(sn+name,"pt",";pt",2000,0,2000)->Fill(probeMuons.front()->pt(),weight);
+    	auto plt = [&](TString idS, double sf=1) {
+    		TString name = "_"+FillerConstants::DataEraNames[year]+"_mu_" + idS;
+    		plotter.getOrMake1DPre(sn+name,"ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
+    		plotter.getOrMake1DPre(sn+name,"pt",";pt",2000,0,2000)->Fill(probeMuons.front()->pt(),weight*sf);
 
     		if(ht > 400) {
-        		plotter.getOrMake1DPre(sn+name+"_ht400","pt",";pt",2000,0,2000)->Fill(probeMuons.front()->pt(),weight);
+        		plotter.getOrMake1DPre(sn+name+"_ht400","pt",";pt",2000,0,2000)->Fill(probeMuons.front()->pt(),weight*sf);
+        		if (ht > 700) {
+            		plotter.getOrMake1DPre(sn+name+"_ht700","pt",";pt",2000,0,2000)->Fill(probeMuons.front()->pt(),weight*sf);
+        		} else {
+            		plotter.getOrMake1DPre(sn+name+"_ht400to700","pt",";pt",2000,0,2000)->Fill(probeMuons.front()->pt(),weight*sf);
+        		}
     		}
+    		if(probeMuons.front()->pt() > 22) {
+        		plotter.getOrMake1DPre(sn+name+"_mupt22","ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
+    		}
+    		if(probeMuons.front()->pt() > 25) {
+        		plotter.getOrMake1DPre(sn+name+"_mupt25","ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
+    		}
+        	if(probeMuons.front()->pt() > 27) {
+        		plotter.getOrMake1DPre(sn+name+"_mupt27","ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
+        	}
+        	if(probeMuons.front()->pt() > 29) {
+        		plotter.getOrMake1DPre(sn+name+"_mupt29","ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
+        	}
+    		if(probeMuons.front()->pt() > 32) {
+        		plotter.getOrMake1DPre(sn+name+"_mupt32","ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
+    		}
+
     	};
 
+    	bool passFullNoCross = passJet || passMet || passMuPath;
+
+    	double lumiwt = 0.884;
     	plt("tt2_passSEl");
     	if(passMuPath) plt("tt2_passSElAndSMu");
-    	if(passSingleCross) plt("tt2_passSElAndSMuCross");
+    	if(passSingleCross) {
+    		plt("tt2_passSElAndSMuCross");
+    		if (passCross && !passMuPath) plt("tt2_passSElAndSMuCross_lumiwt",lumiwt);
+    		else plt("tt2_passSElAndSMuCross_lumiwt",1);
+    	}
+    	if(passFullNoCross || passCross) {
+    		plt("tt2_passSElAndFull");
+    		if(year == FillerConstants::ERA_2017) {
+        		if (passCross && !passFullNoCross) plt("tt2_passSElAndFull_lumiwt",lumiwt);
+        		else plt("tt2_passSElAndFull_lumiwt",1);
+    		}
+    	}
     }
 
     void testElectronInDileptonTTBar(TString sn, std::vector<const Muon*> tagMuons, std::vector<const Electron*> probeElectrons) {
@@ -1083,25 +1229,207 @@ public:
     	bool passSingleMu = passTrig(HLT17_IsoMu27);
     	if(!passSingleMu) return;
 
-    	bool passElPath = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG)
-    			|| passTrig(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150)
-				|| passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
+    	FillerConstants::DataEra year = FillerConstants::DataEra(*reader_event->dataEra);
 
-    	bool passCross = passTrig(HLT17_Ele15_IsoVVVL_PFHT450) || passTrig(HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
+    	// electron triggers
+    	bool passElPath = passSingleElTriggers(year);
+    	bool passCross = passElCrossTriggers(year);
 
-    	auto plt = [&](TString idS) {
-    		TString name = "_el_" + idS;
-    		plotter.getOrMake1DPre(sn+name,"ht",";ht",4000,0,4000)->Fill(ht,weight);
-    		plotter.getOrMake1DPre(sn+name,"pt",";pt",2000,0,2000)->Fill(probeElectrons.front()->pt(),weight);
+//    	bool passElPath = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG)
+//    			|| passTrig(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150) || passTrig(HLT17_Photon200)
+//				|| passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
+//    	bool passCross = passTrig(HLT17_Ele15_IsoVVVL_PFHT450) || passTrig(HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
+
+        // jet and met triggers
+    	bool passJet = passJetTriggers(year);
+    	bool passMet = passMetTriggers(year);
+
+//    	bool passJet = passTrig17(HLT17_AK8PFHT850_TrimMass50) || passTrig17(HLT17_PFHT1050) ||
+//				passTrig17(HLT17_AK8PFJet400_TrimMass30) || passTrig17(HLT17_AK8PFJet500);
+//    	bool passMET = passTrig17(HLT17_PFMET120_PFMHT120_IDTight_PFHT60)
+//    			|| passTrig17(HLT17_PFMETTypeOne120_PFMHT120_IDTight_PFHT60);
+
+    	auto plt = [&](TString idS, double sf=1) {
+    		TString name = "_"+FillerConstants::DataEraNames[year]+"_el_" + idS;
+    		plotter.getOrMake1DPre(sn+name,"ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
+    		plotter.getOrMake1DPre(sn+name,"pt",";pt",2000,0,2000)->Fill(probeElectrons.front()->pt(),weight*sf);
 
     		if(ht > 400) {
-        		plotter.getOrMake1DPre(sn+name+"_ht400","pt",";pt",2000,0,2000)->Fill(probeElectrons.front()->pt(),weight);
+        		plotter.getOrMake1DPre(sn+name+"_ht400","pt",";pt",2000,0,2000)->Fill(probeElectrons.front()->pt(),weight*sf);
+        		if (ht > 700) {
+            		plotter.getOrMake1DPre(sn+name+"_ht700","pt",";pt",2000,0,2000)->Fill(probeElectrons.front()->pt(),weight*sf);
+        		} else {
+            		plotter.getOrMake1DPre(sn+name+"_ht400to700","pt",";pt",2000,0,2000)->Fill(probeElectrons.front()->pt(),weight*sf);
+        		}
+    		}
+    		if(probeElectrons.front()->pt() > 25) {
+        		plotter.getOrMake1DPre(sn+name+"_elpt25","ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
+    		}
+    		if(probeElectrons.front()->pt() > 28) {
+        		plotter.getOrMake1DPre(sn+name+"_elpt28","ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
+    		}
+        	if(probeElectrons.front()->pt() > 30) {
+            	plotter.getOrMake1DPre(sn+name+"_elpt30","ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
+        	}
+            if(probeElectrons.front()->pt() > 32) {
+                plotter.getOrMake1DPre(sn+name+"_elpt32","ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
+            }
+    		if(probeElectrons.front()->pt() > 35) {
+        		plotter.getOrMake1DPre(sn+name+"_elpt35","ht",";ht",4000,0,4000)->Fill(ht,weight*sf);
     		}
     	};
 
+    	bool passFullNoCross = passJet || passMet || passElPath;
+
+    	double lumiwt = 0.884;
     	plt("tt2_passSMu");
     	if(passElPath) plt("tt2_passSMuAndSEl");
-    	if(passElPath || passCross) plt("tt2_passSMuAndSElCross");
+    	if(passElPath || passCross) {
+    		plt("tt2_passSMuAndSElCross");
+    		if(passCross && !passElPath) plt("tt2_passSMuAndSElCross_lumiwt",lumiwt);
+    		else plt("tt2_passSMuAndSElCross_lumiwt",1);
+    	}
+    	if(passFullNoCross || passCross) {
+    		plt("tt2_passSMuAndFull");
+    		if(year == FillerConstants::ERA_2017) {
+        		if (passCross && !passFullNoCross) plt("tt2_passSMuAndFull_lumiwt",lumiwt);
+        		else plt("tt2_passSMuAndFull_lumiwt",1);
+    		}
+    	}
+    }
+
+    bool passSingleMuTriggers(FillerConstants::DataEra year) {
+
+    	bool pass = false;
+    	if (year == FillerConstants::ERA_2016) {
+
+    		pass = passTrig16(HLT16_IsoMu24) || passTrig16(HLT16_IsoTkMu24)
+    				|| passTrig16(HLT16_Mu50) || passTrig16(HLT16_TkMu50) ||
+					passTrig16(HLT16_PFMETNoMu110_PFMHTNoMu110_IDTight) ||
+    				passTrig16(HLT16_PFMETNoMu120_PFMHTNoMu120_IDTight);
+
+    	} else if (year == FillerConstants::ERA_2017) {
+
+    		pass = passTrig17(HLT17_IsoMu27) || passTrig17(HLT17_Mu50)
+    				|| passTrig17(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight);
+
+    	} else if (year == FillerConstants::ERA_2018) {
+
+    		pass = passTrig18(HLT18_IsoMu24) || passTrig18(HLT18_Mu50)
+    				|| passTrig18(HLT18_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60);
+
+    	}
+    	return pass;
+    }
+
+    bool passMetTriggers(FillerConstants::DataEra year) {
+
+    	bool pass = false;
+    	if (year == FillerConstants::ERA_2016) {
+
+    		pass = true;
+
+    	} else if (year == FillerConstants::ERA_2017) {
+
+        	pass = passTrig17(HLT17_PFMET120_PFMHT120_IDTight_PFHT60)
+        			|| passTrig17(HLT17_PFMETTypeOne120_PFMHT120_IDTight_PFHT60);
+
+    	} else if (year == FillerConstants::ERA_2018) {
+
+    		pass = passTrig18(HLT18_PFMETTypeOne140_PFMHT140_IDTight)
+    				|| passTrig18(HLT18_PFHT700_PFMET85_PFMHT85_IDTight)
+					|| passTrig18(HLT18_PFHT500_PFMET100_PFMHT100_IDTight);
+
+    	}
+    	return pass;
+    }
+
+    bool passJetTriggers(FillerConstants::DataEra year) {
+
+    	bool pass = false;
+    	if (year == FillerConstants::ERA_2016) {
+
+    		pass = passTrig16(HLT16_PFHT800) || passTrig16(HLT16_PFHT900) || passTrig16(HLT16_AK8PFJet450)
+    				|| passTrig16(HLT16_AK8PFJet360_TrimMass30);
+
+    	} else if (year == FillerConstants::ERA_2017) {
+
+        	pass = passTrig17(HLT17_AK8PFHT850_TrimMass50) || passTrig17(HLT17_PFHT1050) ||
+				passTrig17(HLT17_AK8PFJet400_TrimMass30) || passTrig17(HLT17_AK8PFJet500);
+
+    	} else if (year == FillerConstants::ERA_2018) {
+
+        	pass = passTrig18(HLT18_AK8PFJet400_TrimMass30) || passTrig18(HLT18_PFHT1050) ||
+				passTrig18(HLT18_AK8PFHT800_TrimMass50) || passTrig18(HLT18_AK8PFJet330_TrimMass30_PFAK8BoostedDoubleB_np4) ||
+				passTrig18(HLT18_AK8PFJet330_TrimMass30_PFAK8BTagCSV_p1);
+
+    	}
+    	return pass;
+    }
+
+    bool passSingleElTriggers(FillerConstants::DataEra year) {
+
+    	bool pass = false;
+    	if (year == FillerConstants::ERA_2016) {
+
+    		pass = passTrig16(HLT16_Ele27_WPTight_Gsf) || passTrig16(HLT16_Ele25_eta2p1_WPTight_Gsf)
+    				|| passTrig16(HLT16_Ele45_WPLoose_Gsf) || passTrig16(HLT16_Photon175)
+					|| passTrig16(HLT16_Ele115_CaloIdVT_GsfTrkIdT);
+
+    	} else if (year == FillerConstants::ERA_2017) {
+
+        	pass = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG)
+        			|| passTrig(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150) || passTrig(HLT17_Photon200)
+    				|| passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT);
+
+    	} else if (year == FillerConstants::ERA_2018) {
+
+    		pass = passTrig18(HLT18_Ele28_eta2p1_WPTight_Gsf_HT150) || passTrig18(HLT18_Ele32_WPTight_Gsf)
+    				|| passTrig18(HLT18_Ele115_CaloIdVT_GsfTrkIdT);
+    	}
+    	return pass;
+    }
+
+    bool passMuCrossTriggers(FillerConstants::DataEra year) {
+
+    	bool pass = false;
+    	if (year == FillerConstants::ERA_2016) {
+
+    		pass = passTrig16(HLT16_Mu15_IsoVVVL_PFHT350) || passTrig16(HLT16_Mu15_IsoVVVL_PFHT400);
+
+    	} else if (year == FillerConstants::ERA_2017) {
+
+    		pass = passTrig17(HLT17_Mu15_IsoVVVL_PFHT450);
+
+    	} else if (year == FillerConstants::ERA_2018) {
+
+    		pass = passTrig18(HLT18_Mu15_IsoVVVL_PFHT450);
+
+    	}
+    	return pass;
+    }
+
+    bool passElCrossTriggers(FillerConstants::DataEra year) {
+
+    	bool pass = false;
+    	if (year == FillerConstants::ERA_2016) {
+
+    		pass = passTrig16(HLT16_Ele15_IsoVVVL_PFHT350) || passTrig16(HLT16_Ele15_IsoVVVL_PFHT400)
+    				|| passTrig16(HLT16_Ele45_CaloIdVT_GsfTrkIdT_PFJet200_PFJet50)
+					|| passTrig16(HLT16_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
+
+    	} else if (year == FillerConstants::ERA_2017) {
+
+    		pass = passTrig17(HLT17_Ele15_IsoVVVL_PFHT450) || passTrig17(HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165)
+    				|| passTrig17(HLT17_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned);
+
+    	} else if (year == FillerConstants::ERA_2018) {
+
+    		pass = passTrig18(HLT18_Ele15_IsoVVVL_PFHT450) || passTrig18(HLT18_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned)
+    				|| passTrig18(HLT18_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
+
+    	}
+    	return pass;
     }
 
     bool runEvent() override {
@@ -1132,9 +1460,9 @@ public:
         if (mcProc == FillerConstants::TTBAR && smDecayEvt.nLepsTT >= 0 && smDecayEvt.nLepsTT <= 2) {
         	sn += TString::Format("%d",smDecayEvt.nLepsTT);
         }
-
-        testInSemileptonicTTBar(sn);
-        testInDrellYan(sn);
+//std::cout<<"slurm"<<std::endl;
+//        testInSemileptonicTTBar(sn);
+//        testDileptonInDrellYan(sn);
 
 //        std::cout<<"event num muons (electrons) = "<<reader_muon->muons.size()<<" ("<<reader_electron->electrons.size()<<")"<<std::endl;
 //
@@ -1150,6 +1478,7 @@ public:
 //        		std::cout<<"passTight = "<<el.passTightID_noIso()<<std::endl;
 //        	}
 //        }
+//        std::cout<<"slurm0.1"<<std::endl;
         LeptonParameters tagLeptonParam = parameters.leptons;
     	tagLeptonParam.mu_minPT = 27;
         tagLeptonParam.mu_getID = &Muon::passTightID;
@@ -1163,16 +1492,41 @@ public:
         parameters.leptons.el_minPT = 5;
         parameters.leptons.mu_minPT = 5;
 
+        LeptonParameters params1 = parameters.leptons;
+        LeptonParameters params2 = parameters.leptons;
+        params2.el_getID = &Electron::passMedID_noIso;
+        params2.mu_getID = &Muon::passLooseID;
+        params2.el_maxISO = 0.15;
+        params2.mu_maxISO = 0.15;
+        params2.el_maxETA = 2.5;
+        params2.el_maxSip3D = 9999;
+        params2.mu_maxSip3D = 9999;
+
+//        std::cout<<"slurm1"<<std::endl;
+
         auto tagElectrons = LeptonProcessor::getElectrons(tagLeptonParam,*reader_electron);
         auto tagMuons     = LeptonProcessor::getMuons(tagLeptonParam,*reader_muon);
 //        std::cout<<"num tags for muons (electrons) = "<<tagMuons.size()<<" ("<<tagElectrons.size()<<")"<<std::endl;
 
-        auto probeElectrons = LeptonProcessor::getElectrons(parameters.leptons,*reader_electron);
-        auto probeMuons     = LeptonProcessor::getMuons(parameters.leptons,*reader_muon);
+        auto probeElectrons1 = LeptonProcessor::getElectrons(params1,*reader_electron);
+        auto probeMuons1     = LeptonProcessor::getMuons(params1,*reader_muon);
+//        std::cout<<"slurm2"<<std::endl;
+
+        auto probeElectrons2 = LeptonProcessor::getElectrons(params2,*reader_electron);
+        auto probeMuons2     = LeptonProcessor::getMuons(params2,*reader_muon);
+//        std::cout<<"slurm3"<<std::endl;
+
 //        std::cout<<"num probes for muons (electrons) = "<<probeMuons.size()<<" ("<<probeElectrons.size()<<")"<<std::endl;
 
-        if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleElectron) testMuonInDileptonTTBar(sn,tagElectrons,probeMuons);
-        if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleMuon)     testElectronInDileptonTTBar(sn,tagMuons,probeElectrons);
+        if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleElectron) {
+        	testMuonInDileptonTTBar(sn+"_id1",tagElectrons,probeMuons1);
+        	testMuonInDileptonTTBar(sn+"_id2",tagElectrons,probeMuons2);
+        }
+        if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleMuon) {
+        	testElectronInDileptonTTBar(sn+"_id1",tagMuons,probeElectrons1);
+        	testElectronInDileptonTTBar(sn+"_id2",tagMuons,probeElectrons2);
+        }
+//        std::cout<<"slurm4"<<std::endl;
 
 
         if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleElectron){
@@ -1204,6 +1558,10 @@ public:
     const double htBins[nHTBins+1] = {0,50,100,150,200,250,300,350,400,450,500,550,600,800,1200,1600,2000};
     static const int nLepBins = 10;
     const double lepBins[nLepBins+1] = {5,10,15,20,25,30,35,50,75,100,500};
+
+	const std::vector<double> htbins = {100,200,250,300,350,400,450,500,550,600,650,
+			700,800,900,1000,1100,1200,2000};
+	const std::vector<double> ptbins = {5,10,15,20,25,30,35,40,50,60,70,80,90,100,150,200,300,1000};
 
 };
 

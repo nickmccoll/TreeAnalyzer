@@ -23,7 +23,6 @@ ParameterSet setCommonParameters() {
     };
     paramSet.event.dataFilters = paramSet.event.mcFilters;
     paramSet.event.dataFilters.push_back(FillerConstants::Flag_eeBadScFilter);
-    paramSet.event.passTrigger = &EventSelection::passTriggerSuite2017;
     paramSet.event.minHT         =400;
     paramSet.event.minTriggerEl  =30;
     paramSet.event.minTriggerMu  =27;
@@ -155,6 +154,7 @@ ParameterSet set2016Parameters() {
     ParameterSet paramSet = setCommonParameters();
     paramSet.event.lumi = 35.9;
     paramSet.event.puCorrSFFile = "corrections/puSF_2016.root";
+    paramSet.event.passTrigger = &EventSelection::passTriggerSuite2016;
 
     paramSet.leptons.el_SFFile          ="corrections/lepton/electron_1l_2016_SF.root";
     paramSet.leptons.mu_SFFile          ="corrections/lepton/muon_1l_2016_SF.root";
@@ -177,6 +177,7 @@ ParameterSet set2017Parameters() {
     ParameterSet paramSet = setCommonParameters();
     paramSet.event.lumi = 41.5;
     paramSet.event.puCorrSFFile = "corrections/puSF_2017.root";
+    paramSet.event.passTrigger = &EventSelection::passTriggerSuite2017;
     paramSet.event.ttbarXSecSF_700to1000_nLep0 = 0.00122835;
     paramSet.event.ttbarXSecSF_700to1000_nLep1 = 0.00129256;
     paramSet.event.ttbarXSecSF_700to1000_nLep2 = 0.00076952;
@@ -208,6 +209,7 @@ ParameterSet set2018Parameters() {
     ParameterSet paramSet = setCommonParameters();
     paramSet.event.lumi = 59.7;
     paramSet.event.puCorrSFFile = "corrections/puSF_2018.root";
+    paramSet.event.passTrigger = &EventSelection::passTriggerSuite2018;
     paramSet.event.ttbarXSecSF_700to1000_nLep0 = 0.000748296;
     paramSet.event.ttbarXSecSF_700to1000_nLep1 = 0.000776814;
     paramSet.event.ttbarXSecSF_700to1000_nLep2 = 0.000800626;

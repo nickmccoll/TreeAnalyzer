@@ -7,9 +7,17 @@ class EventReader;
 class Lepton;
 namespace EventSelection {
 
+bool passMuonTriggerSuite2016(const EventReader& reader_event);
+bool passElectronTriggerSuite2016(const EventReader& reader_event);
+bool passTriggerSuite2016(const EventReader& reader_event);
+
 bool passMuonTriggerSuite2017(const EventReader& reader_event);
 bool passElectronTriggerSuite2017(const EventReader& reader_event);
 bool passTriggerSuite2017(const EventReader& reader_event);
+
+bool passMuonTriggerSuite2018(const EventReader& reader_event);
+bool passElectronTriggerSuite2018(const EventReader& reader_event);
+bool passTriggerSuite2018(const EventReader& reader_event);
 
 bool alwaysTrue(const EventReader& reader_event);
 
