@@ -1148,10 +1148,19 @@ public:
     	if(!tagElectrons.size()) return;
     	if(!probeMuons.size()) return;
 
-    	bool passSingleEl = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
+    	FillerConstants::DataEra year = FillerConstants::DataEra(*reader_event->dataEra);
+
+    	bool passSingleEl = false;
+    	if (year == ERA_2016) {
+    		passSingleEl = passTrig16(HLT16_Ele27_WPTight_Gsf);
+    	} else if (year == ERA_2017) {
+			passSingleEl = passTrig17(HLT17_Ele35_WPTight_Gsf)
+					|| passTrig17(HLT17_Ele32_WPTight_Gsf_L1DoubleEG);
+    	} else if (year == ERA_2018) {
+    		passSingleEl = passTrig18(HLT18_Ele32_WPTight_Gsf);
+    	}
     	if(!passSingleEl) return;
 
-    	FillerConstants::DataEra year = FillerConstants::DataEra(*reader_event->dataEra);
 
     	// muon triggers
     	bool passMuPath = passSingleMuTriggers(year);
@@ -1226,10 +1235,18 @@ public:
     	if(!tagMuons.size()) return;
     	if(!probeElectrons.size()) return;
 
-    	bool passSingleMu = passTrig(HLT17_IsoMu27);
+    	FillerConstants::DataEra year = FillerConstants::DataEra(*reader_event->dataEra);
+
+    	bool passSingleMu = false;
+    	if (year == ERA_2016) {
+    		passSingleMu = passTrig16(HLT16_IsoMu24);
+    	} else if (year == ERA_2017) {
+    		passSingleMu = passTrig17(HLT17_IsoMu27);
+    	} else if (year == ERA_2018) {
+    		passSingleMu = passTrig18(HLT18_IsoMu24);
+    	}
     	if(!passSingleMu) return;
 
-    	FillerConstants::DataEra year = FillerConstants::DataEra(*reader_event->dataEra);
 
     	// electron triggers
     	bool passElPath = passSingleElTriggers(year);
@@ -1518,11 +1535,23 @@ public:
 
 //        std::cout<<"num probes for muons (electrons) = "<<probeMuons.size()<<" ("<<probeElectrons.size()<<")"<<std::endl;
 
-        if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleElectron) {
+        Dataset elName, muName;
+        if(*reader_event->dataEra == ERA_2016 || *reader_event->dataEra == ERA_2017) {
+        	elName = PD_SingleElectron;
+        	muName = PD_SingleMuon;
+        } else if(*reader_event->dataEra == ERA_2018) {
+        	elName = PD_EGamma;
+        	muName = PD_SingleMuon;
+        } else {
+        	elName = NODATASET;
+        	muName = NODATASET;
+        }
+
+        if(!isRealData() || reader_event->dataset.val() == elName) {
         	testMuonInDileptonTTBar(sn+"_id1",tagElectrons,probeMuons1);
         	testMuonInDileptonTTBar(sn+"_id2",tagElectrons,probeMuons2);
         }
-        if(!isRealData() || reader_event->dataset.val() == FillerConstants::PD_SingleMuon) {
+        if(!isRealData() || reader_event->dataset.val() == muName) {
         	testElectronInDileptonTTBar(sn+"_id1",tagMuons,probeElectrons1);
         	testElectronInDileptonTTBar(sn+"_id2",tagMuons,probeElectrons2);
         }

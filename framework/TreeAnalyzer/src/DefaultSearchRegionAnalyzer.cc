@@ -352,9 +352,10 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         }
         if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size())) {
         	if (lepChan == DILEP) {
-                weight *= trigSFProc->getLeptonTriggerSF(ht, (dilep1->isMuon()));
+                weight *= trigSFProc->getDileptonTriggerSF(ht,dilep2->pt(),dilep1->isMuon(),
+                		dilep2->isMuon());
         	} else {
-                weight *= trigSFProc->getLeptonTriggerSF(
+                weight *= trigSFProc->getSingleLeptonTriggerSF(
                         ht, (selectedLepton && selectedLepton->isMuon()));
         	}
         }
