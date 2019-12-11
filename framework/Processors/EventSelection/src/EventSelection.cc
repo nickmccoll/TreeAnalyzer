@@ -9,6 +9,56 @@ using namespace FillerConstants;
 namespace TAna {
 namespace EventSelection {
 //--------------------------------------------------------------------------------------------------
+bool passTriggerSuite2016(const EventReader& reader_event   ) {
+    auto passTrig = [&](FillerConstants::Triggers_2016 trig) -> bool {
+        return FillerConstants::doesPass(*reader_event.triggerAccepts,trig);
+    };
+
+    const bool passMuon = passTrig(HLT16_IsoMu24) || passTrig(HLT16_Mu50)
+    		|| passTrig(HLT16_IsoTkMu24) || passTrig(HLT16_TkMu50)
+			|| passTrig(HLT16_Mu15_IsoVVVL_PFHT400)
+            || (reader_event.realData ? passTrig(HLT16_Mu15_IsoVVVL_PFHT350) : false);
+    const bool passEle =
+              passTrig(HLT16_Ele27_WPTight_Gsf)
+            || passTrig(HLT16_Ele45_WPLoose_Gsf)
+            || passTrig(HLT16_Ele25_eta2p1_WPTight_Gsf)
+            || passTrig(HLT16_Ele115_CaloIdVT_GsfTrkIdT)
+            || (reader_event.realData ? passTrig(HLT16_Ele15_IsoVVVL_PFHT350) : false)
+            || passTrig(HLT16_Ele15_IsoVVVL_PFHT400)
+            || passTrig(HLT16_Ele45_CaloIdVT_GsfTrkIdT_PFJet200_PFJet50)
+            || passTrig(HLT16_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
+
+    const bool passMET = passTrig(HLT16_PFMETNoMu110_PFMHTNoMu110_IDTight)
+            || passTrig(HLT16_PFMETNoMu120_PFMHTNoMu120_IDTight);
+
+    const bool passJetHT = passTrig(HLT16_AK8PFJet450) || passTrig(HLT16_AK8PFJet360_TrimMass30) ||
+            passTrig(HLT16_PFHT800) || passTrig(HLT16_PFHT900);
+
+    const bool passPhoton = passTrig(HLT16_Photon175);
+
+    if(reader_event.realData){
+        switch(*reader_event.dataset){
+        case PD_SingleMuon:
+            return passMuon;
+        case PD_SingleElectron:
+            return passEle && !(passMuon);
+        case PD_JetHT:
+            return passJetHT && !(passEle || passMuon);
+        case PD_MET:
+            return passMET && !(passJetHT ||passEle || passMuon);
+        case PD_SinglePhoton:
+            return passPhoton && !(passMET || passJetHT ||passEle || passMuon);
+        default:
+            throw std::invalid_argument(
+                    "EventSelection::passTriggerSuite2016 -> "
+                    "This is not a valid primary dataset");
+        }
+    } else {
+        return (passMuon || passEle  || passJetHT || passMET || passPhoton);
+    }
+    return true;
+}
+//--------------------------------------------------------------------------------------------------
 bool passTriggerSuite2017(const EventReader& reader_event   ) {
     auto passTrig = [&](FillerConstants::Triggers_2017 trig) -> bool {
         return FillerConstants::doesPass(*reader_event.triggerAccepts,trig);
@@ -61,6 +111,52 @@ bool passTriggerSuite2017(const EventReader& reader_event   ) {
     return true;
 }
 //--------------------------------------------------------------------------------------------------
+bool passTriggerSuite2018(const EventReader& reader_event   ) {
+    auto passTrig = [&](FillerConstants::Triggers_2018 trig) -> bool {
+        return FillerConstants::doesPass(*reader_event.triggerAccepts,trig);
+    };
+
+    const bool passMuon = passTrig(HLT18_IsoMu24) || passTrig(HLT18_Mu50)
+            || passTrig(HLT18_Mu15_IsoVVVL_PFHT450);
+    const bool passEle =
+              passTrig(HLT18_Ele32_WPTight_Gsf)
+            || passTrig(HLT18_Ele28_eta2p1_WPTight_Gsf_HT150)
+            || passTrig(HLT18_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned)
+            || passTrig(HLT18_Ele115_CaloIdVT_GsfTrkIdT)
+            || passTrig(HLT18_Ele15_IsoVVVL_PFHT450)
+            || passTrig(HLT18_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
+
+    const bool passMET = passTrig(HLT18_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)
+            || passTrig(HLT18_PFMETTypeOne140_PFMHT140_IDTight);
+
+    const bool passJetHT = passTrig(HLT18_PFHT1050) || passTrig(HLT18_AK8PFHT800_TrimMass50)
+            || passTrig(HLT18_AK8PFJet400_TrimMass30)
+			|| passTrig(HLT18_AK8PFJet330_TrimMass30_PFAK8BoostedDoubleB_np4)
+			|| passTrig(HLT18_AK8PFJet330_TrimMass30_PFAK8BTagCSV_p1)
+			|| passTrig(HLT18_PFHT500_PFMET100_PFMHT100_IDTight)
+			|| passTrig(HLT18_PFHT700_PFMET85_PFMHT85_IDTight);
+
+    if(reader_event.realData){
+        switch(*reader_event.dataset){
+        case PD_SingleMuon:
+            return passMuon;
+        case PD_EGamma:
+            return passEle && !(passMuon);
+        case PD_JetHT:
+            return passJetHT && !(passEle || passMuon);
+        case PD_MET:
+            return passMET && !(passJetHT ||passEle || passMuon);
+        default:
+            throw std::invalid_argument(
+                    "EventSelection::passTriggerSuite2018 -> "
+                    "This is not a valid primary dataset");
+        }
+    } else {
+        return (passMuon || passEle  || passJetHT || passMET);
+    }
+    return true;
+}
+//--------------------------------------------------------------------------------------------------
 bool alwaysTrue(const EventReader& reader_event   ) {
     if(*reader_event.dataEra){}
     return true;
@@ -91,6 +187,45 @@ bool passTriggerPreselection(const EventParameters& params,
     if(maxElePT < params.minTriggerEl && maxMuPT < params.minTriggerMu ) return false;
     return true;
 };
+
+float get2017CrossTrigWeight(const EventReader& reader_event ) {
+    auto passTrig = [&](FillerConstants::Triggers_2017 trig) -> bool {
+        return FillerConstants::doesPass(*reader_event.triggerAccepts,trig);
+    };
+
+    const bool passMuon = passTrig(HLT17_IsoMu27) || passTrig(HLT17_Mu50);
+    const bool passEle =
+              passTrig(HLT17_Ele32_WPTight_Gsf)
+            || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG)
+            || passTrig(HLT17_Ele35_WPTight_Gsf)
+            || passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT)
+            || passTrig(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150)
+            || passTrig(HLT17_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned)
+            || passTrig(HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
+
+    const bool passMET = passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight)
+            || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)
+			|| passTrig(HLT17_PFMETTypeOne120_PFMHT120_IDTight)
+			|| passTrig(HLT17_PFMETTypeOne120_PFMHT120_IDTight_PFHT60)
+			|| passTrig(HLT17_PFMET120_PFMHT120_IDTight)
+			|| passTrig(HLT17_PFMET120_PFMHT120_IDTight_PFHT60)
+			;
+
+    const bool passJetHT = passTrig(HLT17_PFHT1050) || passTrig(HLT17_AK8PFJet500) ||
+            passTrig(HLT17_AK8PFJet400_TrimMass30) || passTrig(HLT17_AK8PFHT850_TrimMass50);
+    const bool passPhoton = passTrig(HLT17_Photon200);
+
+
+    const bool passMuCross = passTrig(HLT17_Mu15_IsoVVVL_PFHT450);
+    const bool passElCross = passTrig(HLT17_Ele15_IsoVVVL_PFHT450);
+
+    const bool passFullNoCross = passMuon || passEle || passMET || passJetHT || passPhoton;
+
+    double lumiwt = 0.884; // ratio of CDEF lumi / BCDEF lumi since these cross triggers unavailable in RunB
+    if( (passMuCross || passElCross) && !passFullNoCross) return lumiwt;
+    return 1.0;
+
+}
 
 
 

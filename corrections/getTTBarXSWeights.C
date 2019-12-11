@@ -21,9 +21,9 @@ TH1* getMttSubset(TH1* h, double low, double high) {
 
 void getTTBarXSWeights(int year) {
 	TString yS = TString::Format("%d",year);
-	TFile *fl = new TFile("ttbar_lep_"+yS+".root");
-	TFile *f1 = new TFile("ttbar_1000_"+yS+".root");
-	TFile *f7 = new TFile("ttbar_700_"+yS+".root");
+	TFile *fl = new TFile("genmtt_lep_"+yS+".root");
+	TFile *f1 = new TFile("genmtt_1000_"+yS+".root");
+	TFile *f7 = new TFile("genmtt_700_"+yS+".root");
 
 	double lumi = 1000;
 	if (year == 2016) lumi *= 35.9;
@@ -81,24 +81,24 @@ void getTTBarXSWeights(int year) {
 	    hl_700to1000->Add(h7_700to1000,1); hl_700to1000->Scale(defwt*w7);
 	    hl_1000toInf->Add(h1_1000toInf,1); hl_1000toInf->Scale(defwt*w1);
 
-		TH1 *hreco = (TH1*)hl->Clone(); hreco->Reset();
-		hl_0to700->Scale(defwt);
+	    TH1 *hreco = (TH1*)hl->Clone(); hreco->Reset();
+	    hl_0to700->Scale(defwt);
 
-		hreco->Add(hl_0to700,1);
-		hreco->Add(hl_700to1000,1);
-		hreco->Add(hl_1000toInf,1);
+	    hreco->Add(hl_0to700,1);
+	    hreco->Add(hl_700to1000,1);
+	    hreco->Add(hl_1000toInf,1);
 
-		Plotter *pt = new Plotter();
-		Plotter *ptr = new Plotter();
+	    Plotter *pt = new Plotter();
+	    Plotter *ptr = new Plotter();
 
-		hl->Scale(defwt);
-		pt->addHist(hl,"original lep-binned");
-		pt->addHist(hreco,"new stitched");
-		pt->draw(false,"mtt "+nleps[i]);
+	    hl->Scale(defwt);
+	    pt->addHist(hl,"original lep-binned");
+	    pt->addHist(hreco,"new stitched");
+	    pt->draw(false,"mtt "+nleps[i]);
 
-		ptr->addHist(hl,"original lep-binned");
-		ptr->addHist(hreco,"new stitched");
-		ptr->drawRatio(0,"rat "+nleps[i],false,false,"rat "+nleps[i]);
-
+	    ptr->addHist(hl,"original lep-binned");
+	    ptr->addHist(hreco,"new stitched");
+	    ptr->drawRatio(0,"rat "+nleps[i],false,false,"rat "+nleps[i]);
 	}
+
 }

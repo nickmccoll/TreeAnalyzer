@@ -349,12 +349,16 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         if(isCorrOn(CORR_XSEC)) {
             weight *= EventWeights::getNormalizedEventWeight(
                     *reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT);
+            if(FillerConstants::DataEra(*reader_event->dataEra) == FillerConstants::ERA_2017) {
+            	weight *= EventSelection::get2017CrossTrigWeight(*reader_event);
+            }
         }
         if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size())) {
         	if (lepChan == DILEP) {
-                weight *= trigSFProc->getLeptonTriggerSF(ht, (dilep1->isMuon()));
+                weight *= trigSFProc->getDileptonTriggerSF(ht,dilep2->pt(),dilep1->isMuon(),
+                		dilep2->isMuon());
         	} else {
-                weight *= trigSFProc->getLeptonTriggerSF(
+                weight *= trigSFProc->getSingleLeptonTriggerSF(
                         ht, (selectedLepton && selectedLepton->isMuon()));
         	}
         }
