@@ -27,15 +27,15 @@ public:
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
 
         turnOffCorr(CORR_TRIG);
-        turnOffCorr(CORR_PU  );
-        turnOffCorr(CORR_LEP );
+//        turnOffCorr(CORR_PU  );
+//        turnOffCorr(CORR_LEP );
         turnOffCorr(CORR_SJBTAG);
         turnOffCorr(CORR_AK4BTAG);
         turnOffCorr(CORR_SDMASS);
         turnOffCorr(CORR_TOPPT);
-        turnOffCorr(CORR_JER);
+//        turnOffCorr(CORR_JER);
     }
-
+/*
     void loadVariables() override {
         reader_event       =loadReader<EventReader>   ("event",isRealData());
         reader_jet         =loadReader<JetReader>     ("ak4Jet",isRealData());
@@ -49,6 +49,8 @@ public:
 
         checkConfig();
     }
+*/
+
     bool passTrig(Triggers_2017 trig) {return doesPass(triggerAccepts,trig);} // !! Need to use correct trigger enum for whatever era it is !!
 
     bool passTrig16(Triggers_2016 trig) {return doesPass(triggerAccepts,trig);} // !! Need to use correct trigger enum for whatever era it is !!
@@ -1164,7 +1166,7 @@ public:
 
     	// muon triggers
     	bool passMuPath = passSingleMuTriggers(year);
-    	bool passCross = passMuCrossTriggers(year);
+    	bool passCross = passMuCrossTriggers(year,isRealData());
 
 //    	bool passMuPath = passTrig(HLT17_IsoMu27) || passTrig(HLT17_Mu50);
 //    	bool passCross = passTrig(HLT17_Mu15_IsoVVVL_PFHT450);
@@ -1231,7 +1233,8 @@ public:
     	}
     }
 
-    void testElectronInDileptonTTBar(TString sn, std::vector<const Muon*> tagMuons, std::vector<const Electron*> probeElectrons) {
+    void testElectronInDileptonTTBar(TString sn, std::vector<const Muon*> tagMuons, std::vector<const Electron*> probeElectrons,
+    		bool testWithMetNoMu = false) {
     	if(!tagMuons.size()) return;
     	if(!probeElectrons.size()) return;
 
@@ -1239,7 +1242,7 @@ public:
 
     	bool passSingleMu = false;
     	if (year == ERA_2016) {
-    		passSingleMu = passTrig16(HLT16_IsoMu24);
+    		passSingleMu = passTrig16(HLT16_IsoMu24) || passTrig16(HLT16_IsoTkMu24);
     	} else if (year == ERA_2017) {
     		passSingleMu = passTrig17(HLT17_IsoMu27);
     	} else if (year == ERA_2018) {
@@ -1250,7 +1253,7 @@ public:
 
     	// electron triggers
     	bool passElPath = passSingleElTriggers(year);
-    	bool passCross = passElCrossTriggers(year);
+    	bool passCross = passElCrossTriggers(year,isRealData());
 
 //    	bool passElPath = passTrig(HLT17_Ele35_WPTight_Gsf) || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG)
 //    			|| passTrig(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150) || passTrig(HLT17_Photon200)
@@ -1260,6 +1263,9 @@ public:
         // jet and met triggers
     	bool passJet = passJetTriggers(year);
     	bool passMet = passMetTriggers(year);
+
+    	if(testWithMetNoMu) passMet = passMet || passTrig16(HLT16_PFMETNoMu110_PFMHTNoMu110_IDTight) ||
+				passTrig16(HLT16_PFMETNoMu120_PFMHTNoMu120_IDTight);
 
 //    	bool passJet = passTrig17(HLT17_AK8PFHT850_TrimMass50) || passTrig17(HLT17_PFHT1050) ||
 //				passTrig17(HLT17_AK8PFJet400_TrimMass30) || passTrig17(HLT17_AK8PFJet500);
@@ -1303,8 +1309,10 @@ public:
     	if(passElPath) plt("tt2_passSMuAndSEl");
     	if(passElPath || passCross) {
     		plt("tt2_passSMuAndSElCross");
-    		if(passCross && !passElPath) plt("tt2_passSMuAndSElCross_lumiwt",lumiwt);
-    		else plt("tt2_passSMuAndSElCross_lumiwt",1);
+    		if(year == FillerConstants::ERA_2017) {
+        		if(passCross && !passElPath) plt("tt2_passSMuAndSElCross_lumiwt",lumiwt);
+        		else plt("tt2_passSMuAndSElCross_lumiwt",1);
+    		}
     	}
     	if(passFullNoCross || passCross) {
     		plt("tt2_passSMuAndFull");
@@ -1344,7 +1352,7 @@ public:
     	bool pass = false;
     	if (year == FillerConstants::ERA_2016) {
 
-    		pass = true;
+    		// there are no pure met triggers (metnomu is in muon triggers)
 
     	} else if (year == FillerConstants::ERA_2017) {
 
@@ -1407,12 +1415,13 @@ public:
     	return pass;
     }
 
-    bool passMuCrossTriggers(FillerConstants::DataEra year) {
+    bool passMuCrossTriggers(FillerConstants::DataEra year, bool isData) {
 
     	bool pass = false;
     	if (year == FillerConstants::ERA_2016) {
 
-    		pass = passTrig16(HLT16_Mu15_IsoVVVL_PFHT350) || passTrig16(HLT16_Mu15_IsoVVVL_PFHT400);
+    		pass = passTrig16(HLT16_Mu15_IsoVVVL_PFHT400);
+    		if(isData) pass = pass || passTrig16(HLT16_Mu15_IsoVVVL_PFHT350);
 
     	} else if (year == FillerConstants::ERA_2017) {
 
@@ -1426,14 +1435,16 @@ public:
     	return pass;
     }
 
-    bool passElCrossTriggers(FillerConstants::DataEra year) {
+    bool passElCrossTriggers(FillerConstants::DataEra year, bool isData) {
 
     	bool pass = false;
     	if (year == FillerConstants::ERA_2016) {
 
-    		pass = passTrig16(HLT16_Ele15_IsoVVVL_PFHT350) || passTrig16(HLT16_Ele15_IsoVVVL_PFHT400)
+    		pass = passTrig16(HLT16_Ele15_IsoVVVL_PFHT400)
     				|| passTrig16(HLT16_Ele45_CaloIdVT_GsfTrkIdT_PFJet200_PFJet50)
 					|| passTrig16(HLT16_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
+
+    		if(isData) pass = pass || passTrig16(HLT16_Ele15_IsoVVVL_PFHT350);
 
     	} else if (year == FillerConstants::ERA_2017) {
 
@@ -1497,12 +1508,13 @@ public:
 //        }
 //        std::cout<<"slurm0.1"<<std::endl;
         LeptonParameters tagLeptonParam = parameters.leptons;
-    	tagLeptonParam.mu_minPT = 27;
+    	tagLeptonParam.mu_minPT = 30;
         tagLeptonParam.mu_getID = &Muon::passTightID;
         tagLeptonParam.mu_getISO = &Muon::pfIso;
         tagLeptonParam.mu_maxISO = 0.15;
 
-        tagLeptonParam.el_minPT = 30;
+        tagLeptonParam.el_minPT = 35;
+        tagLeptonParam.el_getID = &Electron::passTightID;
         tagLeptonParam.el_getISO = &Electron::pfIso;
         tagLeptonParam.el_maxISO = 0.15;
 
@@ -1533,6 +1545,10 @@ public:
         auto probeMuons2     = LeptonProcessor::getMuons(params2,*reader_muon);
 //        std::cout<<"slurm3"<<std::endl;
 
+        params1.el_getID = &Electron::passTightID_noIso;
+        params1.el_maxISO = 0.1;
+        params1.el_maxETA = 2.5;
+        auto probeElectrons1_test = LeptonProcessor::getElectrons(params1,*reader_electron);
 //        std::cout<<"num probes for muons (electrons) = "<<probeMuons.size()<<" ("<<probeElectrons.size()<<")"<<std::endl;
 
         Dataset elName, muName;
@@ -1554,6 +1570,7 @@ public:
         if(!isRealData() || reader_event->dataset.val() == muName) {
         	testElectronInDileptonTTBar(sn+"_id1",tagMuons,probeElectrons1);
         	testElectronInDileptonTTBar(sn+"_id2",tagMuons,probeElectrons2);
+        	testElectronInDileptonTTBar(sn+"_id1test",tagMuons,probeElectrons1_test,true);
         }
 //        std::cout<<"slurm4"<<std::endl;
 

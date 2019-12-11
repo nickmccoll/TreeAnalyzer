@@ -75,6 +75,7 @@ float PUScaleFactors::getCorrection(const unsigned int trueNumInteractions,
     }
 }
 
+// Info on Top PT reweighting: https://twiki.cern.ch/twiki/bin/view/CMS/TopPtReweighting
 TopPTWeighting::TopPTWeighting(const std::string& dataDir, const std::string& sfFile,
         bool verbose ){
     TFile * file = TObjectHelper::getFile(dataDir+sfFile,"read",verbose);
@@ -98,7 +99,7 @@ float TopPTWeighting::getCorrectionNoNorm(const ASTypes::size8 process,
 }
 float TopPTWeighting::getAvgPT(const SMDecayEvent& decayEvent) const {
     if(decayEvent.topDecays.size() != 2) return 0;
-    return std::sqrt( std::min(decayEvent.topDecays[0].top->pt(),float(800.0)) *
+    return 0.5*( std::min(decayEvent.topDecays[0].top->pt(),float(800.0)) +
             std::min(decayEvent.topDecays[1].top->pt(),float(800.0)));
 }
 
