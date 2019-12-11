@@ -24,6 +24,8 @@ bool alwaysTrue(const EventReader& reader_event);
 bool passTriggerPreselection(const EventParameters& params, const EventReader& reader_event,const float ht, const std::vector<const Lepton    *>& selectedLeptons);
 bool passEventFilters(const EventParameters& params, const EventReader& reader_event);
 
+float get2017CrossTrigWeight(const EventReader& reader_event );
+
 
 
 

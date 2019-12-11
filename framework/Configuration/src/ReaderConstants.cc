@@ -156,6 +156,12 @@ ParameterSet set2016Parameters() {
     paramSet.event.puCorrSFFile = "corrections/pileup/puSF_2016.root";
     paramSet.event.leptonCorrSFFile = "corrections/trigger/triggerSF_2016.root";
     paramSet.event.passTrigger = &EventSelection::passTriggerSuite2016;
+    paramSet.event.ttbarXSecSF_700to1000_nLep0 = 0.00159334;
+    paramSet.event.ttbarXSecSF_700to1000_nLep1 = 0.00135322;
+    paramSet.event.ttbarXSecSF_700to1000_nLep2 = 0.00078532;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep0 = 0.000707199;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep1 = 0.000655208;
+    paramSet.event.ttbarXSecSF_1000toInf_nLep2 = 0.000478046;
 
     paramSet.leptons.el_SFFile          ="corrections/lepton/electron_1l_2016_SF.root";
     paramSet.leptons.mu_SFFile          ="corrections/lepton/muon_1l_2016_SF.root";

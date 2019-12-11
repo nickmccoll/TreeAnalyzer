@@ -16,14 +16,14 @@ bool passTriggerSuite2016(const EventReader& reader_event   ) {
 
     const bool passMuon = passTrig(HLT16_IsoMu24) || passTrig(HLT16_Mu50)
     		|| passTrig(HLT16_IsoTkMu24) || passTrig(HLT16_TkMu50)
-            || passTrig(HLT16_Mu15_IsoVVVL_PFHT350)
-			|| passTrig(HLT16_Mu15_IsoVVVL_PFHT400);
+			|| passTrig(HLT16_Mu15_IsoVVVL_PFHT400)
+            || (reader_event.realData ? passTrig(HLT16_Mu15_IsoVVVL_PFHT350) : false);
     const bool passEle =
               passTrig(HLT16_Ele27_WPTight_Gsf)
             || passTrig(HLT16_Ele45_WPLoose_Gsf)
             || passTrig(HLT16_Ele25_eta2p1_WPTight_Gsf)
             || passTrig(HLT16_Ele115_CaloIdVT_GsfTrkIdT)
-            || passTrig(HLT16_Ele15_IsoVVVL_PFHT350)
+            || (reader_event.realData ? passTrig(HLT16_Ele15_IsoVVVL_PFHT350) : false)
             || passTrig(HLT16_Ele15_IsoVVVL_PFHT400)
             || passTrig(HLT16_Ele45_CaloIdVT_GsfTrkIdT_PFJet200_PFJet50)
             || passTrig(HLT16_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
@@ -187,6 +187,45 @@ bool passTriggerPreselection(const EventParameters& params,
     if(maxElePT < params.minTriggerEl && maxMuPT < params.minTriggerMu ) return false;
     return true;
 };
+
+float get2017CrossTrigWeight(const EventReader& reader_event ) {
+    auto passTrig = [&](FillerConstants::Triggers_2017 trig) -> bool {
+        return FillerConstants::doesPass(*reader_event.triggerAccepts,trig);
+    };
+
+    const bool passMuon = passTrig(HLT17_IsoMu27) || passTrig(HLT17_Mu50);
+    const bool passEle =
+              passTrig(HLT17_Ele32_WPTight_Gsf)
+            || passTrig(HLT17_Ele32_WPTight_Gsf_L1DoubleEG)
+            || passTrig(HLT17_Ele35_WPTight_Gsf)
+            || passTrig(HLT17_Ele115_CaloIdVT_GsfTrkIdT)
+            || passTrig(HLT17_Ele28_eta2p1_WPTight_Gsf_HT150)
+            || passTrig(HLT17_Ele30_eta2p1_WPTight_Gsf_CentralPFJet35_EleCleaned)
+            || passTrig(HLT17_Ele50_CaloIdVT_GsfTrkIdT_PFJet165);
+
+    const bool passMET = passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight)
+            || passTrig(HLT17_PFMETNoMu120_PFMHTNoMu120_IDTight_PFHT60)
+			|| passTrig(HLT17_PFMETTypeOne120_PFMHT120_IDTight)
+			|| passTrig(HLT17_PFMETTypeOne120_PFMHT120_IDTight_PFHT60)
+			|| passTrig(HLT17_PFMET120_PFMHT120_IDTight)
+			|| passTrig(HLT17_PFMET120_PFMHT120_IDTight_PFHT60)
+			;
+
+    const bool passJetHT = passTrig(HLT17_PFHT1050) || passTrig(HLT17_AK8PFJet500) ||
+            passTrig(HLT17_AK8PFJet400_TrimMass30) || passTrig(HLT17_AK8PFHT850_TrimMass50);
+    const bool passPhoton = passTrig(HLT17_Photon200);
+
+
+    const bool passMuCross = passTrig(HLT17_Mu15_IsoVVVL_PFHT450);
+    const bool passElCross = passTrig(HLT17_Ele15_IsoVVVL_PFHT450);
+
+    const bool passFullNoCross = passMuon || passEle || passMET || passJetHT || passPhoton;
+
+    double lumiwt = 0.884; // ratio of CDEF lumi / BCDEF lumi since these cross triggers unavailable in RunB
+    if( (passMuCross || passElCross) && !passFullNoCross) return lumiwt;
+    return 1.0;
+
+}
 
 
 
