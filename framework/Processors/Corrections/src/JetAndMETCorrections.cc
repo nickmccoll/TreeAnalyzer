@@ -35,6 +35,7 @@ void JERCorrector::processJets(JetReader& jetreader,Met& met,const GenJetCollect
 
     for(auto& j : jetreader.jets){
 //        std::cout << j.pt() <<" "<< j.eta() <<"->";
+        if(j.pt() > 7000) continue;
         if(j.pt() < 15) {
 //            std::cout <<std::endl;
             continue;
@@ -46,6 +47,7 @@ void JERCorrector::processJets(JetReader& jetreader,Met& met,const GenJetCollect
 
         const float jres = ak4CHS_resObj->evaluateFormula(*ak4CHS_resObj
                 ->getRecord(parameters),parameters);
+
         const float jSF =  ak4CHS_sfObj->getRecord(parameters)
                  ->getParametersValues()[getSFCount(cT)];
 
