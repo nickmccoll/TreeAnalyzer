@@ -163,9 +163,10 @@ public:
 
         	if (smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size()) {
         	    if (lepChan == SINGLELEP) {
-            		trig_N_ = trigSFProc->getLeptonTriggerSF(ht_, (selectedLepton->isMuon()));
+            		trig_N_ = trigSFProc->getSingleLeptonTriggerSF(ht_, (selectedLepton->isMuon()));
         	    } else if (lepChan == DILEP) {
-            		trig_N_ = trigSFProc->getLeptonTriggerSF(ht_, (dilep1->isMuon()));
+            		trig_N_ = trigSFProc->getDileptonTriggerSF(ht_, dilep2->pt(),
+            		        dilep1->isMuon(),dilep2->isMuon());
         		} else {
         			trig_N_ = 1.0;
         		}
