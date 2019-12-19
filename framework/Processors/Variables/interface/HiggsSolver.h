@@ -103,7 +103,8 @@ public:
     virtual void setup(TFile * inFile, const std::string& hLowName, const std::string& hHighName,
             const double lowValue, const double highValue, bool verbose= false );
     void setInterp(double i);
-    virtual double getProbability(const double x) const;
+    using BASEPDF::getProbability;
+    virtual double getProbability(const double x) const override;
 
 
     double iLow = 0;
@@ -129,7 +130,8 @@ public:
 class OneDimPDFWExtrap : public BASEPDF {
 public:
     virtual void setup(TFile * inFile, const std::string& hName, bool verbose= false );
-    double getProbability(const double x) const;
+    using BASEPDF::getProbability;
+    double getProbability(const double x) const override;
     double bW = 0;
     int nB = 0;
     double minX = 0;
@@ -143,8 +145,9 @@ public:
 class OneDimPDFWInterpAndExtrap : public OneDimPDFWInterp {
 public:
     virtual void setup(TFile * inFile, const std::string& hLowName, const std::string& hHighName,
-            const double lowValue, const double highValue, bool verbose= false );
-    double getProbability(const double x) const;
+            const double lowValue, const double highValue, bool verbose= false ) override;
+    using BASEPDF::getProbability;
+    double getProbability(const double x) const override;
     double minX = 0;
     double maxX = 0;
 };
@@ -155,7 +158,8 @@ public:
 class TwoDimPDF : public BASEPDF {
 public:
     void setup(TFile * inFile, const std::string& hName,  bool verbose= false );
-    double getProbability(const double x,const double y) const;
+    using BASEPDF::getProbability;
+    double getProbability(const double x,const double y) const override;
     double bW = 0;
     int nBX = 0;
     double minX = 0;
