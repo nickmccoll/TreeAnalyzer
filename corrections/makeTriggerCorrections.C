@@ -17,7 +17,7 @@ TH2 * makeTriggerEffs2D(TString name, TH1 *h1, vector<double>& bins1, TH1 *h2, v
 	static const int nbins1 = bins1.size() - 1;
 	static const int nbins2 = bins2.size() - 1;
 
-	TH2 *hh = new TH2D(name,";h1;h2",nbins1,&bins1[0],nbins2,&bins2[0]);
+	TH2 *hh = new TH2D(name,";H_{T};p_{T}",nbins1,&bins1[0],nbins2,&bins2[0]);
 	for(unsigned int i1=1; i1<=nbins1; i1++) for(unsigned int i2=1; i2<=nbins2; i2++) {
 		double eff = getEffOR(h1->GetBinContent(i1),h2->GetBinContent(i2));
 		hh->SetBinContent(i1,i2,eff);
@@ -75,8 +75,8 @@ vector<TH1*> getEffsAndSFs_lnuqq(bool onlyForFile, int year, TString elptS, TStr
 	TString wtS = "";
 	if(year == 2017) wtS = "lumiwt_";
 
-	TFile *fm = new TFile(fPre+"triggerInfo_mc_"+yS+".root");
-	TFile *fd = new TFile(fPre+"triggerInfo_data_"+yS+".root");
+	TFile *fm = new TFile(fPre+"triggerInfo_mc_"+yS+"_toppt.root");
+	TFile *fd = new TFile(fPre+"triggerInfo_data_"+yS+"_toppt.root");
 
 	vector<double> htbins = {100,200,250,300,350,400,450,500,550,600,650,
 			700,800,900,1000,1100,1200,2000};
@@ -104,15 +104,26 @@ vector<TH1*> getEffsAndSFs_lnuqq(bool onlyForFile, int year, TString elptS, TStr
 
 	TH1 *elEffMC = getEff1D(hen_mc,hed_mc,htbins);
 	elEffMC = (TH1*)elEffMC->Clone("effMC_e_"+elptS);
+	elEffMC->GetXaxis()->SetTitle("H_{T}");
 
 	TH1 *muEffMC = getEff1D(hmn_mc,hmd_mc,htbins);
 	muEffMC = (TH1*)muEffMC->Clone("effMC_m_"+muptS);
+	muEffMC->GetXaxis()->SetTitle("H_{T}");
 
 	TH1 *elEffDA = getEff1D(hen_da,hed_da,htbins);
 	elEffDA = (TH1*)elEffDA->Clone("effDA_e_"+elptS);
+	elEffDA->GetXaxis()->SetTitle("H_{T}");
 
 	TH1 *muEffDA = getEff1D(hmn_da,hmd_da,htbins);
 	muEffDA = (TH1*)muEffDA->Clone("effDA_m_"+muptS);
+	muEffDA->GetXaxis()->SetTitle("H_{T}");
+
+	if (!onlyForFile) {
+		hists.push_back(elEffMC);
+		hists.push_back(muEffMC);
+		hists.push_back(elEffDA);
+		hists.push_back(muEffDA);
+	}
 
 	elEffDA = (TH1*)elEffDA->Clone("sf_e_"+elptS);
 	elEffDA->Divide(elEffMC);
@@ -127,10 +138,6 @@ vector<TH1*> getEffsAndSFs_lnuqq(bool onlyForFile, int year, TString elptS, TStr
 		return hists;
 	}
 
-	hists.push_back(elEffMC);
-	hists.push_back(muEffMC);
-	hists.push_back(elEffDA);
-	hists.push_back(muEffDA);
 	hists.push_back(elEffDA);
 	hists.push_back(muEffDA);
 
@@ -144,8 +151,8 @@ vector<TH2*> getEffsAndSFs_lnulnu(int year, TString elptS, TString muptS, bool i
 	TString wtS = "";
 	if(year == 2017) wtS = "lumiwt_";
 
-	TFile *fm = new TFile(fPre+"triggerInfo_mc_"+yS+".root");
-	TFile *fd = new TFile(fPre+"triggerInfo_data_"+yS+".root");
+	TFile *fm = new TFile(fPre+"triggerInfo_mc_"+yS+"_toppt.root");
+	TFile *fd = new TFile(fPre+"triggerInfo_data_"+yS+"_toppt.root");
 
 	vector<double> htbins = {100,200,250,300,350,400,450,500,550,600,650,
 			700,800,900,1000,1100,1200,2000};
@@ -209,18 +216,18 @@ vector<TH2*> getEffsAndSFs_lnulnu(int year, TString elptS, TString muptS, bool i
 
 	//  get 2D effs and scale factors for di-lepton channel
 	TH2 *effMC_ee = makeTriggerEffs2D("effMC_ee_"+elptS+crossS,elEffMC,htbins,el2EffMC,ptbins); hists2D.push_back(effMC_ee);
-	TH2 *effMC_me = makeTriggerEffs2D("effMC_me_"+muptS+elptS+crossS,muEffMC,htbins,el2EffMC,ptbins); hists2D.push_back(effMC_me);
-	TH2 *effMC_em = makeTriggerEffs2D("effMC_em_"+elptS+muptS+crossS,elEffMC,htbins,mu2EffMC,ptbins); hists2D.push_back(effMC_em);
+	TH2 *effMC_me = makeTriggerEffs2D("effMC_me_"+muptS+crossS,muEffMC,htbins,el2EffMC,ptbins); hists2D.push_back(effMC_me);
+	TH2 *effMC_em = makeTriggerEffs2D("effMC_em_"+elptS+crossS,elEffMC,htbins,mu2EffMC,ptbins); hists2D.push_back(effMC_em);
 	TH2 *effMC_mm = makeTriggerEffs2D("effMC_mm_"+muptS+crossS,muEffMC,htbins,mu2EffMC,ptbins); hists2D.push_back(effMC_mm);
 
 	TH2 *effDA_ee = makeTriggerEffs2D("effDA_ee_"+elptS+crossS,elEffDA,htbins,el2EffDA,ptbins); hists2D.push_back(effDA_ee);
-	TH2 *effDA_me = makeTriggerEffs2D("effDA_me_"+muptS+elptS+crossS,muEffDA,htbins,el2EffDA,ptbins); hists2D.push_back(effDA_me);
-	TH2 *effDA_em = makeTriggerEffs2D("effDA_em_"+elptS+muptS+crossS,elEffDA,htbins,mu2EffDA,ptbins); hists2D.push_back(effDA_em);
-	TH2 *effDA_mm = makeTriggerEffs2D("effDA_mm_"+muptS,muEffDA,htbins,mu2EffDA,ptbins); hists2D.push_back(effDA_mm);
+	TH2 *effDA_me = makeTriggerEffs2D("effDA_me_"+muptS+crossS,muEffDA,htbins,el2EffDA,ptbins); hists2D.push_back(effDA_me);
+	TH2 *effDA_em = makeTriggerEffs2D("effDA_em_"+elptS+crossS,elEffDA,htbins,mu2EffDA,ptbins); hists2D.push_back(effDA_em);
+	TH2 *effDA_mm = makeTriggerEffs2D("effDA_mm_"+muptS+crossS,muEffDA,htbins,mu2EffDA,ptbins); hists2D.push_back(effDA_mm);
 
 	TH2 *sfee = (TH2*)effDA_ee->Clone("sf_ee_"+elptS+crossS);
-	TH2 *sfem = (TH2*)effDA_em->Clone("sf_em_"+elptS+muptS+crossS);
-	TH2 *sfme = (TH2*)effDA_me->Clone("sf_me_"+muptS+elptS+crossS);
+	TH2 *sfem = (TH2*)effDA_em->Clone("sf_em_"+elptS+crossS);
+	TH2 *sfme = (TH2*)effDA_me->Clone("sf_me_"+muptS+crossS);
 	TH2 *sfmm = (TH2*)effDA_mm->Clone("sf_mm_"+muptS+crossS);
 
 	sfee->Divide(effMC_ee); hists2D.push_back(sfee);
@@ -238,8 +245,8 @@ vector<TH1*> getEffsForFile_2l(int year, TString elptS, TString muptS, bool incl
 	TString wtS = "";
 	if(year == 2017) wtS = "lumiwt_";
 
-	TFile *fm = new TFile(fPre+"triggerInfo_mc_"+yS+".root");
-	TFile *fd = new TFile(fPre+"triggerInfo_data_"+yS+".root");
+	TFile *fm = new TFile(fPre+"triggerInfo_mc_"+yS+"_toppt.root");
+	TFile *fd = new TFile(fPre+"triggerInfo_data_"+yS+"_toppt.root");
 
 	vector<double> htbins = {100,200,250,300,350,400,450,500,550,600,650,
 			700,800,900,1000,1100,1200,2000};
@@ -269,15 +276,19 @@ vector<TH1*> getEffsForFile_2l(int year, TString elptS, TString muptS, bool incl
 
 	TH1 *elEffMC = getEff1D(hen_mc,hed_mc,htbins);
 	elEffMC = (TH1*)elEffMC->Clone("electronEffs_mcHT_lnulnu");
+	elEffMC->GetXaxis()->SetTitle("H_{T}");
 
 	TH1 *muEffMC = getEff1D(hmn_mc,hmd_mc,htbins);
 	muEffMC = (TH1*)muEffMC->Clone("muonEffs_mcHT_lnulnu");
+	muEffMC->GetXaxis()->SetTitle("H_{T}");
 
 	TH1 *elEffDA = getEff1D(hen_da,hed_da,htbins);
 	elEffDA = (TH1*)elEffDA->Clone("electronEffs_dataHT_lnulnu");
+	elEffDA->GetXaxis()->SetTitle("H_{T}");
 
 	TH1 *muEffDA = getEff1D(hmn_da,hmd_da,htbins);
 	muEffDA = (TH1*)muEffDA->Clone("muonEffs_dataHT_lnulnu");
+	muEffDA->GetXaxis()->SetTitle("H_{T}");
 
 
 //  get single-lepton trigger efficiencies to be used for second lepton -----------------------------
@@ -307,15 +318,19 @@ vector<TH1*> getEffsForFile_2l(int year, TString elptS, TString muptS, bool incl
 
 	TH1 *el2EffMC = getEff1D(hen_mc,hed_mc,ptbins);
 	el2EffMC = (TH1*)el2EffMC->Clone("electronEffs_mcPT_lnulnu");
+	el2EffMC->GetXaxis()->SetTitle("p_{T}");
 
 	TH1 *mu2EffMC = getEff1D(hmn_mc,hmd_mc,ptbins);
 	mu2EffMC = (TH1*)mu2EffMC->Clone("muonEffs_mcPT_lnulnu");
+	mu2EffMC->GetXaxis()->SetTitle("p_{T}");
 
 	TH1 *el2EffDA = getEff1D(hen_da,hed_da,ptbins);
 	el2EffDA = (TH1*)el2EffDA->Clone("electronEffs_dataPT_lnulnu");
+	el2EffDA->GetXaxis()->SetTitle("p_{T}");
 
 	TH1 *mu2EffDA = getEff1D(hmn_da,hmd_da,ptbins);
 	mu2EffDA = (TH1*)mu2EffDA->Clone("muonEffs_dataPT_lnulnu");
+	mu2EffDA->GetXaxis()->SetTitle("p_{T}");
 
 	hists.push_back(elEffMC);
 	hists.push_back(el2EffMC);
@@ -335,7 +350,7 @@ void makeTriggerCorrections(int year, bool makePlotsForFileOnly = true) {
 		vector<TH1*> hists1 = getEffsAndSFs_lnuqq(true,year,"elpt30","mupt27");
 		vector<TH1*> hists2 = getEffsForFile_2l(year,"elpt30","mupt27",false);
 
-		TFile *fout = new TFile("triggerSF_"+TString::Format("%d",year)+".root","RECREATE");
+		TFile *fout = new TFile("triggerSF_"+TString::Format("%d",year)+"_toppt.root","RECREATE");
 		fout->cd();
 		for(const auto& h : hists1) h->Write();
 		for(const auto& h : hists2) h->Write();
@@ -347,6 +362,8 @@ void makeTriggerCorrections(int year, bool makePlotsForFileOnly = true) {
 	vector<TH2*> hists_nom       = getEffsAndSFs_lnulnu(year,"elpt30","mupt27",false);
 	vector<TH2*> hists_up        = getEffsAndSFs_lnulnu(year,"elpt32","mupt29",false);
 	vector<TH2*> hists_down      = getEffsAndSFs_lnulnu(year,"elpt28","mupt25",false);
+	vector<TH2*> hists_downdown  = getEffsAndSFs_lnulnu(year,"elpt25","mupt22",false);
+	vector<TH2*> hists_upup      = getEffsAndSFs_lnulnu(year,"elpt35","mupt32",false);
 	vector<TH2*> hists_upCross   = getEffsAndSFs_lnulnu(year,"elpt32","mupt29",true);
 	vector<TH2*> hists_downCross = getEffsAndSFs_lnulnu(year,"elpt28","mupt25",true);
 	vector<TH2*> hists_nomCross  = getEffsAndSFs_lnulnu(year,"elpt30","mupt27",true);
@@ -359,11 +376,13 @@ void makeTriggerCorrections(int year, bool makePlotsForFileOnly = true) {
 	vector<TH1*> hist_down1 = getEffsAndSFs_lnuqq(false,year,"elpt28","mupt25");
 	vector<TH1*> hist_down2 = getEffsAndSFs_lnuqq(false,year,"elpt25","mupt22");
 
-	TFile *fout = new TFile("effsAndSF_"+TString::Format("%d",year)+".root","RECREATE");
+	TFile *fout = new TFile("effsAndSF_"+TString::Format("%d",year)+"_toppt.root","RECREATE");
 	fout->cd();
 	for(const auto& h : hists_nom)       h->Write();
 	for(const auto& h : hists_up)        h->Write();
 	for(const auto& h : hists_down)      h->Write();
+	for(const auto& h : hists_downdown)      h->Write();
+	for(const auto& h : hists_upup)      h->Write();
 	for(const auto& h : hists_nomCross)  h->Write();
 	for(const auto& h : hists_upCross)   h->Write();
 	for(const auto& h : hists_downCross) h->Write();

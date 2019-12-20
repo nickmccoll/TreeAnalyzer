@@ -13,7 +13,7 @@ void makePUSF(int year, bool showPlots=false) {
     
     TString outS = TString::Format("/Users/brentstone/Dropbox/Physics/HHbbWW/pileup/puSF_%d.root",year);
     TFile *fout = new TFile(outS,"RECREATE");
-    TFile *ft   = new TFile(path+TString::Format("mcFiles/ttbar_%d.root",year));
+    TFile *ft   = new TFile(path+TString::Format("mcFiles/puDistMC_%d.root",year));
 
     Plotter *p = new Plotter();
     Plotter *pp = new Plotter();
