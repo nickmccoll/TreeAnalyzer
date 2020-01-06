@@ -74,6 +74,7 @@ void JERCorrector::processFatJets(FatJetCollection& jets,const GenFatJetCollecti
     for(auto& gj: genjets) gjptrs.push_back(&gj);
     for(auto& j : jets){
         if(j.pt() < 15) continue;
+        if(j.pt() > 7000) continue;
         parameters.setJetPt(j.pt());
         float eta = j.eta() < -4.7 ? -4.7 : (j.eta() > 4.7 ? 4.7 : j.eta());
         parameters.setJetEta(eta);

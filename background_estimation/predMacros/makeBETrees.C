@@ -36,7 +36,6 @@ public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
         addUncVariables = (treeType == TREE_OTHER);
-//        turnOffCorr(CORR_JER);
     }
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
@@ -161,12 +160,11 @@ public:
             btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
             topPt_N_ = topPTProc->getCorrection(mcProc,smDecayEvt);
 
-        	if (smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size()) {
+        	if ((smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size()) || process_ == FillerConstants::ZJETS) {
         	    if (lepChan == SINGLELEP) {
             		trig_N_ = trigSFProc->getSingleLeptonTriggerSF(ht_, (selectedLepton->isMuon()));
         	    } else if (lepChan == DILEP) {
-            		trig_N_ = trigSFProc->getDileptonTriggerSF(ht_, dilep2->pt(),
-            		        dilep1->isMuon(),dilep2->isMuon());
+            		trig_N_ = trigSFProc->getDileptonTriggerSF(ht_, dilep2->pt(),dilep1->isMuon(), dilep2->isMuon());
         		} else {
         			trig_N_ = 1.0;
         		}
