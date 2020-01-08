@@ -32,13 +32,22 @@ class Analyzer : public HHSolTreeAnalyzer {
 public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed,int step) :
-        HHSolTreeAnalyzer(fileName,treeName,treeInt, randSeed), step(step), HSolver(""),
-        BkgHSolver(""){
+        HHSolTreeAnalyzer(fileName,treeName,treeInt, randSeed), step(step), HSolver("")
+{
         parameters = ReaderConstants::set2017Parameters();
-        parameters.hww.liFileName = "hhSol_templates.root";
-        parameters.hww.bkgLiFileName = "hhSol_bkgTemplates.root";
+
+        if(fileName.find("2016") !=  std::string::npos){
+            parameters.hww.liFileName = "hhSol_templates_2016.root";
+        } else if(fileName.find("2017") !=  std::string::npos){
+            parameters.hww.liFileName = "hhSol_templates_2017.root";
+        } else if(fileName.find("2018") !=  std::string::npos){
+            parameters.hww.liFileName = "hhSol_templates_2018.root";
+        } else {
+            parameters.hww.liFileName = "ERROR";
+        }
+        std::cout << "Loaded: "<< parameters.hww.liFileName<<std::endl;
+
         HSolver.setParamters(parameters.hww);
-        BkgHSolver.setParamters(parameters.hww);
     }
 
 
@@ -150,11 +159,11 @@ public:
         TString pf = (isSignal() ? TString("signal") : smpName);
 
 
-        if(approxH.mass()>135){
-            std:: cout << *sampParam<<" "<<int(*dhType)<<" "<< approxH.pt() <<" "<< approxH.mass()<<" "<< approxW.pt() <<" "<< approxW.mass()
-                    <<" "<< wqqPTRes <<" "<< true_jet.pt() <<" "<<qqJet.pt() <<" "<< lepton.pt()<< " "<< true_lep.pt()
-                    <<" "<< PhysicsUtilities::deltaR(qqJet,true_jet)<<" "<< *chi2 <<" "<<isVirtualWqq <<std::endl;
-        }
+//        if(approxH.mass()>135){
+//            std:: cout << *sampParam<<" "<<int(*dhType)<<" "<< approxH.pt() <<" "<< approxH.mass()<<" "<< approxW.pt() <<" "<< approxW.mass()
+//                    <<" "<< wqqPTRes <<" "<< true_jet.pt() <<" "<<qqJet.pt() <<" "<< lepton.pt()<< " "<< true_lep.pt()
+//                    <<" "<< PhysicsUtilities::deltaR(qqJet,true_jet)<<" "<< *chi2 <<" "<<isVirtualWqq <<std::endl;
+//        }
 //
 
 
@@ -233,7 +242,7 @@ public:
 
             plotter.getOrMake1DPre(prefix,"extraMetPerp",";extraMetPerp",30,-150,150)
                 ->Fill(extraMetPerp,weight);
-            plotter.getOrMake1DPre(prefix,"extraMetParRelhwwMag",";extraMetPar/hwwMag",50,-0.6,0.4)
+            plotter.getOrMake1DPre(prefix,"extraMetParRelhwwMag",";extraMetPar/hwwMag",45,-0.6,0.3)
                 ->Fill(extraMetPar/hwwMag,weight);
             plotter.getOrMake1DPre(prefix,"wqqPTRes",";wqqPTRes",50,-0.5,0.5)
                 ->Fill(wqqPTRes,weight);
@@ -540,7 +549,7 @@ public:
             fIn->GetObject(hName,h);
             if(!h)
                 throw std::invalid_argument(std::string(
-                        "processTemplates() -> Couldn't find the histogram! "));
+                        "processTemplates() -> Couldn't find the histogram! ") + hName );
             int nBX = h->GetNbinsX();
             h = (TH1*)h->Clone();
             h->Scale(1./h->Integral(0,-1));
@@ -570,7 +579,7 @@ public:
                     do1D( procName + "_"+ ptCats[iS]+shells[iSh]+ext1DVs[iV],true);
                 }
                 for(unsigned int iV = 0; iV < std1DVs.size(); ++iV){
-                    do1D(ptCats[iS]+"_"+shells[iSh]+std1DVs[iV],true);
+                    do1D(procName+"_"+ptCats[iS]+shells[iSh]+std1DVs[iV],true);
                 }
             }
         }
@@ -857,12 +866,12 @@ public:
                     (bbJet.p4()+lepton.p4()+simN.p4() + qqJet.p4()).mass() );
             //older
 
-            HSolverChiInfo ohwwInfo;
-            double ohwwChi   = oHSolver.hSolverMinimization(lepton.p4(),qqJet.p4(),
-                    met.p4(),*qqJet_SDmass <60,parameters.hww, &ohwwInfo);
-            std::cout <<ohwwChi<<" -> ";
-            print(ohwwInfo.neutrino,ohwwInfo.wqqjet,ohwwInfo.wlnu, ohwwInfo.hWW,
-                    (bbJet.p4()+ohwwInfo.hWW).mass() );
+//            HSolverChiInfo ohwwInfo;
+//            double ohwwChi   = oHSolver.hSolverMinimization(lepton.p4(),qqJet.p4(),
+//                    met.p4(),*qqJet_SDmass <60,parameters.hww, &ohwwInfo);
+//            std::cout <<ohwwChi<<" -> ";
+//            print(ohwwInfo.neutrino,ohwwInfo.wqqjet,ohwwInfo.wlnu, ohwwInfo.hWW,
+//                    (bbJet.p4()+ohwwInfo.hWW).mass() );
 
 
 
@@ -913,9 +922,9 @@ public:
         HSolverLiInfo altHWWInfo;
         HSolver.minimize(lepton,met,qqJet,*qqJet_SDmass,hwwInfo,&osqqHWWInfo,&vqqHWWInfo,&altHWWInfo);
 
-        HSolverLiInfo hwwBkgInfo;
-        HSolverLiInfo hwwBkgAltInfo;
-        BkgHSolver.minimize(lepton,met,qqJet,hwwBkgInfo,&hwwBkgAltInfo);
+//        HSolverLiInfo hwwBkgInfo;
+//        HSolverLiInfo hwwBkgAltInfo;
+//        BkgHSolver.minimize(lepton,met,qqJet,hwwBkgInfo,&hwwBkgAltInfo);
 
 
         auto bN = HSolverBasic::getInvisible(met, (qqJet.p4()+lepton.p4()));
@@ -924,7 +933,7 @@ public:
         const double lHH = (hwwInfo.hWW + bbJet.p4()).mass();
 
 
-        const double nBL = hwwBkgInfo.likeli/hwwBkgAltInfo.likeli;
+//        const double nBL = hwwBkgInfo.likeli/hwwBkgAltInfo.likeli;
 
         const double ptom = (bN.p4() + lepton.p4() + qqJet.p4()).pt() / *hh_orig;
         const double ptom2 = hwwInfo.hWW.pt() / lHH;
@@ -938,43 +947,37 @@ public:
                 ->Fill(*hh_chi2,weight);
         plotter.getOrMake1DPre(smpName, "likeliHH",";HH",120,0,3000)
                 ->Fill(lHH,weight);
-        plotter.getOrMake1DPre(smpName, "likeliBHH",";HH",120,0,3000)
-                ->Fill((hwwBkgInfo.hWW + bbJet.p4()).mass(),weight);
+//        plotter.getOrMake1DPre(smpName, "likeliBHH",";HH",120,0,3000)
+//                ->Fill((hwwBkgInfo.hWW + bbJet.p4()).mass(),weight);
 
 
         auto mkDiscPlts =[&](const TString& prefix){
 
 
 
-            plotter.getOrMake1DPre(prefix, "likeli",";likeli",200,0,5)
+            plotter.getOrMake1DPre(prefix, "likeli",";likeli",200,-50,100)
                     ->Fill(hwwInfo.likeli,weight);
-
-            plotter.getOrMake1DPre(prefix, "likeli2",";likeli",200,-50,100)
-                    ->Fill(hwwInfo.rawLikeli-altHWWInfo.rawLikeli,weight);
 
             plotter.getOrMake1DPre(prefix, "likeli_raw",";likeli",200,0,100)
                     ->Fill(hwwInfo.rawLikeli,weight);
-
-            plotter.getOrMake1DPre(prefix, "alt",";likeli",200,0,100)
-                    ->Fill(altHWWInfo.rawLikeli,weight);
 
             plotter.getOrMake1DPre(prefix, "md",";MD",300,0,300)
                     ->Fill(md,weight);
 
 
 
-            plotter.getOrMake1DPre(prefix, "Blikeli",";likeli",200,0,50)
-                    ->Fill(hwwBkgInfo.likeli,weight);
-
-            plotter.getOrMake1DPre(prefix, "Blikeli_nAlt",";likeli",200,0,5)
-                    ->Fill(nBL,weight);
-
-            plotter.getOrMake1DPre(prefix, "bAlt",";likeli",200,0,100)
-                    ->Fill(hwwBkgAltInfo.likeli,weight);
-
-            plotter.getOrMake1DPre(prefix, "SoBlikeli",";likeli",200,0,5)
-                    ->Fill(nBL > 0 ? hwwInfo.likeli/nBL
-                            : 50,weight);
+//            plotter.getOrMake1DPre(prefix, "Blikeli",";likeli",200,0,50)
+//                    ->Fill(hwwBkgInfo.likeli,weight);
+//
+//            plotter.getOrMake1DPre(prefix, "Blikeli_nAlt",";likeli",200,0,5)
+//                    ->Fill(nBL,weight);
+//
+//            plotter.getOrMake1DPre(prefix, "bAlt",";likeli",200,0,100)
+//                    ->Fill(hwwBkgAltInfo.likeli,weight);
+//
+//            plotter.getOrMake1DPre(prefix, "SoBlikeli",";likeli",200,0,5)
+//                    ->Fill(nBL > 0 ? hwwInfo.likeli/nBL
+//                            : 50,weight);
 
 
             plotter.getOrMake1DPre(prefix, "ptom",";HH",250,0,1)
@@ -1054,6 +1057,7 @@ public:
     bool runEvent() override {
         if(!HHSolTreeAnalyzer::runEvent()) return false;
 //        if(*qqJet_t2ot1 >= 0.75) return false;
+        if(*hbbCat < 4) return false;
         if(isSignal() && (*bbJet_SDmass < 100 || *bbJet_SDmass>150)) return false;
         if(isSignal() && *wqqDR >= 0.7) return false;
         if(isSignal() && (PhysicsUtilities::deltaR(true_jet,qqJet) > 0.4)) return false;
@@ -1085,9 +1089,9 @@ public:
     HistGetter plotter;
     int step;
 
-    HSolverChi oHSolver;
+//    HSolverChi oHSolver;
     HSolverLi HSolver;
-    HSolverBkgLi BkgHSolver;
+//    HSolverBkgLi BkgHSolver;
     ParameterSet parameters;
 };
 
@@ -1097,7 +1101,8 @@ void getHHTraining(int step, std::string fileName, std::string outFileName,
         float xSec=-1, float numEvent=-1){
 
     if(step == 4){
-        Analyzer::processTemplates("hSolTrees_temp.root","hhSol_templates.root",true);
+        Analyzer::processTemplates(std::string("hSolTrees_temp_")+ fileName+  ".root"
+                ,std::string("hhSol_templates_") + fileName + ".root",true);
         return;
     }
 
