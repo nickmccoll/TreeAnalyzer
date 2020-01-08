@@ -132,7 +132,6 @@ ParameterSet setCommonParameters() {
     paramSet.hww.ptCorB        = 0.9663;
     paramSet.hww.ptCorM        = -0.00001013;
     paramSet.hww.liFileName    ="variables/hhSol_templates.root";
-    paramSet.hww.bkgLiFileName ="variables/hhSol_bkgTemplates.root";
 
     paramSet.hww.dilepInvMassGuess = 55;
 
