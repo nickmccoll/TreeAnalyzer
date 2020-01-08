@@ -25,6 +25,7 @@ public:
         setBranch("","sampParam"     ,sampParam      ,true);
         setBranch("","dhType"        ,dhType         ,true);
         setBranch("","hbbCat"        ,hbbCat         ,true);
+        setBranch("","hbbDeepAK8"    ,hbbDeepAK8     ,true);
         setBranch("","isMuon"        ,isMuon         ,true);
         setBranch("","weight"        ,weight_        ,true);
         setBranch("","nAK4Btags"     ,nAK4Btags      ,true);
@@ -114,6 +115,7 @@ public:
     rd_int   sampParam      ;
     rd_size8 dhType         ;
     rd_size8 hbbCat         ;
+    rd_float hbbDeepAK8     ;
     rd_size8 isMuon         ;
     rd_float weight_        ;
     rd_size8 nAK4Btags      ;
