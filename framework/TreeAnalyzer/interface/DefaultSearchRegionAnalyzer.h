@@ -29,6 +29,7 @@ class TopPTWeighting;
 class JERCorrector;
 class JESUncShifter;
 class METUncShifter;
+class HEM1516TestCorrector;
 class HSolverChi;
 class HSolverLi;
 
@@ -53,6 +54,7 @@ public:
                      ,CORR_JER
                      ,CORR_JES
                      ,CORR_MET
+					 ,CORR_HEM1516
     };
 
     enum LepChannels {NOCHANNEL, SINGLELEP, DILEP};
@@ -159,6 +161,7 @@ public:
     std::unique_ptr<JERCorrector>         JERProc ;
     std::unique_ptr<JESUncShifter>        JESUncProc ;
     std::unique_ptr<METUncShifter>          METUncProc;
+    std::unique_ptr<HEM1516TestCorrector>   HEMIssueProc;
     std::unique_ptr<HSolverChi>             hSolverChi;
     std::unique_ptr<HSolverLi>             hSolverLi;
 };

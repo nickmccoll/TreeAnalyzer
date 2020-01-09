@@ -51,6 +51,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
 
     JESUncProc . reset(new JESUncShifter());
     METUncProc . reset(new METUncShifter());
+    HEMIssueProc.reset(new HEM1516TestCorrector);
     hSolverChi . reset(new HSolverChi());
     hSolverLi . reset(new HSolverLi(dataDirectory));
 
@@ -190,6 +191,10 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         if(isCorrOn(CORR_MET) ){
             METUncProc->process(reader_event->met,*reader_event);
         }
+        if(isCorrOn(CORR_HEM1516) && *reader_event->dataEra == FillerConstants::ERA_2018) {
+        	HEMIssueProc->processJets(*reader_jet,reader_event->met);
+        	HEMIssueProc->processFatJets(reader_fatjet->jets);
+        }
     }
 
     //|||||||||||||||||||||||||||||| GEN PARTICLES ||||||||||||||||||||||||||||||
@@ -228,9 +233,9 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         } else {
             dilep1 = 0;
             dilep2 = 0;
-            llMass = 1000;
-            llDR = 1000;
-            llMetDphi = 1000;
+            llMass = 9999;
+            llDR = 9999;
+            llMetDphi = 9999;
         }
     }
 
@@ -328,7 +333,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
         hh_chi     =  MomentumF();
         hh_basic   =  MomentumF();
-    } else if (hbbCand && wjjCand) {
+    } else if (hbbCand && wjjCand && lepChan == SINGLELEP) {
         hh =  hWW.p4() + hbbCand->p4();
         hh_chi   =  hbbCand->p4() + hwwInfoChi.hWW;
 
