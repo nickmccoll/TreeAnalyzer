@@ -193,6 +193,7 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
         }
         if(isCorrOn(CORR_HEM1516) && *reader_event->dataEra == FillerConstants::ERA_2018) {
         	HEMIssueProc->processJets(*reader_jet,reader_event->met);
+            HEMIssueProc->processFatJets(reader_fatjet_noLep->jets);
         	HEMIssueProc->processFatJets(reader_fatjet->jets);
         }
     }

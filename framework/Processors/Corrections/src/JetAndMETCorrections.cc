@@ -210,8 +210,8 @@ void HEM1516TestCorrector::processJets(JetReader& jetreader, Met& met) {
 
     		const ASTypes::CartLorentzVector newMom(sf*j.px(),sf*j.py(),sf*j.pz(),sf*j.E());
 
-    		deltaPX += (sf-1)*j.px();
-    		deltaPY += (sf-1)*j.py();
+    		deltaPX += (1-sf)*j.px();
+    		deltaPY += (1-sf)*j.py();
     		j.setP4(newMom);
     	}
     }
@@ -225,6 +225,7 @@ void HEM1516TestCorrector::processFatJets(FatJetCollection& fatjets) {
     if(cT == CORRTYPE::NONE) return;
 
     for(auto& fj : fatjets) {
+    	// * should be scaling down all fatjets before considering subjets
     	if(!fj.nSubJets()) continue;
 
     	float origSdEnergy = fj.sdMom().E();
