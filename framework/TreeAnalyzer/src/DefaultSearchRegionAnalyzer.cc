@@ -249,7 +249,8 @@ bool DefaultSearchRegionAnalyzer::runEvent() {
 
     //||||||||||||||||||||||||| CLASSIFY LEPTON CHANNEL |||||||||||||||||||||||||
     lepChan = NOCHANNEL;
-    if (selectedDileptons.size() == 2 && passTriggerPreselection2l) lepChan = DILEP;
+    if (selectedDileptons.size() == 2 && dilep1->q() != dilep2->q() && passTriggerPreselection2l)
+        lepChan = DILEP;
     else if (selectedDileptons.size() < 2 && selectedLepton && passTriggerPreselection)
         lepChan = SINGLELEP;
 

@@ -200,7 +200,10 @@ else :
             print line
             continue
         fileList = getFileList(match.group(6),match.group(1))
-        prepareSampleJob(libName,outList,match.group(1), fileList, match.group(5), match.group(2), 
+
+        treeint = match.group(2)
+        if int(treeint) == 1: treeint = args.treeInt
+        prepareSampleJob(libName,outList,match.group(1), fileList, match.group(5), treeint,
                          match.group(3),match.group(4))
         
 if args.runBatch:
