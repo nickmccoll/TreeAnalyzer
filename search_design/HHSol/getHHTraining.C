@@ -34,14 +34,12 @@ public:
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed,int step) :
         HHSolTreeAnalyzer(fileName,treeName,treeInt, randSeed), step(step), HSolver("")
 {
-        parameters = ReaderConstants::set2017Parameters();
-
         if(fileName.find("2016") !=  std::string::npos){
-            parameters.hww.liFileName = "hhSol_templates_2016.root";
+            parameters = ReaderConstants::set2016Parameters();
         } else if(fileName.find("2017") !=  std::string::npos){
-            parameters.hww.liFileName = "hhSol_templates_2017.root";
+            parameters = ReaderConstants::set2017Parameters();
         } else if(fileName.find("2018") !=  std::string::npos){
-            parameters.hww.liFileName = "hhSol_templates_2018.root";
+            parameters = ReaderConstants::set2018Parameters();
         } else {
             parameters.hww.liFileName = "ERROR";
         }
@@ -50,18 +48,6 @@ public:
         HSolver.setParamters(parameters.hww);
     }
 
-
-    double getCorHPt(double inPT){
-        const double b = 0.9663;
-        const double m = -0.00001013;
-        double boundPT = inPT;
-        if(inPT < 300) boundPT = 300;
-        if(inPT > 2000) boundPT = 2000;
-        double corPT = (-1*b + std::sqrt(b*b+4.*m*boundPT))/(2.*m);
-
-        return inPT * corPT/boundPT; //apply as a correction due to the limted range;
-
-    }
 
 
     void getHHPtResolution(){
@@ -92,7 +78,7 @@ public:
 
 
         plotter.getOrMake1DPre(prefix,"corrHPtRes",";H pT: reco/true",100,0,2)
-                ->Fill(getCorHPt(hwwMag)/true_hwwMag,weight);
+                ->Fill(HSolver.getCorrHWWPT(hwwMag)/true_hwwMag,weight);
 
         plotter.getOrMake1DPre(prefix,"mX",";mX",200,0,4000)
                 ->Fill(*sampParam ,weight);

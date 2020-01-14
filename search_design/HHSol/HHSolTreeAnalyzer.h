@@ -105,8 +105,14 @@ public:
         isVirtualWqq = true_jet.mass() < true_W.mass();
         weight = *weight_;
 
+        if(*hbbDeepAK8 < 0 ) sanitizedDeepAK8Tag = 0;
+        else if(*hbbDeepAK8 > 1) sanitizedDeepAK8Tag = 1;
+        else sanitizedDeepAK8Tag = *hbbDeepAK8;
+
         return true;
     }
+
+
     bool isSignal() const {return *process == FillerConstants::SIGNAL;}
 
 
@@ -183,6 +189,8 @@ public:
 
     TString smpName;
     bool isRadionSMP = false;
+
+    double sanitizedDeepAK8Tag = 0;
 
 
 
