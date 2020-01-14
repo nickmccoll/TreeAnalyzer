@@ -115,24 +115,6 @@ ParameterSet setCommonParameters() {
     paramSet.jets.sjBtagCorrSFFile     = "corrections/subjet_CSVv2_Moriond17_B_H.csv";
     paramSet.jets.sjBtagCorrEffFile    = "corrections/sj_csvEff.root";
 
-    paramSet.hww.posMETParErr     = 0.067;
-    paramSet.hww.negMETParErr     = 0.16;
-    paramSet.hww.metPerpErr       = 31;
-    paramSet.hww.jetErr           = 0.11;
-    paramSet.hww.onWlnuMeanJet    = 30;
-    paramSet.hww.offWlnuMeanJet   = 80;
-    paramSet.hww.onWlnuMeanWlnu   = 80;
-    paramSet.hww.offWlnuMeanWlnu  = 41;
-    paramSet.hww.offWlnuPosWlnuErr= 5;
-    paramSet.hww.offWnluNegWlnuErr= 16;
-    paramSet.hww.onWlnuWlnuErr    = 2.3;
-    paramSet.hww.onWlnuHWWErr     = 8.3;
-    paramSet.hww.offWlnuHWWErr    = 3;
-
-    paramSet.hww.ptCorB        = 0.9663;
-    paramSet.hww.ptCorM        = -0.00001013;
-    paramSet.hww.liFileName    ="variables/hhSol_templates.root";
-
     paramSet.hww.dilepInvMassGuess = 55;
 
     return paramSet;
@@ -177,6 +159,10 @@ ParameterSet set2016Parameters() {
     setJetWorkingPoints(paramSet.jets,paramSet.jets.DeepFlavor_WP);
     setSubjetWorkingPoints(paramSet.jets,paramSet.jets.DeepCSV_WP);
 
+    paramSet.hww.ptCorB        = 0.989509;
+    paramSet.hww.ptCorM        = -1.50788e-05;
+    paramSet.hww.liFileName    ="variables/hhSol_templates_2016.root";
+
     return paramSet;
 }
 ParameterSet set2017Parameters() {
@@ -210,6 +196,10 @@ ParameterSet set2017Parameters() {
     setJetWorkingPoints(paramSet.jets,paramSet.jets.DeepFlavor_WP);
     setSubjetWorkingPoints(paramSet.jets,paramSet.jets.DeepCSV_WP);
 
+    paramSet.hww.ptCorB        = 0.966024;
+    paramSet.hww.ptCorM        = -8.90763e-06;
+    paramSet.hww.liFileName    ="variables/hhSol_templates_2017.root";
+
     return paramSet;
 }
 ParameterSet set2018Parameters() {
@@ -241,6 +231,10 @@ ParameterSet set2018Parameters() {
     paramSet.jets.DeepFlavor_WP = {-100,0.0494,0.2770,0.7264}; // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
     setJetWorkingPoints(paramSet.jets,paramSet.jets.DeepFlavor_WP);
     setSubjetWorkingPoints(paramSet.jets,paramSet.jets.DeepCSV_WP);
+
+    paramSet.hww.ptCorB        = 0.965834;
+    paramSet.hww.ptCorM        = -8.75461e-06;
+    paramSet.hww.liFileName    ="variables/hhSol_templates_2018.root";
 
     return paramSet;
 }
