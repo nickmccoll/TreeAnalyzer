@@ -65,5 +65,17 @@ private:
     CorrHelp::CORRTYPE cT;
 };
 
+class HEM1516TestCorrector { // only for 2018, shifts jet energies down to account for blown power supply
+public:
+	HEM1516TestCorrector (const CorrHelp::CORRTYPE ct = CorrHelp::NONE);
+	~HEM1516TestCorrector(){}
+	void setCorrType(const CorrHelp::CORRTYPE newCT) {cT=newCT;}
+	void processJets(JetReader& jetreader, Met& met);
+	void processFatJets(FatJetCollection& fatjets);
+
+private:
+	CorrHelp::CORRTYPE cT;
+};
+
 }
 #endif /* FRAMEWORK_PROCESSORS_INTERFACE_EVENTWEIGHTS_H_ */

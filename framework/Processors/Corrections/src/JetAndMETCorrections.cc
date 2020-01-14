@@ -192,6 +192,67 @@ void METUncShifter::process(Met& met, const EventReader& eventreader) const {
 }
 //--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
+HEM1516TestCorrector::HEM1516TestCorrector (const CorrHelp::CORRTYPE cT) : cT(cT){}
+//--------------------------------------------------------------------------------------------------
+void HEM1516TestCorrector::processJets(JetReader& jetreader, Met& met) {
+    if(cT == CORRTYPE::NONE) return;
+    float deltaPX = 0, deltaPY = 0;
+    for(auto& j : jetreader.jets) {
+    	if(j.pt() < 15) continue;
+    	if(!j.passTightID()) continue;
+
+    	// instructions given in email on Oct 20 2019
+    	if(j.phi() > -1.57 && j.phi() < -0.87) {
+    		float sf = 1.0;
+    		if(j.eta() > -2.5 && j.eta() < -1.3) sf = 0.8;
+    		else if (j.eta() > -3.0 && j.eta() < -2.5) sf = 0.65;
+    		else continue;
+
+    		const ASTypes::CartLorentzVector newMom(sf*j.px(),sf*j.py(),sf*j.pz(),sf*j.E());
+
+    		deltaPX += (1-sf)*j.px();
+    		deltaPY += (1-sf)*j.py();
+    		j.setP4(newMom);
+    	}
+    }
+
+    ASTypes::CartLorentzVector deltaMet(deltaPX,deltaPY,0.0f,std::sqrt(deltaPX*deltaPX + deltaPY*deltaPY));
+    met.p4() += deltaMet;
+    std::sort(jetreader.jets.begin(),jetreader.jets.end(),PhysicsUtilities::greaterPT<Jet>());
+}
+//--------------------------------------------------------------------------------------------------
+void HEM1516TestCorrector::processFatJets(FatJetCollection& fatjets) {
+    if(cT == CORRTYPE::NONE) return;
+
+    for(auto& fj : fatjets) {
+    	// * should be scaling down all fatjets before considering subjets
+    	if(!fj.nSubJets()) continue;
+
+    	float origSdEnergy = fj.sdMom().E();
+    	for(unsigned int idx=0; idx < fj.nSubJets(); ++idx) {
+    		if(fj.subJet(idx).pt() < 15) continue;
+    		// should I do anything to ensure there are no leptons in this subjet??
+
+    		if(fj.subJet(idx).phi() > -1.57 && fj.subJet(idx).phi() < -0.87) {
+    			float sf = 1.0;
+    			if(fj.subJet(idx).eta() > -1.3) continue;
+    			if(fj.subJet(idx).eta() > -2.5 && fj.subJet(idx).eta() < -1.3) sf = 0.8;
+    			else if (fj.subJet(idx).eta() > -3.0 && fj.subJet(idx).eta() < -2.5) sf = 0.65;
+
+        		ASTypes::CartLorentzVector newMom(sf*fj.subJet(idx).px(),sf*fj.subJet(idx).py(),
+        				sf*fj.subJet(idx).pz(),sf*fj.subJet(idx).E());
+        		fj.subJet(idx).setP4(newMom);
+    		}
+    	}
+    	float scaleFactor = fj.sdMom().E() / origSdEnergy;
+    	if(scaleFactor < 1.0) {
+    		ASTypes::CartLorentzVector newMom(scaleFactor*fj.px(),scaleFactor*fj.py(),scaleFactor*fj.pz(),scaleFactor*fj.E());
+    		fj.setP4(newMom);
+    	}
+    }
+    std::sort(fatjets.begin(),fatjets.end(),PhysicsUtilities::greaterPT<FatJet>());
+}
+
 }
 
 
