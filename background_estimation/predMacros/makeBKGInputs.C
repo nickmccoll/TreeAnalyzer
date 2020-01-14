@@ -966,11 +966,6 @@ void go(int year, int modelToDo, int channel, std::string treeDir) {
         return;
     }
 
-    if(year == 2016) {
-        purCats[PURE_LP].cut = "(wjjTau2o1>=0.55||hwwLi>=2.5)";
-        purCats[PURE_HP].cut = "(wjjTau2o1<0.55&&hwwLi<2.5)";
-    }
-
     //Turn on TTBar scaling
     nomW.cut = nomW.cut+"*"+getTTBarSF("../supportInputs/HHbb1o2l") ;
 

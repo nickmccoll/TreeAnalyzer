@@ -151,8 +151,8 @@ CutStr inclBtagCat("I","hbbCSVCat>=0");
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
         CutStr("I","1.0","LHP"),
-        CutStr("LP" ,"(wjjTau2o1>=0.45||hwwLi>=2.5)","LP"),
-        CutStr("HP" ,"(wjjTau2o1<0.45&&hwwLi<2.5)"  ,"HP")
+        CutStr("LP" ,"(hwwLi>=2.5)||(era==2016?wjjTau2o1>=0.55:wjjTau2o1>=0.45)","LP"),
+        CutStr("HP" ,"(hwwLi<2.5)&&(era==2016?wjjTau2o1<0.55:wjjTau2o1<0.45)"  ,"HP")
 
 };
 

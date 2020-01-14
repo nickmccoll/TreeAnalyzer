@@ -77,6 +77,7 @@ public:
             outTree->addSingle(sampParam_,  "",  "sampParam");
         }
 
+        outTree->addSingle(era_,"","era");
     	outTree->addSingle(ht_,  "",  "ht");
     	outTree->addSingle(met_,  "",  "met");
         outTree->addSingle(event_, "", "event");
@@ -146,6 +147,20 @@ public:
 
         if(!addUncVariables && lepChan_ == NOCHANNEL) return false;
 
+        switch(FillerConstants::DataEra(*reader_event->dataEra)){
+        case FillerConstants::ERA_2018:
+            era_ = 2018;
+            break;
+        case FillerConstants::ERA_2017:
+            era_ = 2017;
+            break;
+        case FillerConstants::ERA_2016:
+            era_ = 2016;
+            break;
+        default:
+            era_ = 0;
+        }
+
         ht_        = ht;
         met_       = reader_event->met.pt();
         event_     = *reader_event->event;
@@ -189,6 +204,14 @@ public:
                 wjjTau2o1_ = wjjCand->tau2otau1();
                 wjjMass_   = wjjCand->sdMom().mass();
                 wjjPT_     = wqq.pt();
+
+                if(hbbCand) {
+                    hhMass_  = hh.mass();
+                    hhMassBasic_   = hh_basic.mass();
+                } else {
+                    hhMass_  = 0;
+                    hhMassBasic_   = 0;
+                }
             } else {
                 hwwChi_  = 0;
                 hwwLi_  = 0;
@@ -198,23 +221,7 @@ public:
                 wjjTau2o1_ = 0;
                 wjjMass_   = 0;
                 wjjPT_     = 0;
-            }
 
-            if(hbbCand) {
-                hbbMass_ = hbbMass;
-                hbbPT_ = hbbCand->pt();
-                hbbCSVCat_ = hbbCSVCat;
-                nAK4Btags_   = std::min(nMedBTags_HbbV,250);
-            } else {
-                hbbMass_ = 0;
-                hbbPT_ = 0;
-                hbbCSVCat_ = 0;
-                nAK4Btags_   = 0;
-            }
-            if(hbbCand && wjjCand) {
-                hhMass_  = hh.mass();
-                hhMassBasic_   = hh_basic.mass();
-            } else {
                 hhMass_  = 0;
                 hhMassBasic_   = 0;
             }
@@ -242,17 +249,9 @@ public:
             hwwPT_ = hWW.pt();
 
             if(hbbCand) {
-                hbbMass_ = hbbMass;
-                hbbPT_ = hbbCand->pt();
-                hbbCSVCat_ = hbbCSVCat;
                 hhMass_  = hh.mass();
-                nAK4Btags_   = std::min(nMedBTags_HbbV,250);
             } else {
-                hbbMass_ = 0;
-                hbbPT_ = 0;
-                hbbCSVCat_ = 0;
                 hhMass_  = 0;
-                nAK4Btags_   = 0;
             }
 
             hwwChi_  = 0;
@@ -271,6 +270,17 @@ public:
             lep1ETA_  = 0;
             lep2ETA_  = 0;
         }
+
+        if(hbbCand) {
+            hbbMass_ = hbbMass;
+            hbbPT_ = hbbCand->pt();
+            hbbCSVCat_ = hbbCSVCat;
+        } else {
+            hbbMass_ = 0;
+            hbbPT_ = 0;
+            hbbCSVCat_ = 0;
+        }
+        nAK4Btags_   = std::min(nMedBTags_HbbV,250);
 
         if(!isRealData()) {
 
@@ -406,6 +416,7 @@ public:
     size8 lepChan_    = 0;
     size64 event_     = 0;
     size16 sampParam_ = 0;
+    size16 era_ = 0;
 
     //SR variables
     float ht_        = 0;
