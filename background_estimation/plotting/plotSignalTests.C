@@ -198,7 +198,6 @@ void plotYields(std::string name, std::string filename,std::string fitName,
 }
 
 void plotEfficiencies(std::string name, std::string filename,std::string fitName, int signal, int year) {
-	throw std::invalid_argument{"need to amend this function with input luminosity, etc"};
     Plotter * p = new Plotter; //stupid CINT bugfix.....
     std::vector<TObject*> paramPads;
 
@@ -451,8 +450,15 @@ void plotShapeSystNorms(std::string name, std::string filename,const std::vector
     std::vector<TFile*> systUpFs;
     std::vector<TFile*> systDownFs;
     for(unsigned int iS = 0; iS < systs.size(); ++iS ){
-        systUpFs.push_back(new TFile((filename+"_"+name + "_"+systs[iS]+"Up_distributions.root").c_str()));
-        systDownFs.push_back(new TFile((filename+"_"+name + "_"+systs[iS]+"Down_distributions.root").c_str()));
+        std::string pref = filename+"_"+name + "_"+systs[iS];
+        if(systs[iS] == "HEM") {
+            systUpFs.push_back(new TFile((pref+"_distributions.root").c_str()));
+            systDownFs.push_back(new TFile((pref+"_distributions.root").c_str()));
+        } else {
+            systUpFs.push_back(new TFile((pref+"Up_distributions.root").c_str()));
+            systDownFs.push_back(new TFile((pref+"Down_distributions.root").c_str()));
+
+        }
     }
     std::vector<std::string> sels;
     sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_FULL]);
@@ -532,13 +538,20 @@ void plotShapeSystParams(std::string name, std::string filename,const std::vecto
     std::vector<TFile*> systUpFs;
     std::vector<TFile*> systDownFs;
     for(unsigned int iS = 0; iS < systs.size(); ++iS ){
-        systUpFs.push_back(new TFile((filename+"_"+name + "_"+systs[iS]+"Up_distributions.root").c_str()));
-        systDownFs.push_back(new TFile((filename+"_"+name + "_"+systs[iS]+"Down_distributions.root").c_str()));
+        std::string downName = filename+"_"+name + "_"+systs[iS]+"Down_distributions.root";
+        std::string upName = filename+"_"+name + "_"+systs[iS]+"Up_distributions.root";
+
+        if(systs[iS] == "HEM") {
+            downName = filename+"_"+name + "_"+systs[iS]+"_distributions.root";
+            upName = downName;
+        }
+        systDownFs.push_back(new TFile(downName.c_str()));
+        systUpFs.push_back(new TFile(upName.c_str()));
     }
     std::vector<std::string> sels;
     sels.push_back(lepCats[LEP_EMU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB]);
-//    sels.push_back(lepCats[LEP_E]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]);/
-//    sels.push_back(lepCats[LEP_MU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+hadCuts[HAD_LTMB]);
+    sels.push_back(lepCats[LEP_E]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB]);
+    sels.push_back(lepCats[LEP_MU]+"_"+btagCats[BTAG_LMT]+"_"+purCats[PURE_I]+"_"+selCuts1[SEL1_LTMB]);
     std::vector<std::string> params = {"meanMR","sigmaMR"};
 
     for(unsigned int iS = 0; iS < systs.size(); ++iS ){
@@ -546,9 +559,14 @@ void plotShapeSystParams(std::string name, std::string filename,const std::vecto
         gROOT->SetBatch(true);
         std::vector<TObject*>plots;
         for(auto& sel : sels){
-
-            TFile* fU = new TFile((filename+"_"+name + "_"+sel+ "_"+systs[iS]+"Up_MVV_fit1stIt.root").c_str());
-            TFile* fD = new TFile((filename+"_"+name + "_"+sel+ "_"+systs[iS]+"Down_MVV_fit1stIt.root").c_str());
+            std::string upN = filename+"_"+name + "_"+sel+ "_"+systs[iS]+"Up_MVV_fit1stIt.root";
+            std::string downN = filename+"_"+name + "_"+sel+ "_"+systs[iS]+"Down_MVV_fit1stIt.root";
+            if(systs[iS] == "HEM") {
+                upN = filename+"_"+name + "_"+sel+ "_"+systs[iS]+"_MVV_fit1stIt.root";
+                downN = upN;
+            }
+            TFile* fU = new TFile(upN.c_str());
+            TFile* fD = new TFile(downN.c_str());
             TFile* fN = new TFile((filename+"_"+name + "_"+sel+ "_"+"NOMSyst_MVV_fit1stIt.root").c_str());
             if(fU ==0||fD==0||fN==0)continue;
             for(auto& par : params){
@@ -688,10 +706,9 @@ void plotSignalTests(int cat = 0,int sig = RADION, bool do1lep = true, int year 
         if(outName.size()) outName += "_normSyst";
         plotPDFSysts(name,filename,signalMassBins[sig]);
         plotNormSysts(name,filename,signalMassBins[sig],{"muID","muISO","elReco","elID","elISO","b_real","b_fake","pu"});
-        plotShapeSystNorms(name,filename,signalMassBins[sig],{"MET","JER","JES"});
-        plotShapeSystParams(name,filename,signalMassBins[sig],{"MET","JER","JES"});
+        plotShapeSystNorms(name,filename,signalMassBins[sig],{"JER","JES","HEM"});
+        plotShapeSystParams(name,filename,signalMassBins[sig],{"JER","JES","HEM"});
         break;
-
     }
 
     Dummy d(outName);

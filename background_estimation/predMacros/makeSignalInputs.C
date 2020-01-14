@@ -42,33 +42,43 @@ void makeSignalPDFSystDists(const std::string& name, const std::string& filename
     gSystem->Exec((std::string("hadd -f ")+ compiledFile + " " + allFiles).c_str());
     gSystem->Exec((std::string("rm ") + allFiles).c_str());
 }
-void makeSignalNormSystDists(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,  const std::string inputFile){
+void makeSignalNormSystDists(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,  const std::string inputFile, const int channel){
     int nameIDX =  inputFile.find("XXX", 0);
     std::vector<PlotVar> vars;
     std::vector<PlotSel> sels;
-    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :selCuts1){
-        if(h != selCuts1[SEL1_FULL]) continue;
-        sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
-                l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
+
+    if(channel == 0 || channel == 1) {
+        for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats) for(const auto& h :selCuts1){
+            if(h != selCuts1[SEL1_FULL]) continue;
+            sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
+                    l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
+        }
     }
+    if(channel == 0 || channel == 2) {
+        for(const auto& l :dilepCats) for(const auto& b :btagCats) for(const auto& s :selCuts2){
+            if(s != selCuts2[SEL2_FULL]) continue;
+            sels.emplace_back(l +"_"+b +"_"+s,l.cut +"&&"+b.cut+"&&"+s.cut);
+        }
+    }
+
     vars.emplace_back(hhMCS ,std::string(";")+hhMCS.title,hhMCS.cut,nHHMassBins,minHHMass,maxHHMass );
 
     std::vector<std::pair<std::string,std::string>> sysStrings = {
             {"muIDUp"    ,"w_muIDUp*xsec*trig_N*pu_N*btag_N"     },
-            {"muISOUp"   ,"w_muISOUp*xsec*trig_N*pu_N*btag_N"    },
+//            {"muISOUp"   ,"w_muISOUp*xsec*trig_N*pu_N*btag_N"    },
             {"elRecoUp"  ,"w_elRecoUp*xsec*trig_N*pu_N*btag_N"   },
             {"elIDUp"    ,"w_elIDUp*xsec*trig_N*pu_N*btag_N"     },
-            {"elISOUp"   ,"w_elISOUp*xsec*trig_N*pu_N*btag_N"    },
+//            {"elISOUp"   ,"w_elISOUp*xsec*trig_N*pu_N*btag_N"    },
             {"b_realUp"  ,"w_b_realUp*xsec*trig_N*pu_N*lep_N"    },
             {"b_fakeUp"  ,"w_b_fakeUp*xsec*trig_N*pu_N*lep_N"    },
-            {"puUp"      ,"w_puUp*xsec*trig_N*btag_N*lep_N"    },
+            {"puUp"      ,"w_puUp*xsec*trig_N*btag_N*lep_N"      },
             {"muIDDown"  ,"w_muIDDown*xsec*trig_N*pu_N*btag_N"   },
-            {"muISODown" ,"w_muISODown*xsec*trig_N*pu_N*btag_N"  },
+//            {"muISODown" ,"w_muISODown*xsec*trig_N*pu_N*btag_N"  },
             {"elRecoDown","w_elRecoDown*xsec*trig_N*pu_N*btag_N" },
             {"elIDDown"  ,"w_elIDDown*xsec*trig_N*pu_N*btag_N"   },
-            {"elISODown" ,"w_elISODown*xsec*trig_N*pu_N*btag_N"  },
-            {"b_realDown","w_b_realDown*xsec*trig_N*pu_N*lep_N"  },
-            {"b_fakeDown","w_b_fakeDown*xsec*trig_N*pu_N*lep_N"  },
+//            {"elISODown" ,"w_elISODown*xsec*trig_N*pu_N*btag_N"  },
+//            {"b_realDown","w_b_realDown*xsec*trig_N*pu_N*lep_N"  },
+//            {"b_fakeDown","w_b_fakeDown*xsec*trig_N*pu_N*lep_N"  },
             {"puDown"    ,"w_puDown*xsec*trig_N*btag_N*lep_N"    }
     };
 
@@ -89,15 +99,25 @@ void makeSignalNormSystDists(const std::string& name, const std::string& filenam
     gSystem->Exec((std::string("hadd -f ")+ compiledFile + " " + allFiles).c_str());
     gSystem->Exec((std::string("rm ") + allFiles).c_str());
 }
-void makeSignalShapeSystDists(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins,  const std::string inputFile, const std::string systName){
+void makeSignalShapeSystDists(const std::string& name, const std::string& filename,const std::vector<int>& signalMassBins, const int channel, const std::string inputFile, const std::string systName){
     int nameIDX =  inputFile.find("XXX", 0);
     std::vector<PlotVar> vars;
     std::vector<PlotSel> sels;
-    for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats)  for(const auto& h :selCuts1){
-        if(h != selCuts1[SEL1_FULL] && h != selCuts1[SEL1_LTMB]) continue;
-        sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
-                l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
+
+    if(channel == 0 || channel == 1) {
+        for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats) for(const auto& h :selCuts1){
+            if(h != selCuts1[SEL1_FULL] && h != selCuts1[SEL1_LTMB]) continue;
+            sels.emplace_back(l +"_"+b+"_"+p +"_"+h,
+                    l.cut +"&&"+b.cut+"&&"+p.cut+"&&"+h.cut);
+        }
     }
+    if(channel == 0 || channel == 2) {
+        for(const auto& l :dilepCats) for(const auto& b :btagCats) for(const auto& s :selCuts2){
+            if(s != selCuts2[SEL2_FULL] && s != selCuts2[SEL2_RPhiB]) continue;
+            sels.emplace_back(l +"_"+b +"_"+s,l.cut +"&&"+b.cut+"&&"+s.cut);
+        }
+    }
+
     vars.emplace_back(hbbMCS,std::string(";")+hbbMCS.title,hbbMCS.cut,nHbbMassBins,minHbbMass,maxHbbMass,hhMCS,std::string(";")+hhMCS.title,hhMCS.cut,nInclHHMassBins,minInclHHMass,maxInclHHMass );
 
     for(const auto& sM : signalMassBins){
@@ -176,10 +196,7 @@ void makeSignalYields(const std::string& name, const std::string& filename,
         for(unsigned int iS = 0; iS < signalMassBins.size(); ++iS){
             std::string hName   = name+"_m"+ASTypes::int2Str(signalMassBins[iS])+"_"+catName;
             auto hh_H = TObjectHelper::getObject<TH1>(iF,hName+"_"+hhMCS,false,false);
-            if(hh_H ==0) {
-                std::cout << hName+"_"+hhMCS<<std::endl;
-                continue;
-            }
+            if(hh_H ==0) continue;
             double error = 0;
             double integral = hh_H->IntegralAndError(1,hh_H->GetNbinsX(),error);
             yieldGraph->SetPoint(n,signalMassBins[iS],integral);
@@ -288,6 +305,7 @@ void makeSignal1DShapes(const std::string& name, const std::string& filename,
     for(unsigned int iS = 0; iS < signalMassBins.size(); ++iS){
         std::string hName   = name+"_m"+ASTypes::int2Str(signalMassBins[iS])+"_"+catName;
         std::string ptName  = std::string("m") + ASTypes::flt2Str(signalMassBins[iS]);
+
         auto hbb_hh_H = TObjectHelper::getObject<TH2>(iF,hName+"_"+hbbMCS+"_"+hhMCS,false,false);
         if(hbb_hh_H ==0) continue;
         auto hbb_H = fitMJJ
@@ -391,6 +409,7 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename,
 
     auto mkShapes = [&](std::string catName) {
         makeSignal1DShapes(name,filename,signalMassBins,catName,fitName,false,0,iF,false,true);
+
         std::string argsP1 = std::string("-i ")+filename+"_"+name+"_"+catName+"_"+fitName+".root "
                 +" -var "+MOD_MS +" ";
         argsP1 += " -minX 700 -maxX 3800 ";
@@ -400,8 +419,8 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename,
     if(channel==0 || channel==1) {
         CatIterator ci;
         while(ci.getBin()){
-            if(!ci.is(BTAG_LMT )) continue;
-            if(!ci.is(PURE_I  )) continue;
+//            if(!ci.is(BTAG_LMT )) continue;
+//            if(!ci.is(PURE_I  )) continue;
             if(!ci.is(SEL1_LTMB)) continue;
             mkShapes(ci.name());
         }
@@ -410,7 +429,7 @@ void makeSignalMVVShapes1D(const std::string& name, const std::string& filename,
     if(channel==0 || channel==2) {
         DilepCatIterator ci;
         while(ci.getBin()){
-            if(!ci.is(BTAG_LMT )) continue;
+//            if(!ci.is(BTAG_LMT )) continue;
             if(!ci.is(SEL2_FULL)) continue;
             mkShapes(ci.name());
         }
@@ -906,35 +925,37 @@ void go(int step,int sig,int channel,std::string treeDir) {
         makeSignal2DShapesSecondIteration(name,filename,signalMassBins[sig],channel);
     }
 
-//
-//
-//    if(step == 2){
-//        makeSignalNormSystDists(name,filename,signalMassBins[sig],signalTrees);
-//        makeSignalShapeSystDists(name,filename,signalMassBins[sig],signalTrees,"NOMSyst");
-//        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_METUp.root","METUp");
-//        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_JESUp.root","JESUp");
-//        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_JERUp.root","JERUp");
-//        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_METDown.root","METDown");
-//        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_JESDown.root","JESDown");
-//        makeSignalShapeSystDists(name,filename,signalMassBins[sig],baseTreeName+"_JERDown.root","JERDown");
-//
-//        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"NOMSyst_");
-//        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"METUP_"  );
-//        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"JESUp_"  );
-//        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"JERUp_"  );
-//        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"METDown_");
-//        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"JESDown_");
-//        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],"JERDown_");
-//
-//
-//        makeSignalPDFSystDists(name,filename,signalMassBins[sig],signalTrees);
-//
-//    }
+    if(step == 2){
+        makeSignalNormSystDists(name,filename,signalMassBins[sig],signalTrees,channel);
+
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],channel,signalTrees,"NOMSyst");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],channel,baseTreeName+"_HEM.root","HEM");
+
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],channel,baseTreeName+"_METUp.root","METUp");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],channel,baseTreeName+"_JESUp.root","JESUp");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],channel,baseTreeName+"_JERUp.root","JERUp");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],channel,baseTreeName+"_METDown.root","METDown");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],channel,baseTreeName+"_JESDown.root","JESDown");
+        makeSignalShapeSystDists(name,filename,signalMassBins[sig],channel,baseTreeName+"_JERDown.root","JERDown");
+
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],channel,"NOMSyst_");
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],channel,"HEM_");
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],channel,"METUP_"  );
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],channel,"JESUp_"  );
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],channel,"JERUp_"  );
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],channel,"METDown_");
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],channel,"JESDown_");
+        makeSignalMVVShapes1D(name,filename,signalMassBins[sig],channel,"JERDown_");
+
+
+        makeSignalPDFSystDists(name,filename,signalMassBins[sig],signalTrees);
+
+    }
 
 
 }
 #endif
 
-void makeSignalInputs(int step = 0,int sigToDo = RADION, int channel = 0, std::string treeDir = "../trees/"){
+void makeSignalInputs(int step = 0,int sigToDo = RADION, int channel = 0, std::string treeDir = "../signalPieces/"){
     go(step,sigToDo,channel,treeDir);
 }

@@ -151,8 +151,8 @@ CutStr inclBtagCat("I","hbbCSVCat>=0");
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
         CutStr("I","1.0","LHP"),
-        CutStr("LP" ,"(wjjTau2o1>=0.45||hwwLi>=2.5)","LP"),
-        CutStr("HP" ,"(wjjTau2o1<0.45&&hwwLi<2.5)"  ,"HP")
+        CutStr("LP" ,"(hwwLi>=2.5)||(era==2016?wjjTau2o1>=0.55:wjjTau2o1>=0.45)","LP"),
+        CutStr("HP" ,"(hwwLi<2.5)&&(era==2016?wjjTau2o1<0.55:wjjTau2o1<0.45)"  ,"HP")
 
 };
 
@@ -328,9 +328,9 @@ std::vector<CutStr > signals = {
         CutStr("blkHH"     ,"spin2","bulk graviton")
 };
 std::vector<std::vector<int> > signalMassBins = {
-		{800,900,1000,2000,2500,3000},
+		{800,900,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
 //        {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
-        {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
+        {800,900,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500}
 };
 
 //Constants for models when building limits

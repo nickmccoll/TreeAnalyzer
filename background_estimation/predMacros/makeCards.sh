@@ -32,7 +32,7 @@ eval $RCMD
 
 . comp.sh
 cd ..
-RCMD="scp -r ${dirName} bwstone@cmslpc26.fnal.gov:/uscms/home/bwstone/nobackup/TreeAnalyzer/CMSSW_8_3_0/src/combine/"
+RCMD="scp -r ${dirName} bwstone@cmslpc26.fnal.gov:/uscms/home/bwstone/nobackup/TreeAnalyzer/combine/"
 if [ "${runSR}" = "0" ]; then
     eval $RCMD
 fi

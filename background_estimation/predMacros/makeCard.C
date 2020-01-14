@@ -44,11 +44,11 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
     std::string cmd = "combineCards.py ";
 
     if(channel == 0 || channel == 1) {
-        for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats) for(const auto& h :hadCuts){
+        for(const auto& l :lepCats) for(const auto& b :btagCats) for(const auto& p :purCats) for(const auto& h :selCuts1){
             if(l == lepCats[LEP_EMU] ) continue;
             if(b == btagCats[BTAG_LMT]) continue;
             if(p == purCats[PURE_I] ) continue;
-            if(h != hadCuts[HAD_FULL] ) continue;
+            if(h != selCuts1[SEL1_FULL] ) continue;
 
             const std::string cat = l +"_"+b+"_"+p +"_"+h;
 
@@ -202,10 +202,10 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         }
     }
     if (channel == 0 || channel == 2) {
-        for(const auto& l :dilepCats) for(const auto& b :btagCats) for(const auto& s :selCuts){
+        for(const auto& l :dilepCats) for(const auto& b :btagCats) for(const auto& s :selCuts2){
             if(l == dilepCats[LEP_INCL] ) continue;
             if(b == btagCats[BTAG_LMT]) continue;
-            if(s != selCuts[SEL_FULL] ) continue;
+            if(s != selCuts2[SEL2_FULL] ) continue;
 
             const std::string cat = l +"_"+b +"_"+s;
             auto card = DataCardMaker(cat,"13TeV",1);
