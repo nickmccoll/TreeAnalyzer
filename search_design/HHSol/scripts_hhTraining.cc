@@ -1,71 +1,78 @@
-// RUNNING
+rr -b -q 'HHSol/getHHTraining.C+(0,"hSolTrees/hhSolTrees_2016_radion.root","2016_radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(0,"hSolTrees/hhSolTrees_2016_bulkgrav.root","2016_bulkgrav")' &
+rr -b -q 'HHSol/getHHTraining.C+(0,"hSolTrees/hhSolTrees_2017_radion.root","2017_radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(0,"hSolTrees/hhSolTrees_2017_bulkgrav.root","2017_bulkgrav")' &
+rr -b -q 'HHSol/getHHTraining.C+(0,"hSolTrees/hhSolTrees_2018_radion.root","2018_radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(0,"hSolTrees/hhSolTrees_2018_bulkgrav.root","2018_bulkgrav")' &
+hadd -f hSolTrees_HPTRes_2016.root hSolTrees_HPTRes_2016_*.root
+hadd -f hSolTrees_HPTRes_2017.root hSolTrees_HPTRes_2017_*.root
+hadd -f hSolTrees_HPTRes_2018.root hSolTrees_HPTRes_2018_*.root  
 
-cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIISummer16MiniAODv2/Radion_hh_hVVhbb_inclusive_narrow_M2000_TuneCUETP8M1_13TeV-madgraph-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/50000/0CA7CEB0-B25E-E711-9997-842B2B42B758.root" outputFile="testGen_old.root" isCrab=False sample=signal_blkgrav type=MC2017 sampParam=2000 maxEvents=1000
-
-
-cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIISummer16MiniAODv2/Radion_hh_hVVhbb_inclusive_narrow_M2000_TuneCUETP8M1_13TeV-madgraph-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/50000/0CA7CEB0-B25E-E711-9997-842B2B42B758.root" outputFile="testGen_new.root" isCrab=False sample=signal_blkgrav type=MC2017 sampParam=2000 maxEvents=200
-
-
-
-cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIISummer16MiniAODv2/Radion_hh_hVVhbb_inclusive_narrow_M2000_TuneCUETP8M1_13TeV-madgraph-pythia8/MINIAODSIM/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/50000/0CA7CEB0-B25E-E711-9997-842B2B42B758.root" outputFile="testGen_newFilt.root" isCrab=False sample=signal_blkgrav type=MC2017 sampParam=2000 maxEvents=200
-
-cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIIFall17MiniAODv2/QCD_HT2000toInf_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/80000/F44F2FDA-3A5B-E811-A65C-0CC47A4D7630.root" outputFile="testQCD_newFilt.root" isCrab=False sample=qcd type=MC2017 sampParam=2000 maxEvents=200
-
-cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIIFall17MiniAODv2/QCD_HT500to700_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/90000/E2B87AE4-D496-E811-9F33-0CC47A78A468.root" outputFile="testQCD500_new.root" isCrab=False sample=qcd type=MC2017 sampParam=500 maxEvents=200
-
-cmsRun run/searchRegionTreeMaker_cfg.py inputFiles="root://cmsxrootd.fnal.gov//store/mc/RunIIFall17MiniAODv2/QCD_HT500to700_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/90000/E2B87AE4-D496-E811-9F33-0CC47A78A468.root" outputFile="testQCD500_newFilt.root" isCrab=False sample=qcd type=MC2017 sampParam=500 maxEvents=200
-
-
-////////
-
-rr -b -q 'HHSol/getHHTraining.C+(0,"trees/hhSolTrees_radion.root","radion")' &
-rr -b -q 'HHSol/getHHTraining.C+(0,"trees/hhSolTrees_bulkgrav.root","bulkgrav")' 
-hadd -f hSolTrees_HPTRes.root hSolTrees_HPTRes_*.root
+rr -b -q 'HHSol/getHHTraining.C+(3,"hSolTrees/hhSolTrees_2016_radion.root","2016_radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(3,"hSolTrees/hhSolTrees_2016_bulkgrav.root","2016_bulkgrav")' &
+rr -b -q 'HHSol/getHHTraining.C+(3,"hSolTrees/hhSolTrees_2017_radion.root","2017_radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(3,"hSolTrees/hhSolTrees_2017_bulkgrav.root","2017_bulkgrav")' &
+rr -b -q 'HHSol/getHHTraining.C+(3,"hSolTrees/hhSolTrees_2018_radion.root","2018_radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(3,"hSolTrees/hhSolTrees_2018_bulkgrav.root","2018_bulkgrav")' &
+hadd -f hSolTrees_temp_2016.root hSolTrees_temp_2016_*.root
+hadd -f hSolTrees_temp_2017.root hSolTrees_temp_2017_*.root
+hadd -f hSolTrees_temp_2018.root hSolTrees_temp_2018_*.root
+rr -b -q 'HHSol/getHHTraining.C+(4,"2016","")' &
+rr -b -q 'HHSol/getHHTraining.C+(4,"2017","")' &
+rr -b -q 'HHSol/getHHTraining.C+(4,"2018","")' &
   
-  rr -b -q 'HHSol/getHHTraining.C+(0,"trees/hhSolTrees_radion.root","radion")' &
-  rr -b -q 'HHSol/getHHTraining.C+(0,"trees/hhSolTrees_bulkgrav.root","bulkgrav")' 
-  hadd -f hSolTrees_test.root hSolTrees_test_*.root
+  
+rr -b -q 'HHSol/getHHTraining.C+(5,"hSolTrees/hhSolTrees_2016_bkg.root"     ,"2016_bkg")' &    
+rr -b -q 'HHSol/getHHTraining.C+(5,"hSolTrees/hhSolTrees_2016_radion.root"  ,"2016_radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(5,"hSolTrees/hhSolTrees_2016_bulkgrav.root","2016_bulkgrav")' &
+  
+rr -b -q 'HHSol/getHHTraining.C+(5,"hSolTrees/hhSolTrees_2017_bkg.root"     ,"2017_bkg")' &    
+rr -b -q 'HHSol/getHHTraining.C+(5,"hSolTrees/hhSolTrees_2017_radion.root"  ,"2017_radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(5,"hSolTrees/hhSolTrees_2017_bulkgrav.root","2017_bulkgrav")' &
 
-rr -b -q 'HHSol/getHHTraining.C+(2,"trees/hhSolTrees_radion.root","radion")' &
-rr -b -q 'HHSol/getHHTraining.C+(2,"trees/hhSolTrees_bulkgrav.root","bulkgrav")' 
-hadd -f hSolTrees_tempStudy.root hSolTrees_tempStudy_*.root
+rr -b -q 'HHSol/getHHTraining.C+(5,"hSolTrees/hhSolTrees_2018_bkg.root"     ,"2018_bkg")' &    
+rr -b -q 'HHSol/getHHTraining.C+(5,"hSolTrees/hhSolTrees_2018_radion.root"  ,"2018_radion")' &
+rr -b -q 'HHSol/getHHTraining.C+(5,"hSolTrees/hhSolTrees_2018_bulkgrav.root","2018_bulkgrav")' &
 
-rr -b -q 'HHSol/getHHTraining.C+(3,"trees/hhSolTrees_radion.root","radion")' &
-rr -b -q 'HHSol/getHHTraining.C+(3,"trees/hhSolTrees_bulkgrav.root","bulkgrav")' 
-hadd -f hSolTrees_temp.root hSolTrees_temp_*.root
-
-
-
-rr -b -q 'HHSol/getHHTraining.C+(4,"","")'
-    
-    
-
-rr -b -q 'HHSol/getHHTraining.C+(5,"treesWCSV/hhSolTrees_bkg.root","bkg")' &    
-rr -b -q 'HHSol/getHHTraining.C+(5,"treesWCSV/hhSolTrees_radion.root","radion")' &
-rr -b -q 'HHSol/getHHTraining.C+(5,"treesWCSV/hhSolTrees_bulkgrav.root","bulkgrav")' &
-hadd -f hSolTrees_test.root hSolTrees_test_*.root
+hadd -f hSolTrees_test_2016.root hSolTrees_test_2016_*.root
+hadd -f hSolTrees_test_2017.root hSolTrees_test_2017_*.root
+hadd -f hSolTrees_test_2018.root hSolTrees_test_2018_*.root
 
 
+rr -b -q 'HHSol/getHHCuts.C+(0,"hSolTrees/hhSolTrees_2016_bkg.root"     ,"2016_bkg")' &    
+rr -b -q 'HHSol/getHHCuts.C+(0,"hSolTrees/hhSolTrees_2016_radion.root"  ,"2016_radion")' &
+rr -b -q 'HHSol/getHHCuts.C+(0,"hSolTrees/hhSolTrees_2016_bulkgrav.root","2016_bulkgrav")' &
+  
+rr -b -q 'HHSol/getHHCuts.C+(0,"hSolTrees/hhSolTrees_2017_bkg.root"     ,"2017_bkg")' &    
+rr -b -q 'HHSol/getHHCuts.C+(0,"hSolTrees/hhSolTrees_2017_radion.root"  ,"2017_radion")' &
+rr -b -q 'HHSol/getHHCuts.C+(0,"hSolTrees/hhSolTrees_2017_bulkgrav.root","2017_bulkgrav")' &
 
+rr -b -q 'HHSol/getHHCuts.C+(0,"hSolTrees/hhSolTrees_2018_bkg.root"     ,"2018_bkg")' &    
+rr -b -q 'HHSol/getHHCuts.C+(0,"hSolTrees/hhSolTrees_2018_radion.root"  ,"2018_radion")' &
+rr -b -q 'HHSol/getHHCuts.C+(0,"hSolTrees/hhSolTrees_2018_bulkgrav.root","2018_bulkgrav")' &
+hadd -f hSolTrees_getCuts_2016.root hSolTrees_getCuts_2016_*.root
+hadd -f hSolTrees_getCuts_2017.root hSolTrees_getCuts_2017_*.root
+hadd -f hSolTrees_getCuts_2018.root hSolTrees_getCuts_2018_*.root
+  
+  
+rr -b -q 'HHSol/getHbbTaggingCutHistograms.C+("hSolTrees/hhSolTrees_2016_bkg.root"     ,"2016_bkg")' &    
+rr -b -q 'HHSol/getHbbTaggingCutHistograms.C+("hSolTrees/hhSolTrees_2016_radion.root"  ,"2016_radion")' &
+rr -b -q 'HHSol/getHbbTaggingCutHistograms.C+("hSolTrees/hhSolTrees_2016_bulkgrav.root","2016_bulkgrav")' &
 
-rr -b -q 'HHSol/getHHTraining.C+(6,"trees/hhSolTrees_bkg.root","bkg")' & 
-              
-              
-rr -b -q 'HHSol/getHHTraining.C+(9,"trees/hhSolTrees_bkg.root","bkg")' &    
-rr -b -q 'HHSol/getHHTraining.C+(9,"trees/hhSolTrees_radion.root","radion")' &
-rr -b -q 'HHSol/getHHTraining.C+(9,"trees/hhSolTrees_bulkgrav.root","bulkgrav")' &
-hadd -f hSolTrees_qcdTempStudy.root hSolTrees_qcdTempStudy_*.root   
-    
-    
-    rr -b -q 'HHSol/getHHCuts.C+(0,"treesWCSV/hhSolTrees_bkg.root","bkg")' &    
-    rr -b -q 'HHSol/getHHCuts.C+(0,"treesWCSV/hhSolTrees_radion.root","radion")' &
-    rr -b -q 'HHSol/getHHCuts.C+(0,"treesWCSV/hhSolTrees_bulkgrav.root","bulkgrav")' &
-    hadd -f hSolTrees_getCuts.root hSolTrees_getCuts_*.root
+rr -b -q 'HHSol/getHbbTaggingCutHistograms.C+("hSolTrees/hhSolTrees_2017_bkg.root"     ,"2017_bkg")' &    
+rr -b -q 'HHSol/getHbbTaggingCutHistograms.C+("hSolTrees/hhSolTrees_2017_radion.root"  ,"2017_radion")' &
+rr -b -q 'HHSol/getHbbTaggingCutHistograms.C+("hSolTrees/hhSolTrees_2017_bulkgrav.root","2017_bulkgrav")' &
 
+rr -b -q 'HHSol/getHbbTaggingCutHistograms.C+("hSolTrees/hhSolTrees_2018_bkg.root"     ,"2018_bkg")' &    
+rr -b -q 'HHSol/getHbbTaggingCutHistograms.C+("hSolTrees/hhSolTrees_2018_radion.root"  ,"2018_radion")' &
+rr -b -q 'HHSol/getHbbTaggingCutHistograms.C+("hSolTrees/hhSolTrees_2018_bulkgrav.root","2018_bulkgrav")' &
+  hadd -f hSolTrees_hbbTaggingCutHistograms_2016.root hSolTrees_hbbTaggingCutHistograms_2016_*.root
+hadd -f hSolTrees_hbbTaggingCutHistograms_2017.root hSolTrees_hbbTaggingCutHistograms_2017_*.root
+hadd -f hSolTrees_hbbTaggingCutHistograms_2018.root hSolTrees_hbbTaggingCutHistograms_2018_*.root
 
 //Fit HHRes
 {
-  TFile * f = new TFile("hSolTrees_HPTRes.root");
+  TFile * f = new TFile("hSolTrees_HPTRes_2018.root");
   std::vector<float> ptBins {300,400,500,600,800,1000,1200,1400,1600,1800,2000};
   
   TGraphErrors * gF = new TGraphErrors();
@@ -102,6 +109,11 @@ hadd -f hSolTrees_qcdTempStudy.root hSolTrees_qcdTempStudy_*.root
   p->addGraph(gF,"Full range");
   p->addGraph(gC,"0.6 #rightarrow 1.4");
   p->addGraph(gCor,"Corrected 0.6 #rightarrow 1.4");
+  
+  auto res = gC->Fit("pol1","S");
+  cout << "RESULT: " << res->GetParams()[0] <<" "<< res->GetParams()[1] <<endl;
+  
+  
   
   p->draw();
 }
@@ -254,14 +266,16 @@ hadd -f hSolTrees_qcdTempStudy.root hSolTrees_qcdTempStudy_*.root
 }
 
 
-TEST RESULTS
+//////////////////////////////////TEST RESULTS
   //Mass shape comparison
 {
-  TFile * f = new TFile("hSolTrees_test.root");
-  std::vector<TString> sigs = {"radion_m1000","radion_m2000","radion_m3000","ttbar","wjets"};
+  TString year = "2016";
+  TFile * f = new TFile("hSolTrees_test_"+year+".root");
+  std::vector<TString> sigs = {"radion_m1000","radion_m2000","radion_m3000","ttbar","wjets","qcd"};
   // std::vector<TString> vars = {"simpleHH","chi2HH","likeliHH"};
     std::vector<TString> vars = {"simpleHH","likeliHH"};
   std::vector<TString> varNs = {"Old method","Likelihood method"};
+  vector<TObject*> objs;
 
   for(unsigned int iS = 0; iS < sigs.size(); ++iS){
     Plotter * p = new Plotter();
@@ -273,26 +287,30 @@ TEST RESULTS
     }
     p->rebin(2);
     p->setBotMinMax(0,2);
-    p->setXTitle("#it{m}_{HH} [GeV]");
+    p->setXTitle(sigs[iS]+" #it{m}_{HH} [GeV]");
     p->setYTitle("Arbitary units");
-    p->drawSplitRatio(0,"stack",false,false,sigs[iS]);
+    auto c = p->drawSplitRatio(0,"stack",false,false,sigs[iS]);
+    objs.push_back(c);
+    
   }
+  Drawing::drawAll(objs,year);
+  
 
 
 }
 
 //Efficiency curves of the likli/chi
 {
-  TFile * f = new TFile("hSolTrees_test.root");
+  TFile * f = new TFile("hSolTrees_test_2018.root");
   // std::vector<TString> sigs = {"radion_m1000","radion_m2000","radion_m4000","ttbar_m1000","wjets_m1000","ttbar_m2000","wjets_m2000"};
     std::vector<TString> sigs = {"radion_m1000","radion_m2000","ttbar_m1000","wjets_m1000"};
     std::vector<TString> sigNs = {"1 TeV #it{m}_{X}","2 TeV #it{m}_{X}","t#bar{t}","W+jets"};
   // std::vector<TString> vars = {"chi2","likeli","OSQQ","OSQQPZ","VQQ","VQQPZ"};
   // std::vector<TString> vars = {"chi2","likeli","likeli_nAlt","alt"};
     // std::vector<TString> vars = {"chi2","Blikeli","Blikeli_nAlt","bAlt"};
-        // std::vector<TString> vars = {"chi2","likeli","likeli2"};
-        std::vector<TString> vars = {"md"};
-  
+        std::vector<TString> vars = {"likeli"};
+        // std::vector<TString> vars = {"md"};
+ 
   
   // std::vector<TString> sigs = {"radion_m1000","radion_m2000","radion_m3000","ttbar_m1000","wjets_m1000"};
   // std::vector<TString> sigNs = {"#it{m}_{X} 1 TeV","#it{m}_{X} 2 TeV", "#it{m}_{X} 3 TeV","t#bar{t}","W+jets"};
@@ -318,7 +336,10 @@ TEST RESULTS
     p->rebin(2);
     // p->setXTitle("miniminized -2*log(L)");
       p->setXTitle("#it{D}");
-    p->draw(false,vars[iV]);
+      p->setMinMax(0.00001,1);
+    auto c = p->draw(false,vars[iV]);
+    c->SetLogy();
+    c->Update();
   }
   
   
@@ -595,9 +616,10 @@ TEST RESULTS
 
 ///ROC CURVES
 {
-  TFile * f = new TFile("hSolTrees_test.root");
-  std::vector<TString> sigs = {"radion_m2000"};
-  std::vector<TString> bkgCs = {"m2000"};
+  TString year = "2018";
+  TFile * f = new TFile("hSolTrees_test_"+year+".root");
+  std::vector<TString> sigs = {"radion_m1000","radion_m2000","radion_m3000"};
+  std::vector<TString> bkgCs = {"m1000","m2000","m2000"};
   
   
   
@@ -619,15 +641,17 @@ TEST RESULTS
   
     // std::vector<TString> vars = {"Blikeli","Blikeli_nAlt"};
     // std::vector<TString> vars = {"SoBlikeli","SoBNlikeli"};
-    std::vector<TString> vars = {"likeli2","md"};
+    std::vector<TString> vars = {"likeli","md"};
   
   
 
   int cutGT = 10;
+  vector<TObject*> objs;
   for(unsigned int iB = 0; iB < bkgs.size(); ++iB){
+          for(unsigned int iS = 0; iS < sigs.size(); ++iS){
     Plotter * p = new Plotter();
     for(unsigned int iV = 0; iV < vars.size(); ++iV){
-      for(unsigned int iS = 0; iS < sigs.size(); ++iS){
+
         TH1* hs = 0;
         f->GetObject(sigs[iS]+"_"+vars[iV],hs);     
         if(hs==0)continue;
@@ -636,21 +660,27 @@ TEST RESULTS
         f->GetObject(bkgs[iB]+"_"+bkgCs[iS]+"_"+vars[iV],hb);     
         if(hb==0)continue;
         hb=(TH1*)hb->Clone();
+        hb->SetName(bkgs[iB]+"_"+bkgCs[iS]+"_"+vars[iV] + "_"+iS );
         PlotTools::toUnderflow(hs);
         PlotTools::toOverflow(hs);
         PlotTools::toUnderflow(hb);
         PlotTools::toOverflow(hb);
         auto * roc = PlotTools::getRocCurve(hs,hb,iV==cutGT, "signal eff","bkg. eff");
         // p->addGraph(roc,sigs[iS]+"_"+vars[iV]);
-        // p->addGraph(roc,sigs[iS]+"_"+vars[iV]);
+        // p->addGraph(roc,sigs[iS]+": "+varNss[iV]);
                 p->addGraph(roc,varNss[iV]);
                         // p->addGraph(roc,vars[iV]); 
       }                  
+      // p->setXTitle("signal efficiency");
+      p->setXTitle(sigs[iS]+" efficiency");
+      // p->setYTitle("bkg. efficiency");
+      p->setYTitle(bkgs[iB] +" efficiency");
+      auto c = p->draw(false,sigs[iS]+"_"+bkgs[iB])      ;
+      objs.push_back(c);
     }
-    p->setXTitle("signal efficiency");
-    p->setYTitle("bkg. efficiency");
-    p->draw(false,bkgs[iB])      ;
+
   }
+  auto c= Drawing::drawAll(objs,"rocCurves_"+year);
 }
 
 
@@ -693,51 +723,62 @@ TEST RESULTS
 
 //////////////. GET CUTS. //////////////. 
 //First cut for high mass
-{
-  TFile * f = new TFile("hSolTrees_getCuts.root");
-  std::vector<std::string> sigs = {"m800","m1000","m2000","m2500","m3000"};
-  // std::vector<std::string> cuts = {"tauIncl_LMT_emu","tau0p75_LMT_emu","tau0p55_LMT_emu","tau0p75_MT_emu","tau0p55_MT_emu"};
-    // std::vector<std::string> cuts = {"oLP_L_emu","oLP_M_emu","oLP_T_emu","oHP_L_emu","oHP_M_emu","oHP_T_emu"};
-    // std::vector<std::string> cuts = {"tau0p75_LMT_emu","tau0p75_MT_emu","tau0p75_T_emu","oHP_LMT_emu","oHP_MT_emu","oHP_T_emu"};
-      std::vector<std::string> cuts = {"tau0p75_LMT_emu","tau0p75_MT_emu","tau0p75_T_emu","oHP_LMT_emu","oHP_L_emu","oHP_T_emu"};
-        // std::vector<std::string> cuts = {"tau0p75_L_emu","tau0p75_M_emu","tau0p75_T_emu","tau0p55_L_emu","tau0p55_M_emu","tau0p55_T_emu"};
-  // std::vector<std::string> cuts = {"tau0p80","tau0p75","tau0p70","tau0p60","tau0p55","tau0p50","tau0p45","tau0p40"};
+  {
+    TString year = "2017";
+    TFile * f = new TFile("hSolTrees_getCuts_"+year+".root");
+    std::vector<std::string> sigs = {"m800","m1000","m2000","m2500","m3000"};
   
-  // TString sigN ="radion";
-  TString sigN =   "graviton";
-  TString var = "likeli";
+          // std::vector<std::string> cuts = {"tau0p75_LMT_emu","tau0p75_MT_emu","tau0p45_T_emu","tau0p45_MT_emu","tau0p45to0p75_MT_emu","tau0p45to0p75_LMT_emu"};
+                    // std::vector<std::string> cuts = {"tau0p75_LMT_emu","tau0p75_MT_emu","tau0p45_T_emu","tau0p45_MT_emu","tau0p35_T_emu","tau0p35_MT_emu"};
+                          std::vector<std::string> cuts = {"tau0p45_T_emu","tau0p45_MT_emu","tau0p40_T_emu","tau0p40_MT_emu","tau0p55_T_emu","tau0p55_MT_emu"};
   
+    // TString sigN ="radion";
+    TString sigN =   "graviton";
+    TString var = "likeli";
+    vector<TObject*> objs_s;
+    vector<TObject*> objs_b;
+    vector<TObject*> objs_sob;
   
-  for(unsigned int iS = 0; iS < sigs.size(); ++iS){
-    Plotter * pr = new Plotter();
-    Plotter * ps = new Plotter();
-    Plotter * pb = new Plotter();
-  for(unsigned int iC = 0; iC < cuts.size(); ++iC){
+    for(unsigned int iS = 0; iS < sigs.size(); ++iS){
+      Plotter * pr = new Plotter();
+      Plotter * ps = new Plotter();
+      Plotter * pb = new Plotter();
+    for(unsigned int iC = 0; iC < cuts.size(); ++iC){
 
     
       
-      TH1* hs = 0;
-      f->GetObject(sigN + "_"+sigs[iS]+"_"+cuts[iC]+"_mIncl_"+var,hs);
-      TH1* hb = 0;
-      f->GetObject("bkg_"+cuts[iC]+"_"+sigs[iS]+"_"+var,hb);      
-      if(hs==0||hb==0) continue;      
-      hs = PlotTools::getIntegral(hs,false,false);
-      hb = PlotTools::getIntegral(hb,false,false);
-      TH1* hr = (TH1*)hs->Clone();
-      for(unsigned int iX = 1; iX <= hs->GetNbinsX(); ++iX){
-        hr->SetBinContent(iX,hs->GetBinContent(iX)/(std::sqrt(3.+hb->GetBinContent(iX)) ));
+        TH1* hs = 0;
+        f->GetObject(sigN + "_"+sigs[iS]+"_"+cuts[iC]+"_mIncl_"+var,hs);
+        TH1* hb = 0;
+        f->GetObject("bkg_"+cuts[iC]+"_"+sigs[iS]+"_"+var,hb);      
+        if(hs==0||hb==0) continue;      
+        hs = PlotTools::getIntegral(hs,false,false);
+        hb = PlotTools::getIntegral(hb,false,false);
+        TH1* hr = (TH1*)hs->Clone();
+        for(unsigned int iX = 1; iX <= hs->GetNbinsX(); ++iX){
+          hr->SetBinContent(iX,hs->GetBinContent(iX)/(std::sqrt(3.+hb->GetBinContent(iX)) ));
+        }
+        ps->addHistLine(hs,cuts[iC]);
+        pb->addHistLine(hb,cuts[iC]);
+        pr->addHistLine(hr,cuts[iC]);        
       }
-      ps->addHistLine(hs,cuts[iC]);
-      pb->addHistLine(hb,cuts[iC]);
-      pr->addHistLine(hr,cuts[iC]);        
-    }
-    pr->draw(false,"sosqrt3pb_" + sigs[iS]);
-    // ps->draw(false,"sig_"+ sigs[iS]);
-    // pb->draw(false,"bkg_"+ sigs[iS]);
+      pr->setXTitle(sigs[iS] +" likeli" );
+      auto sob = pr->draw(false,"sosqrt3pb_" + sigs[iS]);
+      objs_sob.push_back(sob);
+      auto s = ps->draw(false,"sig_"+ sigs[iS]);
+      objs_s.push_back(s);
+      auto b = pb->draw(false,"bkg_"+ sigs[iS]);
+      objs_b.push_back(b);
     
-  }
+    }
   
-}
+    Drawing::drawAll(objs_sob,"sosqrt3pb_"+year);
+    Drawing::drawAll(objs_s,"s_"+year);
+    Drawing::drawAll(objs_b,"b_"+year);
+    
+  
+  
+  }
 
 //////////////. Evalute impact on individual SRs. //////////////. 
 
@@ -915,3 +956,244 @@ for(unsigned int iB = 0; iB < bkgs.size(); ++iB){
   
   
 }
+
+// Compare different years for signal
+{
+  vector<TString> fileNs = {"hSolTrees_temp_2016_bulkgrav.root","hSolTrees_temp_2017_bulkgrav.root","hSolTrees_temp_2018_bulkgrav.root"};
+  vector<TString> fileTs = {"2016","2017","2018"};
+  std::vector<TString> sigs = {"signal_low","signal_test","signal_high"};
+  std::vector<TString> shells = {"_vqq","_osqq"};    
+  std::vector<TString> vars = {"extraMetPerp","extraMetParRelhwwMag","wqqPTRes","Wlnu","hWW","qqSDMassCoarse"};
+
+  std::vector<TObject*> objs;
+
+  for(unsigned int iV = 0; iV < vars.size();++iV){    
+      for(unsigned int iSh = 0; iSh < shells.size(); ++iSh){
+                for(unsigned int iS = 0; iS < sigs.size(); ++iS){
+            Plotter * p = new Plotter();
+            
+            for(unsigned int iY = 0; iY< fileTs.size(); ++iY){
+              auto * f = new TFile(fileNs[iY]);
+              if(f == 0) continue;
+              TH1 *h = 0;
+              auto hname = sigs[iS]+shells[iSh] +"_"+vars[iV];
+              f->GetObject(hname,h);
+              if(!h) continue;
+              h->SetDirectory(0);
+              h->SetName(hname+"_"+fileTs[iY]);
+              p->addHistLine(h,fileTs[iY]);
+              // f->Close();
+              // delete f;
+            }       
+            p->normalize();
+            p->setBotMinMax(0,2);
+            TCanvas * c = p->draw(false,vars[iV]+"_"+shells[iSh]+"_"+sigs[iS]);
+            objs.push_back(c);
+    // TCanvas * c = p->drawSplitRatio(0,"stack",false,false,vars[iV]);
+    // objs.push_back(c);
+  }
+  }
+}
+  
+  // auto c= Drawing::drawAll(objs,"templatesUnbinned");
+  // c->Print("templatesUnbinned.pdf");
+  
+}
+
+//Look at all templates
+{
+  TString year = "2018";
+  
+  TFile * f = new TFile("hhSol_templates_"+year+".root");
+  std::vector<TString> sigs = {"low","high"};
+  std::vector<TString> shells = {"vqq","osqq"};
+    
+  std::vector<TString> vars = {"extraMetPerp","extraMetParRelhwwMag","wqqPTRes","Wlnu","hWW","qqSDMassCoarse"};
+  std::vector<TObject*> objs;
+
+  for(unsigned int iV = 0; iV < vars.size();++iV){    
+      for(unsigned int iSh = 0; iSh < shells.size(); ++iSh){
+            Plotter * p = new Plotter();
+        for(unsigned int iS = 0; iS < sigs.size(); ++iS){
+      TH1 *h = 0;
+      auto hname = "signal_" + sigs[iS]+"_"+shells[iSh] +"_"+vars[iV];                  
+      f->GetObject(hname,h);      
+      if(!h) continue;
+      for(unsigned int iB = 0; iB <= h->GetNbinsX() + 1; ++iB){
+        if(h->GetBinContent(iB) <= 0) cout << sigs[iS]+"_"+shells[iSh] +"_"+vars[iV] <<" -> "<< iB <<" "<< 
+          h->GetBinCenter(iB) <<endl;
+      }
+      p->addHistLine(h,shells[iSh]+": "+sigs[iS]);
+  
+}
+    TCanvas * c = p->draw(false,vars[iV]+"_"+shells[iSh]);
+    // c->SetLogy();
+    // c->Update();
+    // TCanvas * c = p->drawSplitRatio(0,"stack",false,false,vars[iV]);
+    objs.push_back(c);
+  }
+  }
+  
+  auto c= Drawing::drawAll(objs,"templates_"+year);
+  // c->Print("templatesUnbinned.pdf");
+  
+}
+
+// Compare different years of likelihoods
+{
+  vector<TString> fileNs = {"hSolTrees_getCuts_2016.root","hSolTrees_getCuts_2017.root","hSolTrees_getCuts_2018.root"};
+  vector<TString> fileTs = {"2016","2017","2018"};
+  std::vector<TString> sigs = {"radion_m1000","radion_m2000","radion_m3000"};
+  std::vector<std::string> cuts = {"tau0p75_LMT_emu","tau0p75_MT_emu","tau0p45_T_emu","tau0p45_MT_emu"};
+  TString var = "likeli";
+  std::vector<TObject*> objs;
+
+      for(unsigned int iC = 0; iC < cuts.size(); ++iC){
+                for(unsigned int iS = 0; iS < sigs.size(); ++iS){
+            Plotter * p = new Plotter();
+            
+            for(unsigned int iY = 0; iY< fileTs.size(); ++iY){
+              auto * f = new TFile(fileNs[iY]);
+              if(f == 0) continue;
+              TH1 *h = 0;
+              auto hname = sigs[iS]+"_"+cuts[iC]+"_mIncl_"+var;
+              f->GetObject(hname,h);
+              if(!h) continue;
+              h->SetDirectory(0);
+              h->SetName(hname+"_"+fileTs[iY]);
+              PlotTools::toUnderflow(h);
+              PlotTools::toOverflow(h);
+              h = PlotTools::getIntegral(h,false,true);
+              p->addHistLine(h,fileTs[iY]);
+              p->setYTitle(cuts[iC]);
+              p->setXTitle(sigs[iS] +": likeli");
+            }       
+            TCanvas * c = p->draw(false,var+"_"+cuts[iC]+"_"+sigs[iS]);
+            objs.push_back(c);
+  }
+  }
+  Drawing::drawAll(objs,"efficiencies");
+  
+  
+  
+}
+
+
+///////////. BTAGGGING SCRIPTS!!!!
+
+{
+  TString year = "2017";
+  TFile * f = new TFile("hSolTrees_hbbTaggingCutHistograms_"+year+".root");
+  std::vector<std::string> sigs = {"m800","m1000","m2000","m2500","m3000"};
+
+                        std::vector<std::string> cuts = {"LHP_emu","HP_emu","LP_emu","HP_e","HP_mu"};
+
+  // TString sigN ="radion";
+  TString sigN =   "graviton";
+  // TString var ="dCSVCat";
+  TString var = "ak8Tag";
+  vector<TObject*> objs_s;
+  vector<TObject*> objs_b;
+  vector<TObject*> objs_sob;
+
+  for(unsigned int iS = 0; iS < sigs.size(); ++iS){
+    Plotter * pr = new Plotter();
+    Plotter * ps = new Plotter();
+    Plotter * pb = new Plotter();
+  for(unsigned int iC = 0; iC < cuts.size(); ++iC){
+
+  
+    
+      TH1* hs = 0;
+      f->GetObject(sigN + "_"+sigs[iS]+"_"+cuts[iC]+"_mIncl_"+var,hs);
+      TH1* hb = 0;
+      f->GetObject("bkg_"+cuts[iC]+"_"+sigs[iS]+"_"+var,hb);      
+      if(hs==0||hb==0) continue;      
+      hs = PlotTools::getIntegral(hs,true,false);
+      hb = PlotTools::getIntegral(hb,true,false);
+      TH1* hr = (TH1*)hs->Clone();
+      for(unsigned int iX = 1; iX <= hs->GetNbinsX(); ++iX){
+        hr->SetBinContent(iX,hs->GetBinContent(iX)/(std::sqrt(3.+hb->GetBinContent(iX)) ));
+      }
+      ps->addHistLine(hs,cuts[iC]);
+      pb->addHistLine(hb,cuts[iC]);
+      pr->addHistLine(hr,cuts[iC]);        
+    }
+    pr->setXTitle(sigs[iS] +" likeli" );
+    auto sob = pr->draw(false,"sosqrt3pb_" + sigs[iS]);
+    objs_sob.push_back(sob);
+    ps->normalize();
+    auto s = ps->draw(false,"sig_"+ sigs[iS]);
+    objs_s.push_back(s);
+    pb->normalize();
+    auto b = pb->draw(false,"bkg_"+ sigs[iS]);
+    objs_b.push_back(b);
+  
+  }
+
+  Drawing::drawAll(objs_sob,"sosqrt3pb_"+year);
+  Drawing::drawAll(objs_s,"s_"+year);
+  Drawing::drawAll(objs_b,"b_"+year);
+
+
+}
+
+//compare years
+
+{
+
+  std::vector<std::string> sigs = {"m800","m1000","m2000","m2500","m3000"};
+
+  std::vector<std::string> cuts = {"LHP_emu"};
+  std::vector<TString> years = {"2016","2017","2018"};
+
+  // TString sigN ="radion";
+  TString sigN =   "graviton";
+  // TString var ="dCSVCat";
+  TString var = "ak8Tag";
+  vector<TObject*> objs_s;
+  vector<TObject*> objs_b;
+
+  for(unsigned int iS = 0; iS < sigs.size(); ++iS){
+    Plotter * pr = new Plotter();
+    Plotter * ps = new Plotter();
+    Plotter * pb = new Plotter();
+  for(unsigned int iY = 0; iY < years.size(); ++iY){
+
+        TFile * f = new TFile("hSolTrees_hbbTaggingCutHistograms_"+years[iY]+".root");
+        
+    
+      TH1* hs = 0;
+      f->GetObject(sigN + "_"+sigs[iS]+"_"+cuts[0]+"_mIncl_"+var,hs);
+      TH1* hb = 0;
+      f->GetObject("bkg_"+cuts[0]+"_"+sigs[iS]+"_"+var,hb);      
+      if(hs==0||hb==0) continue;      
+      
+      
+      hs = (TH1*)hs->Clone();
+      hs->SetDirectory(0);
+      hs->SetName(sigN + "_"+sigs[iS]+"_"+cuts[0]+"_mIncl_"+var +"_"+ years[iY]);
+      
+      hb = (TH1*)hb->Clone();
+      hb->SetDirectory(0);
+      hb->SetName("bkg_"+cuts[0]+"_"+sigs[iS]+"_"+var +"_"+ years[iY]);
+      
+      hs = PlotTools::getIntegral(hs,true,true);
+      hb = PlotTools::getIntegral(hb,true,true);
+      ps->addHistLine(hs,sigs[iS] +": "+years[iY]);
+      pb->addHistLine(hb,sigs[iS] +": "+years[iY]);
+    }
+    pr->setXTitle(sigs[iS] +" likeli" );
+    auto s = ps->draw(false,"sig_"+ sigs[iS]);
+    objs_s.push_back(s);
+    auto b = pb->draw(false,"bkg_"+ sigs[iS]);
+    objs_b.push_back(b);
+  
+  }
+
+  Drawing::drawAll(objs_s,"s");
+  Drawing::drawAll(objs_b,"b");
+
+
+  }
+

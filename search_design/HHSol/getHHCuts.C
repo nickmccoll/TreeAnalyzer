@@ -32,24 +32,32 @@ class Analyzer : public HHSolTreeAnalyzer {
 public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed,int step) :
-        HHSolTreeAnalyzer(fileName,treeName,treeInt, randSeed), step(step), HSolver(""),
-        BkgHSolver(""){
-        parameters = ReaderConstants::set2017Parameters();
-        parameters.hww.liFileName = "hhSol_templates.root";
-        parameters.hww.bkgLiFileName = "hhSol_bkgTemplates.root";
+        HHSolTreeAnalyzer(fileName,treeName,treeInt, randSeed), step(step), HSolver(""){
+        if(fileName.find("2016") !=  std::string::npos){
+            parameters = ReaderConstants::set2016Parameters();
+        } else if(fileName.find("2017") !=  std::string::npos){
+            parameters = ReaderConstants::set2017Parameters();
+        } else if(fileName.find("2018") !=  std::string::npos){
+            parameters = ReaderConstants::set2018Parameters();
+        } else {
+            parameters.hww.liFileName = "ERROR";
+        }
+        std::cout << "Loaded: "<< parameters.hww.liFileName<<std::endl;
         HSolver.setParamters(parameters.hww);
-        BkgHSolver.setParamters(parameters.hww);
     }
+
+
+
 
 
     bool runEvent() override {
         if(!HHSolTreeAnalyzer::runEvent()) return false;
         if((*bbJet_SDmass < 100 || *bbJet_SDmass>150)) return false;
         if(*nAK4Btags != 0) return false;
+        if(*hbbCat < 4) return false;
 
         HSolverLiInfo hwwInfo;
-        HSolverLiInfo altHWWInfo;
-        double ll = HSolver.minimize(lepton,met,qqJet,*qqJet_SDmass,hwwInfo,0,0,&altHWWInfo);
+        double ll = HSolver.minimize(lepton,met,qqJet,*qqJet_SDmass,hwwInfo);
 
         const double lHH = (hwwInfo.hWW + bbJet.p4()).mass();
         const double ptom = hwwInfo.hWW.pt() / lHH;
@@ -61,10 +69,6 @@ public:
 //        if(lHH < 700) return false;
         if(ptom < 0.3) return false;
 
-
-//        if(!isSignal() && ){
-//
-//        }
 
         auto mkDPlts = [&](const TString& prefix, float lV){
 
@@ -116,31 +120,31 @@ public:
         auto mkCut1Plts = [&](const TString& prefix){
             mkCutBTAGPlts(prefix+"_tauIncl", ll);
 
-            if(*qqJet_t2ot1 < 0.80)
-                mkCutBTAGPlts(prefix+"_tau0p80",ll);
-            if(*qqJet_t2ot1 < 0.70)
-                mkCutBTAGPlts(prefix+"_tau0p70",ll);
-            if(*qqJet_t2ot1 < 0.60)
-                mkCutBTAGPlts(prefix+"_tau0p60",ll);
-            if(*qqJet_t2ot1 < 0.50)
-                mkCutBTAGPlts(prefix+"_tau0p50",ll);
+            if(*qqJet_t2ot1 < 0.75)
+                mkCutBTAGPlts(prefix+"_tau0p75",ll);
 
+
+            if(*qqJet_t2ot1 < 0.55)
+                mkCutBTAGPlts(prefix+"_tau0p55",ll);
             if(*qqJet_t2ot1 < 0.45)
                 mkCutBTAGPlts(prefix+"_tau0p45",ll);
             if(*qqJet_t2ot1 < 0.40)
                 mkCutBTAGPlts(prefix+"_tau0p40",ll);
+            if(*qqJet_t2ot1 < 0.35)
+                mkCutBTAGPlts(prefix+"_tau0p35",ll);
 
-            if(*qqJet_t2ot1 < 0.75)
-                mkCutBTAGPlts(prefix+"_tau0p75",ll);
-
-            if(*qqJet_t2ot1 < 0.55)
-                mkCutBTAGPlts(prefix+"_tau0p55",ll);
+            if(*qqJet_t2ot1 >= 0.75) return;
 
 
-            if(*qqJet_t2ot1 >= 0.55 && *qqJet_t2ot1 < 0.75)
-                mkCutBTAGPlts(prefix+"_oLP",ll);
-            if(*qqJet_t2ot1 < 0.55)
-                mkCutBTAGPlts(prefix+"_oHP",ll);
+            if(*qqJet_t2ot1 >= 0.55)
+                mkCutBTAGPlts(prefix+"_tau0p55to0p75",ll);
+            if(*qqJet_t2ot1 >= 0.45)
+                mkCutBTAGPlts(prefix+"_tau0p45to0p75",ll);
+            if(*qqJet_t2ot1 >= 0.40)
+                mkCutBTAGPlts(prefix+"_tau0p40to0p75",ll);
+            if(*qqJet_t2ot1 >= 0.35)
+                mkCutBTAGPlts(prefix+"_tau0p35to0p75",ll);
+
 
             if(md < 125){
                 if(*qqJet_t2ot1 >= 0.55 && *qqJet_t2ot1 < 0.75)
@@ -172,9 +176,7 @@ public:
     HistGetter plotter;
     int step;
 
-    HSolverChi oHSolver;
     HSolverLi HSolver;
-    HSolverBkgLi BkgHSolver;
     ParameterSet parameters;
 };
 

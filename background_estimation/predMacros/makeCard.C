@@ -41,7 +41,6 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
         break;
     }
 
-    const std::string category = "std";
     std::string cmd = "combineCards.py ";
 
     if(channel == 0 || channel == 1) {
@@ -51,11 +50,12 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             if(p == purCats[PURE_I] ) continue;
             if(h != selCuts1[SEL1_FULL] ) continue;
 
-
-            auto card = DataCardMaker(l,b+"_"+p +"_"+h ,"13TeV",1,category);
-
             const std::string cat = l +"_"+b+"_"+p +"_"+h;
-            cmd += std::string(" ")+ category +"_"+cat +"_13TeV=datacard_"+category+"_"+cat +"_13TeV.txt";
+
+
+            auto card = DataCardMaker(cat,"13TeV",1);
+            const std::string dataCardTag = DataCardMaker::getFileNameTag(cat,"13TeV");
+            cmd += std::string(" ")+ DataCardMaker::getOutputCardFileName(dataCardTag);
 
             auto fullInputName =[&](const std::string& proc, const std::string& l, const std::string& b, const std::string& p, const std::string& h, const std::string& pf) -> std::string
                     {return fPF + "_"+proc +"_"+l +"_"+b+"_"+p +"_"+h +"_"+ pf; };
@@ -207,10 +207,11 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             if(b == btagCats[BTAG_LMT]) continue;
             if(s != selCuts2[SEL2_FULL] ) continue;
 
-            auto card = DataCardMaker(l,b+"_"+s,"13TeV",1,category);
-
             const std::string cat = l +"_"+b +"_"+s;
-            cmd += std::string(" ")+ category +"_"+cat +"_13TeV=datacard_"+category+"_"+cat +"_13TeV.txt";
+            auto card = DataCardMaker(cat,"13TeV",1);
+
+
+            cmd += std::string(" ")+ DataCardMaker::getFileNameTag(cat,"13TeV");
 
             auto fullInputName =[&](const std::string& proc, const std::string& l, const std::string& b, const std::string& s, const std::string& pf) -> std::string
                     {return fPF + "_"+proc +"_"+l +"_"+b +"_"+s +"_"+ pf; };

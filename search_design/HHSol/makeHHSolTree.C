@@ -35,10 +35,8 @@ class Analyzer : public DefaultSearchRegionAnalyzer {
 public:
 
     Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed)
-    : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed) {
-        turnOffCorr(CORR_TRIG);
-        turnOffCorr(CORR_PU);
-    }
+    : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed)
+{}
 
 
     virtual void setupParameters() override {
@@ -55,6 +53,7 @@ public:
         outTree->addSingle(sampParam      ,  "",  "sampParam");
         outTree->addSingle(dhType         ,  "",  "dhType");
         outTree->addSingle(hbbCat         ,  "",  "hbbCat");
+        outTree->addSingle(hbbDeepAK8     ,  "",  "hbbDeepAK8");
         outTree->addSingle(isMuon         ,  "",  "isMuon");
         outTree->addSingle(weight         ,  "",  "weight");
         outTree->addSingle(nAK4Btags      ,  "",  "nAK4Btags");
@@ -106,11 +105,11 @@ public:
     }
 
     bool runEvent() override {
-        if(!DefaultSearchRegionAnalyzer::runEvent()) return false;
-        if(!passTriggerPreselection) return false;
-        if(selectedLeptons.size()!=1) return false;
-        if(!hbbCand || !wjjCand) return false;
-        if(hbbCSVCat <4) return false;
+        if(!DefaultSearchRegionAnalyzer::runEvent() || !passEventFilters) return false;
+        if(lepChan != SINGLELEP || !hbbCand || !wjjCand)  return false;
+        if(hbbMass < 30) return false;
+        if(nAK4Btags > 0) return false;
+        if(hbbMass > 210) return false;
 
         //Start with gen info
 
@@ -169,9 +168,11 @@ public:
         process = *reader_event->process;
         sampParam = *reader_event->sampParam;
         hbbCat = hbbCSVCat;
+        hbbDeepAK8 = hbbCand->deep_MDZHbb();
         isMuon = selectedLepton->isMuon();
         weight  =  EventWeights::getNormalizedEventWeight(
-                *reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT);
+                *reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT)
+            * puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL);
 
         nAK4Btags = size8(std::min(nMedBTags_HbbV,250));
         hh_orig =hh_basic.mass();
@@ -257,6 +258,7 @@ public:
     int   sampParam      = 0;
     size8 dhType         = 0;
     size8 hbbCat         = 0;
+    float hbbDeepAK8     = 0;
     size8 isMuon         = 0;
     float weight         = 0;
 

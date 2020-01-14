@@ -25,6 +25,7 @@ public:
         setBranch("","sampParam"     ,sampParam      ,true);
         setBranch("","dhType"        ,dhType         ,true);
         setBranch("","hbbCat"        ,hbbCat         ,true);
+        setBranch("","hbbDeepAK8"    ,hbbDeepAK8     ,true);
         setBranch("","isMuon"        ,isMuon         ,true);
         setBranch("","weight"        ,weight_        ,true);
         setBranch("","nAK4Btags"     ,nAK4Btags      ,true);
@@ -104,8 +105,14 @@ public:
         isVirtualWqq = true_jet.mass() < true_W.mass();
         weight = *weight_;
 
+        if(*hbbDeepAK8 < 0 ) sanitizedDeepAK8Tag = 0;
+        else if(*hbbDeepAK8 > 1) sanitizedDeepAK8Tag = 1;
+        else sanitizedDeepAK8Tag = *hbbDeepAK8;
+
         return true;
     }
+
+
     bool isSignal() const {return *process == FillerConstants::SIGNAL;}
 
 
@@ -114,6 +121,7 @@ public:
     rd_int   sampParam      ;
     rd_size8 dhType         ;
     rd_size8 hbbCat         ;
+    rd_float hbbDeepAK8     ;
     rd_size8 isMuon         ;
     rd_float weight_        ;
     rd_size8 nAK4Btags      ;
@@ -181,6 +189,8 @@ public:
 
     TString smpName;
     bool isRadionSMP = false;
+
+    double sanitizedDeepAK8Tag = 0;
 
 
 

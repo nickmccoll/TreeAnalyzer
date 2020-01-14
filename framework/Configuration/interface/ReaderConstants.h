@@ -196,7 +196,6 @@ struct HWWParameters {
     double ptCorB           ;
     double ptCorM           ;
     std::string   liFileName;
-    std::string   bkgLiFileName;
 
     double dilepInvMassGuess;
 
