@@ -38,7 +38,7 @@ public:
         addUncVariables = (treeType == TREE_OTHER);
     }
 
-    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
+    Analyzer(std::string fileName, std::string treeName, int treeInt, int randSeed, CORRTYPE jerUNC, CORRTYPE jesUNC,CORRTYPE metUNC,CORRTYPE hemUNC) : DefaultSearchRegionAnalyzer(fileName,treeName,treeInt,randSeed){
         JERProc->setCorrType(jerUNC);
         if(jesUNC == UP || jesUNC == DOWN ){
             JESUncProc ->setCorrType(jesUNC);
@@ -47,6 +47,10 @@ public:
         if(metUNC == UP || metUNC == DOWN){
             METUncProc ->setCorrType(metUNC);
             turnOnCorr(CORR_MET);
+        }
+        if(hemUNC != NONE) {
+            HEMIssueProc->setCorrType(hemUNC);
+            turnOnCorr(CORR_HEM1516);
         }
 
     }
@@ -176,22 +180,44 @@ public:
             lep1PT_   = selectedLepton->pt();
             lep1ETA_  = selectedLepton->eta();
 
-            hwwChi_  = hwwChi;
-            hwwLi_  = hwwLi;
-            wlnuMass_ = wlnu.mass();
-            wlnuPT_    = wlnu.pt();
+            if(wjjCand) {
+                hwwChi_  = hwwChi;
+                hwwLi_  = hwwLi;
+                hwwPT_ = hWW.pt();
+                wlnuMass_ = wlnu.mass();
+                wlnuPT_    = wlnu.pt();
+                wjjTau2o1_ = wjjCand->tau2otau1();
+                wjjMass_   = wjjCand->sdMom().mass();
+                wjjPT_     = wqq.pt();
+            } else {
+                hwwChi_  = 0;
+                hwwLi_  = 0;
+                hwwPT_ = 0;
+                wlnuMass_ = 0;
+                wlnuPT_    = 0;
+                wjjTau2o1_ = 0;
+                wjjMass_   = 0;
+                wjjPT_     = 0;
+            }
 
-            wjjTau2o1_ = wjjCand->tau2otau1();
-            wjjMass_   = wjjCand->sdMom().mass();
-            wjjPT_     = wqq.pt();
-
-            hbbMass_ = hbbMass;
-            hbbPT_ = hbbCand->pt();
-            hbbCSVCat_ = hbbCSVCat;
-            hwwPT_ = hWW.pt();
-            hhMass_  = hh.mass();
-            hhMassBasic_   = hh_basic.mass();
-            nAK4Btags_   = std::min(nMedBTags_HbbV,250);
+            if(hbbCand) {
+                hbbMass_ = hbbMass;
+                hbbPT_ = hbbCand->pt();
+                hbbCSVCat_ = hbbCSVCat;
+                nAK4Btags_   = std::min(nMedBTags_HbbV,250);
+            } else {
+                hbbMass_ = 0;
+                hbbPT_ = 0;
+                hbbCSVCat_ = 0;
+                nAK4Btags_   = 0;
+            }
+            if(hbbCand && wjjCand) {
+                hhMass_  = hh.mass();
+                hhMassBasic_   = hh_basic.mass();
+            } else {
+                hhMass_  = 0;
+                hhMassBasic_   = 0;
+            }
 
             isMuon2_ = 0;
         	lep2PT_  = 0;
@@ -213,13 +239,21 @@ public:
         	dilepMass_ = llMass;
         	dilepDR_   = llDR;
         	llMetDphi_ = llMetDphi;
-
-            hbbMass_ = hbbMass;
-            hbbPT_ = hbbCand->pt();
-            hbbCSVCat_ = hbbCSVCat;
             hwwPT_ = hWW.pt();
-            hhMass_  = hh.mass();
-            nAK4Btags_   = std::min(nMedBTags_HbbV,250);
+
+            if(hbbCand) {
+                hbbMass_ = hbbMass;
+                hbbPT_ = hbbCand->pt();
+                hbbCSVCat_ = hbbCSVCat;
+                hhMass_  = hh.mass();
+                nAK4Btags_   = std::min(nMedBTags_HbbV,250);
+            } else {
+                hbbMass_ = 0;
+                hbbPT_ = 0;
+                hbbCSVCat_ = 0;
+                hhMass_  = 0;
+                nAK4Btags_   = 0;
+            }
 
             hwwChi_  = 0;
             hwwLi_   = 0;
@@ -229,6 +263,13 @@ public:
             wjjMass_   = 0;
             wjjPT_     = 0;
             hhMassBasic_ = 0;
+        } else {
+            isMuon1_ = 0;
+            isMuon2_ = 0;
+            lep1PT_  = 0;
+            lep2PT_  = 0;
+            lep1ETA_  = 0;
+            lep2ETA_  = 0;
         }
 
         if(!isRealData()) {
@@ -428,7 +469,6 @@ public:
 //    spv_float w_pdf_     = make_spv_float();
 
     bool addUncVariables = false;
-    TString filename = "";
 
 };
 
@@ -442,8 +482,8 @@ void doOne(const std::string& fileName, const int treeInt,int randSeed,  const s
     a.analyze();
 }
 
-void doOneVar(const std::string& fileName, const int treeInt,int randSeed, const std::string& outFileName, const CORRTYPE jerType, CORRTYPE jesUNC, CORRTYPE metUNC, float xSec = -1, float numEvent = -1){
-    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed,jerType,jesUNC,metUNC);
+void doOneVar(const std::string& fileName, const int treeInt,int randSeed, const std::string& outFileName, const CORRTYPE jerType, CORRTYPE jesUNC, CORRTYPE metUNC, CORRTYPE hemUNC, float xSec = -1, float numEvent = -1){
+    Analyzer a(fileName,"treeMaker/Events",treeInt,randSeed,jerType,jesUNC,metUNC,hemUNC);
     if(xSec > 0) a.setSampleInfo(xSec,numEvent);
     a.initializeTreeCopy(outFileName,BaseTreeAnalyzer::COPY_NONE);
     a.analyze();
@@ -456,12 +496,13 @@ void makeBETrees(std::string fileName, int treeInt, int randSeed, std::string ou
     if(treeInt==2){
         size_t lastindex = outFileName.find_last_of(".");
         std::string extLessName = outFileName.substr(0, lastindex);
-        doOneVar(fileName,treeInt,randSeed+1,extLessName+"_JERUp.root"  ,UP     ,NONE,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,randSeed+2,extLessName+"_JERDown.root",DOWN   ,NONE,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,randSeed+3,extLessName+"_JESDOWN.root",NOMINAL,DOWN,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,randSeed+4,extLessName+"_JESUp.root"  ,NOMINAL,UP  ,NONE,xSec,numEvent);
-        doOneVar(fileName,treeInt,randSeed+5,extLessName+"_METDOWN.root",NOMINAL,NONE,DOWN,xSec,numEvent);
-        doOneVar(fileName,treeInt,randSeed+6,extLessName+"_METUp.root"  ,NOMINAL,NONE,UP  ,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+1,extLessName+"_JERUp.root"  ,UP     ,NONE,NONE,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+2,extLessName+"_JERDown.root",DOWN   ,NONE,NONE,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+3,extLessName+"_JESDOWN.root",NOMINAL,DOWN,NONE,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+4,extLessName+"_JESUp.root"  ,NOMINAL,UP  ,NONE,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+5,extLessName+"_METDOWN.root",NOMINAL,NONE,DOWN,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+6,extLessName+"_METUp.root"  ,NOMINAL,NONE,UP  ,NONE,xSec,numEvent);
+        doOneVar(fileName,treeInt,randSeed+7,extLessName+"_HEM.root"    ,NOMINAL,NONE,NONE,DOWN,xSec,numEvent);
     }
 
 }

@@ -303,7 +303,7 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,
         for(const auto& p :purCats)  for(const auto& h :selCuts1){
 
         	// hack
-        	if(l=="e" && b=="T" && p=="HP") continue;
+            if(l=="e" && (b=="T"||b=="M") && p=="HP") continue;
 
             const std::string catName = l +"_"+b+"_"+p +"_"+h;
             std::string args = "-nF "+distName +" -nH " + catName + "_"+hhMCS
@@ -837,7 +837,6 @@ void compile2DTemplatesForDebug(const std::string& name, const std::string& file
             hh_H->Write((name+"_"+ci.name()).c_str());
             iF->Close();
         }
-//        oF->Close();
     }
     if (channel == 0 || channel == 2){
         DilepCatIterator ci;
@@ -852,7 +851,6 @@ void compile2DTemplatesForDebug(const std::string& name, const std::string& file
             hh_H->Write((name+"_"+ci.name()).c_str());
             iF->Close();
         }
-//        oF->Close();
     }
     oF->Close();
 
@@ -956,7 +954,7 @@ void makeDataDistributions(const std::string& name, const std::string& filename,
 
 }
 
-void go(int modelToDo, int channel, std::string treeDir) {
+void go(int year, int modelToDo, int channel, std::string treeDir) {
     std::string filename = hhFilename;
 
     if(modelToDo == -1){
@@ -966,6 +964,11 @@ void go(int modelToDo, int channel, std::string treeDir) {
     }
     if(modelToDo ==5){
         return;
+    }
+
+    if(year == 2016) {
+        purCats[PURE_LP].cut = "(wjjTau2o1>=0.55||hwwLi>=2.5)";
+        purCats[PURE_HP].cut = "(wjjTau2o1<0.55&&hwwLi<2.5)";
     }
 
     //Turn on TTBar scaling
@@ -1065,7 +1068,7 @@ void go(int modelToDo, int channel, std::string treeDir) {
 }
 #endif
 
-void makeBKGInputs(int bkgToDo = BKG_QG, int channel = 0, std::string treeDir = "../trees/bkgCompLMT/"){
+void makeBKGInputs(int year, int bkgToDo = BKG_QG, int channel = 0, std::string treeDir = "../bkgCompLMT/"){
 	// channel = 0 (both), 1 (single lep), 2 (dilep)
-    go(bkgToDo,channel,treeDir);
+    go(year,bkgToDo,channel,treeDir);
 }
