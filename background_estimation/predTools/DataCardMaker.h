@@ -49,15 +49,31 @@ public:
 
 
 
-    DataCardMaker(const std::string& finalstate,const std::string& category,const std::string& period, const double luminosity, const std::string& physics)
-: finalstate(finalstate),category(category),period(period),luminosity(luminosity),physics(physics),lumiV(physics+"_"+period+"_lumi"),tag(physics +"_"+ finalstate+"_"+category+"_"+period)
+    DataCardMaker(const std::string& categoryLabel, const std::string& physicsPeriodLabel, const double luminosityScaleFactor)
+        : luminosityScaleFactor(luminosityScaleFactor), lumiV(physicsPeriodLabel+"_lumi"),
+          tag(getFileNameTag(categoryLabel, physicsPeriodLabel))
 {
-        rootFile = new TFile((std::string("datacardInputs_")+tag+".root").c_str(),"RECREATE");
+        rootFile = new TFile(getOutputRootFileName(tag).c_str(),"RECREATE");
         rootFile->SetCompressionAlgorithm(1);
         rootFile->cd();
         w = new RooWorkspace("w","w");
-        w->factory((lumiV+"["+ASTypes::flt2Str(luminosity)+"]").c_str());
+        w->factory((lumiV+"["+ASTypes::flt2Str(luminosityScaleFactor)+"]").c_str());
 }
+
+    static std::string getOutputRootFileName(const std::string& fileNameTag) {
+        std::string out = "datacardInputs_" + fileNameTag + ".root";
+        return out;
+    }
+
+    static std::string getOutputCardFileName(const std::string& fileNameTag) {
+        std::string out = "datacard_" + fileNameTag + ".txt";
+        return out;
+    }
+
+    static std::string getFileNameTag(const std::string& categoryLabel, const std::string& physicsPeriodLabel) {
+        return categoryLabel+"_"+physicsPeriodLabel;
+    }
+
     void rebinX(int nBins, double min, double max) {rebinner.reset(new PDFAdder::HistRebinX(nBins,min,max)); }
     void rebinX(const  std::vector<double>& bins){rebinner.reset(new PDFAdder::HistRebinX(bins)); }
     void rebinY(int nBins, double min, double max) {rebinner.reset(new PDFAdder::HistRebinY(nBins,min,max)); }
@@ -143,7 +159,7 @@ public:
     double addFixedYieldFromFile(const std::string& name, const int id, const std::string& fileName, const std::string& hName, const double constant = 1.0, bool isY = false){
         auto* iF =  TObjectHelper::getFile(fileName);
         auto h = TObjectHelper::getObject<TH1>(iF,hName);
-        double nEvents =luminosity*constant;
+        double nEvents =luminosityScaleFactor*constant;
         if(rebinner){
             auto * nh = rebinner->process(&*h,std::string(h->GetName())+"_rebin",isY);
             nEvents *= nh->Integral();
@@ -157,7 +173,7 @@ public:
 
     }
     double addFixedYield(const std::string& name, const int id, const double yield= 1.0, bool isY = false){
-        double nEvents =luminosity*yield;
+        double nEvents =luminosityScaleFactor*yield;
         contributions.emplace_back(name,name+"_"+tag,id,nEvents);
         return nEvents;
 
@@ -184,7 +200,7 @@ public:
     }
 
     void makeCard(){
-        std::ofstream f (std::string("datacard_")+tag+".txt",std::ios::out|std::ios::trunc);
+        std::ofstream f (getOutputCardFileName(tag),std::ios::out|std::ios::trunc);
         const std::string rfn = std::string("datacardInputs_")+tag+".root";
         const std::string dn = "data_obs";
         f<< "imax 1\n";
@@ -262,11 +278,7 @@ public:
 
 
 private:
-    const std::string finalstate;
-    const std::string category;
-    const std::string period;
-    const double luminosity;
-    const std::string physics;
+    const double luminosityScaleFactor;
     const std::string lumiV;
     const std::string tag;
     const double sqrt_s= 13000;
