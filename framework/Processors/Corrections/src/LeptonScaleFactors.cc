@@ -50,6 +50,19 @@ void LeptonScaleFactors::load(
     loadPromptLeptons(genDecays.promptMuons,selectedMuons,promptMuons);
 
 }
+//--------------------------------------------------------------------------------------------------
+void LeptonScaleFactors::loadWithoutPromptCheck(const std::vector<const Lepton*>& selectedLeptons) {
+    promptMuons    .clear();
+    promptElectrons.clear();
+
+    std::vector<const Muon*>     selectedMuons    ;
+    std::vector<const Electron*> selectedElectrons;
+    for(const auto* sl : selectedLeptons){
+        if(sl->isMuon()) promptMuons.push_back(static_cast<const Muon*>(sl));
+        else promptElectrons.push_back(static_cast<const Electron*>(sl));
+    }
+}
+
 
 //--------------------------------------------------------------------------------------------------
 // POGLeptonScaleFactors

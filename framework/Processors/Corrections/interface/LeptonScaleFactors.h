@@ -48,6 +48,7 @@ public:
 
     virtual void load(const SMDecayEvent& genDecays,
             const std::vector<const Lepton*>& selectedLeptons);
+    virtual void loadWithoutPromptCheck(const std::vector<const Lepton*>& selectedLeptons);
 
     const std::vector<const Muon*>& getPromptMuons() const {return promptMuons;}
     const std::vector<const Electron*>& getPromptElectrons() const {return promptElectrons;}
