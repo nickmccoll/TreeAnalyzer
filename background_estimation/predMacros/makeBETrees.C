@@ -98,6 +98,7 @@ public:
     	outTree->addSingle(hbbMass_,  "",  "hbbMass");
     	outTree->addSingle(hbbPT_,  "",  "hbbPT");
     	outTree->addSingle(hbbCSVCat_,  "",  "hbbCSVCat");
+    	outTree->addSingle(hbbTag_,  "",  "hbbTag");
 
     	outTree->addSingle(hhMass_,  "",  "hhMass");
     	outTree->addSingle(hhMassBasic_,  "",  "hhMassBasic");
@@ -169,25 +170,6 @@ public:
         if(isRealData()){
             dataset_ = *reader_event->dataset;
             dataRun_ = *reader_event->dataRun;
-        } else {
-            process_ = *reader_event->process;
-            dhType_  = diHiggsEvt.type;
-            xsec_    = EventWeights::getNormalizedEventWeight(*reader_event,xsec(),nSampEvt(),
-        		    parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT);
-            pu_N_    = puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::NOMINAL);
-            lep_N_   = (lepChan==DILEP ? dileptonSFProc : leptonSFProc)->getSF();
-            btag_N_  = 1.0 /*float(sjbtagSFProc->getSF(parameters.jets,{hbbCand})*ak4btagSFProc->getSF(jets_HbbV))*/;
-            topPt_N_ = topPTProc->getCorrection(mcProc,smDecayEvt);
-
-        	if ((smDecayEvt.promptElectrons.size() + smDecayEvt.promptMuons.size()) || process_ == FillerConstants::ZJETS) {
-        	    if (lepChan == SINGLELEP) {
-            		trig_N_ = trigSFProc->getSingleLeptonTriggerSF(ht_, (selectedLepton->isMuon()));
-        	    } else if (lepChan == DILEP) {
-            		trig_N_ = trigSFProc->getDileptonTriggerSF(ht_, dilep2->pt(),dilep1->isMuon(), dilep2->isMuon());
-        		} else {
-        			trig_N_ = 1.0;
-        		}
-        	} else trig_N_ = 1.0;
         }
 
         if(lepChan == SINGLELEP){
@@ -196,7 +178,6 @@ public:
             lep1ETA_  = selectedLepton->eta();
 
             if(wjjCand) {
-                hwwChi_  = hwwChi;
                 hwwLi_  = hwwLi;
                 hwwPT_ = hWW.pt();
                 wlnuMass_ = wlnu.mass();
@@ -213,7 +194,6 @@ public:
                     hhMassBasic_   = 0;
                 }
             } else {
-                hwwChi_  = 0;
                 hwwLi_  = 0;
                 hwwPT_ = 0;
                 wlnuMass_ = 0;
@@ -275,118 +255,140 @@ public:
             hbbMass_ = hbbMass;
             hbbPT_ = hbbCand->pt();
             hbbCSVCat_ = hbbCSVCat;
+            hbbTag_ = hbbTag;
         } else {
             hbbMass_ = 0;
             hbbPT_ = 0;
             hbbCSVCat_ = 0;
+            hbbTag_ = 0;
         }
         nAK4Btags_   = std::min(nMedBTags_HbbV,250);
 
         if(!isRealData()) {
+            fillWeights();
+            fillGenVariables();
+        }
+        if(addUncVariables) fillUncertaintyVariables();
 
-            auto getDecayType = [&](const FatJet* fjet) {
-        		double maxDR2 = 0.8*0.8;
+        return true;
+    }
 
-                int topDecayType = 0; // NONE b wj wjb wjj wjjb bb wjbb wjjbb
-                int maxQuarksFromTop = 0;
-                int totQuarksFromTops = 0;
-                int WDecayType  = 0; // NONE b wj wjb wjj wjjb bb wjbb wjjbb
-                int maxQuarksFromW = 0;
-                int totQuarksFromWs = 0;
-                int numB = 0;
+    void fillWeights() {
+        xsec_    = getXSecWeight();
+        pu_N_    = getPUWeight();
+        lep_N_   = getLeptonWeight();
+        btag_N_  = 1.0;
+        topPt_N_ = getTopPTWeight();
+        trig_N_  = getTriggerWeight();
+    }
 
-                for(const auto& d : smDecayEvt.topDecays) {
-                	if(d.type == TopDecay::BAD) continue;
-                    if(d.type != TopDecay::HAD){
-                		if (PhysicsUtilities::deltaR2(*d.b,*fjet) < maxDR2) {
-                			totQuarksFromTops++;
-                			numB++;
-                			if (maxQuarksFromTop == 0) maxQuarksFromTop = 1;
-                		}
-                    } else {
-                        if (!d.b) continue;
-                        bool passB = (PhysicsUtilities::deltaR2(*d.b,*fjet) < maxDR2);
-                    	int nW = (PhysicsUtilities::deltaR2(*d.W_decay.dau1,*fjet) < maxDR2) +
-                    			(PhysicsUtilities::deltaR2(*d.W_decay.dau2,*fjet) < maxDR2);
-                    	int nT = nW + passB;
-                    	totQuarksFromTops += nT;
-                    	numB += passB;
-                    	if (nT > maxQuarksFromTop) maxQuarksFromTop = nT;
+    void fillGenVariables() {
+        process_ = *reader_event->process;
+        dhType_  = diHiggsEvt.type;
+
+        auto getDecayType = [&](const FatJet* fjet) {
+            double maxDR2 = 0.8*0.8;
+
+            int topDecayType = 0; // NONE b wj wjb wjj wjjb bb wjbb wjjbb
+            int maxQuarksFromTop = 0;
+            int totQuarksFromTops = 0;
+            int WDecayType  = 0; // NONE b wj wjb wjj wjjb bb wjbb wjjbb
+            int maxQuarksFromW = 0;
+            int totQuarksFromWs = 0;
+            int numB = 0;
+
+            for(const auto& d : smDecayEvt.topDecays) {
+                if(d.type == TopDecay::BAD) continue;
+                if(d.type != TopDecay::HAD){
+                    if (PhysicsUtilities::deltaR2(*d.b,*fjet) < maxDR2) {
+                        totQuarksFromTops++;
+                        numB++;
+                        if (maxQuarksFromTop == 0) maxQuarksFromTop = 1;
                     }
-                }
-
-                if (totQuarksFromTops == 1){
-                    if(numB == 1) topDecayType = 1;
-                    else topDecayType = 2;
-                } else if(totQuarksFromTops == 2){
-                    if (numB == 1) topDecayType = 3;
-                    else if (numB == 2) topDecayType = 6;
-                    else topDecayType = 4;
-                } else if(totQuarksFromTops == 3) {
-                	if (numB == 1) topDecayType = 5;
-                	else topDecayType = 7;
-                } else if (totQuarksFromTops == 4) topDecayType = 8;
-
-                for (const auto& d : smDecayEvt.bosonDecays) {
-                    if(d.type != BosonDecay::Z_HAD && d.type != BosonDecay::W_HAD ) continue;
-                    int nW = (PhysicsUtilities::deltaR2(*d.dau1,*fjet) < maxDR2) +
-                    		(PhysicsUtilities::deltaR2(*d.dau2,*fjet) < maxDR2);
-                    if (d.dau1->absPdgId() == ParticleInfo::p_b &&
-                    		PhysicsUtilities::deltaR2(*d.dau1,*fjet) < maxDR2) numB++;
-                    if (d.dau2->absPdgId() == ParticleInfo::p_b &&
-                    		PhysicsUtilities::deltaR2(*d.dau2,*fjet) < maxDR2) numB++;
-
-                    totQuarksFromWs += nW;
-                    if (nW > maxQuarksFromW) maxQuarksFromW = nW;
-                }
-
-                if (totQuarksFromWs == 1) WDecayType = 2;
-                else if (totQuarksFromWs == 2) WDecayType = 4;
-
-                size8 decayType = 0;
-                size8 nExtraQuarks = 0;
-                if(maxQuarksFromTop >= maxQuarksFromW){
-                    decayType = topDecayType;
-                    nExtraQuarks = (totQuarksFromTops - maxQuarksFromTop) + totQuarksFromWs;
                 } else {
-                    decayType = WDecayType;
-                    nExtraQuarks = (totQuarksFromWs - maxQuarksFromW) + totQuarksFromTops;
+                    if (!d.b) continue;
+                    bool passB = (PhysicsUtilities::deltaR2(*d.b,*fjet) < maxDR2);
+                    int nW = (PhysicsUtilities::deltaR2(*d.W_decay.dau1,*fjet) < maxDR2) +
+                            (PhysicsUtilities::deltaR2(*d.W_decay.dau2,*fjet) < maxDR2);
+                    int nT = nW + passB;
+                    totQuarksFromTops += nT;
+                    numB += passB;
+                    if (nT > maxQuarksFromTop) maxQuarksFromTop = nT;
                 }
-
-                return std::make_pair(decayType,nExtraQuarks);
-            };
-
-            if (hbbCand) {
-            	std::pair<size8,size8> beVars = getDecayType(hbbCand);
-            	hbbDecayType_ = beVars.first;
-            	eQuarksInHbb_ = beVars.second;
             }
 
-            if (smDecayEvt.nLepsTT != -1) nLepsTT_ = smDecayEvt.nLepsTT;
+            if (totQuarksFromTops == 1){
+                if(numB == 1) topDecayType = 1;
+                else topDecayType = 2;
+            } else if(totQuarksFromTops == 2){
+                if (numB == 1) topDecayType = 3;
+                else if (numB == 2) topDecayType = 6;
+                else topDecayType = 4;
+            } else if(totQuarksFromTops == 3) {
+                if (numB == 1) topDecayType = 5;
+                else topDecayType = 7;
+            } else if (totQuarksFromTops == 4) topDecayType = 8;
+
+            for (const auto& d : smDecayEvt.bosonDecays) {
+                if(d.type != BosonDecay::Z_HAD && d.type != BosonDecay::W_HAD ) continue;
+                int nW = (PhysicsUtilities::deltaR2(*d.dau1,*fjet) < maxDR2) +
+                        (PhysicsUtilities::deltaR2(*d.dau2,*fjet) < maxDR2);
+                if (d.dau1->absPdgId() == ParticleInfo::p_b &&
+                        PhysicsUtilities::deltaR2(*d.dau1,*fjet) < maxDR2) numB++;
+                if (d.dau2->absPdgId() == ParticleInfo::p_b &&
+                        PhysicsUtilities::deltaR2(*d.dau2,*fjet) < maxDR2) numB++;
+
+                totQuarksFromWs += nW;
+                if (nW > maxQuarksFromW) maxQuarksFromW = nW;
+            }
+
+            if (totQuarksFromWs == 1) WDecayType = 2;
+            else if (totQuarksFromWs == 2) WDecayType = 4;
+
+            size8 decayType = 0;
+            size8 nExtraQuarks = 0;
+            if(maxQuarksFromTop >= maxQuarksFromW){
+                decayType = topDecayType;
+                nExtraQuarks = (totQuarksFromTops - maxQuarksFromTop) + totQuarksFromWs;
+            } else {
+                decayType = WDecayType;
+                nExtraQuarks = (totQuarksFromWs - maxQuarksFromW) + totQuarksFromTops;
+            }
+
+            return std::make_pair(decayType,nExtraQuarks);
+        };
+
+        if (hbbCand) {
+            std::pair<size8,size8> beVars = getDecayType(hbbCand);
+            hbbDecayType_ = beVars.first;
+            eQuarksInHbb_ = beVars.second;
         }
 
-        if(addUncVariables){
-            auto lepProc = &*(lepChan==DILEP ? dileptonSFProc : leptonSFProc);
-            const float nomMu = lepProc->getMuonSF();
-            const float nomEl = lepProc->getElectronSF();
+        if (smDecayEvt.nLepsTT != -1) nLepsTT_ = smDecayEvt.nLepsTT;
+    }
 
-            w_muIDUp_     = float(lepProc->getMuonSF(NONE,UP)*nomEl);
+    void fillUncertaintyVariables() {
+        auto lepProc = &*(lepChan==DILEP ? dileptonSFProc : leptonSFProc);
+        const float nomMu = lepProc->getMuonSF();
+        const float nomEl = lepProc->getElectronSF();
+
+        w_muIDUp_     = float(lepProc->getMuonSF(NONE,UP)*nomEl);
 //            w_muISOUp_    = float(leptonSFProc->getMuonSF(NONE,NOMINAL,UP)*nomEl);
-            w_elRecoUp_   = float(lepProc->getElectronSF(UP,NOMINAL)*nomMu);
-            w_elIDUp_     = float(lepProc->getElectronSF(NOMINAL,UP)*nomMu);
+        w_elRecoUp_   = float(lepProc->getElectronSF(UP,NOMINAL)*nomMu);
+        w_elIDUp_     = float(lepProc->getElectronSF(NOMINAL,UP)*nomMu);
 //            w_elISOUp_    = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,UP)*nomMu);
-            w_b_realUp_   = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,UP)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,UP));
-            w_b_fakeUp_   = float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},UP,NOMINAL));
-            w_puUp_       = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::UP));
+        w_b_realUp_   = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,UP)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,UP));
+        w_b_fakeUp_   = float(ak4btagSFProc->getSF(jets_HbbV,UP,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},UP,NOMINAL));
+        w_puUp_       = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::UP));
 
-            w_muIDDown_   = float(lepProc->getMuonSF(NONE,DOWN)*nomEl);
+        w_muIDDown_   = float(lepProc->getMuonSF(NONE,DOWN)*nomEl);
 //            w_muISODown_  = float(leptonSFProc->getMuonSF(NONE,NOMINAL,DOWN)*nomEl);
-            w_elRecoDown_ = float(lepProc->getElectronSF(DOWN,NOMINAL)*nomMu);
-            w_elIDDown_   = float(lepProc->getElectronSF(NOMINAL,DOWN)*nomMu);
+        w_elRecoDown_ = float(lepProc->getElectronSF(DOWN,NOMINAL)*nomMu);
+        w_elIDDown_   = float(lepProc->getElectronSF(NOMINAL,DOWN)*nomMu);
 //            w_elISODown_  = float(leptonSFProc->getElectronSF(NOMINAL,NOMINAL,DOWN)*nomMu);
-            w_b_realDown_ = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,DOWN));
-            w_b_fakeDown_ = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},DOWN,NOMINAL));
-            w_puDown_     = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::DOWN));
+        w_b_realDown_ = float(ak4btagSFProc->getSF(jets_HbbV,NOMINAL,DOWN)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},NOMINAL,DOWN));
+        w_b_fakeDown_ = float(ak4btagSFProc->getSF(jets_HbbV,DOWN,NOMINAL)* sjbtagSFProc->getSF(parameters.jets,{hbbCand},DOWN,NOMINAL));
+        w_puDown_     = float(puSFProc->getCorrection(*reader_event->nTruePUInts,CorrHelp::DOWN));
 
 //            for(unsigned int i = 1; i < 9; ++i){
 //                if(i == 5 || i ==7)continue; //told to ignore
@@ -394,11 +396,6 @@ public:
 //            }
 //            for(unsigned int i = 111; i < 211; ++i) //Number 110 is the nominal
 //                outTree->fillMulti(i_w_pdf,(*reader_event->genWeights)[i]);
-
-
-        }
-
-        return true;
     }
 
     //Event information and weights
@@ -437,6 +434,7 @@ public:
     float hbbMass_   = 0;
     float hbbPT_     = 0;
     size8 hbbCSVCat_ = 0;
+    float hbbTag_ = 0;
 
     float hhMass_    = 0;
     float hwwPT_     = 0;
