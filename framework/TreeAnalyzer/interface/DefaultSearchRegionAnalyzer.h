@@ -79,11 +79,16 @@ public:
 
     //Set all the reader constants
     virtual void setupParameters();
+    virtual void setupParametersFromEra();
+    virtual void setupProcessorParameters();
+
+
 
     //fills class member variables....can be run before child runEvent
     virtual bool runEvent() override;
 
     bool isSignal() const {return mcProc == FillerConstants::SIGNAL;}
+    bool hasPromptLeptons() const;
 
     std::shared_ptr<EventReader      > reader_event    ;
     std::shared_ptr<GenParticleReader> reader_genpart  ;
@@ -125,10 +130,10 @@ public:
     const FatJet*              wjjCand     =0;
     const FatJet*              hbbCand     =0;
     BTagging::CSVSJ_CAT        hbbCSVCat   = BTagging::CSVSJ_INCL;
+    float                      hbbTag      = 0;
     BTagging::CSVSJ_CAT        wjjCSVCat   = BTagging::CSVSJ_INCL;
 
     float                      wwDM        = 0;
-    float                      hwwChi      = 0;
     float                      hwwLi       = 0;
 
     MomentumF                  neutrino           ;
@@ -136,7 +141,6 @@ public:
     MomentumF                  wqq                ;
     MomentumF                  hWW                ;
     MomentumF                  hh                 ;
-    MomentumF                  hh_chi             ;
     MomentumF                  hh_basic           ;
     float                      hbbMass     =0     ;
 
@@ -164,6 +168,52 @@ public:
     std::unique_ptr<HEM1516TestCorrector>   HEMIssueProc;
     std::unique_ptr<HSolverChi>             hSolverChi;
     std::unique_ptr<HSolverLi>             hSolverLi;
+
+private:
+    void fillEventLabels();
+
+    void announceParameterChange();
+    void correctJetsAndMET();
+
+    void fillGenInfo();
+    void fillJetInfo();
+
+    void fillLeptonInfo();
+    void resetLeptonInfo();
+    void selectLeptons();
+    void fillTwoLepInfo();
+
+    void fillFilterResults();
+
+    void fillLeptonChannel();
+
+    void fillFatJetCandidates();
+    void resetFatJetCandidates();
+    void fillOneLepFatJetCandidates();
+    void fillTwoLepFatJetCandidates();
+
+    void fillHbbInfo();
+    void resetHbbInfo();
+
+    void fillWjjInfo();
+
+    void fillHWWInfo();
+    void resetHWWInfo();
+    void fillOneLepHWWInfo();
+    void fillTwoLepHWWInfo();
+
+    void fillHHInfo();
+    void resetHHInfo();
+
+    void fillEventWeight();
+public:
+    float getXSecWeight();
+    float getTriggerWeight();
+    float getPUWeight();
+    float getLeptonWeight();
+    float getSJBTagWeights();
+    float getAK4BTagWeights();
+    float getTopPTWeight();
 };
 }
 #endif

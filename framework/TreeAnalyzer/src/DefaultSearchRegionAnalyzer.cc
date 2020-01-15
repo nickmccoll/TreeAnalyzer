@@ -124,20 +124,31 @@ void DefaultSearchRegionAnalyzer::checkConfig()  {
 }
 //--------------------------------------------------------------------------------------------------
 void DefaultSearchRegionAnalyzer::setupParameters(){
+    announceParameterChange();
+    setupParametersFromEra();
+    setupProcessorParameters();
+}
+void DefaultSearchRegionAnalyzer::announceParameterChange() {
+    lastEra = FillerConstants::DataEra(*reader_event->dataEra);
+    std::cout << " ++  Setting era: "<<FillerConstants::DataEraNames[lastEra]<<std::endl;
+}
+void DefaultSearchRegionAnalyzer::setupParametersFromEra(){
     switch(FillerConstants::DataEra(*reader_event->dataEra)){
-    case FillerConstants::ERA_2018:
-        parameters = ReaderConstants::set2018Parameters();
-        break;
-    case FillerConstants::ERA_2017:
-        parameters = ReaderConstants::set2017Parameters();
-        break;
-    case FillerConstants::ERA_2016:
-        parameters = ReaderConstants::set2016Parameters();
-        break;
-    default:
-        throw std::invalid_argument(
-                "DefaultSearchRegionAnalyzer -> The era needs to be set to use this class");
+        case FillerConstants::ERA_2018:
+            parameters = ReaderConstants::set2018Parameters();
+            break;
+        case FillerConstants::ERA_2017:
+            parameters = ReaderConstants::set2017Parameters();
+            break;
+        case FillerConstants::ERA_2016:
+            parameters = ReaderConstants::set2016Parameters();
+            break;
+        default:
+            throw std::invalid_argument(
+                    "DefaultSearchRegionAnalyzer -> The era needs to be set to use this class");
     }
+}
+void DefaultSearchRegionAnalyzer::setupProcessorParameters(){
     if(isCorrOn(CORR_SJBTAG))  sjbtagSFProc->setParameters(parameters.jets);
     if(isCorrOn(CORR_AK4BTAG)) ak4btagSFProc->setParameters(parameters.jets);
     if(isCorrOn(CORR_TRIG))    trigSFProc->setParameters(parameters.event);
@@ -146,255 +157,326 @@ void DefaultSearchRegionAnalyzer::setupParameters(){
     if(isCorrOn(CORR_LEP))     leptonSFProc->setParameters(parameters.leptons);
     if(isCorrOn(CORR_LEP))     dileptonSFProc->setParameters(parameters.dileptons);
 
-
     hSolverLi->setParamters(parameters.hww);
 }
+
+bool DefaultSearchRegionAnalyzer::hasPromptLeptons() const {
+    if(isRealData()) return false;
+    return smDecayEvt.promptElectrons.size()
+            || smDecayEvt.promptMuons.size()
+            || *reader_event->process == FillerConstants::ZJETS;
+}
+
 //--------------------------------------------------------------------------------------------------
 bool DefaultSearchRegionAnalyzer::runEvent() {
-    if(isRealData()){
-        mcProc = FillerConstants::NOPROCESS;
-        smpName = "data";
-    } else {
-        mcProc = FillerConstants::MCProcess(*(reader_event->process));
-        signal_mass = *reader_event->sampParam;
-        if (mcProc == FillerConstants::SIGNAL){
-            smpName = TString::Format("%s_m%i",
-                    FillerConstants::SignalTypeNames[*reader_event->signalType].data(),signal_mass);
-        }
-        else smpName = FillerConstants::MCProcessNames[mcProc];
-    }
+    fillEventLabels();
 
-    //|||||||||||||||||||||||||||||| Setup parameters ||||||||||||||||||||||||||||||||||||||||
     if(*reader_event->dataEra != lastEra){
-        lastEra = FillerConstants::DataEra(*reader_event->dataEra);
-        std::cout << " ++  Setting era: "<<FillerConstants::DataEraNames[lastEra]<<std::endl;
         setupParameters();
     }
 
+    correctJetsAndMET();
 
-    //|||||||||||||||||||||||||||||| CORRECT JETS AND MET FIRST ||||||||||||||||||||||||||||||
-    if(!isRealData()){
-        if(isCorrOn(CORR_JES) ){
-            Met dummyMET =reader_event->met;
-            JESUncProc ->processJets(*reader_jet,reader_event->met);
-            JESUncProc ->processFatJets(reader_fatjet_noLep->jets);
-            JESUncProc ->processFatJets(reader_fatjet->jets);
-        }
-        if(isCorrOn(CORR_JER) ){
-            JERProc   ->processJets(
-                    *reader_jet,reader_event->met,reader_jet->genJets,reader_event->rho.val());
-            JERProc ->processFatJets(
-                    reader_fatjet_noLep->jets,std::vector<GenJet>(),reader_event->rho.val());
-            JERProc ->processFatJets(
-                    reader_fatjet->jets,reader_fatjet->genJets,reader_event->rho.val());
-        }
-        if(isCorrOn(CORR_MET) ){
-            METUncProc->process(reader_event->met,*reader_event);
-        }
-        if(isCorrOn(CORR_HEM1516) && *reader_event->dataEra == FillerConstants::ERA_2018) {
-        	HEMIssueProc->processJets(*reader_jet,reader_event->met);
-            HEMIssueProc->processFatJets(reader_fatjet_noLep->jets);
-        	HEMIssueProc->processFatJets(reader_fatjet->jets);
-        }
+    fillGenInfo();
+    fillJetInfo();
+    fillLeptonInfo();
+    fillFilterResults();
+    fillLeptonChannel();
+
+    fillFatJetCandidates();
+    fillHbbInfo();
+    fillWjjInfo();
+    fillHWWInfo();
+    fillHHInfo();
+
+    fillEventWeight();
+
+    return true;
+}
+
+void DefaultSearchRegionAnalyzer::fillEventLabels() {
+    if(isRealData()){
+        mcProc = FillerConstants::NOPROCESS;
+        smpName = "data";
+        return;
     }
-
-    //|||||||||||||||||||||||||||||| GEN PARTICLES ||||||||||||||||||||||||||||||
-    if(reader_genpart){
-        if(mcProc == FillerConstants::SIGNAL) diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
-        smDecayEvt.setDecayInfo(reader_genpart->genParticles,*reader_event->sampParam);
+    mcProc = FillerConstants::MCProcess(*(reader_event->process));
+    signal_mass = *reader_event->sampParam;
+    if (mcProc == FillerConstants::SIGNAL){
+        smpName = TString::Format("%s_m%i",
+                FillerConstants::SignalTypeNames[*reader_event->signalType].data(),signal_mass);
     }
+    else smpName = FillerConstants::MCProcessNames[mcProc];
+}
 
-    //|||||||||||||||||||||||||||||| CHS JETS ||||||||||||||||||||||||||||||
-    if(reader_jet){
-        jets_ht = PhysicsUtilities::selObjsMom(reader_jet->jets,30);
-        ht = JetKinematics::ht(jets_ht);
 
-        jets = PhysicsUtilities::selObjsMom(reader_jet->jets,
-                parameters.jets.minJetPT,parameters.jets.maxJetETA,
-                [&](const Jet* j){return (j->*parameters.jets.passJetID)();} );
-        nMedBTags = PhysicsUtilities::selObjsMomD(jets,
-                parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
-                [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
+void DefaultSearchRegionAnalyzer::correctJetsAndMET() {
+    if(!isRealData()) return;
+
+    if(isCorrOn(CORR_JES) ){
+        Met dummyMET =reader_event->met;
+        JESUncProc ->processJets(*reader_jet,reader_event->met);
+        JESUncProc ->processFatJets(reader_fatjet_noLep->jets);
+        JESUncProc ->processFatJets(reader_fatjet->jets);
     }
-
-    //|||||||||||||||||||||||||||||| LEPTONS ||||||||||||||||||||||||||||||
-    if(reader_electron && reader_muon){
-        selectedLeptons = LeptonProcessor::getLeptons(parameters.leptons,
-                *reader_muon,*reader_electron);
-        selectedLepton = selectedLeptons.size() ? selectedLeptons.front() : 0;
-
-        selectedDileptons = DileptonProcessor::getLeptons(
-                parameters.dileptons,*reader_muon,*reader_electron);
-        if (selectedDileptons.size() >= 2) {
-            dilep1 = selectedDileptons[0];
-            dilep2 = selectedDileptons[1];
-            llMass = (dilep1->p4()+dilep2->p4()).mass();
-            llDR = PhysicsUtilities::deltaR(*dilep1,*dilep2);
-            llMetDphi = PhysicsUtilities::absDeltaPhi(reader_event->met,(dilep1->p4()+dilep2->p4()));
-        } else {
-            dilep1 = 0;
-            dilep2 = 0;
-            llMass = 9999;
-            llDR = 9999;
-            llMetDphi = 9999;
-        }
+    if(isCorrOn(CORR_JER) ){
+        JERProc   ->processJets(
+                *reader_jet,reader_event->met,reader_jet->genJets,reader_event->rho.val());
+        JERProc ->processFatJets(
+                reader_fatjet_noLep->jets,std::vector<GenJet>(),reader_event->rho.val());
+        JERProc ->processFatJets(
+                reader_fatjet->jets,reader_fatjet->genJets,reader_event->rho.val());
     }
+    if(isCorrOn(CORR_MET) ){
+        METUncProc->process(reader_event->met,*reader_event);
+    }
+    if(isCorrOn(CORR_HEM1516) && *reader_event->dataEra == FillerConstants::ERA_2018) {
+        HEMIssueProc->processJets(*reader_jet,reader_event->met);
+        HEMIssueProc->processFatJets(reader_fatjet_noLep->jets);
+        HEMIssueProc->processFatJets(reader_fatjet->jets);
+    }
+}
 
-    //|||||||||||||||||||||||||||||| FILTERS ||||||||||||||||||||||||||||||
+void DefaultSearchRegionAnalyzer::fillGenInfo() {
+    if(!reader_genpart) return;
+    if(mcProc == FillerConstants::SIGNAL)
+        diHiggsEvt.setDecayInfo(reader_genpart->genParticles);
+    smDecayEvt.setDecayInfo(reader_genpart->genParticles,*reader_event->sampParam);
+}
+
+void DefaultSearchRegionAnalyzer::fillJetInfo() {
+    if(!reader_jet) return;
+
+    jets_ht = PhysicsUtilities::selObjsMom(reader_jet->jets,30);
+    ht = JetKinematics::ht(jets_ht);
+
+    jets = PhysicsUtilities::selObjsMom(reader_jet->jets,
+            parameters.jets.minJetPT,parameters.jets.maxJetETA,
+            [&](const Jet* j){return (j->*parameters.jets.passJetID)();} );
+    nMedBTags = PhysicsUtilities::selObjsMomD(jets,
+            parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
+            [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
+}
+
+void DefaultSearchRegionAnalyzer::fillLeptonInfo() {
+    if(reader_muon == 0 || reader_electron == 0) return;
+
+    resetLeptonInfo();
+    selectLeptons();
+    if (selectedDileptons.size() >= 2) fillTwoLepInfo();
+}
+void DefaultSearchRegionAnalyzer::resetLeptonInfo() {
+    selectedLeptons.clear();
+    selectedLepton = 0;
+    selectedDileptons.clear();
+    dilep1 = 0;
+    dilep2 = 0;
+    llMass = 9999;
+    llDR = 9999;
+    llMetDphi = 9999;
+
+}
+void DefaultSearchRegionAnalyzer::selectLeptons() {
+    selectedLeptons = LeptonProcessor::getLeptons(parameters.leptons,
+            *reader_muon,*reader_electron);
+    selectedLepton = selectedLeptons.size() ? selectedLeptons.front() : 0;
+
+    selectedDileptons = DileptonProcessor::getLeptons(
+            parameters.dileptons,*reader_muon,*reader_electron);
+}
+void DefaultSearchRegionAnalyzer::fillTwoLepInfo() {
+    dilep1 = selectedDileptons[0];
+    dilep2 = selectedDileptons[1];
+    llMass = (dilep1->p4()+dilep2->p4()).mass();
+    llDR = PhysicsUtilities::deltaR(*dilep1,*dilep2);
+    llMetDphi = PhysicsUtilities::absDeltaPhi(reader_event->met,(dilep1->p4()+dilep2->p4()));
+}
+
+void DefaultSearchRegionAnalyzer::fillFilterResults() {
     passEventFilters= EventSelection::passEventFilters(parameters.event,*reader_event);
     passTriggerPreselection= EventSelection::passTriggerPreselection(
             parameters.event,*reader_event,ht,selectedLeptons);
     passTriggerPreselection2l = EventSelection::passTriggerPreselection(
             parameters.event,*reader_event,ht,selectedDileptons);
+}
 
-    //||||||||||||||||||||||||| CLASSIFY LEPTON CHANNEL |||||||||||||||||||||||||
+void DefaultSearchRegionAnalyzer::fillLeptonChannel() {
     lepChan = NOCHANNEL;
     if (selectedDileptons.size() == 2 && dilep1->q() != dilep2->q() && passTriggerPreselection2l)
         lepChan = DILEP;
     else if (selectedDileptons.size() < 2 && selectedLepton && passTriggerPreselection)
         lepChan = SINGLELEP;
+}
 
-    //|||||||||||||||||||||||||||||| FATJETS ||||||||||||||||||||||||||||||
+void DefaultSearchRegionAnalyzer::fillFatJetCandidates() {
+    resetFatJetCandidates();
+    if(lepChan == SINGLELEP) fillOneLepFatJetCandidates();
+    else if(lepChan == DILEP) fillTwoLepFatJetCandidates();
+}
+void DefaultSearchRegionAnalyzer::resetFatJetCandidates() {
+    hbbCand = 0;
+    wjjCand = 0;
+}
+void DefaultSearchRegionAnalyzer::fillOneLepFatJetCandidates() {
+    if(reader_fatjet && reader_fatjet_noLep) {
+        fjProc->loadFatJets(parameters.fatJets,*reader_fatjet,*reader_fatjet_noLep,selectedLepton);
+        hbbCand     = fjProc->getHBBCand();
+        wjjCand     = fjProc->getWjjCand();
+    }
+}
+void DefaultSearchRegionAnalyzer::fillTwoLepFatJetCandidates() {
     if(reader_fatjet) {
-        if (lepChan == SINGLELEP && reader_fatjet_noLep) {
-            fjProc->loadFatJets(parameters.fatJets,*reader_fatjet,*reader_fatjet_noLep,selectedLepton);
-            hbbCand     = fjProc->getHBBCand();
-            wjjCand     = fjProc->getWjjCand();
-            hbbCSVCat   = hbbCand ? BTagging::getCSVSJCat(parameters.jets,hbbCand->subJets())
-            : BTagging::CSVSJ_INCL ;
-            wjjCSVCat   = wjjCand ? BTagging::getCSVSJCat(parameters.jets,wjjCand->subJets())
-            : BTagging::CSVSJ_INCL ;
-        } else if (lepChan == DILEP) {
-            fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,dilep1,dilep2);
-            hbbCand     = fjProc->getDilepHbbCand();
-            hbbCSVCat   = hbbCand ? BTagging::getCSVSJCat(parameters.jets,hbbCand->subJets())
-            : BTagging::CSVSJ_INCL ;
+        fjProc->loadDilepFatJet(parameters.fatJets,*reader_fatjet,dilep1,dilep2);
+        hbbCand     = fjProc->getDilepHbbCand();
+    }
+}
 
-            wjjCand = 0;
-            wjjCSVCat = BTagging::CSVSJ_INCL;
-        } else {
-            hbbCand = 0;
-            wjjCand = 0;
-            hbbCSVCat = BTagging::CSVSJ_INCL;
-            wjjCSVCat = BTagging::CSVSJ_INCL;
-        }
-    } else {
-        hbbCand = 0;
-        wjjCand = 0;
-        hbbCSVCat = BTagging::CSVSJ_INCL;
+void DefaultSearchRegionAnalyzer::fillHbbInfo() {
+    if(!hbbCand) {
+        resetHbbInfo();
+        return;
+    }
+
+    hbbCSVCat   = BTagging::getCSVSJCat(parameters.jets,hbbCand->subJets());
+    hbbTag      = BTagging::getFatJetTagValue(parameters.jets,*hbbCand);
+    hbbMass = isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
+
+    jets_HbbV = PhysicsUtilities::selObjsD(jets,
+            [&](const Jet* j){return  PhysicsUtilities::deltaR2(*j,*hbbCand ) >= 1.2*1.2;});
+
+    nMedBTags_HbbV = PhysicsUtilities::selObjsMomD(jets_HbbV,
+            parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
+            [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
+}
+void DefaultSearchRegionAnalyzer::resetHbbInfo() {
+    hbbCSVCat = BTagging::CSVSJ_INCL;
+    hbbTag = 0;
+    hbbMass = 0;
+    jets_HbbV = jets;
+    nMedBTags_HbbV = nMedBTags;
+}
+
+void DefaultSearchRegionAnalyzer::fillWjjInfo() {
+    if(!wjjCand) {
         wjjCSVCat = BTagging::CSVSJ_INCL;
+        return;
     }
+    wjjCSVCat   = BTagging::getCSVSJCat(parameters.jets,wjjCand->subJets());
+}
 
-    if (hbbCand) {
-        hbbMass = isCorrOn(CORR_SDMASS) ? hbbFJSFProc->getCorrSDMass(hbbCand) : hbbCand->sdMom().mass();
-
-        if (reader_jet) {
-            jets_HbbV = PhysicsUtilities::selObjsD(jets,
-                    [&](const Jet* j){return  PhysicsUtilities::deltaR2(*j,*hbbCand ) >= 1.2*1.2;});
-            nMedBTags_HbbV = PhysicsUtilities::selObjsMomD(jets_HbbV,
-                    parameters.jets.minBtagJetPT,parameters.jets.maxBTagJetETA,
-                    [&](const Jet* j){return BTagging::passJetBTagWP(parameters.jets,*j);} ).size();
-        }
-    } else {
-        hbbMass = 0;
-        if (reader_jet) {
-            jets_HbbV = jets;
-            nMedBTags_HbbV = nMedBTags;
-        }
-    }
+void DefaultSearchRegionAnalyzer::fillHWWInfo() {
+    resetHWWInfo();
+    if(lepChan == SINGLELEP) fillOneLepHWWInfo();
+    else if(lepChan == DILEP) fillTwoLepHWWInfo();
+}
+void DefaultSearchRegionAnalyzer::resetHWWInfo() {
+    hwwLi       =  1000;
+    neutrino    =  MomentumF();
+    wlnu        =  MomentumF();
+    wqq         =  MomentumF();
+    wwDM        =  0;
+    hWW         =  MomentumF();
+}
+void DefaultSearchRegionAnalyzer::fillOneLepHWWInfo() {
+    if(!wjjCand) return;
 
     HSolverLiInfo  hwwInfoLi;
-    HSolverChiInfo hwwInfoChi;
-    if(wjjCand){
-        const double qqSDMass = wjjCand->sdMom().mass();
-        hwwChi   = hSolverChi->hSolverMinimization(selectedLepton->p4(),wjjCand->p4(),
-                reader_event->met.p4(),qqSDMass <60,parameters.hww, &hwwInfoChi);
+    const double qqSDMass = wjjCand->sdMom().mass();
+    hwwLi   = hSolverLi->minimize(selectedLepton->p4(),reader_event->met.p4(),
+            wjjCand->p4(), qqSDMass, hwwInfoLi);
 
-        hwwLi   = hSolverLi->minimize(selectedLepton->p4(),reader_event->met.p4(),
-                wjjCand->p4(), qqSDMass, hwwInfoLi);
+    neutrino = hwwInfoLi.neutrino;
+    wlnu     = hwwInfoLi.wlnu;
+    wqq      = hwwInfoLi.wqqjet;
+    wwDM     = PhysicsUtilities::deltaR( wlnu,wqq) * hWW.pt()/2.0;
+    hWW      = hwwInfoLi.hWW;
+}
+void DefaultSearchRegionAnalyzer::fillTwoLepHWWInfo() {
+    hWW = Hww2lSolver::getSimpleHiggsMom(dilep1->p4()+dilep2->p4(),reader_event->met,
+            parameters.hww.dilepInvMassGuess);
+}
 
-        neutrino = hwwInfoLi.neutrino;
-        wlnu     = hwwInfoLi.wlnu;
-        wqq      = hwwInfoLi.wqqjet;
-        hWW      = hwwInfoLi.hWW;
-        wwDM     = PhysicsUtilities::deltaR( wlnu,wqq) * hWW.pt()/2.0;
-    } else {
-        hwwChi      =  1000;
-        hwwLi       =  1000;
-        neutrino    =  MomentumF();
-        wlnu        =  MomentumF();
-        wqq         =  MomentumF();
-        hWW         =  MomentumF();
-        wwDM        =  0;
-    }
+void DefaultSearchRegionAnalyzer::fillHHInfo() {
+    resetHHInfo();
 
-    if (hbbCand && lepChan == DILEP) {
-        hWW = Hww2lSolver::getSimpleHiggsMom(dilep1->p4()+dilep2->p4(),reader_event->met,
-                parameters.hww.dilepInvMassGuess);
-        hh = hbbCand->p4() + hWW.p4();
+    bool hasSolution = (hbbCand && lepChan == DILEP) || (hbbCand && wjjCand);
+    if(!hasSolution) return;
 
-        hh_chi     =  MomentumF();
-        hh_basic   =  MomentumF();
-    } else if (hbbCand && wjjCand && lepChan == SINGLELEP) {
-        hh =  hWW.p4() + hbbCand->p4();
-        hh_chi   =  hbbCand->p4() + hwwInfoChi.hWW;
-
+    hh = hbbCand->p4() + hWW.p4();
+    if(lepChan == SINGLELEP) {
         auto oldN =  HSolverBasic::getInvisible(reader_event->met,
                 (selectedLepton->p4() + wjjCand->p4()) );
         hh_basic =  hbbCand->p4() + oldN.p4() + selectedLepton->p4() + wjjCand->p4();
-    } else {
-        hWW        =  MomentumF();
-        hh         =  MomentumF();
-        hh_chi     =  MomentumF();
-        hh_basic   =  MomentumF();
     }
+}
+void DefaultSearchRegionAnalyzer::resetHHInfo() {
+    hh         =  MomentumF();
+    hh_basic   =  MomentumF();
+}
 
-
-    //|||||||||||||||||||||||||||||| EVENT WEIGHTS ||||||||||||||||||||||||||||||
+void DefaultSearchRegionAnalyzer::fillEventWeight() {
     weight = 1;
-    if(!isRealData()){
-        if(isCorrOn(CORR_XSEC)) {
-            weight *= EventWeights::getNormalizedEventWeight(
-                    *reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT);
-            if(FillerConstants::DataEra(*reader_event->dataEra) == FillerConstants::ERA_2017) {
-            	weight *= EventSelection::get2017CrossTrigWeight(*reader_event);
-            }
-        }
-        if(isCorrOn(CORR_TRIG) && (smDecayEvt.promptElectrons.size()+smDecayEvt.promptMuons.size())) {
-        	if (lepChan == DILEP) {
-                weight *= trigSFProc->getDileptonTriggerSF(ht,dilep2->pt(),dilep1->isMuon(),
-                		dilep2->isMuon());
-        	} else {
-                weight *= trigSFProc->getSingleLeptonTriggerSF(
-                        ht, (selectedLepton && selectedLepton->isMuon()));
-        	}
-        }
-        if(isCorrOn(CORR_PU) ) {
-        	float pucorr = puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);
-            weight *= pucorr;
-        }
-        if(isCorrOn(CORR_LEP)){
-            dileptonSFProc->load(smDecayEvt,selectedDileptons);
-            leptonSFProc->load(smDecayEvt,selectedLeptons);
-            if (lepChan == DILEP) {
-                weight *= dileptonSFProc->getSF();
-            } else {
-                weight *= leptonSFProc->getSF();
-            }
-        }
-        if(isCorrOn(CORR_SJBTAG)){
-            weight    *= sjbtagSFProc->getSF(parameters.jets,{hbbCand});
-        }
-        if(isCorrOn(CORR_AK4BTAG)){
-            weight    *= ak4btagSFProc->getSF(jets_HbbV);
+    if(isRealData()) return;
 
-        }
-        if(isCorrOn(CORR_TOPPT)){
-            weight *= topPTProc->getCorrection(mcProc,smDecayEvt);
-        }
-
+    if(isCorrOn(CORR_XSEC)) weight *= getXSecWeight();
+    if(isCorrOn(CORR_TRIG)) weight *= getTriggerWeight();
+    if(isCorrOn(CORR_PU)) weight *= getPUWeight();
+    if(isCorrOn(CORR_LEP)) weight *= getLeptonWeight();
+    if(isCorrOn(CORR_SJBTAG)) weight *= getSJBTagWeights();
+    if(isCorrOn(CORR_AK4BTAG)) weight *= getAK4BTagWeights();
+    if(isCorrOn(CORR_TOPPT)) weight *= getTopPTWeight();
+}
+float DefaultSearchRegionAnalyzer::getXSecWeight() {
+    return EventWeights::getNormalizedEventWeight(
+            *reader_event,xsec(),nSampEvt(),parameters.event,smDecayEvt.genMtt,smDecayEvt.nLepsTT);
+}
+float DefaultSearchRegionAnalyzer::getTriggerWeight() {
+    double triggerWeight = 1;
+    if(FillerConstants::DataEra(*reader_event->dataEra) == FillerConstants::ERA_2017) {
+        triggerWeight *= EventSelection::get2017CrossTrigWeight(*reader_event);
     }
-    return true;
+
+    if(!hasPromptLeptons()) return triggerWeight;
+
+    if (lepChan == DILEP) {
+        triggerWeight *= trigSFProc->getDileptonTriggerSF(ht,dilep2->pt(),dilep1->isMuon(),
+                dilep2->isMuon());
+    } else if(selectedLepton) {
+        triggerWeight *= trigSFProc->getSingleLeptonTriggerSF(
+                ht, selectedLepton->isMuon());
+    }
+    return triggerWeight;
+}
+float DefaultSearchRegionAnalyzer::getPUWeight() {
+    return puSFProc->getCorrection(reader_event->nTruePUInts.val(),CorrHelp::NOMINAL);
+}
+float DefaultSearchRegionAnalyzer::getLeptonWeight() {
+    LeptonScaleFactors * sfProc = 0;
+    const std::vector<const Lepton*> * leptonCollection;
+
+    if (lepChan == DILEP) {
+        sfProc = dileptonSFProc.get();
+        leptonCollection = &selectedDileptons;
+    } else {
+        sfProc = leptonSFProc.get();
+        leptonCollection = &selectedLeptons;
+    }
+
+    if(*reader_event->process == FillerConstants::ZJETS) {
+        sfProc->loadWithoutPromptCheck(*leptonCollection);
+    } else {
+        sfProc->load(smDecayEvt,*leptonCollection);
+    }
+    return sfProc->getSF();
+}
+float DefaultSearchRegionAnalyzer::getSJBTagWeights() {
+    return sjbtagSFProc->getSF(parameters.jets,{hbbCand});
+}
+float DefaultSearchRegionAnalyzer::getAK4BTagWeights() {
+    return ak4btagSFProc->getSF(jets_HbbV);
+}
+float DefaultSearchRegionAnalyzer::getTopPTWeight() {
+    return topPTProc->getCorrection(mcProc,smDecayEvt);
 }
 }
 //--------------------------------------------------------------------------------------------------
