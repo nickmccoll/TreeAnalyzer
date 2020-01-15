@@ -102,6 +102,7 @@ ParameterSet setCommonParameters() {
 
     paramSet.jets.getJetBTagVal = &BaseRecoJet::deep_flavor;
     paramSet.jets.jetBTagWP     = paramSet.jets.DeepFlavor_WP [BTagging::BTAG_M];
+    paramSet.jets.getFatJetTagVal = &FatJet::deep_MDZHbb;
     paramSet.jets.getSJBTagVal = &BaseRecoJet::deep_csv;
     paramSet.jets.sjBTagLWP = paramSet.jets.DeepCSV_WP [BTagging::BTAG_L];
     paramSet.jets.sjBTagMWP = paramSet.jets.DeepCSV_WP [BTagging::BTAG_M];

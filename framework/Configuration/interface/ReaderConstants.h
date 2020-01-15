@@ -135,6 +135,7 @@ class BaseRecoJet;
 class Jet;
 namespace BTagging {
     typedef  float (BaseRecoJet::*getBTagVal)() const;
+    typedef  float (FatJet::*getFatJetTagVal)() const;
 }
 namespace JetProcessor{
 typedef  bool (Jet::*jetFun)() const;
@@ -154,6 +155,9 @@ struct JetParameters {
 
     BTagging::getBTagVal getJetBTagVal;
     float jetBTagWP;
+
+    BTagging::getFatJetTagVal getFatJetTagVal;
+
     BTagging::getBTagVal getSJBTagVal;
     float sjBTagLWP;
     float sjBTagMWP;
@@ -162,6 +166,7 @@ struct JetParameters {
     BTagging::getBTagVal jetBtagCorrGetBTagVal;
     std::string          jetBtagCorrSFFile;
     std::string          jetBtagCorrEffFile;
+
     std::vector<float>   sjBtagCorrWP;
     BTagging::getBTagVal sjBtagCorrGetBTagVal;
     std::string          sjBtagCorrSFFile;
