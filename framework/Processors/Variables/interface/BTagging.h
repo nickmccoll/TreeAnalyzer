@@ -9,19 +9,35 @@ namespace TAna {
 namespace BTagging{
 enum  BTAGWP { BTAG_INCL, BTAG_L, BTAG_M, BTAG_T};
 
+
+template<typename Jet>
+float getJetBTagValue(const JetParameters& params, const Jet& jet){
+    return (jet.*params.getJetBTagVal)() ;
+}
+
+template<typename Jet>
+float getSubjetBTagValue(const JetParameters& params, const Jet& subJet){
+    return (subJet.*params.getSJBTagVal)() ;
+}
+
+template<typename Jet>
+float getFatJetTagValue(const JetParameters& params, const Jet& jet){
+    return (jet.*params.getFatJetTagVal)() ;
+}
+
 template<typename Jet>
 bool passJetBTagWP(const JetParameters& params, const Jet& jet){
-    return (jet.*params.getJetBTagVal)() >= params.jetBTagWP ;
+    return getJetBTagValue(params,jet) >= params.jetBTagWP ;
 }
 
 template<typename Jet>
 bool passSubjetBTagLWP(const JetParameters& params, const Jet& subjet){
-    return (subjet.*params.getSJBTagVal)() >= params.sjBTagLWP ;
+    return getSubjetBTagValue(params,subjet) >= params.sjBTagLWP ;
 }
 
 template<typename Jet>
 bool passSubjetBTagMWP(const JetParameters& params, const Jet& subjet){
-    return (subjet.*params.getSJBTagVal)() >= params.sjBTagMWP ;
+    return getSubjetBTagValue(params,subjet) >= params.sjBTagMWP ;
 }
 
 
