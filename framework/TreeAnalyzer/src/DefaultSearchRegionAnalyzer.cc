@@ -51,7 +51,7 @@ DefaultSearchRegionAnalyzer::DefaultSearchRegionAnalyzer(std::string fileName,
 
     JESUncProc . reset(new JESUncShifter());
     METUncProc . reset(new METUncShifter());
-    HEMIssueProc.reset(new HEM1516TestCorrector);
+    HEMIssueProc.reset(new HEM1516TestCorrector());
     hSolverChi . reset(new HSolverChi());
     hSolverLi . reset(new HSolverLi(dataDirectory));
 
