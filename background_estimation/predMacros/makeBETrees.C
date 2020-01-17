@@ -89,6 +89,8 @@ public:
         outTree->addSingle(lep2PT_, "", "lep2PT");
     	outTree->addSingle(lep1ETA_,  "",  "lep1ETA");
     	outTree->addSingle(lep2ETA_,  "",  "lep2ETA");
+        outTree->addSingle(lep1Phi_,  "",  "lep1Phi");
+        outTree->addSingle(lep2Phi_,  "",  "lep2Phi");
 
         outTree->addSingle(dilepPT_, "", "dilepPT");
         outTree->addSingle(dilepMass_, "", "dilepMass");
@@ -96,6 +98,9 @@ public:
         outTree->addSingle(llMetDphi_, "", "llMetDphi");
 
     	outTree->addSingle(hbbMass_,  "",  "hbbMass");
+        outTree->addSingle(hbbMassUp_,  "",  "hbbMassUp");
+        outTree->addSingle(hbbMassDown_,  "",  "hbbMassDown");
+
     	outTree->addSingle(hbbPT_,  "",  "hbbPT");
     	outTree->addSingle(hbbCSVCat_,  "",  "hbbCSVCat");
     	outTree->addSingle(hbbTag_,  "",  "hbbTag");
@@ -175,6 +180,7 @@ public:
             isMuon1_  = selectedLepton->isMuon();
             lep1PT_   = selectedLepton->pt();
             lep1ETA_  = selectedLepton->eta();
+            lep1Phi_  = selectedLepton->phi();
 
             if(wjjCand) {
                 hwwLi_  = hwwLi;
@@ -206,12 +212,13 @@ public:
             }
 
             isMuon2_ = 0;
-        	lep2PT_  = 0;
-        	lep2ETA_ = 0;
-        	dilepPT_ = 0;
-        	dilepMass_ = 0;
-        	dilepDR_   = 0;
-        	llMetDphi_ = 0;
+            lep2PT_  = 0;
+            lep2ETA_ = 0;
+            lep2Phi_ = 0;
+            dilepPT_ = 0;
+            dilepMass_ = 0;
+            dilepDR_   = 0;
+            llMetDphi_ = 0;
 
         } else if (lepChan == DILEP) {
         	isMuon1_ = dilep1->isMuon();
@@ -220,6 +227,8 @@ public:
         	lep2PT_  = dilep2->pt();
             lep1ETA_  = dilep1->eta();
             lep2ETA_  = dilep2->eta();
+            lep1Phi_  = dilep1->phi();
+            lep2Phi_  = dilep2->phi();
 
         	dilepPT_   = (dilep1->p4()+dilep2->p4()).pt();
         	dilepMass_ = llMass;
@@ -247,15 +256,22 @@ public:
             lep2PT_  = 0;
             lep1ETA_  = 0;
             lep2ETA_  = 0;
+            lep1Phi_  = 0;
+            lep2Phi_  = 0;
         }
 
         if(hbbCand) {
             hbbMass_ = hbbMass;
+            hbbMassUp_ = hbbFJSFProc->getCorrSDMassUp(hbbCand);
+            hbbMassDown_ = hbbFJSFProc->getCorrSDMassDown(hbbCand);
+
             hbbPT_ = hbbCand->pt();
             hbbCSVCat_ = hbbCSVCat;
             hbbTag_ = hbbTag;
         } else {
             hbbMass_ = 0;
+            hbbMassUp_ = 0;
+            hbbMassDown_ = 0;
             hbbPT_ = 0;
             hbbCSVCat_ = 0;
             hbbTag_ = 0;
@@ -423,6 +439,8 @@ public:
     float lep2PT_     = 0;
     float lep1ETA_    = 0;
     float lep2ETA_    = 0;
+    float lep1Phi_    = 0;
+    float lep2Phi_    = 0;
 
     float dilepPT_    = 0;
     float dilepMass_  = 0;
@@ -430,6 +448,9 @@ public:
     float llMetDphi_  = 0;
 
     float hbbMass_   = 0;
+    float hbbMassUp_   = 0;
+    float hbbMassDown_   = 0;
+
     float hbbPT_     = 0;
     size8 hbbCSVCat_ = 0;
     float hbbTag_ = 0;

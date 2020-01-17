@@ -44,6 +44,14 @@ float HbbFatJetScaleFactors::getCorrSDMass(const FatJet* fj) const {
     return fj->rawSdMom().mass() * getMassScaleFactor(fj->pt()*getJEC(fj), fj->absEta());
 }
 //--------------------------------------------------------------------------------------------------
+float HbbFatJetScaleFactors::getCorrSDMassUp(const FatJet* fj) const {
+    return fj->rawSDMassUp() * getMassScaleFactor(fj->pt()*getJEC(fj), fj->absEta());
+}
+//--------------------------------------------------------------------------------------------------
+float HbbFatJetScaleFactors::getCorrSDMassDown(const FatJet* fj) const {
+    return fj->rawSDMassDown() * getMassScaleFactor(fj->pt()*getJEC(fj), fj->absEta());
+}
+//--------------------------------------------------------------------------------------------------
 //--------------------------------------------------------------------------------------------------
 SoftDropMassScaleFactorsFromW::SoftDropMassScaleFactorsFromW(const std::string& dataDir, const std::string& sfFile, bool verbose ){
     TFile * file = TObjectHelper::getFile(dataDir+sfFile,"read",verbose);

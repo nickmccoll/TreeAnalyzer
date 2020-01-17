@@ -16,6 +16,9 @@ public:
     float getMassScaleFactor(const float corrJetPT, const float jetAbsETA) const;
     float getJEC(const FatJet* fj) const;
     float getCorrSDMass(const FatJet* fj) const;
+    float getCorrSDMassUp(const FatJet* fj) const;
+    float getCorrSDMassDown(const FatJet* fj) const;
+
 private:
 
 
