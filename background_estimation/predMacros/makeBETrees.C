@@ -27,6 +27,7 @@
 #include "Processors/Corrections/interface/BTagScaleFactors.h"
 #include "Processors/Corrections/interface/LeptonScaleFactors.h"
 #include "Processors/Corrections/interface/JetAndMETCorrections.h"
+#include "Processors/Corrections/interface/FatJetScaleFactors.h"
 
 #include "TPRegexp.h"
 using namespace TAna;
