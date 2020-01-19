@@ -417,7 +417,7 @@ public:
     size8 process_    = 0;
     size8 dhType_     = 0;
     size8 dataset_    = 0;
-    size  dataRun_    = 0;
+    size8 dataRun_    = 0;
     float xsec_       = 0;
     float trig_N_     = 0;
     float pu_N_       = 0;
