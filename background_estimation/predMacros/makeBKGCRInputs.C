@@ -3,7 +3,7 @@
 #include "makeBKGInputs.C"
 #endif
 
-void makeBKGCRInputs(int year, bool doTopRegion = true, int bkgToDo = BKG_QG, int channel = 0, std::string treeDir = "../trees/"){
+void makeBKGCRInputs(bool doTopRegion = true, int bkgToDo = BKG_QG, int channel = 0, std::string treeDir = "../"){
 	if(doTopRegion){
 	    selCuts1[SEL1_NONE].cut = preSel1.cut;
 	    selCuts1[SEL1_LB].cut   = preSel1.cut+ "&&"+wjjBC.cut;
@@ -16,11 +16,11 @@ void makeBKGCRInputs(int year, bool doTopRegion = true, int bkgToDo = BKG_QG, in
         selCuts2[SEL2_FULL].cut  = preSel2.cut+"&&"+abV.cut+"&&"+drCrC.cut+"&&"+mllV.cut+"&&"+metC.cut+"&&"+dPhiC.cut;
 
 	    hhFilename +="_TopCR";
-	    go(year,bkgToDo,channel,treeDir+"/bkgCompLMT/");
+	    go(bkgToDo,channel,treeDir+"/bkgCompLMT/");
 	} else {
 	    btagCats = qgBtagCats;
 	    hhFilename +="_NonTopCR";
-	    go(year,bkgToDo,channel,treeDir+"/bkgCompAB/");
+	    go(bkgToDo,channel,treeDir+"/bkgCompAB/");
 	}
 
 }

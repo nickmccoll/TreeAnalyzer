@@ -126,7 +126,7 @@ public:
 
             for(unsigned int iSe = 0; iSe < sels.size(); ++iSe){
                 double sel   = selSels[iSe]->EvalInstance();
-                if(sel == 0) continue;
+//                if(sel == 0) continue;
                 std::string thisPre = prefix + samps[iS].name + std::string("_") +sels[iSe].first;
 
                 for(unsigned int iV = 0; iV < vars.size(); ++iV){

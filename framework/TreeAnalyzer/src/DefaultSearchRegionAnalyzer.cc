@@ -467,7 +467,23 @@ float DefaultSearchRegionAnalyzer::getLeptonWeight() {
     } else {
         sfProc->load(smDecayEvt,*leptonCollection);
     }
-    return sfProc->getSF();
+
+    auto getHEMLumiWt = [&]() {
+        bool isGood = dilep1->isMuon() ? true : dilep1->eta() > -1.479 &&
+            (dilep1->phi() > -0.9 || dilep1->phi() < -1.55);
+
+        isGood &= dilep2->isMuon() ? true : dilep2->eta() > -1.479 &&
+            (dilep2->phi() > -0.9 || dilep2->phi() < -1.55);
+
+        // use brilcalc to get totrecorded lumi from 2018 golden json before run 319077 and full run
+        if(!isGood) return (21.077794578 / 59.740565202);
+        else return 1.0;
+    };
+
+    if(lepChan == DILEP && *reader_event->dataEra == FillerConstants::ERA_2018)
+        return getHEMLumiWt()*sfProc->getSF();
+    else
+        return sfProc->getSF();
 }
 float DefaultSearchRegionAnalyzer::getSJBTagWeights() {
     return sjbtagSFProc->getSF(parameters.jets,{hbbCand});

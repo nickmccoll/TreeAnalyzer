@@ -82,6 +82,7 @@ public:
     	outTree->addSingle(ht_,  "",  "ht");
     	outTree->addSingle(met_,  "",  "met");
         outTree->addSingle(event_, "", "event");
+        outTree->addSingle(run_, "", "run");
         outTree->addSingle(lepChan_,  "",  "lepChan");
 
         outTree->addSingle(isMuon1_, "", "isMuon1");
@@ -170,6 +171,7 @@ public:
         ht_        = ht;
         met_       = reader_event->met.pt();
         event_     = *reader_event->event;
+        run_       = *reader_event->run;
         sampParam_ = *reader_event->sampParam;
 
         if(isRealData()){
@@ -427,6 +429,7 @@ public:
 
     size8 lepChan_    = 0;
     size64 event_     = 0;
+    size   run_       = 0;
     size16 sampParam_ = 0;
     size16 era_ = 0;
 
