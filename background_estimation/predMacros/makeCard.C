@@ -55,7 +55,7 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
 
             auto card = DataCardMaker(cat,"13TeV",1);
             const std::string dataCardTag = DataCardMaker::getFileNameTag(cat,"13TeV");
-            cmd += std::string(" ")+ DataCardMaker::getOutputCardFileName(dataCardTag);
+            cmd += std::string(" ")+ dataCardTag+"="+DataCardMaker::getOutputCardFileName(dataCardTag);
 
             auto fullInputName =[&](const std::string& proc, const std::string& l, const std::string& b, const std::string& p, const std::string& h, const std::string& pf) -> std::string
                     {return fPF + "_"+proc +"_"+l +"_"+b+"_"+p +"_"+h +"_"+ pf; };
@@ -210,8 +210,8 @@ void go(const int insig, const std::string& filename, const std::string& mainDir
             const std::string cat = l +"_"+b +"_"+s;
             auto card = DataCardMaker(cat,"13TeV",1);
 
-
-            cmd += std::string(" ")+ DataCardMaker::getFileNameTag(cat,"13TeV");
+            const std::string dataCardTag = DataCardMaker::getFileNameTag(cat,"13TeV");
+            cmd += std::string(" ")+ dataCardTag+"="+DataCardMaker::getOutputCardFileName(dataCardTag);
 
             auto fullInputName =[&](const std::string& proc, const std::string& l, const std::string& b, const std::string& s, const std::string& pf) -> std::string
                     {return fPF + "_"+proc +"_"+l +"_"+b +"_"+s +"_"+ pf; };

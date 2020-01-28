@@ -201,6 +201,6 @@ void go(int step, std::string treeDir) {
 }
 #endif
 
-void makeTTBarSF(int step = 0, std::string treeDir = "../trees/"){
+void makeTTBarSF(int step = 0, std::string treeDir = "../"){
     go(step, treeDir);
 }

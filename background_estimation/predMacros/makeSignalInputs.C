@@ -1,4 +1,5 @@
 
+
 #if !defined(__CINT__) || defined(__MAKECINT__)
 
 #include "../predTools/makeJSON.C"
@@ -336,6 +337,7 @@ void makeSignalMJJShapes1stIt(const std::string& name, const std::string& filena
                 +  ( doExpo  ?  fitMJJExpo : fitMJJStd ));
     };
 
+    // make shapes for each b-tagging category
     if(channel==0 || channel==1) {
         CatIterator ci;
         while(ci.getBin()){
@@ -378,6 +380,7 @@ void makeSignalMJJShapes2ndIt(const std::string& name, const std::string& filena
         newJSON.write(filename+"_"+name+"_"+catName+"_"+fitName+".json");
     };
 
+    // make shapes for each b-tagging category
     if(channel==0 || channel==1) {
         CatIterator ci;
         while(ci.getBin()){
@@ -904,8 +907,11 @@ void makeSignal2DShapesSecondIteration(const std::string& name, const std::strin
 //
 
 
-void go(int step,int sig,int channel,std::string treeDir) {
+void go(int step, int sig, int channel, std::string treeDir) {
     const std::string filename = hhFilename;
+
+    if(step == 1) sig = SIGNALS::ALLSIGNAL;
+
     const std::string baseTreeName = treeDir + "/"+signals[sig].cut+  "_mXXX";
 
     const std::string signalTrees = baseTreeName +".root";
@@ -915,7 +921,8 @@ void go(int step,int sig,int channel,std::string treeDir) {
                 hhInclRange.cut+"&&"+hbbInclRange.cut,true,channel);
         makeSignalFittingDistributions(name,filename,signalMassBins[sig],signalTrees,
                 hhRange.cut+"&&"+hbbRange.cut,false,channel);
-        makeSignalYields(name,filename,signalMassBins[sig],channel);
+        if(sig != SIGNALS::ALLSIGNAL)
+        	makeSignalYields(name,filename,signalMassBins[sig],channel);
     }
 
     if(step == 1){
@@ -923,6 +930,13 @@ void go(int step,int sig,int channel,std::string treeDir) {
         makeSignalMJJShapes2ndIt(name,filename,signalMassBins[sig],channel);
         makeSignalMVVShapes1D(name,filename,signalMassBins[sig],channel,"exclM_");
         makeSignal2DShapesSecondIteration(name,filename,signalMassBins[sig],channel);
+
+        gSystem->Exec(std::string("mkdir temp").c_str());
+        gSystem->Exec((std::string("cp *")+signals[ALLSIGNAL]+"*fit* temp/").c_str());
+        gSystem->Exec((std::string("rename 's/")+signals[ALLSIGNAL]+"/"+signals[RADION]+"/' *"+signals[ALLSIGNAL]+"*fit*").c_str());
+        gSystem->Exec((std::string("rename 's/")+signals[ALLSIGNAL]+"/"+signals[BLKGRAV]+"/' temp/*").c_str());
+        gSystem->Exec((std::string("mv temp/* .")).c_str());
+        gSystem->Exec((std::string("rm -r temp/")).c_str());
     }
 
     if(step == 2){
@@ -956,6 +970,6 @@ void go(int step,int sig,int channel,std::string treeDir) {
 }
 #endif
 
-void makeSignalInputs(int step = 0,int sigToDo = RADION, int channel = 0, std::string treeDir = "../signalPieces/"){
+void makeSignalInputs(int step = 0, int sigToDo = RADION, int channel = 0, std::string treeDir = "../signalPieces/"){
     go(step,sigToDo,channel,treeDir);
 }

@@ -29,25 +29,26 @@ std::vector<CutStr > processes = {
 enum REGION  {REG_SR, REG_TOPCR, REG_NONTOPCR};
 
 CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N*lep_N*btag_N");
-//CutStr nomW ("nomW"  ,  "xsec*trig_N*pu_N");
 
 CutStr aQCD ("aQCD"  , "process!=8");
 
-CutStr wjjBC("wjjBC" , "wjjTau2o1<0.75");
+CutStr wjjBC("wjjBC" , "((wjjTau2o1<=0.75)&&(hwwLi<=11.0))");
 
-CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)&&(hwwLi<11.0)");
+CutStr exA  ("exA"   , "(hwwPT/hhMass>0.3)");
 
 CutStr bV   ("bV"    , "nAK4Btags==0");
 CutStr abV  ("abV"   , "nAK4Btags!=0");
 
-CutStr dPhiC ("dPhiC"  , "abs(llMetDphi)<(3.14159/2)");
-CutStr mllV ("mllV"  , "(dilepMass>6)&&(dilepMass<75)");
+CutStr dPhiC ("dPhiC"  , "(abs(llMetDphi)<(3.14159/2))");
+CutStr mllV ("mllV"  , "(dilepMass>6&&dilepMass<75)");
 CutStr metC ("metC"  , "met/hhMass>0.1");
 CutStr dRC   ("dRC"    , "dilepDR<1.0");
 CutStr drCrC  ("drCrC"   , "dilepDR>0.4");
 
+CutStr aHEM ("aHEM","((era==2018)?(isMuon1==0?(lep1ETA>-1.479||lep1Phi<-1.55||lep1Phi>-0.9):1.0)&&(isMuon2==0?(lep2ETA>-1.479||lep2Phi<-1.55||lep2Phi>-0.9):1.0):1.0)");
+
 CutStr preSel1("preSel1"  , "lepChan==1");
-CutStr preSel2("preSel2"  , "lepChan==2");
+CutStr preSel2("preSel2"  , "(lepChan==2&&"+aHEM.cut+")");
 
 CutStr hbbMCS("hbbMass","hbbMass","#it{m}_{b#bar{b}} [GeV]");
 CutStr hhMCS ("hhMass" ,"hhMass","#it{m}_{HH} [GeV]");
@@ -115,7 +116,7 @@ std::string getHHBinningString(bool inclusive){
 enum BKGModels  {BKG_QG, BKG_LOSTTW, BKG_MW, BKG_MT};
 std::vector<CutStr > bkgSels = {
         CutStr("qg"    ,"hbbDecayType==0","q/g bkg."),
-        CutStr("losttw","((hbbDecayType>0)&&(hbbDecayType<=3))||(hbbDecayType>5)","Lost t/W bkg."),
+        CutStr("losttw","((hbbDecayType>0&&hbbDecayType<=3)||hbbDecayType>5)","Lost t/W bkg."),
         CutStr("mw"     ,"hbbDecayType==4","#it{m}_{W} bkg."),
         CutStr("mt"     ,"hbbDecayType==5","#it{m}_{t} bkg.")
 };
@@ -136,23 +137,23 @@ std::vector<CutStr> dilepCats = {
 
 enum BTAGCats  {BTAG_LMT, BTAG_L, BTAG_M, BTAG_T};
 std::vector<CutStr > btagCats = {
-        CutStr("LMT","hbbCSVCat>=4","bLMT"),
-        CutStr("L"  ,"hbbCSVCat==4","bL"),
-        CutStr("M"  ,"hbbCSVCat==5","bM"),
-        CutStr("T"  ,"hbbCSVCat==6","bT")
+        CutStr("LMT","hbbTag>=0.5","bLMT"),
+        CutStr("L"  ,"(hbbTag>=0.5&&hbbTag<0.9)","bL"),
+        CutStr("M"  ,"(hbbTag>=0.9&&hbbTag<0.98)","bM"),
+        CutStr("T"  ,"hbbTag>=0.98","bT")
 };
 
 std::vector<CutStr > qgBtagCats = {
-        CutStr("LMT","hbbCSVCat==1",""),
-        CutStr("L"  ,"hbbCSVCat==1","")
+        CutStr("LMT","hbbTag<=0.05",""),
+        CutStr("L"  ,"hbbTag<=0.05","")
 };
 CutStr inclBtagCat("I","hbbCSVCat>=0");
 
 enum   PURCats {PURE_I, PURE_LP, PURE_HP};
 std::vector<CutStr > purCats = {
         CutStr("I","1.0","LHP"),
-        CutStr("LP" ,"(hwwLi>=2.5)||(era==2016?wjjTau2o1>=0.55:wjjTau2o1>=0.45)","LP"),
-        CutStr("HP" ,"(hwwLi<2.5)&&(era==2016?wjjTau2o1<0.55:wjjTau2o1<0.45)"  ,"HP")
+        CutStr("LP" ,"(hwwLi>=2.5||(era==2016?wjjTau2o1>=0.55:wjjTau2o1>=0.45))","LP"),
+        CutStr("HP" ,"(hwwLi<2.5&&(era==2016?wjjTau2o1<0.55:wjjTau2o1<0.45))"  ,"HP")
 
 };
 
@@ -322,15 +323,17 @@ std::string getCategoryLabel(const std::string& inStr){
 std::vector<double> resPTBins = {600,700,750,800,850,900,1000,1100,1250,1500,1750,
                                  2000,2500,3000,3500,4000};
 
-enum SIGNALS  {RADION,BLKGRAV};
+enum SIGNALS  {RADION,BLKGRAV,ALLSIGNAL};
 std::vector<CutStr > signals = {
         CutStr("radHH"     ,"spin0","radion"),
-        CutStr("blkHH"     ,"spin2","bulk graviton")
+        CutStr("blkHH"     ,"spin2","bulk graviton"),
+        CutStr("allHH"     ,"spinE","combined radion and bulk graviton")
 };
 std::vector<std::vector<int> > signalMassBins = {
-		{800,900,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
-//        {600,800,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500},
-        {800,900,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500}
+		{800,900,1000,1200,1600,1800,2000,2500,3000,3500},
+		{800,900,1000,1200,1600,1800,2000,2500,3000,3500},
+		{800,900,1000,1200,1600,1800,2000,2500,3000,3500}
+//        {800,900,1000,1200,1400,1600,1800,2000,2500,3000,3500,4000,4500}
 };
 
 //Constants for models when building limits

@@ -1170,7 +1170,7 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
             if(b == btagCats[BTAG_LMT]) continue;
             if(p == purCats[PURE_I] ) continue;
             if(h != selCuts1[SEL1_FULL] ) continue;
-            const std::string wsName = "std_"+ l +"_"+b+"_"+p +"_"+h+"_13TeV";
+            const std::string wsName = l +"_"+b+"_"+p +"_"+h+"_13TeV";
             fitter.addCategory(l +"_"+b+"_"+p +"_"+h,wsName);
         }
     }
@@ -1179,7 +1179,7 @@ void runPostFit(const std::string& inName, const std::string& outName, double fi
             if(l == dilepCats[LEP_INCL] ) continue;
             if(b == btagCats[BTAG_LMT]) continue;
             if(s != selCuts2[SEL2_FULL] ) continue;
-            const std::string wsName = "std_"+ l +"_"+b+"_"+s+"_13TeV";
+            const std::string wsName = l +"_"+b+"_"+s+"_13TeV";
             fitter.addCategory(l +"_"+b+"_"+s,wsName);
         }
     }

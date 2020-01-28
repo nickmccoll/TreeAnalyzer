@@ -163,11 +163,12 @@ void makeBackgroundShapes2DConditional(const std::string name, const std::string
     		dilepCats[LEP_INCL]+"_"+btagCats[BTAG_LMT]+"_"+selCuts2[SEL2_RPhiB];
     tempFile += inclName+"_2D_cond_template.root";
 
-    std::string inclCut = std::string("((")+baseSel+"&&"+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut
+    // may need to fix a bug here in the string defining the cut
+    std::string inclCut = std::string("(")+baseSel+")&&((("+lepCats[LEP_EMU].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+purCats[PURE_I].cut
     		+"&&"+selCuts1[SEL1_LTMB].cut+")";
     if(addQCDSF) inclCut += "*"+getQCDSF(name,filename,LEP_EMU,PURE_I,SEL1_LTMB);
     inclCut += ")";
-    inclCut += "||("+dilepCats[LEP_INCL].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+selCuts2[SEL2_RPhiB].cut+")";
+    inclCut += "||("+dilepCats[LEP_INCL].cut+"&&"+btagCats[BTAG_LMT].cut+"&&"+selCuts2[SEL2_RPhiB].cut+"))";
 
 
     std::string args = std::string("-v -n histo ") + " -vx "+ hbbMCS.cut+ " -vy "+hhMCS.cut
@@ -303,7 +304,7 @@ void getQCDScaleFactor(const std::string& name, const std::string& filename,
         for(const auto& p :purCats)  for(const auto& h :selCuts1){
 
         	// hack
-            if(l=="e" && (b=="T"||b=="M") && p=="HP") continue;
+            if(b=="T" && p=="HP") continue;
 
             const std::string catName = l +"_"+b+"_"+p +"_"+h;
             std::string args = "-nF "+distName +" -nH " + catName + "_"+hhMCS
@@ -372,7 +373,7 @@ void makeFittingDistributions(const std::string& name, const std::string& filena
         	if(!cit2.is(LEP_INCL)) continue;
         	if(cit1.b != cit2.b)   continue;
 
-        	sels.emplace_back(cit1.name()+"_"+cit2.name(),"("+cit1.cut()+")||("+cit2.cut()+")");
+        	sels.emplace_back(cit1.name()+"_"+cit2.name(),"(("+cit1.cut()+")||("+cit2.cut()+"))");
     	}
     }
 
@@ -954,7 +955,7 @@ void makeDataDistributions(const std::string& name, const std::string& filename,
 
 }
 
-void go(int year, int modelToDo, int channel, std::string treeDir) {
+void go(int modelToDo, int channel, std::string treeDir) {
     std::string filename = hhFilename;
 
     if(modelToDo == -1){
@@ -1063,7 +1064,7 @@ void go(int year, int modelToDo, int channel, std::string treeDir) {
 }
 #endif
 
-void makeBKGInputs(int year, int bkgToDo = BKG_QG, int channel = 0, std::string treeDir = "../bkgCompLMT/"){
+void makeBKGInputs(int bkgToDo = BKG_QG, int channel = 0, std::string treeDir = "../bkgCompLMT/"){
 	// channel = 0 (both), 1 (single lep), 2 (dilep)
-    go(year,bkgToDo,channel,treeDir);
+    go(bkgToDo,channel,treeDir);
 }
